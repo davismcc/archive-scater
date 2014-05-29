@@ -5,5 +5,4 @@ gene-expression data using the statistical software R.
 
 
 
-Davis McCarthy
-May 2014
+Davis McCarthy, May 2014
