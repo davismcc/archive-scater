@@ -33,16 +33,19 @@ require(mgcv)
 #' A <- matrix(rep(1:4, each = 4), byrow = TRUE, ncol = 2)
 #' uniquerows(A)
 uniquerows <- function(A) {
-    C <- uniquecombs(A) # uniquecombs() from package mgcv
+    C <- mgcv::uniquecombs(A) # uniquecombs() from package mgcv
     ia <- vector("integer", length=nrow(C))
     for( i in 1:nrow(C) ) {
         for( j in 1:nrow(A) ) {
-            score <- ifelse(C[i,] == A[j,], yes = 1, no = 0)
-            if( sum(score) == ncol(A) )
-                ia[i] <- j; break
+            #score <- ifelse(C[i,] == A[j,], yes = 1, no = 0)
+            #if( sum(score) == ncol(A) )
+            if( identical(C[i,], A[j,]) ) {
+                ia[i] <- j
+                break
+            }
         }
     }
-    return(list(C,ia))
+    return(list(C, ia))
 } # end function uniquerows
 
 #------------------------------------------------------------------------
@@ -61,7 +64,7 @@ tidyfactor <- function(n) {
     if( n==1 )
         return(c(1,0))
     ## Use factorize() from package gmp.
-    pf <- as.integer(factorize(n))
+    pf <- as.integer(gmp::factorize(n))
     f  <- unique(pf)
     ## Compute multiplicities.
     nprimes <- length(f)
@@ -156,6 +159,7 @@ multcoeff <- function(n, x) {
 #' 
 #' # Gamma distribution approximation of p value for rank product rp=9720.
 #' righttailgamma = function(r, k, n) 1 - pgamma(-log(r/(n+1)^k), k, scale=1)
+#' 
 #' righttailgamma(9720, 5, 500)
 #' #--- Example 2.
 #' # Calculate for n=500 the number of (k=)5-tuples with rankproduct rp<=9720.
@@ -176,16 +180,29 @@ piltzcount <- function(r, k, n) {
     if( k < 1 ) {
         h <- 0
         return(h)
-    } else if( r == 1 )  {
-            h <- 1
-            return(h)
-        } else if( r > n^k ) {
-                h <- 0
-                return(h)
-            } else if( k==1 ) {
-                    h <- 1
-                    return(h)
-            }
+    } 
+    if( r == 1 | r > n^k ) {
+        h <- ifelse(r == 1, 1, 0)
+        return(h)
+    }
+    if( k == 1 ) {
+        h <- 1
+        return(h)
+    }
+    
+#     if( k < 1 ) {
+#         h <- 0
+#         return(h)
+#     } else if( r == 1 ) {
+#             h <- 1
+#             return(h)
+#         } else if( r > n^k ) {
+#                 h <- 0
+#                 return(h)
+#             } else if( k==1 ) {
+#                     h <- 1
+#                     return(h)
+#             }
 
     ## Compute prime factorization.
     fm <- tidyfactor(r)
@@ -257,7 +274,7 @@ piltzcount <- function(r, k, n) {
                 print("divset")
                 print(divset)
 
-                for (t in 1:length(iii)) {
+                for( t in 1:length(iii) ) {
                     hextra <- piltzcount(r / divset[[s+1]][t], k-s, r)
                     cat("hextra=", hextra, "s= ", s, "divset[[s+1]][t]= ", divset[[s+1]][t], "\n")
                     add_or_subt <- bincoeff(k,s) * multcoeff(s,bbb[[s+1]][t,]) * hextra
