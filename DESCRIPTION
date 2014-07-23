@@ -1,0 +1,21 @@
+Package: scater
+Type: Package
+Title: Single-cell analysis toolkit for gene expression data in R
+Version: 0.1
+Date: 2014-07-21
+Author: Davis McCarthy
+Maintainer: Davis McCarthy <davismcc@gmail.com>
+Depends:
+    R (>= 3.0),
+    methods,
+    limma,
+    edgeR,
+    dplyr
+Imports:
+    limma,
+    edgeR
+Suggests:
+    ggplot2
+Description: A collection of tools for doing various differential analyses of
+    single-cell RNA-seq gene expression data.
+License: GPL (>= 2)
