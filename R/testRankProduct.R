@@ -7,14 +7,24 @@ require(matrixStats)
 #' 
 #' @param ranks a matrix of logFC-ranks, one row per gene, one column per "experiment", i.e. pair of samples
 #' @param nmax.genes integer giving the maximum number of genes for which to compute exact rank-product p-values
-#' @return data frame with mean rank, rank product, number of ways of obtaining given rank product and exact p-value
-calcRankProdPVals <- function(ranks, nmax.genes = 500) {
+#' @param max.rprod.exact integer giving the maximum rank-product for which to compute exact p-values. Exact p-values are very slow to compute for large rank-products, and converge to approximate p-values.
+#' @return data frame with mean rank, rank product, number of ways of obtaining given rank product, approximate p-value and exact p-value
+#' @examples
+#' ptm <- proc.time()
+#' ranks <- replicate(3, sample(50))
+#' rownames(ranks) <- paste0("gene.", 1:50)
+#' colnames(ranks) <- paste0("exp.", 1:3)
+#' results <- calcRankProdPVals(ranks)
+#' results
+#' proc.time() - ptm
+calcRankProdPVals <- function(ranks, nmax.genes = 500, max.rprod.exact = 100000) {
     ngenes <- nrow(ranks)
     nexp <- ncol(ranks)
     if( nmax.genes > ngenes )
         nmax.genes <- ngenes
     ## Calculate rank products
     rank.products <- matrixStats::rowProds(ranks)
+    names(rank.products) <- rownames(ranks)
     max.rp <- max(rank.products)
     cat("Maximum rank-product is: ", max.rp, "\n")
     print("Summary of rank-products:")
@@ -23,20 +33,40 @@ calcRankProdPVals <- function(ranks, nmax.genes = 500) {
     cat("Computing p-values for top ", nmax.genes, "genes.\n")
     o <- order(rank.products)
     rp.topgenes <- rank.products[o][1:nmax.genes]
-    cat("Max rank-product for top ", nmax.genes, "is ", max(rp.topgenes), ".\n")
-    counts <- rep(NA, nmax.genes)
+    cat("Max rank-product for top", nmax.genes, "genes is", max(rp.topgenes), ".\n")
+    counts <- pvals.approx <- rep(NA, nmax.genes)
     prev.rp <- 0
     total <- 0
+    n <- 1
     for( i in 1:nmax.genes ) {
+        cat("Computing p-value for top gene", i, ",", names(rp.topgenes)[i], "\n")
         this.rp <- rp.topgenes[i]
-        for( n in (prev.rp + 1):this.rp ) {
-            total <- total + piltzcount(n, nexp, ngenes)
+        cat("Rank-product is:", this.rp, "\n")
+        if( this.rp <= max.rprod.exact ) {
+            while( n <= this.rp ) {
+                total <- total + piltzcount(n, nexp, ngenes)
+                n <- n + 1 
+            }
+            counts[i] <- total  
         }
-        counts[i] <- prev.counts <- total  
+        pvals.approx[i] <- calcRankProdPvalsApprox(this.rp, nexp, ngenes)
     }
     pvals <- counts / ngenes^nexp
     meanrank <- rp.topgenes^(1/nexp) # Get geometric mean of ranks
-    out <- data.frame(Mean.Rank = meanrank, Rank.Product = rp.topgenes, N.Ways = counts, P.Value = pvals)
+    out <- data.frame(Mean.Rank = meanrank, Rank.Product = rp.topgenes, N.Ways = counts, Approx.P.Value = pvals.approx, Exact.P.Value = pvals)
     rownames(out) <- names(rp.topgenes)
     out
 }
+
+#' Right-tailed gamma approximation to rank-product p-value
+#' 
+#' @param r integer rank-product
+#' @param k integer number of experiments
+#' @param n integer number of genes
+#' @return float aproximate p-value
+#' @example
+#' calcRankProdPvalsApprox(9720, 5, 500)
+calcRankProdPvalsApprox <- function(r, k, n) {
+    1 - pgamma(-log(r/(n+1)^k), k, scale = 1)
+}
+

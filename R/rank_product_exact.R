@@ -174,7 +174,7 @@ multcoeff <- function(n, x) {
 #' total / 500^5
 piltzcount <- function(r, k, n) {
 
-    cat ("r=", r, " k=", k, " n=", n, "\n")
+    #cat ("r=", r, " k=", k, " n=", n, "\n")
 
     ## Check for trivial cases.
     if( k < 1 ) {
@@ -189,20 +189,6 @@ piltzcount <- function(r, k, n) {
         h <- 1
         return(h)
     }
-    
-#     if( k < 1 ) {
-#         h <- 0
-#         return(h)
-#     } else if( r == 1 ) {
-#             h <- 1
-#             return(h)
-#         } else if( r > n^k ) {
-#                 h <- 0
-#                 return(h)
-#             } else if( k==1 ) {
-#                     h <- 1
-#                     return(h)
-#             }
 
     ## Compute prime factorization.
     fm <- tidyfactor(r)
@@ -214,7 +200,7 @@ piltzcount <- function(r, k, n) {
     for( t in 1:nprimes )
         h <- h * bincoeff(m[t]+k-1, k-1)
 
-    cat("First term of h: ", h, "\n")
+    #cat("First term of h: ", h, "\n")
 
     if( r > n ) {
 
@@ -223,8 +209,8 @@ piltzcount <- function(r, k, n) {
         ## Select divisors larger than n.
         bigones <- d[d>n]  # bigones is a row vector.
         nbig <- length(bigones)
-        print("bigones")
-        print(bigones)
+        #print("bigones")
+        #print(bigones)
 
         ## Construct possible combinations of divisors.
         divset <- list()
@@ -237,17 +223,17 @@ piltzcount <- function(r, k, n) {
 
         for( s in 1:smax ) {
 
-            print("s"); print(s)
+            #print("s"); print(s)
             newdivset <- matrix(divset[[s]], ncol=1) %*% bigones
-            print("newdivset")
-            print(newdivset)
+            #print("newdivset")
+            #print(newdivset)
 
             ij <- as.matrix(which(r - newdivset*floor(r/newdivset) < 0.5, arr.ind=TRUE))
-            print(ij)
+            #print(ij)
             i <- ij[,1]
             j <- ij[,2]
             nnew <- length(i)
-            cat("nnew=", nnew,"\n")
+            #cat("nnew=", nnew,"\n")
 
             if( nnew > 0 ) {
 
@@ -255,30 +241,30 @@ piltzcount <- function(r, k, n) {
                 bbb[[s+1]]    <- matrix(0, nrow=nnew, ncol=nbig)
 
                 for( t in 1:nnew ) {
-                    print("***")
-                    print(divset[[s]][i[t]])
+                    #print("***")
+                    #print(divset[[s]][i[t]])
                     divset[[s+1]][t] <- divset[[s]][i[t]] * bigones[j[t]]
                     bbb[[s+1]][t,] <- bbb[[s]][i[t],]
                     bbb[[s+1]][t,j[t]] <- bbb[[s+1]][t,j[t]] + 1
                 }
-                print("divset[[s+1]]")
-                print(divset[[s+1]])
-                print("bbb")
-                print(bbb)
+                #print("divset[[s+1]]")
+                #print(divset[[s+1]])
+                #print("bbb")
+                #print(bbb)
 
                 temp <- uniquerows(bbb[[s+1]])
                 bbb[[s+1]] <- temp[[1]];  iii <- temp[[2]]
-                print("iii")
-                print(iii)
+                #print("iii")
+                #print(iii)
                 divset[[s+1]] <- divset[[s+1]][iii]
-                print("divset")
-                print(divset)
+                #print("divset")
+                #print(divset)
 
                 for( t in 1:length(iii) ) {
                     hextra <- piltzcount(r / divset[[s+1]][t], k-s, r)
-                    cat("hextra=", hextra, "s= ", s, "divset[[s+1]][t]= ", divset[[s+1]][t], "\n")
+                    #cat("hextra=", hextra, "s= ", s, "divset[[s+1]][t]= ", divset[[s+1]][t], "\n")
                     add_or_subt <- bincoeff(k,s) * multcoeff(s,bbb[[s+1]][t,]) * hextra
-                    cat("add_or_subt= ", add_or_subt, "\n")
+                    #cat("add_or_subt= ", add_or_subt, "\n")
                     ## Update h, number of ways of getting rank-product
                     h <- h + (-1)^s * add_or_subt
                 }
