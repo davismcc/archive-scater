@@ -24,7 +24,8 @@ Compute the number of k-tuples of rank-product value r, given n genes, which is 
 piltzcount(9720, 5, 500)
 
 # Gamma distribution approximation of p value for rank product rp=9720.
-righttailgamma = function(r, k, n) 1 - pgamma(-log(r/(n+1)^k), k, scale=1)
+righttailgamma <- function(r, k, n) 1 - pgamma(-log(r/(n+1)^k), k, scale=1)
+
 righttailgamma(9720, 5, 500)
 #--- Example 2.
 # Calculate for n=500 the number of (k=)5-tuples with rankproduct rp<=9720.
