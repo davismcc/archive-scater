@@ -8,10 +8,12 @@
 #' implemented are: t-test, rank-production test, ...
 #' @export
 #'
-testAmp <- function(object, expr.values = "log2cpm.pc0.25", method = "ttest", ...) {
+testAmp <- function(object, expr_values = "log2cpm.pc0.25", method = "ttest", ...) {
     method <- match.arg(method, c("ttest","rankprod"))
     if( method == "ttest" )
-        results <- testAmp.ttest(object, expr.values, ...)
+        results <- testAmp.ttest(object, expr_values, ...)
+    else
+        results <- "Sorry, other methods not implemented yet"
     results
 }
 
@@ -19,16 +21,16 @@ testAmp <- function(object, expr.values = "log2cpm.pc0.25", method = "ttest", ..
 #'
 #' @param object a DGEList object containing expression values and
 #' experimental information. Must have been appropriately prepared.
-#' @param expr.values character string giving the name of the element
+#' @param expr_values character string giving the name of the element
 #' of the DGEList object yielding the expression values to be used.
 #' @export
 #'
-testAmp.ttest <- function(object, expr.values = "log2cpm.pc0.25", experiment = "culture", treatment = "perturbed",     p.adj.method = "BH") {
+testAmp.ttest <- function(object, expr_values = "log2cpm.pc0.25", experiment = "culture", treatment = "perturbed",     p.adj.method = "BH") {
     ## Define expression values
-    if( is.null(object[[expr.values]]) )
+    if( is.null(object[[expr_values]]) )
         stop("Expression values not found")
     else
-        expr <- object[[expr.values]]
+        expr <- object[[expr_values]]
     ## Define experiment and treatment vectors
     if( is.null(object$samples[[experiment]]) )
         stop("Experiment not found")
