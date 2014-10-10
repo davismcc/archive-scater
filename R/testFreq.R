@@ -89,7 +89,7 @@ binomGLMFit <- function(y, design, ntest = nrow(y)) {
         fit$iter[i] <- fit_gene$iter
         fit$df_residual[i] <- fit_gene$df.residual
         fit$df_null[i] <- fit_gene$df.null
-        fit$converged <- fit_gene$converged
+        fit$converged[i] <- fit_gene$converged
         fit$boundary[i] <- fit_gene$boundary
     }
     new("DGEGLM", fit)
