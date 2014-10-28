@@ -8,7 +8,8 @@
 #' implemented are: t-test, rank-production test, ...
 #' @export
 #'
-testAmp <- function(object, expr_values = "log2cpm.pc0.25", method = "ttest", ...) {
+testAmp <- function(object, design, coef = ncol(design), expr_values = "cpm",
+                    method = "ttest", p_adj_method = "BH", ...) {
     method <- match.arg(method, c("ttest","rankprod"))
     if( method == "ttest" )
         results <- testAmp.ttest(object, expr_values, ...)
@@ -25,7 +26,7 @@ testAmp <- function(object, expr_values = "log2cpm.pc0.25", method = "ttest", ..
 #' of the DGEList object yielding the expression values to be used.
 #' @export
 #'
-testAmp.ttest <- function(object, expr_values = "log2cpm.pc0.25", experiment = "culture", treatment = "perturbed",     p.adj.method = "BH") {
+testAmp.ttest <- function(object, design, coef = ncol(design), expr_values = "log2cpm.pc0.25", p.adj.method = "BH") {
     ## Define expression values
     if( is.null(object[[expr_values]]) )
         stop("Expression values not found")
