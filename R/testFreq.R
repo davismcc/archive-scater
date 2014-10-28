@@ -41,7 +41,7 @@ testFreq <- function(data_object, design, coef = ncol(design),
         rn <- 1:nrow(isexpr)
     else
         rn <- make.unique(rn)
-    tab <- data.frame(fit_full$coefficients[, coef], OverallFreq = rowMeans(isexpr),
+    tab <- data.frame(logFC = fit_full$coefficients[, coef], OverallFreq = rowMeans(isexpr),
                       LR = LR, PValue = LRT_pvalue, row.names = rn)
     fit_full$table <- tab
     fit_full$comparison <- colnames(design)[coef]
