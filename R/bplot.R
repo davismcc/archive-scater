@@ -13,7 +13,7 @@
 #' or down-regulated (or giving any other information to be plotted
 #' above beeswarms).
 #' @param boxplot show a boxplot behind the beeswarm? (Default = \code{TRUE}).
-#' 
+#' @export
 #'  
 bplot <- function(expr_values, value_name = "log2_cpm", group = NULL, ylab = expression("log2(cpm)"),
                   de_direction = NULL, boxplot = TRUE) {

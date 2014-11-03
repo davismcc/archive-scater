@@ -3,8 +3,8 @@
 \alias{testAmp.ttest}
 \title{Test for differences in expression amplitude using a t-test}
 \usage{
-testAmp.ttest(object, expr_values = "log2cpm.pc0.25",
-  experiment = "culture", treatment = "perturbed", p.adj.method = "BH")
+testAmp.ttest(object, design, coef = ncol(design),
+  expr_values = "log2cpm.pc0.25", p.adj.method = "BH")
 }
 \arguments{
 \item{object}{a DGEList object containing expression values and
