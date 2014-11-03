@@ -3,7 +3,8 @@
 \alias{testAmp}
 \title{Test for differences in expression amplitude}
 \usage{
-testAmp(object, expr_values = "log2cpm.pc0.25", method = "ttest", ...)
+testAmp(object, design, coef = ncol(design), expr_values = "cpm",
+  method = "ttest", p_adj_method = "BH", ...)
 }
 \description{
 Test for differences in expression amplitude
