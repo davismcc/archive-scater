@@ -3,25 +3,24 @@
 \alias{bplot}
 \title{Beeswarm plot for expression levels}
 \usage{
-bplot(expr_values, value_name = "log2_cpm", group = NULL,
-  ylab = expression("log2(cpm)"), de_direction = NULL, boxplot = TRUE)
+bplot(expr_values, group = NULL, ylab = expression("log2(cpm)"),
+  de_direction = NULL, distribution_plot = "violinplot",
+  col_theme = "few")
 }
 \arguments{
 \item{expr_values}{matrix of expression values to be plotted.}
-
-\item{value_name}{label for the expression values (default:
-"log2_cpm").}
 
 \item{group}{vector or factor that defines groups to be coloured
 disctinctly in the plot.}
 
 \item{ylab}{label for the y-axis.}
 
-\item{boxplot}{show a boxplot behind the beeswarm? (Default = \code{TRUE}).}
-
-\item{optional}{character vector indicating whether genes are up-
+\item{de_direction}{optional character vector indicating whether genes are up-
 or down-regulated (or giving any other information to be plotted
 above beeswarms).}
+
+\item{distribution_plot}{show either a violinplot or a boxplot
+behind the beeswarm? (Default = \code{"violinplot"}).}
 }
 \description{
 \code{beeplot} creates a beeswarm plot with background boxplots to
