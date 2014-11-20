@@ -70,7 +70,7 @@ bplot <- function(expr_values, group = NULL, ylab = expression("log2(cpm)"),
             geom_point(size = 3, alpha = 0.75)
     else
         beeswarm.plot <- beeswarm.plot +
-            geom_point(aes(colour = Group), size = 3, alpha = 0.75)
+            geom_point(size = 3, alpha = 0.75)
     if( !is.null(de_direction) )
         beeswarm.plot <- beeswarm.plot +
             geom_text(aes(xl, yl), label = de_dir$label, data = de_dir)

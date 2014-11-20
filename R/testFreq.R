@@ -8,24 +8,16 @@
 #' @param coef the coefficient(s)
 #' @param p_adj_method method to pass to \code{p.adjust()} to adjust
 #' p-values for multiple testing.
-#' @param method method used for defining whether or not a gene is
-#' expressed in a given cell. Either "cpm" or "counts".
 #' @details Test for differences in expression frequency using
 #' logistic regression and a likelihood ratio test. Returns a DGELRT
 #' object with the differential frequency test results.
 #' @export
 #'
-testFreq <- function(data_object, design, coef = ncol(design),
-                     p_adj_method = "BH", method = "cpm", ntest = nrow(data_object)) {
+testFreq <- function(data_object, design, coef = ncol(design), p_adj_method = "BH", ntest = nrow(data_object)) {
     ## Define null design matrix
     design_null <- design[, -coef, drop = FALSE]
     ## Define matrix of binary "is expressed" values
-    if(method == "cpm")
-        isexpr <- data_object$isexpr_cpm
-    else if(method == "counts")
-        isexpr <- data_object$isexpr_counts
-    else
-        stop("Unrecognised argument to 'method'")
+    isexpr <- data_object$isexpr
     rownames(isexpr) <- rownames(data_object)
     ## Fit full model
     fit_full <- binomGLMFit(isexpr, design, ntest)

@@ -4,7 +4,7 @@
 \title{Test for differences in expression frequency using logistic regression}
 \usage{
 testFreq(data_object, design, coef = ncol(design), p_adj_method = "BH",
-  method = "cpm", ntest = nrow(data_object))
+  ntest = nrow(data_object))
 }
 \arguments{
 \item{data_object}{a DGEList object containing expression values and
@@ -16,9 +16,6 @@ experimental information. Must have been appropriately prepared.}
 
 \item{p_adj_method}{method to pass to \code{p.adjust()} to adjust
 p-values for multiple testing.}
-
-\item{method}{method used for defining whether or not a gene is
-expressed in a given cell. Either "cpm" or "counts".}
 }
 \description{
 Test for differences in expression frequency using logistic regression
