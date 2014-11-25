@@ -23,7 +23,7 @@ above beeswarms).}
 behind the beeswarm? (Default = \code{"violinplot"}).}
 }
 \description{
-\code{beeplot} creates a beeswarm plot with background boxplots to
+\code{bplot} creates a beeswarm plot with background boxplots to
 show the distribution of expression values for a set of genes.
 }
 

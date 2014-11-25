@@ -1,14 +1,15 @@
-# Wrapper functions for the computation of p-values for exact rank-product tests
+# Compare and aggregate results from different ranking methods using exact rank-product tests
 # Davis McCarthy, July 2014
 
 library(matrixStats)
 
 #' Conduct rank-product test
 #'
-#' @param dfilt DGEList object containing data and so on that has been
-#' filtered and expressed cells determined
-#' @param nmax.genes integer giving the maximum number of genes for
-#' which to compute exact rank-product p-values
+#' @param results a matrix or data.frame object where columns provide
+#' results values (e.g. p-values) to be used for ranking features
+#' (e.g. genes) and ordering of results.
+#' @param nmax.features integer giving the maximum number of features
+#' (e.g. genes) for which to compute exact rank-product p-values
 #' @param max.rprod.exact integer giving the maximum rank-product for
 #' which to compute exact p-values. Exact p-values are very slow to
 #' compute for large rank-products, and converge to approximate
@@ -16,59 +17,20 @@ library(matrixStats)
 #' @return data frame with mean rank, rank product, number of ways of
 #' obtaining given rank product, approximate p-value and exact p-value
 #' @export
-testRankProduct <- function(dfilt, nmax.genes = 500, max.rprod.exact = 100000) {
-    navec <- rep(NA, nrow(dfilt))
-    rp.results <- data.frame(Ave.CPM = navec, Ave.logFC = navec, N = navec)
-    rownames(rp.results) <- rownames(dfilt)
-    rep.names <- unique(dfilt$cells.info$culture)
-    logFC.df <- matrix(NA, nrow = nrow(dfilt), ncol = 2*length(rep.names) + 1)
-    colnames(logFC.df) <- c(paste0("logFC.", unique(dfilt$cells.info$culture)), "Ave.logFC")
-    treatment.names <- unique(dfilt$cells.info$perturbed)
-    for(i in 1:nrow(rp.results)) {
-        ## Code for one gene to do get logFC in each replicate experiment
-        dofit <- TRUE
-
-        isexpr <- dfilt$isexpr_cpm[i,]
-        culture <- dfilt$cells.info$culture[isexpr]
-        treatment <- dfilt$cells.info$perturbed[isexpr]
-        if( (length(unique(culture)) > 1) & (length(unique(treatment)) > 1) ) {
-            design <- model.matrix(~ culture + treatment)
-            colnames(design) <- c("(Intercept)", "Expt", "Metformin")
-        }
-        else if( (length(unique(culture)) > 1) & (length(unique(treatment)) <= 1) ) {
-            warning("Gene expressed in only one treatment. Cannot do test on treatment.")
-            rp.results$N[i] <- sum(isexpr)
-            dofit <- FALSE
-        } else if( length(unique(treatment)) > 1 ) {
-            warning(paste0("Gene ", rownames(rp.results)[i], " expressed in only one culture/experiment (culture ", unique(culture), "). Results should be treated with caution."))
-            design <- model.matrix(~ treatment)
-            colnames(design) <- c("(Intercept)", "Metformin")
-        } else {
-            warning("Gene expressed in only one culture/experiment and one treatment. No DE results possible.")
-            rp.results$N[i] <- sum(isexpr)
-            dofit <- FALSE
-        }
-        if( dofit ) { ## Test to see if we should actually do the testing or not
-            x <- dfilt$log2cpm.pc0.25[i, isexpr]
-            rp.results$Ave.CPM[i] <- mean(x)
-            for( j in 1:length(rep.names) ) {
-                ave.expr.1 <- mean(x[perturbed == treatment.names[1]] & culture == rep.names[j])
-                ave.expr.2 <- mean(x[perturbed == treatment.names[2]] & culture == rep.names[j])
-                logFC.df[, j] <- NA ### FIX ME
-            }
-        }
+aggregateResults <- function(results, nmax_genes = 500, max_rankprod_exact = 100000) {
+    ranks <- matrix(NA, nrow = nrow(results), ncol = ncol(results), dimnames = list(rownames(results), colnames(results)))
+    ## Define ranking for each feature, for each method
+    for(i in seq_len(ncol(results))) {
+        ranks[, i] <- rank(results[, i], ties.method = "average")
     }
-## Compute average logFC and logFC-rankings for all genes
+    rank_products <- matrixStats::rowProds(ranks)
+    names(rank_products) <- rownames(ranks)
+    ranks <- ranks[order(rank_products), ]
+    aggregated_results <- calcRankProdPVals(ranks, nmax_genes, max_rankprod_exact)
+    aggregated_results <- cbind(ranks[1:nmax_genes, ], aggregated_results)
+    aggregated_results
 }
-
-
-#' Get logFC values for replicates within on experiment
-getLogFC.oneexperiment <- function() {
-
-}
-
-
-
+    
 #' Calculate exact rank-product p-values
 #'
 #' @param ranks a matrix of logFC-ranks, one row per gene, one column

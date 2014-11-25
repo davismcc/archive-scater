@@ -19,7 +19,7 @@ scaleAmp <- function(expr_matrix, is_expr) {
     ## Get average amplitude in expressing cells for each gene
     expr_vals <- expr_matrix
     expr_vals[!is_expr] <- NA
-    ave_expr <- matrixStats::rowMeans(expr_vals, na.rm = TRUE)
+    ave_expr <- rowMeans(expr_vals, na.rm = TRUE)
     ## ave_expr <- rep(NA, nrow(expr_matrix))
     ## for( i in seq_len(nrow(expr_matrix)) ) {
     ##     expr_ind <- is_expr[i, ]
