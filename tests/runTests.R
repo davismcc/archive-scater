@@ -1,0 +1,3 @@
+BiocGenerics:::testPackage("scater")
+
+
