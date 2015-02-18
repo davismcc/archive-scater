@@ -25,7 +25,7 @@ plotExpression <- function(features, data_object, aes, ncol = 2, xlab = "Patient
     else
         nfeatures <- length(features)
     ## Melt the expression data and metadata into a convenient form
-    to_melt <- as.matrix(data_object$cpm[features,])
+    to_melt <- as.matrix(data_object$cpm[features, , drop = FALSE])
     evals_long <- reshape2::melt(to_melt, value.name = "evals")
     colnames(evals_long) <- c("Feature", "Cell", "evals")
     evals_long <- mutate(evals_long, log2_evals = log2(evals + 1))

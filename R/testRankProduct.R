@@ -72,41 +72,77 @@ testRankProduct <- function(dfilt, nmax.genes = 500, max.rprod.exact = 100000) {
 #' @param delta character string indication approximate p-value to be
 #' returned for rank-product results: "upper", "lower", or "geometric"
 #' (default; gives approximate p-value)
+#' @param compute_pvals logical, should p-values be computed? Default
+#' is \code{FALSE} as for experiments with many genes or cells,
+#' p-values will be extremely expensice or impossible to compute
 #' @return results object summarising RankProduct results
 #' @export
-testRankProduct.matrix <- function(data_matrix, group, block = NULL, delta = "geometric") {
+testRankProduct.matrix <- function(data_matrix, group, block = NULL, delta = "geometric", compute_pvals = FALSE) {
     ngenes <- nrow(data_matrix)
     group <- as.factor(group)
+    block <- as.factor(block)
     ## If no blocking, then assume one source for the data --> easy case
     if(is.null(block) | nlevels(block) == 1) {
         message("Treating study as having one experimental block.")
-        ## get logFCs for 
+        ## get logFCs
         logFC <- getLogFCOneBlock(data_matrix, group)
         ## Compute median logFC to report for each gene
         median_logFC <- matrixStats::rowMedians(logFC)
         ## Get ranks for each pairwise comparison of cells across groups
         ## Take log-ranks: true RP is likely to cause numeric overflow
         lranks <- getRanksOneBlock(logFC, group, logged = TRUE)
-        ## Get mean log(rank-products) for up-regulation in group1 and up-regulation in group2
-        ## This is equivalent to the log of the geometric mean of the ranks
-        lrp_up_grp1 <- rowMeans(lranks[[1]])
-        lrp_up_grp2 <- rowMeans(lranks[[2]])
-        ## Report the smallest mean log-rank-product for each gene
-        lrp <- pmin(lrp_up_grp1, lrp_up_grp2)
-        ## Report whether expression higher in group1 or group2
-        direction <- rep(names(lranks)[1], length(lrp))
-        direction[lrp_up_grp1 > lrp_up_grp2] <- names(lranks)[2]
-        direction <- gsub("-", " > ", direction)
-        ## Compute approximate p-values for geometric mean of rank-products, as if k = 1
-        pvals <- calcRankProdBounds(exp(lrp), ngenes, 1, delta = delta)
-        ## Define output
-        out_table <- data.frame(Median_logFC = median_logFC, Dir_of_Effect = direction,
-                                Geom_Mean_Rank = exp(lrp), P_Value = pvals)
+        lranks_up_grp1 <- lranks[[1]]
+        lranks_up_grp2 <- lranks[[2]]
     }
     else {
         message("Computing rank-products across ", nlevels(block), " experimental blocks.")
-        stop("Multiple blocks not yet implemented.")
+        blk_idx <- 1
+        for(blk in levels(block)) {
+            message("Block ", blk_idx, "...")
+            select_blk <- block == blk
+            this_grp <- group[select_blk]
+            ## get logFCs
+            this_logFC <- getLogFCOneBlock(data_matrix[, select_blk], this_grp)
+            ## Get ranks for each pairwise comparison of cells across groups
+            ## Take log-ranks: true RP is likely to cause numeric overflow
+            this_lranks <- getRanksOneBlock(this_logFC, this_grp, logged = TRUE)
+            if( blk_idx == 1 ) {
+                logFC <- this_logFC
+                lranks_up_grp1 <- this_lranks[[1]]
+                lranks_up_grp2 <- this_lranks[[2]]
+            }
+            else {
+                logFC <- cbind(logFC, this_logFC)
+                lranks_up_grp1 <- cbind(lranks_up_grp1, this_lranks[[1]])
+                lranks_up_grp2 <- cbind(lranks_up_grp2, this_lranks[[2]])
+            }
+            blk_idx <- blk_idx + 1
+        }
     }
+    ## Compute median logFC to report for each gene
+    median_logFC <- matrixStats::rowMedians(logFC)
+    ## Get mean log(rank-products) for up-regulation in group1 and up-regulation in group2
+    ## This is equivalent to the log of the geometric mean of the ranks
+    lrp_up_grp1 <- rowMeans(lranks_up_grp1)
+    lrp_up_grp2 <- rowMeans(lranks_up_grp2)
+    ## Report the smallest mean log-rank-product for each gene
+    lrp <- pmin(lrp_up_grp1, lrp_up_grp2)
+    ## Report whether expression higher in group1 or group2
+    label1 <- paste0(levels(group), collapse = ">")
+    label2 <- paste0(rev(levels(group)), collapse = ">")
+    direction <- rep(label1, length(lrp))
+    direction[lrp_up_grp1 > lrp_up_grp2] <- label2
+    ## Compute approximate p-values for geometric mean of rank-products, as if k = 1
+    if(compute_pvals) {
+        ## Compute the number of "replicates" if computing p-values
+        nreps <- ncol(logFC)
+        pvals <- calcRankProdBounds(exp(lrp), ngenes, nreps, delta = delta)
+    }
+    else
+        pvals <- rep(NA, ngenes)
+    ## Define output
+    out_table <- data.frame(Median_logFC = median_logFC, Dir_of_Effect = direction,
+                            Geom_Mean_Rank = exp(lrp), P_Value = pvals)
     rownames(out_table) <- rownames(data_matrix)
     out_table
 }
@@ -167,7 +203,6 @@ getLogFCOneBlock <- function(data_matrix, group) {
     ncells <- ncol(data_matrix)
     k <- ngroup1 * ngroup2
     logFC <- matrix(NA, nrow = ngenes, ncol = k)
-    print("Hello!!")
     ## Get logFC for all pairwise comparisons of genes in group1 and group2
     for(i in seq_len(ngroup1)) {
         idx_this_insertion <- ((i - 1) * ngroup2 + 1):(i * ngroup2)
