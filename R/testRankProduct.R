@@ -189,8 +189,8 @@ getLogFCOneBlock <- function(data_matrix, group) {
 #' per "experiment", i.e. pair of samples
 #' @param nmax.genes integer giving the maximum number of genes for
 #' which to compute exact rank-product p-values
-#' @param max.rprod.exact integer giving the maximum rank-product for
-#' which to compute exact p-values. Exact p-values are very slow to
+#' @param max.rprod integer giving the maximum rank-product for
+#' which to compute p-values. Exact p-values are very slow to
 #' compute for large rank-products, and converge to approximate
 #' p-values.
 #' @return data frame with mean rank, rank product, number of ways of
@@ -204,7 +204,7 @@ getLogFCOneBlock <- function(data_matrix, group) {
 #' results <- calcRankProdPVals(ranks)
 #' results
 #' proc.time() - ptm
-calcRankProdPVals <- function(ranks, nmax.genes = 500, max.rprod.exact = 100000) {
+calcRankProdPVals <- function(ranks, nmax.genes = 500, max.rprod = 1e30) {
     ngenes <- nrow(ranks)
     nexp <- ncol(ranks)
     if( nmax.genes > ngenes )
@@ -225,22 +225,25 @@ calcRankProdPVals <- function(ranks, nmax.genes = 500, max.rprod.exact = 100000)
     prev.rp <- 0
     total <- 0
     n <- 1
-    for( i in 1:nmax.genes ) {
-        cat("Computing p-value for top gene", i, ",", names(rp.topgenes)[i], "\n")
-        this.rp <- rp.topgenes[i]
-        cat("Rank-product is:", this.rp, "\n")
-        if( this.rp <= max.rprod.exact ) {
-            while( n <= this.rp ) {
-                total <- total + piltzcount(n, nexp, ngenes)
-                n <- n + 1
-            }
-            counts[i] <- total
-        }
-        pvals.approx[i] <- calcRankProdPvalsApprox(this.rp, nexp, ngenes)
-    }
-    pvals <- counts / ngenes^nexp
+    ## for( i in 1:nmax.genes ) {
+    ##     cat("Computing p-value for top gene", i, ",", names(rp.topgenes)[i], "\n")
+    ##     this.rp <- rp.topgenes[i]
+    ##     cat("Rank-product is:", this.rp, "\n")
+    ##     if( this.rp <= max.rprod.exact ) {
+    ##         while( n <= this.rp ) {
+    ##             total <- total + piltzcount(n, nexp, ngenes)
+    ##             n <- n + 1
+    ##         }
+    ##         counts[i] <- total
+    ##     }
+    ##     pvals.approx[i] <- calcRankProdPvalsApprox(this.rp, nexp, ngenes)
+    ## }
+    ## pvals <- counts / ngenes^nexp
+    ## Unfortunately, more accurate approximate p-values take an impossibly long time to compute
+    ## pvals.approx <- calcRankProdBounds(rp.topgenes, nexp, ngenes)
+    pvals.approx <- calcRankProdPvalsApprox(rp.topgenes, nexp, ngenes)
     meanrank <- rp.topgenes^(1/nexp) # Get geometric mean of ranks
-    out <- data.frame(Mean.Rank = meanrank, Rank.Product = rp.topgenes, N.Ways = counts, Approx.P.Value = pvals.approx, Exact.P.Value = pvals)
+    out <- data.frame(Mean.Rank = meanrank, Rank.Product = rp.topgenes, Approx.P.Value = pvals.approx)
     rownames(out) <- names(rp.topgenes)
     out
 }

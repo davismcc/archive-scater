@@ -3,7 +3,7 @@
 \alias{getRanksOneBlock}
 \title{Get ranks from logFCs for one block}
 \usage{
-getRanksOneBlock(logFC_matrix, group)
+getRanksOneBlock(logFC_matrix, group, logged = FALSE)
 }
 \arguments{
 \item{logFC_matrix}{numeric matrix of logFCs computed as group1 -
@@ -11,6 +11,9 @@ group2}
 
 \item{group}{character vector or factor defining the experimental
 groups being compared}
+
+\item{logged}{boolean: return raw ranks if \code{FALSE} or
+log(ranks) if \code{TRUE}}
 }
 \description{
 Get ranks both for up-regulation in group1 and up-regulation in

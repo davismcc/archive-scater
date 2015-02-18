@@ -4,16 +4,8 @@
 \title{Right-tailed gamma approximation to rank-product p-value}
 \usage{
 calcRankProdPvalsApprox(r, k, n)
-
-calcRankProdPvalsApprox(r, k, n)
 }
 \arguments{
-\item{r}{integer rank-product}
-
-\item{k}{integer number of experiments}
-
-\item{n}{integer number of genes}
-
 \item{r}{integer rank-product}
 
 \item{k}{integer number of experiments}
@@ -22,16 +14,11 @@ calcRankProdPvalsApprox(r, k, n)
 }
 \value{
 float aproximate p-value
-
-float aproximate p-value
 }
 \description{
 Right-tailed gamma approximation to rank-product p-value
-
-Right-tailed gamma approximation to rank-product p-value
 }
 \examples{
-calcRankProdPvalsApprox(9720, 5, 500)
 calcRankProdPvalsApprox(9720, 5, 500)
 }
 
