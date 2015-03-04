@@ -3,7 +3,7 @@
 
 library(matrixStats)
 
-#' Conduct rank-product test
+#' Aggregate and compare results from different ranking methods using exact rank-product tests
 #'
 #' @param results a matrix or data.frame object where columns provide
 #' results values (e.g. p-values) to be used for ranking features

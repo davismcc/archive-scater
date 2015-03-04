@@ -1,14 +1,5 @@
 ## A suite of functions for calculating necessary quantities for analysis
 
-
-## calcCPM <- function(object, normalized.lib.sizes=TRUE, log=FALSE, prior.count=0.25, ...) {
-##     lib.size <- object$cells.info$lib_size
-##     if(normalized.lib.sizes)
-##         lib.size <- lib.size*object$samples$norm.factors
-##     cpm.default(object$counts, lib.size = lib.size)
-## }
-
-
 #' Calculate which gene are expressed in which cells using a count
 #' threshold
 #'

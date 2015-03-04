@@ -1,0 +1,6 @@
+scater vignette
+========================================================
+
+This document gives an introduction to and overview of the functionality of the `scater` package.
+
+
