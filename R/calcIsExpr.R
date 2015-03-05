@@ -11,7 +11,7 @@
 #' particular cell is expressed.
 #' @export
 #' @examples
-#' d <- DGEList(counts = matrix(rpois(100, lambda = 20), nrow = 10))
+#' d <- edgeR::DGEList(counts = matrix(rpois(100, lambda = 20), nrow = 10))
 #' calcIsExprCounts(d)
 calcIsExprCounts <- function(object, min_gene_count_in_cell = 5) {
     isexpr <- object$counts >= min_gene_count_in_cell
@@ -35,13 +35,16 @@ calcIsExprCounts <- function(object, min_gene_count_in_cell = 5) {
 #' counts-per-million, but this is not implemented yet.
 #' @export
 #' @examples
-#' d <- DGEList(counts = matrix(rpois(100, lambda = 20), nrow = 10))
-#' d$cells.info <- data.frame(treatment = rep(c("A", "B"), each = 5), lib_size = colSums(d$counts))
+#' d <- edgeR::DGEList(counts = matrix(rpois(100, lambda = 20), nrow = 10))
+#' d$cells.info <- data.frame(treatment = rep(c("A", "B"), each = 5), 
+#' lib_size = colSums(d$counts))
 #' calcIsExprCPM(d)
-calcIsExprCPM <- function(object, min_gene_count_in_cell = 5, normalized.lib.sizes = FALSE) {
+calcIsExprCPM <- function(object, min_gene_count_in_cell = 5, 
+                          normalized.lib.sizes = FALSE) {
     cpm_thresh <- min_gene_count_in_cell / object$samples$lib.size * 1e06
     if( is.null(object$cpm) )
-        object$cpm <- edgeR::cpm(object, normalized.lib.sizes = normalized.lib.sizes)
+        object$cpm <- edgeR::cpm(object, normalized.lib.sizes = 
+                                     normalized.lib.sizes)
     isexpr <- t(t(object$cpm) > cpm_thresh)
     object$isexpr_cpm <- isexpr
     object$cells.info$cpm_thresh <- cpm_thresh

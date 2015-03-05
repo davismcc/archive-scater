@@ -8,9 +8,9 @@ library(matrixStats)
 #' @param results a matrix or data.frame object where columns provide
 #' results values (e.g. p-values) to be used for ranking features
 #' (e.g. genes) and ordering of results.
-#' @param nmax.features integer giving the maximum number of features
+#' @param nmax_genes integer giving the maximum number of features
 #' (e.g. genes) for which to compute exact rank-product p-values
-#' @param max.rprod.exact integer giving the maximum rank-product for
+#' @param max_rankprod_exact integer giving the maximum rank-product for
 #' which to compute exact p-values. Exact p-values are very slow to
 #' compute for large rank-products, and converge to approximate
 #' p-values.

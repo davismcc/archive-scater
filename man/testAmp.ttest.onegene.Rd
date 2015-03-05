@@ -4,17 +4,19 @@
 \alias{testAmp.ttest.onegene}
 \title{Test for differences in expression for one gene with a t-test}
 \usage{
-testAmp.ttest.onegene(log2cpm, design, test.variable = ncol(design))
+testAmp.ttest.onegene(log2cpm, design, test_variable = ncol(design))
 }
 \arguments{
-\item{log2cpm}{vector of log2-count-per-million values, the measure of expression}
+\item{log2cpm}{vector of log2-count-per-million values, the measure of
+expression}
 
 \item{design}{design matrix for the linear model fit}
 
-\item{test.variable}{the variable (or coefficient) for which testing is done}
+\item{test_variable}{the variable (or coefficient) for which testing is done}
 }
 \value{
-dataframe with logFC, SE, N (number of cells expressed), t-statistic and p-value
+dataframe with logFC, SE, N (number of cells expressed), t-statistic
+and p-value
 }
 \description{
 Test for differences in expression for one gene with a t-test

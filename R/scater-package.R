@@ -5,9 +5,12 @@
 #'
 #' In particular, \pkg{scater} provides rank-based methods for finding
 #' differentially expressed genes. Testing for DE genes using the
-#' rank-product method can be done with the function \code{\link{testRankProd}}.
+#' rank-product method can be done with the function 
+#' \code{\link{testRankProduct}}.
 #'
+#' @name scater-package
 #' @docType package
-#' @name scater
+#' @import edgeR
+#' @import limma
 NULL
 

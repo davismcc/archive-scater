@@ -9,6 +9,8 @@
 #' experimental information. Must have been appropriately prepared.
 #' @param aes aesthetics function call to pass to ggplot
 #' @param ncol number of columns to be used for the panels of the plot
+#' @param xlab label for x-axis
+#' @param ylab label for y-axis
 #' @param show_median logical, show the median for each group on the plot
 #' @param show_violin logical, show a violin plot for the distribution
 #' for each group on the plot
@@ -17,8 +19,9 @@
 #' 1)) for a set of genes or features.
 #' @export
 #'
-plotExpression <- function(features, data_object, aes, ncol = 2, xlab = "Patient", ylab = "log2(counts-per-million + 1)",
-                  show_median = FALSE, show_violin = FALSE) {
+plotExpression <- function(features, data_object, aes, ncol = 2, 
+                           xlab = "Patient", ylab = "log2(counts-per-million + 1)",
+                           show_median = FALSE, show_violin = FALSE) {
     ## Define number of features to plot
     if(is.logical(features))
         nfeatures <- sum(features)

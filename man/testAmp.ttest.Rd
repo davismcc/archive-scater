@@ -5,14 +5,22 @@
 \title{Test for differences in expression amplitude using a t-test}
 \usage{
 testAmp.ttest(object, design, coef = ncol(design),
-  expr_values = "log2cpm.pc0.25", p.adj.method = "BH")
+  expr_values = "log2cpm.pc0.25", p_adj_method = "BH")
 }
 \arguments{
-\item{object}{a DGEList object containing expression values and
+\item{object}{an SCESet object containing expression values and
 experimental information. Must have been appropriately prepared.}
 
+\item{design}{design matrix describing experimental design}
+
+\item{coef}{coefficient(s) of the design matrix for which testing is to be
+done}
+
 \item{expr_values}{character string giving the name of the element
-of the DGEList object yielding the expression values to be used.}
+of the SCESet object yielding the expression values to be used.}
+
+\item{p_adj_method}{method to be used to adjust p-values for multiple testing
+(defaults to Benjamini-Hochberg FDR)}
 }
 \description{
 Test for differences in expression amplitude using a t-test

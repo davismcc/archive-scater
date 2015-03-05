@@ -17,6 +17,8 @@ experimental information. Must have been appropriately prepared.}
 
 \item{p_adj_method}{method to pass to \code{p.adjust()} to adjust
 p-values for multiple testing.}
+
+\item{ntest}{number of tests to carry out (defaults to number of genes)}
 }
 \description{
 Test for differences in expression frequency using logistic regression

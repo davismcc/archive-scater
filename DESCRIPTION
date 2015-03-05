@@ -8,6 +8,7 @@ Authors@R: c(person("Davis", "McCarthy", role = c("aut", "cre"),
 Maintainer: Davis McCarthy <davismcc@gmail.com>
 Depends: 
     R (>= 3.0),
+    Biobase,
     methods
 Imports: 
     dplyr,
@@ -15,11 +16,11 @@ Imports:
     limma,
     matrixStats
 Suggests: 
-    RUnit,
     BiocGenerics,
+    BiocStyle,
     ggplot2,
-    knitr, 
-    BiocStyle
+    knitr,
+    testthat
 Description: A collection of tools for doing various differential analyses of
     single-cell RNA-seq gene expression data.
 License: GPL (>= 2)

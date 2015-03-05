@@ -7,6 +7,24 @@
 testAmp(object, design, coef = ncol(design), expr_values = "cpm",
   method = "ttest", p_adj_method = "BH", ...)
 }
+\arguments{
+\item{object}{SCESet class object containing data}
+
+\item{design}{design matrix describing experimental design}
+
+\item{coef}{coefficient(s) of the design matrix for which testing is to be
+done}
+
+\item{expr_values}{which expression values to use?}
+
+\item{method}{method to be used to test for differences in expression
+amplitude (default is a t-test)}
+
+\item{p_adj_method}{method to be used to adjust p-values for multiple testing
+(defaults to Benjamini-Hochberg FDR)}
+
+\item{...}{arguments passed to \code{testAmp.ttest}}
+}
 \description{
 Test for differences in expression amplitude
 }
