@@ -1,6 +1,165 @@
-scater vignette
-========================================================
+Introduction to `scater`: Single-cell analysis toolkit for expression in R
+==========================================================================
 
-This document gives an introduction to and overview of the functionality of the `scater` package.
+This document gives an introduction to and overview of the functionality of the 
+`scater` package.
+
+The `scater` package is contains tools to help with the analysis of single-cell 
+gene expression data, with the focus on RNA-seq data. The package features:
+* A data structure for single-cell expression data;
+* Functions for diagnostic plots for quality control;
+* Methods for identifying cells at different stages of the cell cycle;
+* Differential testing methods for finding genes with differences in behaviour
+between experimental conditions.
+
+To get up and running as quickly as possible, see the [Quick Start](#quickstart)
+section below. For see the various in-depth sections on various aspects of the 
+functionality that follow.
+
+## Quick Start
+<a name="quickstart"></a>
+
+Assuming you have a matrix containing expression count data summarised at the 
+level of some features (gene, exon, region, etc.), then we first need to form an
+`SCESet` object containing the data. An `SCESet` object is the basic data 
+container that we use in `scater`. 
+
+Here we use the example data provided with 
+the package, which gives us two objects, a matrix of counts and a dataframe 
+with information about the cells we are studying:
+
+```{r quickstart-load-data}
+library(scater)
+data("sc_example_counts")
+data("sc_example_cell_info")
+ls()
+```
+
+We use these objects to form an `SCESet` object containing all of the necessary
+information for our analysis:
+
+```{r quickstart-make-sceset}
+pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+example_sceset
+```
+
+Now we have the expression data neatly stored in a structure that can be used 
+for lots of exciting analyses.
+
+
+## The SCESet class
+
+In `scater` we organise single-cell expression data in objects of the `SCESet` 
+class. The class is derived from the Bioconductor `ExpressionSet` class, which 
+provides a common interface familiar to those who have analyzed microarray 
+experiments with Bioconductor. The class requires three input files:
+  1. `exprs`, a numeric matrix of expression values, where rows are 
+  genes, and columns are cells
+  2. `phenoData`, an `AnnotatedDataFrame` object, where rows are cells, and 
+  columns are cell attributes (such as cell type, culture condition, day 
+  captured, etc.)
+  3. `featureData`, an `AnnotatedDataFrame` object, where rows are features 
+  (e.g. genes), and columns are gene attributes, such as biotype, gc content, 
+  etc.
+
+The requirements for the `SCESet` class (as with other S4 classes in R and 
+Bioconductor) are strict. The idea is that strictness with generating a valid
+class object ensures that downstream methods applied to the class will work 
+reliably. Thus, the expression value matrix *must* have the same number of 
+columns as the `phenoData` object has rows, and it must have the same number of 
+rows as the `featureData` dataframe has rows. Row names of the `phenoData` 
+object need to match the column names of the expression matrix. Row names of the
+`featureData` object need to match row names of the expression matrix.
+
+You can create a new `SCESet` object using count data as follows. In this case, 
+the `exprs` slot in the object will be generated as log2(counts-per-million) 
+using the `cpm` function from `edgeR`, with a "prior count" value of 1:  
+
+```{r sceset-make-sceset-counts-only}
+pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+gene_df <- data.frame(Gene = rownames(sc_example_counts))
+rownames(gene_df) <- gene_df$Gene
+fd <- new("AnnotatedDataFrame", data = gene_df)
+example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd,
+                            featureData = fd)
+example_sceset
+```
+
+We can also make an `SCESet` object with just a matrix of expression values 
+(no count data required) like this:
+
+```{r sceset-make-sceset-exprs-only}
+example2 <- newSCESet(cellData = edgeR::cpm.default(sc_example_counts))
+pData(example2)
+fData(example2)
+head(counts(example2))
+head(isExpr(example2))
+```
+
+It is straight-forward to change the threshold by which we decide which 
+observations are expressed or not:
+
+```{r sceset-define-is-expr}
+isExpr(example2) <- calcIsExpr(example2, lowerDetectionLimit = 0.5, 
+                               expr_data = "exprs")
+head(isExpr(example2))
+```
+
+
+If you later find some count data that you want to add to the `SCESet` object 
+(always worth checking down the back of the couch), then you can add it easily:
+
+```{r sceset-add-count-data}
+counts(example2) <- sc_example_counts
+example2
+head(counts(example2))
+```
+
+Handily, it is also easy to replace other data in slots of the `SCESet` object 
+using generic accessor and replacement functions.
+
+```{r sceset-demo-replacement}
+gene_df <- data.frame(Gene = rownames(sc_example_counts))
+rownames(gene_df) <- gene_df$Gene
+fd <- new("AnnotatedDataFrame", data = gene_df)
+## replace featureData
+fData(example_sceset) <- fd
+## replace phenotype data
+pData(example_sceset) <- pd
+## replace expression data to be used
+exprs(example_sceset) <- edgeR::cpm.default(counts(example_sceset), 
+                                            prior.count = 5, log = TRUE)
+```
+
+
+## Plots of expression values
+
+In `scater`, the `plotExpression` function makes it easy to plot expression 
+values for a subset of genes or features. This can be particularly useful when 
+investigating the some genes identified as being of interest from differential
+expression testing or other means.
+
+```{r plot-expression}
+plotExpression(rownames(example_sceset)[1:6], example_sceset, 
+               aes(x = Mutation_Status, y = log2_evals, colour = IsExpressed))
+```
+
+This function uses `ggplot2`, making it easy to change the theme to whatever you 
+prefer. We can also show the median expression level per group on the plot and 
+show a violin plot to summarise the distribution of expression values:
+
+```{r plot-expression-theme-bw}
+theme_set(theme_bw())
+plotExpression(rownames(example_sceset)[1:6], example_sceset, 
+               aes(x = Mutation_Status, y = log2_evals, colour = IsExpressed,
+                   show_median = TRUE, show_violin = TRUE))
+
+```
+
+
+
+
+
 
 

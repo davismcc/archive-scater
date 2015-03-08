@@ -4,7 +4,7 @@
 \alias{plotExpression}
 \title{Plot expression values for a set of genes or features}
 \usage{
-plotExpression(features, data_object, aes, ncol = 2, xlab = "Patient",
+plotExpression(features, data_object, aesth, ncol = 2, xlab = "Patient",
   ylab = "log2(counts-per-million + 1)", show_median = FALSE,
   show_violin = FALSE)
 }
@@ -13,10 +13,10 @@ plotExpression(features, data_object, aes, ncol = 2, xlab = "Patient",
 vector indicating which features should have their expression
 values plotted}
 
-\item{data_object}{a DGEList object containing expression values and
+\item{data_object}{an SCESet object containing expression values and
 experimental information. Must have been appropriately prepared.}
 
-\item{aes}{aesthetics function call to pass to ggplot}
+\item{aesth}{aesthetics function call to pass to ggplot}
 
 \item{ncol}{number of columns to be used for the panels of the plot}
 

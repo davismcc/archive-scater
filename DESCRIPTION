@@ -11,16 +11,18 @@ Description: A collection of tools for doing various differential analyses of si
 Depends: 
     R (>= 3.0),
     Biobase,
+    BiocGenerics,
+    ggplot2,
     methods
 Imports: 
     dplyr,
     edgeR,
     limma,
-    matrixStats
+    matrixStats,
+    reshape2
 Suggests: 
-    BiocGenerics,
     BiocStyle,
-    ggplot2,
+    ggthemes,
     knitr,
     testthat
 VignetteBuilder: knitr

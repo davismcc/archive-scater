@@ -1,8 +1,6 @@
 # Wrapper functions for the computation of p-values for rank-product tests
 # Davis McCarthy, July 2014
 
-library(matrixStats)
-
 #' Conduct rank-product test
 #'
 #' @param dfilt DGEList object containing data and so on that has been
@@ -90,7 +88,7 @@ testRankProduct.matrix <- function(data_matrix, group, block = NULL, delta = "ge
         ## get logFCs
         logFC <- getLogFCOneBlock(data_matrix, group)
         ## Compute median logFC to report for each gene
-        median_logFC <- matrixStats::rowMedians(logFC)
+        median_logFC <- Biobase::rowMedians(logFC)
         ## Get ranks for each pairwise comparison of cells across groups
         ## Take log-ranks: true RP is likely to cause numeric overflow
         lranks <- getRanksOneBlock(logFC, group, logged = TRUE)
@@ -123,7 +121,7 @@ testRankProduct.matrix <- function(data_matrix, group, block = NULL, delta = "ge
         }
     }
     ## Compute median logFC to report for each gene
-    median_logFC <- matrixStats::rowMedians(logFC)
+    median_logFC <- Biobase::rowMedians(logFC)
     ## Get mean log(rank-products) for up-regulation in group1 and up-regulation in group2
     ## This is equivalent to the log of the geometric mean of the ranks
     lrp_up_grp1 <- rowMeans(lranks_up_grp1)
