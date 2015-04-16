@@ -26,9 +26,11 @@ aggregateResults <- function(results, nmax_genes = 500, max_rankprod_exact = 100
     rank_products <- matrixStats::rowProds(ranks)
     names(rank_products) <- rownames(ranks)
     ranks <- ranks[order(rank_products), ]
-    aggregated_results <- calcRankProdPVals(ranks, nmax_genes, max_rankprod_exact)
-    aggregated_results <- cbind(ranks[1:nmax_genes, ], aggregated_results)
-    aggregated_results
+    pvals <- calcRankProdPValsBounds(ranks, n=length(ranks), k=ncol(results))
+    aggregated_results <- data.frame(Feature=rownames(results), 
+                                     Rank_Prod=rank_products, P_Value=pvals, 
+                                     Rank=ranks)
+    aggregated_results[1:nmax_genes, ]
 }
     
 

@@ -13,7 +13,7 @@
 #' p-values.
 #' @return data frame with mean rank, rank product, number of ways of
 #' obtaining given rank product, approximate p-value and exact p-value
-#' @export
+#' 
 testRankProduct <- function(dfilt, nmax.genes = 500, max.rprod.exact = 100000) {
     
     #### NEED TO ADJUST TO GENERIC FOR SCESet Class Object #####

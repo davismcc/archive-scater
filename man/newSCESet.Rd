@@ -6,7 +6,7 @@
 \usage{
 newSCESet(cellData = NULL, phenoData = NULL, featureData = NULL,
   countData = NULL, lowerDetectionLimit = 0, logged = FALSE,
-  isExpr = NULL)
+  isExprs = NULL)
 }
 \arguments{
 \item{cellData}{expression data matrix for an experiment}
@@ -24,7 +24,7 @@ observation is expressed or not)}
 \item{logged}{logical, if a value is supplied for the cellData argument, are
 the expression values already on the log2 scale, or not?}
 
-\item{isExpr}{matrix of class \code{"logical"}, indicating whether
+\item{isExprs}{matrix of class \code{"logical"}, indicating whether
 or not each observation is above the \code{lowerDetectionLimit}.}
 }
 \value{

@@ -34,7 +34,7 @@ setClass( "SCESet",
                     lowerDetectionLimit = "numeric"),
           prototype = prototype(new("VersionedBiobase",
                                     versions = c(classVersion("ExpressionSet"),
-                                                 SCESet = "0.1.0")))
+                                                 SCESet = "0.1.1")))
 )
 
 

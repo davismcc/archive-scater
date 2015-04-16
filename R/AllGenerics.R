@@ -25,16 +25,16 @@ setGeneric("fData<-", signature = signature("x", "value"),
            function(x, value) {standardGeneric("fData<-")})
 
 
-#' @name isExpr
+#' @name isExprs
 #' @export
 #' @docType methods
-#' @rdname isExpr 
-setGeneric("isExpr", function(object) {standardGeneric("isExpr")})
+#' @rdname isExprs
+setGeneric("isExprs", function(object) {standardGeneric("isExprs")})
 
-#' @name isExpr<-
+#' @name isExprs<-
 #' @export
 #' @docType methods
-#' @rdname isExpr
-setGeneric("isExpr<-", function(object, value) {standardGeneric("isExpr<-")})
+#' @rdname isExprs
+setGeneric("isExprs<-", function(object, value) {standardGeneric("isExprs<-")})
 
 

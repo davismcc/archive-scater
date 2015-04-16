@@ -3,18 +3,20 @@ Type: Package
 Maintainer: Davis McCarthy <davismcc@gmail.com>
 Author: Davis McCarthy
 Authors@R: c(person("Davis", "McCarthy", role = c("aut", "cre"), email = "davismcc@gmail.com"))
-Version: 0.1.0
-Date: 2015-03-03
+Version: 0.1.1
+Date: 2015-03-16
 License: GPL (>= 2)
 Title: Single-cell analysis toolkit for gene expression data in R
-Description: A collection of tools for doing various differential analyses of single-cell RNA-seq gene expression data.
+Description: A collection of tools for doing various analyses of single-cell RNA-seq gene expression data, with a focus on quality control.
 Depends: 
     R (>= 3.0),
     Biobase,
     BiocGenerics,
     ggplot2,
-    methods
+    methods,
+    magrittr
 Imports: 
+    cluster,
     dplyr,
     edgeR,
     limma,

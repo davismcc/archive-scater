@@ -23,7 +23,7 @@
 #'  observation is expressed or not)
 #'  @param logged logical, if a value is supplied for the cellData argument, are
 #'  the expression values already on the log2 scale, or not?
-#'  @param isExpr matrix of class \code{"logical"}, indicating whether
+#'  @param isExprs matrix of class \code{"logical"}, indicating whether
 #'    or not each observation is above the \code{lowerDetectionLimit}.
 #' @return a new SCESet object
 #' @details
@@ -47,7 +47,7 @@ newSCESet <- function( cellData = NULL,
                        countData = NULL,
                        lowerDetectionLimit = 0,
                        logged = FALSE,
-                       isExpr = NULL)
+                       isExprs = NULL)
 {
     ## Check that we have some expression data
     if(is.null(cellData) & is.null(countData))
@@ -66,20 +66,20 @@ newSCESet <- function( cellData = NULL,
         logged <- TRUE
         message("Generating log2(counts-per-million) from counts to use as 
                 expression data, with prior.count = 1. See edgeR::cpm().")
-        if( is.null(isExpr) ) {
-            isexpr <- countData > lowerDetectionLimit
-            rownames(isexpr) <- rownames(countData)
-            colnames(isexpr) <- colnames(countData)
-            message(paste0("Defining 'isExpr' using count data and a lower count
+        if( is.null(isExprs) ) {
+            isexprs <- countData > lowerDetectionLimit
+            rownames(isexprs) <- rownames(countData)
+            colnames(isexprs) <- colnames(countData)
+            message(paste0("Defining 'isExprs' using count data and a lower count
                            threshold of ", lowerDetectionLimit))
         }        
     } else {
         cellData <- as.matrix(cellData)
-        if( is.null(isExpr) ) {
-            isexpr <- cellData > lowerDetectionLimit
-            rownames(isexpr) <- rownames(cellData)
-            colnames(isexpr) <- colnames(cellData)
-            message(paste0("Defining 'isExpr' using cellData and a lower count 
+        if( is.null(isExprs) ) {
+            isexprs <- cellData > lowerDetectionLimit
+            rownames(isexprs) <- rownames(cellData)
+            colnames(isexprs) <- colnames(cellData)
+            message(paste0("Defining 'isExprs' using cellData and a lower count 
                            threshold of ", lowerDetectionLimit))
         }
     }
@@ -93,7 +93,7 @@ newSCESet <- function( cellData = NULL,
                    assayData = assayDataNew("environment", 
                                             exprs = cellData, 
                                             counts = countData,
-                                            isExpr = isexpr),
+                                            isExprs = isexprs),
                    phenoData = phenoData, 
                    featureData = featureData, 
                    lowerDetectionLimit = lowerDetectionLimit,
@@ -167,6 +167,61 @@ setReplaceMethod("pData", signature(x = "SCESet", value = "AnnotatedDataFrame"),
                  } )
 
 
+################################################################################
+### Convenience functions for adding columns to pData and fData in an SCESet 
+### object
+
+#' Add columns to phenoData for an SCESet object
+#'
+#' SCESet objects contain phenotype information (inherited from the 
+#' ExpressionSet class). This function allows convenient addition of one or more 
+#' columns to the phenotype data, and returns an AnnotatedDataFrame.
+#' @param x An SCESet object.
+#' @param df a data.frame to add to phenoData 
+#' @return An AnnotatedDataFrame that can be assigned to \code{pData(x)}.
+#' @export
+#' @examples
+#' \dontrun{
+#' 
+#' }
+addpData <- function(x, df) {
+    if( !is(x, "SCESet") )
+        stop("x must be an SCESet object")
+    df <- as.data.frame(df)
+    if( !is(df, "data.frame") )
+        stop("df cannot be coerced to a data.frame. Make sure df is a data.frame.")
+    if(ncol(x) != nrow(df))
+        stop("Number of rows of df must match number of rows of pData(x)")   
+    pdata_out <- cbind(pData(x), df) %>% new("AnnotatedDataFrame", .)
+    pdata_out
+}
+
+#' Add columns to featureData for an SCESet object
+#'
+#' SCESet objects contain feature (i.e. gene) information (inherited from the 
+#' ExpressionSet class). This function allows convenient addition of one or more 
+#' columns to the feature data, and returns an AnnotatedDataFrame that can be 
+#' assigned to \code{fData(x)}.
+#' @param x An SCESet object.
+#' @param df a data.frame to add to phenoData 
+#' @return An AnnotatedDataFrame that can be assigned to \code{pData(x)}.
+#' @export
+#' @examples
+#' \dontrun{
+#' 
+#' }
+addfData <- function(x, df) {
+    if( !is(x, "SCESet") )
+        stop("x must be an SCESet object") 
+    df <- as.data.frame(df)
+    if( !is(df, "data.frame") )
+        stop("df cannot be coerced to a data.frame. Make sure df is a data.frame.")
+    if(nrow(x) != nrow(df))
+        stop("Number of rows of df must match number of rows of fData(x)")  
+    fdata_out <- cbind(fData(x), df) %>% new("AnnotatedDataFrame", .)
+    fdata_out
+}
+
 
 
 ################################################################################
@@ -218,24 +273,24 @@ setReplaceMethod("counts", signature(object="SCESet", value="matrix"),
                  })
 
 ################################################################################
-### isExpr
+### isExprs
 
-#' Accessors for the 'isExpr' element of an SCESet object.
+#' Accessors for the 'isExprs' element of an SCESet object.
 #'
-#' The isExpr element holds a logical matrix indicating whether or not each 
+#' The isExprs element holds a logical matrix indicating whether or not each 
 #' observation is above the defined lowerDetectionLimit in the SCESet object. It
 #' has the same dimensions as the 'exprs' and 'counts' elements, which hold the 
 #' transformed expression data and count data, respectively.
 #' 
 #' @usage
-#' \S4method{isExpr}{SCESet}(object)
+#' \S4method{isExprs}{SCESet}(object)
 #'
-#' \S4method{isExpr}{SCESet,matrix}(object)<-value
+#' \S4method{isExprs}{SCESet,matrix}(object)<-value
 #'
 #' @docType methods
-#' @name isExpr
-#' @rdname isExpr
-#' @aliases isExpr isExpr,SCESet-method isExpr<-,SCESet,matrix-method
+#' @name isExprs
+#' @rdname isExprs
+#' @aliases isExprs isExprs,SCESet-method isExprs<-,SCESet,matrix-method
 #'
 #' @param object a \code{SCESet} object.
 #' @param value an integer matrix
@@ -245,23 +300,23 @@ setReplaceMethod("counts", signature(object="SCESet", value="matrix"),
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' example_sceset <- newSCESet(countData = sc_example_counts)
-#' isExpr(example_sceset)
+#' isExprs(example_sceset)
 #'
-isExpr.SCESet <- function(object) {
-    object@assayData$isExpr
+isExprs.SCESet <- function(object) {
+    object@assayData$isExprs
 }
 
 
-#' @rdname isExpr
+#' @rdname isExprs
 #' @export
-setMethod("isExpr", signature(object = "SCESet"), isExpr.SCESet)
+setMethod("isExprs", signature(object = "SCESet"), isExprs.SCESet)
 
-#' @name isExpr<-
-#' @rdname isExpr
-#' @export "isExpr<-"
-setReplaceMethod("isExpr", signature(object = "SCESet", value = "matrix"),
+#' @name isExprs<-
+#' @rdname isExprs
+#' @export "isExprs<-"
+setReplaceMethod("isExprs", signature(object = "SCESet", value = "matrix"),
                  function( object, value ) {
-                     object@assayData$isExpr <- value
+                     object@assayData$isExprs <- value
                      validObject(object)
                      object
                  })
