@@ -18,7 +18,7 @@ devtools::install_github("davismcc/scater")
 
 ## Getting started
 
-The best place to start is the [vignette](http://github.com/davismcc/scater/blob/master/vignettes/vignette.Rmd).
+The best place to start is the [vignette](http://htmlpreview.github.io/?http://github.com/davismcc/scater/blob/master/inst/doc/vignette.html).
 
 ## Acknowledgements and disclaimer
 
