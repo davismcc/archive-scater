@@ -106,7 +106,7 @@ a lower count threshold of 0.")
 
 ################################################################################
 
-#' Calculate QC metrics
+#' Produce QC diagnostic plots
 #'
 #' @param object an SCESet object containing expression values and
 #' experimental information. Must have been appropriately prepared.

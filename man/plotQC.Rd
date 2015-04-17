@@ -2,7 +2,7 @@
 % Please edit documentation in R/qc.R
 \name{plotQC}
 \alias{plotQC}
-\title{Calculate QC metrics}
+\title{Produce QC diagnostic plots}
 \usage{
 plotQC(object, type = "most-expressed", ...)
 }
@@ -20,7 +20,7 @@ against each other, ordered by marginal variance explained).}
 \code{plotImportantPCs} and \code{plotExplanatoryVariables} as appropriate.}
 }
 \description{
-Calculate QC metrics
+Produce QC diagnostic plots
 }
 \details{
 Calculate useful quality control metrics to help with pre-processing

@@ -185,7 +185,7 @@ plotMetadata <- function(object, aesth=aes(x=log10(depth), y=coverage)) {
     plot_out <- plot_out + theme_bw(16) +
         theme(legend.justification=c(0, 0), 
               legend.position=c(0, 0), 
-              legend.title = element_text(8),
+              legend.title = element_text(size=8),
               legend.text=element_text(size=7))
     
     ## Tweak plot guides
