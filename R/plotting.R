@@ -19,6 +19,7 @@
 #'
 #' @details Plot expression values (default log2(counts-per-million +
 #' 1)) for a set of genes or features.
+#' @import ggplot2
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -95,7 +96,8 @@ plotExpression <- function(features, data_object, aesth, ncol = 2,
 #' will be returned. If both variables are discrete then a jitter plot will be 
 #' produced. The object returned is a ggplot object, so further layers and 
 #' plotting options (titles, facets, themes etc) can be added.
-#' .
+#' 
+#' @import magrittr
 #' @export
 #' @examples
 #' data("sc_example_counts")

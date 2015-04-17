@@ -25,7 +25,6 @@ discrete and one continuous then a violin plot with jittered points overlaid
 will be returned. If both variables are discrete then a jitter plot will be
 produced. The object returned is a ggplot object, so further layers and
 plotting options (titles, facets, themes etc) can be added.
-.
 }
 \examples{
 data("sc_example_counts")
