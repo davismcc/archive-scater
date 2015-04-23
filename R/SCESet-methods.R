@@ -321,3 +321,50 @@ setReplaceMethod("isExprs", signature(object = "SCESet", value = "matrix"),
                      object
                  })
 
+#' Convert an \code{SCESet} to a \code{CellDataSet}
+#' 
+#' @param useExpression If TRUE (default), `exprs(sce)` is used as the `cellData`, otherwise `counts(sce)`
+#' 
+#' @export
+#' @rdname toCellDataSet
+#' @name toCellDataSet
+#' @return An object of class \code{SCESet}
+toCellDataSet <- function(sce, useExpression = TRUE) {
+  if(!is(sce,'SCESet')) stop('sce must be of type SCESet')
+  cellData <- NULL
+  if(useExpression) {
+    cellData <- exprs(sce)
+  } else {
+    cellData <- counts(sce)
+  }
+  
+  cds <- newCellDataSet(cellData, phenoData = phenoData(sce),
+                        featureData = featureData(sce),
+                        lowerDetectionLimit = sce@lowerDetectionLimit)
+  return( cds )
+} 
+
+#' Convert a \code{CellDataSet} to an \code{SCESet}
+#' 
+#' @param useExpression logical If TRUE (default), `cellData` is mapped to `exprs(sce)`, otherwise `counts(sce)`
+#' @param logged logical, if a value is supplied for the cellData argument, are the expression values already on the log2 scale, or not?
+#' @export
+#' @rdname fromCellDataSet
+#' @name fromCellDataSet
+#' @return An object of class \code{SCESet}
+fromCellDataSet <- function(cds, useExpression = TRUE, logged = FALSE) {
+  if(!is(cds,'CellDataSet')) stop('cds must be of type CellDataSet from package monocle')
+  cellData <- countData <- NULL
+  if(useExpression) {
+    cellData <- exprs(cds)
+  } else {
+    countData <- exprs(cds)
+  }
+  
+  sce <- newSCESet(cellData = cellData, phenoData = phenoData(HSMM),
+                   featureData = featureData(cds), countData = countData,
+                   lowerDetectionLimit = cds@lowerDetectionLimit,
+                   logged = logged)
+  return( sce )
+}
+
