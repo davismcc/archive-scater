@@ -18,12 +18,14 @@
 #' @param phenoData data frame containing attributes of individual cells
 #' @param featureData data frame containing attributes of features (e.g. genes)
 #' @param countData data matrix containing raw count expression values
+#' @param experimentData MIAME class object containing metadata data and details
+#' about the experiment and dataset.
 #' @param lowerDetectionLimit the minimum expression level that constitutes true
 #'  expression (defaults to zero and uses count data to determine if an 
 #'  observation is expressed or not)
-#'  @param logged logical, if a value is supplied for the cellData argument, are
+#' @param logged logical, if a value is supplied for the cellData argument, are
 #'  the expression values already on the log2 scale, or not?
-#'  @param isExprs matrix of class \code{"logical"}, indicating whether
+#' @param isExprs matrix of class \code{"logical"}, indicating whether
 #'    or not each observation is above the \code{lowerDetectionLimit}.
 #' @return a new SCESet object
 #' @details
@@ -44,6 +46,7 @@
 newSCESet <- function( cellData = NULL, 
                        phenoData = NULL, 
                        featureData = NULL,
+                       experimentData = NULL,
                        countData = NULL,
                        lowerDetectionLimit = 0,
                        logged = FALSE,
@@ -88,6 +91,30 @@ newSCESet <- function( cellData = NULL,
         phenoData <- annotatedDataFrameFrom(cellData, byrow = FALSE)
     if( is.null( featureData ) ) 
         featureData <- annotatedDataFrameFrom(cellData, byrow = TRUE)
+    ## Check experimentData
+    expData_null <- new("MIAME",
+                        name="<your name here>",
+                        lab="<your lab here>",
+                        contact="<email address>",
+                        title="<title for this dataset>",
+                        abstract="An SCESet",
+                        url="<your website here>",
+                        other=list(
+                            notes="This dataset created from ...",
+                            coauthors=c("")
+                        ))
+    if( !is.null( experimentData ) ) {
+        if( is(experimentData, "MIAME") )
+            expData <- experimentData
+        else {
+            expData <- expData_null
+            warning("experimentData supplied is not an 'MIAME' object. Thus, experimentData is being set to an empty MIAME object.\n Please supply a valid 'MIAME' class object containing experiment data to experimentData(object).")
+        }
+    } else {
+        expData <- expData_null
+    }
+        
+    
     ## Generate new SCESet object
     sceset <- new( "SCESet",
                    assayData = assayDataNew("environment", 
@@ -96,6 +123,7 @@ newSCESet <- function( cellData = NULL,
                                             isExprs = isexprs),
                    phenoData = phenoData, 
                    featureData = featureData, 
+                   experimentData = expData,
                    lowerDetectionLimit = lowerDetectionLimit,
                    logged = logged)
     ## Check validity of object    
@@ -148,7 +176,7 @@ setReplaceMethod("fData", signature(x = "SCESet", value = "AnnotatedDataFrame"),
 #' Replaces phenoData in an SCESet object
 #'
 #' SCESet objects contain phenotype information (inherited from the 
-#' ExpressionSet class). This function conveniently replaces the feature data 
+#' ExpressionSet class). This function conveniently replaces the phenotype data 
 #' with the value supplied, which must be an AnnotatedDataFrame.
 #' @param x An SCESet object.
 #' @param value an AnnotatedDataFrame with updated phenoData to replace 
@@ -192,7 +220,7 @@ addpData <- function(x, df) {
         stop("df cannot be coerced to a data.frame. Make sure df is a data.frame.")
     if(ncol(x) != nrow(df))
         stop("Number of rows of df must match number of rows of pData(x)")   
-    pdata_out <- cbind(pData(x), df) %>% new("AnnotatedDataFrame", .)
+    pdata_out <- cbind(Biobase::pData(x), df) %>% new("AnnotatedDataFrame", .)
     pdata_out
 }
 
@@ -218,7 +246,7 @@ addfData <- function(x, df) {
         stop("df cannot be coerced to a data.frame. Make sure df is a data.frame.")
     if(nrow(x) != nrow(df))
         stop("Number of rows of df must match number of rows of fData(x)")  
-    fdata_out <- cbind(fData(x), df) %>% new("AnnotatedDataFrame", .)
+    fdata_out <- cbind(Biobase::fData(x), df) %>% new("AnnotatedDataFrame", .)
     fdata_out
 }
 
@@ -306,7 +334,6 @@ isExprs.SCESet <- function(object) {
     object@assayData$isExprs
 }
 
-
 #' @rdname isExprs
 #' @export
 setMethod("isExprs", signature(object = "SCESet"), isExprs.SCESet)
@@ -314,57 +341,234 @@ setMethod("isExprs", signature(object = "SCESet"), isExprs.SCESet)
 #' @name isExprs<-
 #' @rdname isExprs
 #' @export "isExprs<-"
-setReplaceMethod("isExprs", signature(object = "SCESet", value = "matrix"),
+setReplaceMethod("isExprs", signature(object="SCESet", value="matrix"),
                  function( object, value ) {
                      object@assayData$isExprs <- value
                      validObject(object)
                      object
                  })
 
+################################################################################
+### cellPairwiseDistances
+
+#' cellPairwiseDistances in an SCESet object
+#'
+#' SCESet objects can contain a matrix of pairwise distances between cells. These
+#'  functions conveniently access and replace the cell pairwise distances with the value 
+#'  supplied, which must be a matrix of the correct size. The function \code{cellDist}
+#'  is simply shorthand for \code{cellPairwiseDistances}.
+#' 
+#' @docType methods
+#' @name cellPairwiseDistances
+#' @rdname cellPairwiseDistances
+#' @aliases cellPairwiseDistances cellPairwiseDistances,SCESet-method cellPairwiseDistances<-,cellDist cellDist,SCESet-method cellDist<-,SCESet,matrix-method
+#'
+#' @param object a \code{SCESet} object.
+#' @param value a matrix of class \code{"numeric"} containing cell pairwise 
+#' distances
+#' @author Davis McCarthy
+#' 
+#' @return An SCESet object containing new cell pairwise distances matrix.
+#' 
+#' @export
+#' @examples
+#' \dontrun{
+#' 
+#' }
+#' 
+cellPairwiseDistances.SCESet <- function(object) {
+    object@cellPairwiseDistances
+}
+
+#' @rdname cellPairwiseDistances
+#' @aliases cellPairwiseDistances
+#' @export
+setMethod("cellPairwiseDistances", signature(object="SCESet"), 
+          cellPairwiseDistances.SCESet)
+
+#' @rdname cellPairwiseDistances
+#' @aliases cellPairwiseDistances
+#' @export
+cellDist.SCESet <- function(object) {
+    object@cellPairwiseDistances
+}
+
+#' @rdname cellPairwiseDistances
+#' @aliases cellPairwiseDistances
+#' @export
+setMethod("cellDist", signature(object="SCESet"), cellDist.SCESet)
+
+#' @name cellPairwiseDistances<-
+#' @aliases cellPairwiseDistances
+#' @rdname cellPairwiseDistances
+#' @export "cellPairwiseDistances<-"
+setReplaceMethod("cellPairwiseDistances", signature(object="SCESet", value="matrix"), 
+                 function(object, value) {
+                     if( nrow(value) == ncol(object) ) {
+                         object@cellPairwiseDistances <- value
+                         return(object)
+                     }
+                     else
+                         stop("Cell pairwise distance matrix supplied is of incorrect size.")
+                 } )
+
+#' @name cellDist<-
+#' @aliases cellPairwiseDistances
+#' @rdname cellPairwiseDistances
+#' @export "cellDist<-"
+setReplaceMethod("cellDist", signature(object="SCESet", value="matrix"), 
+                 function(object, value) {
+                     if( nrow(value) == ncol(object) ) {
+                         object@cellPairwiseDistances <- value
+                         return(object)
+                     }
+                     else
+                         stop("Cell pairwise distance matrix supplied is of incorrect size.")
+                 } )
+
+
+################################################################################
+### genePairwiseDistances
+
+#' genePairwiseDistances in an SCESet object
+#'
+#' SCESet objects can contain a matrix of pairwise distances between genes. These
+#'  functions conveniently access and replace the gene pairwise distances with the value 
+#'  supplied, which must be a matrix of the correct size. The function \code{geneDist}
+#'  is simply shorthand for \code{genePairwiseDistances}.
+#'
+#' @docType methods
+#' @name genePairwiseDistances
+#' @rdname genePairwiseDistances
+#' @aliases genePairwiseDistances genePairwiseDistances,SCESet-method genePairwiseDistances<-,geneDist geneDist,SCESet-method geneDist<-,SCESet,matrix-method
+#'
+#' @param object a \code{SCESet} object.
+#' @param value a matrix of class \code{"numeric"} containing gene pairwise 
+#' distances
+#' @author Davis McCarthy
+#' 
+#' @return An SCESet object containing new gene pairwise distances matrix.
+#' @export
+#' @examples
+#' \dontrun{
+#' 
+#' }
+#' 
+genePairwiseDistances.SCESet <- function(object) {
+    object@genePairwiseDistances
+}
+
+#' @rdname genePairwiseDistances
+#' @aliases genePairwiseDistances 
+#' @export
+setMethod("genePairwiseDistances", signature(object="SCESet"), 
+          genePairwiseDistances.SCESet)
+
+#' 
+#' @param object An \code{SCESet} object from which to get genePairwiseDistances.
+#' @aliases genePairwiseDistances
+#' @rdname genePairwiseDistances
+#' @export
+geneDist.SCESet <- function(object) {
+    object@genePairwiseDistances
+}
+
+#' @aliases genePairwiseDistances
+#' @rdname genePairwiseDistances
+#' @export
+setMethod("geneDist", signature(object="SCESet"), geneDist.SCESet)
+
+#' @name genePairwiseDistances<-
+#' @aliases genePairwiseDistances
+#' @rdname genePairwiseDistances
+#' @export "genePairwiseDistances<-"
+setReplaceMethod("genePairwiseDistances", signature(object="SCESet", value="matrix"), 
+                 function(object, value) {
+                     if( nrow(value) == nrow(object) ) {
+                         object@genePairwiseDistances <- value
+                         return(object)
+                     }
+                     else
+                         stop("Gene pairwise distance matrix supplied is of incorrect size.")
+                 } )
+
+#' @name geneDist<-
+#' @rdname genePairwiseDistances
+#' @aliases genePairwiseDistances
+#' @export "geneDist<-"
+setReplaceMethod("geneDist", signature(object="SCESet", value="matrix"), 
+                 function(object, value) {
+                     if( nrow(value) == nrow(object) ) {
+                         object@genePairwiseDistances <- value
+                         return(object)
+                     }
+                     else
+                         stop("Gene pairwise distance matrix supplied is of incorrect size.")
+                 } )
+
+
+################################################################################
+### Convert to and from Monocle CellDataSet objects
+
 #' Convert an \code{SCESet} to a \code{CellDataSet}
 #' 
+#' @param sce An \code{SCESet} object 
 #' @param useExpression If TRUE (default), `exprs(sce)` is used as the `cellData`, otherwise `counts(sce)`
 #' 
 #' @export
+#' @importClassesFrom monocle CellDataSet
 #' @rdname toCellDataSet
 #' @name toCellDataSet
 #' @return An object of class \code{SCESet}
-toCellDataSet <- function(sce, useExpression = TRUE) {
-  if(!is(sce,'SCESet')) stop('sce must be of type SCESet')
-  cellData <- NULL
-  if(useExpression) {
-    cellData <- exprs(sce)
-  } else {
-    cellData <- counts(sce)
-  }
-  
-  cds <- newCellDataSet(cellData, phenoData = phenoData(sce),
-                        featureData = featureData(sce),
-                        lowerDetectionLimit = sce@lowerDetectionLimit)
-  return( cds )
-} 
+toCellDataSet <- function(sce, useExpression=TRUE) {
+    pkgAvail <- requireNamespace("monocle", character.only=TRUE) 
+    if(pkgAvail) {
+        if(!is(sce,'SCESet')) stop('sce must be of type SCESet')
+        cellData <- NULL
+        if(useExpression) {
+            cellData <- exprs(sce)
+        } else {
+            cellData <- counts(sce)
+        }
+        
+        cds <- monocle::newCellDataSet(cellData, phenoData=phenoData(sce),
+                                       featureData=featureData(sce),
+                                       lowerDetectionLimit=sce@lowerDetectionLimit)
+        return( cds )
+    } 
+    else 
+        stop("Require package monocle to be installed to use this function.")
+}
 
 #' Convert a \code{CellDataSet} to an \code{SCESet}
 #' 
+#' @param cds A \code{CellDataSet} from the \code{monocle} package
 #' @param useExpression logical If TRUE (default), `cellData` is mapped to `exprs(sce)`, otherwise `counts(sce)`
 #' @param logged logical, if a value is supplied for the cellData argument, are the expression values already on the log2 scale, or not?
+#' 
 #' @export
+#' @importClassesFrom monocle CellDataSet
 #' @rdname fromCellDataSet
 #' @name fromCellDataSet
 #' @return An object of class \code{SCESet}
-fromCellDataSet <- function(cds, useExpression = TRUE, logged = FALSE) {
-  if(!is(cds,'CellDataSet')) stop('cds must be of type CellDataSet from package monocle')
-  cellData <- countData <- NULL
-  if(useExpression) {
-    cellData <- exprs(cds)
-  } else {
-    countData <- exprs(cds)
-  }
-  
-  sce <- newSCESet(cellData = cellData, phenoData = phenoData(HSMM),
-                   featureData = featureData(cds), countData = countData,
-                   lowerDetectionLimit = cds@lowerDetectionLimit,
-                   logged = logged)
-  return( sce )
+fromCellDataSet <- function(cds, useExpression=TRUE, logged=FALSE) {
+    pkgAvail <- requireNamespace("monocle", character.only=TRUE) 
+    if(pkgAvail) {
+        if(!is(cds,'CellDataSet')) stop('cds must be of type CellDataSet from package monocle')
+        cellData <- countData <- NULL
+        if(useExpression) {
+            cellData <- exprs(cds)
+        } else {
+            countData <- exprs(cds)
+        }
+        
+        sce <- newSCESet(cellData=cellData, phenoData=phenoData(HSMM),
+                         featureData=featureData(cds), countData=countData,
+                         lowerDetectionLimit=cds@lowerDetectionLimit,
+                         logged=logged)
+        return( sce )    
+    }
+    else 
+        stop("Require package monocle to be installed to use this function.")
 }
 

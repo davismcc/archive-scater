@@ -12,8 +12,9 @@
 #' 
 #' Methods that operate on SCESet objects constitute the basic scater workflow.
 #'
-#' Thanks to the Monocle package for their CellDataSet class, which provided the 
-#' inspiration and template for SCESet.
+#' Thanks to the Monocle package (github.com/cole-trapnell-lab/monocle-release/)
+#' for their CellDataSet class, which provided the inspiration and template for 
+#' SCESet.
 #'
 #'@section Slots:
 #'  \describe{
@@ -23,18 +24,25 @@
 #'    \item{\code{lowerDetectionLimit}:}{Scalar of class \code{"numeric"}, 
 #'    giving the lower limit for an expression value to be classified as 
 #'    "expressed".}
+#'    \item{\code{cellPairwiseDistances}:}{Matrix of class \code{"numeric"}, 
+#'    containing pairwise distances between cells.}
+#'    \item{\code{genePairwiseDistances}:}{Matrix of class \code{"numeric"}, 
+#'    containing pairwise distances between genes.}
 #'}
 #' @name SCESet
 #' @rdname SCESet
 #' @aliases SCESet-class
+#' @import BiocGenerics
 #' @exportClass SCESet
-setClass( "SCESet",
-          contains = "ExpressionSet",
-          slots = c(logged = "logical",
-                    lowerDetectionLimit = "numeric"),
-          prototype = prototype(new("VersionedBiobase",
-                                    versions = c(classVersion("ExpressionSet"),
-                                                 SCESet = "0.1.1")))
+setClass("SCESet",
+         contains="ExpressionSet",
+         slots=c(logged="logical",
+                 lowerDetectionLimit="numeric",
+                 cellPairwiseDistances="matrix",
+                 genePairwiseDistances="matrix"),
+         prototype = prototype(new("VersionedBiobase",
+                                   versions = c(classVersion("ExpressionSet"),
+                                                SCESet = "0.1.1")))
 )
 
 

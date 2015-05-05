@@ -1,4 +1,15 @@
 ## Convenience function for computing QC metrics and adding to pData & fData
+### This file contains definitions for the following functions:
+### * calculateQCMetrics
+### * findImportantPCs
+### * plotExplanatoryVariables
+### * plotMostExpressed
+### * plotQC
+### 
+### * .calculateSilhouetteWidth
+### * .getRSquared
+### * .getTypeOfVariable
+
 
 #' Calculate QC metrics
 #'
@@ -101,51 +112,6 @@ a lower count threshold of 0.")
     ## Ensure sample names are correct and return object
     sampleNames(object) <- colnames(exprs(object))
     object
-}
-
-
-################################################################################
-
-#' Produce QC diagnostic plots
-#'
-#' @param object an SCESet object containing expression values and
-#' experimental information. Must have been appropriately prepared.
-#' @param type character scalar providing type of QC plot to compute: 
-#' "most-expressed" (showing genes with highest expression), "find-pcs" (showing
-#' the most important principal components for a given variable), or 
-#' "explanatory-variables" (showing a set of explanatory variables plotted 
-#' against each other, ordered by marginal variance explained).
-#' @param ... arguments passed to \code{plotMostExpressed}, 
-#' \code{plotImportantPCs} and \code{plotExplanatoryVariables} as appropriate.
-#'
-#' @details Calculate useful quality control metrics to help with pre-processing
-#' of data and identification of potentially problematic genes and cells.
-#' @export
-#' @examples
-#' data("sc_example_counts")
-#' data("sc_example_cell_info")
-#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
-#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
-#' example_sceset <- calculateQCMetrics(example_sceset)
-#' plotQC(example_sceset, type="most", col_by_variable="Mutation_Status")
-#' plotQC(example_sceset, type="find", variable="coverage")
-#' vars <- names(pData(example_sceset))[c(2:3, 5:14)]
-#' plotQC(example_sceset, type="expl", variables=vars)
-#' 
-plotQC <- function(object, type="most-expressed", ...) {
-    type <- match.arg(type, c("most-expressed", "find-pcs", 
-                                  "explanatory-variables"))
-    if(type == "most-expressed") {
-        plot_out <- plotMostExpressed(object, ...)
-        print(plot_out)
-        return(plot_out)
-    }
-    if(type == "find-pcs") {        
-        findImportantPCs(object, ...)
-    }
-    if(type == "explanatory-variables") {
-        plotExplanatoryVariables(object, ...)
-    }
 }
 
 
@@ -474,7 +440,7 @@ This variable will not be plotted."))
 }
 
 
-
+#' @importFrom limma lmFit
 .getRSquared <- function(y, design) {
     fit <- limma::lmFit(y, design=design)
     sst <- rowSums(y^2)
@@ -483,4 +449,48 @@ This variable will not be plotted."))
 }
 
 
+
+################################################################################
+
+#' Produce QC diagnostic plots
+#'
+#' @param object an SCESet object containing expression values and
+#' experimental information. Must have been appropriately prepared.
+#' @param type character scalar providing type of QC plot to compute: 
+#' "most-expressed" (showing genes with highest expression), "find-pcs" (showing
+#' the most important principal components for a given variable), or 
+#' "explanatory-variables" (showing a set of explanatory variables plotted 
+#' against each other, ordered by marginal variance explained).
+#' @param ... arguments passed to \code{plotMostExpressed}, 
+#' \code{plotImportantPCs} and \code{plotExplanatoryVariables} as appropriate.
+#'
+#' @details Calculate useful quality control metrics to help with pre-processing
+#' of data and identification of potentially problematic genes and cells.
+#' @export
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' example_sceset <- calculateQCMetrics(example_sceset)
+#' plotQC(example_sceset, type="most", col_by_variable="Mutation_Status")
+#' plotQC(example_sceset, type="find", variable="coverage")
+#' vars <- names(pData(example_sceset))[c(2:3, 5:14)]
+#' plotQC(example_sceset, type="expl", variables=vars)
+#' 
+plotQC <- function(object, type="most-expressed", ...) {
+    type <- match.arg(type, c("most-expressed", "find-pcs", 
+                              "explanatory-variables"))
+    if(type == "most-expressed") {
+        plot_out <- plotMostExpressed(object, ...)
+        print(plot_out)
+        return(plot_out)
+    }
+    if(type == "find-pcs") {        
+        findImportantPCs(object, ...)
+    }
+    if(type == "explanatory-variables") {
+        plotExplanatoryVariables(object, ...)
+    }
+}
 

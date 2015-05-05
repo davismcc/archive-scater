@@ -7,11 +7,26 @@
 #' @param features a character vector of feature names or Boolean
 #' vector indicating which features should have their expression
 #' values plotted
-#' @param data_object an SCESet object containing expression values and
+#' @param object an SCESet object containing expression values and
 #' experimental information. Must have been appropriately prepared.
-#' @param aesth aesthetics function call to pass to ggplot
+#' @param x character string providing a column name of \code{pData(object)} to 
+#' plot on the x-axis in the expression plot(s)
+#' @param exprs_type character string indicating which expression values to plot:
+#' either "exprs" for the expression value defined in the \code{exprs} slot or
+#' "counts" to plot log2(counts-per-million + 1) using counts from the 
+#' \code{counts} slot of \code{object}
+#' @param colour optional character string supplying name of a column of 
+#' \code{pData(object)} which will be used as a variable by which to colour 
+#' expression values on the plot.
+#' @param shape optional character string supplying name of a column of 
+#' \code{pData(object)} which will be used as a variable to define the shape of
+#' points for expression values on the plot.
+#' @param size optional character string supplying name of a column of 
+#' \code{pData(object)} which will be used as a variable to define the size of
+#' points for expression values on the plot.
 #' @param ncol number of columns to be used for the panels of the plot
-#' @param xlab label for x-axis
+#' @param xlab label for x-axis; if \code{NULL} (default), then \code{x} will be
+#' used as the x-axis label
 #' @param ylab label for y-axis
 #' @param show_median logical, show the median for each group on the plot
 #' @param show_violin logical, show a violin plot for the distribution
@@ -27,37 +42,69 @@
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset <- calculateQCMetrics(example_sceset)
-#' plotExpression(1:5, example_sceset, 
-#' aes(x=Mutation_Status, y=log2_evals, colour=Patient), xlab="Mutation_Status",
-#' show_violin=TRUE, show_median=TRUE)
+#' plotExpression(1:5, example_sceset, x="Mutation_Status", exprs_type="exprs", 
+#' colour="Patient", show_violin=TRUE, show_median=TRUE)
 #' 
-plotExpression <- function(features, data_object, aesth, ncol = 2, 
-                           xlab = "", 
-                           ylab = "log2(counts-per-million + 1)",
-                           show_median = FALSE, show_violin = FALSE) {
+plotExpression <- function(features, object, x, exprs_type="exprs", colour=NULL, 
+                           shape=NULL, size=NULL, ncol=2, xlab=NULL, 
+                           show_median=FALSE, show_violin=FALSE) {
+    ## Check object is an SCESet object
+    if( !is(object, "SCESet") )
+        stop("object must be an SCESet")
     ## Define number of features to plot
     if(is.logical(features))
         nfeatures <- sum(features)
     else
         nfeatures <- length(features)
+    ## Define expression values to use
+    exprs_type <- match.arg(exprs_type, choices=c("exprs", "counts"))
+    if( exprs_type == "exprs" ) {
+        to_melt <- as.matrix(exprs(object)[features, , drop = FALSE])
+        ylab <- "Expression"
+    }
+    else {
+        if( exprs_type == "counts" ) {
+            count_mtrx <- as.matrix(counts(object))
+            lib_size <- colSums(count_mtrx)
+            cpm_to_plot <- log2(t(t(count_mtrx)/lib_size) + 1)
+            to_melt <- as.matrix(cpm_to_plot[features, , drop = FALSE])
+            ylab <- "log2(counts-per-million + 1)"
+        }
+        else
+            stop("The argument 'exprs_type' must either be 'exprs' to use expression values, or 'counts', to use read counts.")
+    }
     ## Melt the expression data and metadata into a convenient form
-    to_melt <- as.matrix(exprs(data_object)[features, , drop = FALSE])
     evals_long <- reshape2::melt(to_melt, value.name = "evals")
     colnames(evals_long) <- c("Feature", "Cell", "evals")
-    if( data_object@logged )
+    if( object@logged )
         log2_evals = evals_long$evals
-    else
+    else {
         log2_evals = log2(evals_long$evals + 1)
+        message("Expression values have been transformed to a log2 scale")
+        ylab <- "Expression (log2 scale)"
+    }
     evals_long <- dplyr::mutate(evals_long, log2_evals = log2_evals)
-    isexpr_long <- reshape2::melt(isExprs(data_object)[features,], 
+    isexpr_long <- reshape2::melt(isExprs(object)[features,], 
                                   value.name = "isExprs")
     evals_long <- dplyr::mutate(evals_long, 
-                                IsExpressed = as.vector(isexpr_long$isExpr))
+                                IsExpressed = as.vector(isexpr_long$isExprs))
     ## Extend the samples information
-    samples_long <- pData(data_object)[rep(seq_len(ncol(data_object)), 
-                                           each=nfeatures), ]
+    samples_long <- pData(object)[rep(seq_len(ncol(object)), each=nfeatures), ]
     ## Combine the expression values and sample information
     object_to_plot <- cbind(evals_long, samples_long)
+    ## Construct a ggplot2 aesthetic for the plot
+    aesth <- aes()
+    aesth$x <- as.symbol(x)
+    aesth$y <- as.symbol("log2_evals")
+    if( !is.null(colour) )
+        aesth$colour <- as.symbol(colour)
+    else
+        aesth$colour <- as.symbol("IsExpressed")
+    if( !is.null(shape) )
+        aesth$shape <- as.symbol(shape)
+    ## Define sensible x-axis label if NULL
+    if( is.null(xlab) )
+        xlab <- x
     ## Define the plot
     plot_out <- ggplot(object_to_plot, aesth) +
         facet_wrap(~ Feature, ncol = ncol, scales = 'free_y') +

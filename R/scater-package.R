@@ -11,6 +11,5 @@
 #' @name scater-package
 #' @docType package
 #' @import edgeR
-#' @import limma
 NULL
 

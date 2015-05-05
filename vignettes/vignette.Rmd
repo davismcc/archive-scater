@@ -185,7 +185,7 @@ expression testing or other means.
 
 ```{r plot-expression}
 plotExpression(rownames(example_sceset)[1:6], example_sceset, 
-               aes(x = Mutation_Status, y = log2_evals, colour = IsExpressed))
+               x="Mutation_Status", exprs_type="exprs")
 ```
 
 This function uses `ggplot2`, making it easy to change the theme to whatever you 
@@ -195,10 +195,8 @@ show a violin plot to summarise the distribution of expression values:
 ```{r plot-expression-theme-bw}
 theme_set(theme_bw())
 plotExpression(rownames(example_sceset)[7:12], example_sceset, 
-               aes(x = Mutation_Status, y = log2_evals, colour = IsExpressed),
-                   show_median = TRUE, show_violin = TRUE, 
-               xlab="Mutation Status")
-
+               x="Mutation_Status", exprs_type="exprs", colour="IsExpressed",
+               show_median=TRUE, show_violin=TRUE,  xlab="Mutation Status")
 ```
 
 
@@ -327,6 +325,16 @@ have convenient tools for conducting QC and pre-processing (e.g. filtering) data
 for downstream analysis.
 
 
+## Gene and cell pairwise distance matrices
+
+In many single-cell expression analyses we may want to generate and store 
+pairwise distance matrices for both cells and genes.
+
+```{r cell-pairwise-distance-matrices, eval=TRUE}
+cell_dist <- as.matrix(dist(t(exprs(example_sceset))))
+cellPairwiseDistances(example_sceset) <- cell_dist
+
+```
 
 
 

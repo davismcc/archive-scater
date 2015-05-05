@@ -2,9 +2,9 @@ Package: scater
 Type: Package
 Maintainer: Davis McCarthy <davismcc@gmail.com>
 Author: Davis McCarthy
-Authors@R: c(person("Davis", "McCarthy", role = c("aut", "cre"), email = "davismcc@gmail.com"))
+Authors@R: c(person("Davis", "McCarthy", role=c("aut", "cre"), email="davismcc@gmail.com"), person("Quin", "Wills", role=c("aut"), email="qilin@quinwills.net"), person("Kieran", "Campbell", role=c("aut"), email="kieran.campbell@sjc.ox.ac.uk"))
 Version: 0.1.1
-Date: 2015-03-16
+Date: 2015-05-03
 License: GPL (>= 2)
 Title: Single-cell analysis toolkit for gene expression data in R
 Description: A collection of tools for doing various analyses of single-cell RNA-seq gene expression data, with a focus on quality control.
@@ -13,7 +13,6 @@ Depends:
     Biobase,
     BiocGenerics,
     ggplot2,
-    methods,
     magrittr
 Imports: 
     cluster,
@@ -21,6 +20,7 @@ Imports:
     edgeR,
     limma,
     matrixStats,
+    monocle,
     reshape2
 Suggests: 
     BiocStyle,

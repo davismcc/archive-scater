@@ -7,6 +7,8 @@
 toCellDataSet(sce, useExpression = TRUE)
 }
 \arguments{
+\item{sce}{An \code{SCESet} object}
+
 \item{useExpression}{If TRUE (default), `exprs(sce)` is used as the `cellData`, otherwise `counts(sce)`}
 }
 \value{
