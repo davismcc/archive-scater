@@ -11,7 +11,7 @@
 \alias{genePairwiseDistances,SCESet-method}
 \alias{genePairwiseDistances.SCESet}
 \alias{genePairwiseDistances<-}
-\alias{genePairwiseDistances<-,geneDist}
+\alias{genePairwiseDistances<-,SCESet,matrix-method}
 \title{genePairwiseDistances in an SCESet object}
 \usage{
 genePairwiseDistances(object)
@@ -39,8 +39,6 @@ geneDist.SCESet(object)
 
 \item{value}{a matrix of class \code{"numeric"} containing gene pairwise
 distances}
-
-\item{object}{An \code{SCESet} object from which to get genePairwiseDistances.}
 }
 \value{
 An SCESet object containing new gene pairwise distances matrix.
@@ -50,8 +48,6 @@ SCESet objects can contain a matrix of pairwise distances between genes. These
  functions conveniently access and replace the gene pairwise distances with the value
  supplied, which must be a matrix of the correct size. The function \code{geneDist}
  is simply shorthand for \code{genePairwiseDistances}.
-
-
 }
 \examples{
 \dontrun{

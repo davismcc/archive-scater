@@ -54,6 +54,7 @@ information for our analysis:
 
 ```{r quickstart-make-sceset}
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+rownames(pd) <- pd$Cell
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 example_sceset
 ```
@@ -100,6 +101,7 @@ using the `cpm` function from `edgeR`, with a "prior count" value of 1:
 
 ```{r sceset-make-sceset-counts-only}
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+rownames(pd) <- pd$Cell
 gene_df <- data.frame(Gene = rownames(sc_example_counts))
 rownames(gene_df) <- gene_df$Gene
 fd <- new("AnnotatedDataFrame", data = gene_df)
@@ -145,7 +147,7 @@ It is straight-forward to change the threshold by which we decide which
 observations are expressed or not:
 
 ```{r sceset-define-is-exprs}
-isExprs(example2) <- calcIsExprs(example2, lowerDetectionLimit = 0.5, 
+isExprs(example2) <- calcIsExprs(example2, lowerDetectionLimit = 100, 
                                expr_data = "exprs")
 isExprs(example2)[1:3, 1:6]
 ```
@@ -193,7 +195,6 @@ prefer. We can also show the median expression level per group on the plot and
 show a violin plot to summarise the distribution of expression values:
 
 ```{r plot-expression-theme-bw}
-theme_set(theme_bw())
 plotExpression(rownames(example_sceset)[7:12], example_sceset, 
                x="Mutation_Status", exprs_type="exprs", colour="IsExpressed",
                show_median=TRUE, show_violin=TRUE,  xlab="Mutation Status")
@@ -205,13 +206,25 @@ plotExpression(rownames(example_sceset)[7:12], example_sceset,
 The `scater` package puts a focus on aiding with quality control (QC) and 
 pre-processing of single-cell RNA-seq data before further downstream analysis.
 
+We see QC as consisting of three distinct steps:
+
+1. QC and filtering of genes
+2. QC and filtering of cells
+3. QC of experimental variables
+
+Following QC, we can proceed with data normalisation before downstream analysis 
+and modelling.
+
+In the next few sections we discuss the QC and filtering capabilities available
+in `scater`.
+
 ### Calculate QC metrics
 
 To compute commonly-used QC metrics we have the function `calculateQCMetrics()`:
 
 ```{r calc-qc-metrics}
 names(pData(example_sceset))
-example_sceset <- calculateQCMetrics(example_sceset, control_genes=NULL)
+example_sceset <- calculateQCMetrics(example_sceset, gene_controls=1:20)
 names(pData(example_sceset))
 ```
 
@@ -227,19 +240,19 @@ log10-depth for the dataset?
 * `filter_on_coverage`: would this cell be filtered out based on its coverage 
 being (by default) more than 5 median absolute deviations from the median 
 coverage for the dataset?
-* `reads_from_control_genes`: total number of reads for the cell that come from 
+* `reads_from_gene_controls`: total number of reads for the cell that come from 
 (a set of user-defined) control genes. Defaults to zero if no control genes are 
 indicated.
 * `reads_from_biological_genes`: total number of reads for the cell that come from 
 biological genes (i.e. not control genes). Defaults to `depth` if no control genes are 
 indicated.
-* `log10_reads_from_control_genes`: total number of reads from control genes on 
+* `log10_reads_from_gene_controls`: total number of reads from control genes on 
 the log10-scale. Defaults to zero (i.e. log10(0 + 1), offset to avoid infinite 
 values) if no control genes are indicated.
 * `log10_reads_from_biological_genes`: total number of reads from biological 
 genes on the log10-scale. Defaults to zero (i.e. log10(0 + 1), offset to avoid 
 infinite values) if no control genes are indicated.
-*`pct_reads_from_control_genes`: percentage of all reads that come from the 
+*`pct_reads_from_gene_controls`: percentage of all reads that come from the 
 defined control genes. Defaults to zero if no control genes are defined.
 
 The function further adds the following columns to `fData(object)`:
@@ -251,10 +264,21 @@ cells.
 * `log10_total_gene_reads`: total gene reads on the log10-scale.
 * `prop_total_reads`: the proportion of all reads that are accounted for by the
 reads mapping to the gene.
-* `is_control_gene`: is the gene a control gene? Default is `FALSE` unless 
+* `is_gene_control`: is the gene a control gene? Default is `FALSE` unless 
 control genes are defined by the user.
 `n_cells_exprs`: the number of cells for which the expression level of the gene
 is above the detection limit (default detection limit is zero).
+
+
+### QC and filtering of genes
+
+
+
+### QC and filtering of cells
+
+
+
+### QC of experimental variables
 
 
 ### Produce diagnostic plots for QC
@@ -272,12 +296,17 @@ These three QC plots can all be accessed through the function `plotQC` (we need
 to make sure there are no genes with zero or constant expression):
 
 ```{r plot-qc}
-keep_gene <- rowSums(isExprs(example_sceset)) > 0
+keep_gene <- rowSums(isExprs(example_sceset)) > 4
 example_sceset <- example_sceset[keep_gene,]
 ## Plot QC
 plotQC(example_sceset, type="most-expressed")
 plotQC(example_sceset, type="find-pcs", variable="coverage")
-plotQC(example_sceset, type="expl", variable=c("coverage", "depth"))
+plotQC(example_sceset, type="find-pcs", variable="Cell_Cycle")
+plotQC(example_sceset, type="find-pcs", variable="Treatment")
+plotQC(example_sceset, type="expl", 
+       variables=c("coverage", "depth", "Mutation_Status", "Treatment"))
+plotQC(example_sceset, type="expl")
+
 ```
 
 In this small dataset depth and coverage explain a very large proportion of the
@@ -325,19 +354,155 @@ have convenient tools for conducting QC and pre-processing (e.g. filtering) data
 for downstream analysis.
 
 
+
+## Data normalisation
+
+High levels of variability between cells characterise single-cell expression 
+data. In almost all settings, many sources of unwanted variation should be 
+accounted for before proceeding with more sophisticated analysis. Below, we show
+some of `scater`'s capabilities for normalising data for downstream analyses.
+
+We can use gene controls to help address differences between cells arising from 
+different sets of transcripts being expressed and differences in library 
+composition.
+
+Important experimental variables and latent factors (if used) can be regressed 
+out, so that normalised data has these effects removed.
+
+
 ## Gene and cell pairwise distance matrices
 
 In many single-cell expression analyses we may want to generate and store 
 pairwise distance matrices for both cells and genes.
 
-```{r cell-pairwise-distance-matrices, eval=TRUE}
+We can first look at a multidimensional scaling (MDS) plot using Euclidean distance
+between cells.
+
+```{r cell-pairwise-distance-matrices-euclidean, eval=TRUE}
 cell_dist <- as.matrix(dist(t(exprs(example_sceset))))
 cellPairwiseDistances(example_sceset) <- cell_dist
 
+if(require(MASS)) {
+    fit <- MASS::isoMDS(cellDist(example_sceset), k=2) # k is the number of dim
+    # plot solution 
+    Col <- c("firebrick", "dodgerblue")[factor(pData(example_sceset)$Treatment)]
+    plot(fit$points[,1:2], xlab="Coordinate 1", ylab="Coordinate 2", main="Nonmetric MDS", 
+         type="n")
+    text(fit$points[,1:2], labels=colnames(example_sceset), col=Col)
+}
+```
+
+Second, we could also look at an MDS plot using the count data and the Canberra
+distance metric.
+
+```{r cell-pairwise-distance-matrices-canberra, eval=TRUE}
+cell_dist <- as.matrix(dist(t(counts(example_sceset)), method="canberra"))
+cellPairwiseDistances(example_sceset) <- cell_dist
+
+if(require(MASS)) {
+    fit <- MASS::isoMDS(cellDist(example_sceset), k=2) # k is the number of dim
+    # plot solution 
+    Col <- c("firebrick", "dodgerblue")[factor(pData(example_sceset)$Treatment)]
+    plot(fit$points[,1:2], xlab="Coordinate 1", ylab="Coordinate 2", main="Nonmetric MDS", 
+         type="n")
+    text(fit$points[,1:2], labels=colnames(example_sceset), col=Col)
+}
+```
+
+We can also look at a (nonmetric) MDS plot for the genes, here using Euclidean
+distance.
+
+```{r gene-pairwise-distance-matrices, eval=TRUE}
+gene_dist <- as.matrix(dist(exprs(example_sceset)))
+genePairwiseDistances(example_sceset) <- gene_dist
+
+if(require(MASS)) {
+    fit <- MASS::isoMDS(geneDist(example_sceset), k=2) # k is the number of dim
+    # plot solution 
+    x <- fit$points[,1]
+    y <- fit$points[,2]
+    plot(x, y, xlab="Coordinate 1", ylab="Coordinate 2", main="Nonmetric MDS", 
+         type="n")
+    text(x, y, labels = rownames(example_sceset), cex=.7)
+}
 ```
 
 
+## Using **kallisto** to quantify transcript abundance from within R
 
+Lior Pachter's group at Berkeley has recently released a new software tool 
+called **kallisto** for rapid quantification of transcript abundance from RNA-seq
+data. In `scater`, a couple of wrapper functions to `kallisto` enable easy and 
+extremely fast quantification of transcript abundance from within R.
+
+```{r kallisto-demos, eval=FALSE}
+################################################################################
+### Tests and Examples
+
+# out <- tryCatch(ex <- system2("ls","xx", stdout=TRUE, stderr=TRUE), warning=function(w){w})
+# out
+# out <- tryCatch(ex <- system2("ls","targets.txt", stdout=TRUE, stderr=TRUE), warning=function(w){w})
+# out
+# tryCatch(ex <- system2("lb","xx", stdout=TRUE, stderr=TRUE), warning=function(w){w}, error=function(e){e})
+
+## Example if in the kallisto/test directory
+# setwd("/home/davis/kallisto/test")
+# kallisto_log <- runKallisto("targets.txt", "transcripts.idx", single_end=FALSE, 
+#             output_prefix="output", verbose=TRUE, n_bootstrap_samples=10)
+# 
+# abund_test <- readKallistoResultsOneSample("output_sample1", read_h5=TRUE)
+# names(abund_test)
+# abund_test$abundance[1:10,]
+# abund_test$run_info
+# 
+# sce_test <- readKallistoResults(kallisto_log)
+# 
+# sce_test <- readKallistoResults(kallisto_log, read_h5=TRUE)
+
+## Example to read a JSON file into R
+# json_data <- rjson::fromJSON(file="output_sample1/run_info.json")
+
+## Example with cell cycle data
+# setwd("/home/davis/021_Cell_Cycle/data/fastq")
+# system("wc -l targets.txt")
+# ave_frag_len <- mean(c(855, 860, 810, 760, 600, 690, 770, 690))
+# klog_err_test <- runKallisto("targets.txt", 
+#                              "Mus_musculus.GRCm38.rel79.cdna.all.ERCC.idx", 
+#                              output_prefix="kallisto_output_Mmus", n_cores=12, 
+#                              fragment_length=NULL, verbose=TRUE)
+# 
+# 
+# setwd("/home/davis/021_Cell_Cycle/data/fastq")
+# system("wc -l targets.txt")
+# ave_frag_len <- mean(c(855, 860, 810, 760, 600, 690, 770, 690))
+# 
+# kallisto_test <- runKallisto("targets.txt", 
+#                              "Mus_musculus.GRCm38.rel79.cdna.all.ERCC.idx", 
+#                              output_prefix="kallisto_output_Mmus", n_cores=12, 
+#                              fragment_length=ave_frag_len, verbose=TRUE)
+# sce_kall_mmus <- readKallistoResults(kallisto_test, read_h5=TRUE)
+# sce_kall_mmus
+# 
+# sce_kall_mmus <- readKallistoResults(kallisto_test)
+# 
+# 
+# head(fData(sce_kall_mmus))
+# head(pData(sce_kall_mmus))
+# counts(sce_kall_mmus)[sample(nrow(sce_kall_mmus), size=15), 1:6]
+
+
+
+# 
+# abund_test1 <- readKallistoResultsOneSample("kallisto_output_Mmus_WTCHG_166708_712505", read_h5=TRUE)
+# names(abund_test1)
+# abund_test1$abundance[1:10,]
+# abund_test1$run_info
+# 
+# abund_test2 <- readKallistoResultsOneSample("kallisto_output_Mmus_WTCHG_166708_712504", read_h5=TRUE)
+# abund_test2$abundance[1:10,]
+# abund_test2$run_info
+
+```
 
 
 

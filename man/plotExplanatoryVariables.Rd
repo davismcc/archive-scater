@@ -28,6 +28,7 @@ value are quietly ignored.
 data("sc_example_counts")
 data("sc_example_cell_info")
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+rownames(pd) <- pd$Cell
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 example_sceset <- calculateQCMetrics(example_sceset)
 vars <- names(pData(example_sceset))[c(2:3, 5:14)]

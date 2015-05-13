@@ -31,6 +31,8 @@ SCESet.
    containing pairwise distances between cells.}
    \item{\code{genePairwiseDistances}:}{Matrix of class \code{"numeric"},
    containing pairwise distances between genes.}
+   \item{\code{bootstraps}:}{Array of class \code{"numeric"} that can contain
+   bootstrap estimates of the expression or count values.}
 }
 }
 

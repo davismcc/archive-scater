@@ -38,6 +38,42 @@ setGeneric("isExprs", function(object) {standardGeneric("isExprs")})
 setGeneric("isExprs<-", function(object, value) {standardGeneric("isExprs<-")})
 
 
+#' @name norm_exprs
+#' @export
+#' @docType methods
+#' @rdname norm_exprs
+setGeneric("norm_exprs", function(object) {standardGeneric("norm_exprs")})
+
+#' @name norm_exprs<-
+#' @export
+#' @docType methods
+#' @rdname norm_exprs
+setGeneric("norm_exprs<-", function(object, value) {standardGeneric("norm_exprs<-")})
+
+#' @name tpm
+#' @export
+#' @docType methods
+#' @rdname tpm
+setGeneric("tpm", function(object) {standardGeneric("tpm")})
+
+#' @name tpm<-
+#' @export
+#' @docType methods
+#' @rdname tpm
+setGeneric("tpm<-", function(object, value) {standardGeneric("tpm<-")})
+
+#' @name bootstraps
+#' @export
+#' @docType methods
+#' @rdname bootstraps
+setGeneric("bootstraps", function(object) {standardGeneric("bootstraps")})
+
+#' @name bootstraps<-
+#' @export
+#' @docType methods
+#' @rdname bootstraps
+setGeneric("bootstraps<-", function(object, value) {standardGeneric("bootstraps<-")})
+
 #' @name cellPairwiseDistances
 #' @export
 #' @docType methods

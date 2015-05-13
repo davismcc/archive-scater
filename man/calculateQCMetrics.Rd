@@ -4,15 +4,20 @@
 \alias{calculateQCMetrics}
 \title{Calculate QC metrics}
 \usage{
-calculateQCMetrics(object, control_genes = NULL, nmads = 5)
+calculateQCMetrics(object, gene_controls = NULL, cell_controls = NULL,
+  nmads = 5)
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and
 experimental information. Must have been appropriately prepared.}
 
-\item{control_genes}{a character vector of gene names, or a logical vector,
-or a numeric vector of indices used to identify control genes (for example,
-ERCC spike-in genes)}
+\item{gene_controls}{a character vector of gene names, or a logical vector,
+or a numeric vector of indices used to identify gene controls (for example,
+ERCC spike-in genes, mitochondrial genes, etc).}
+
+\item{cell_controls}{a character vector of cell (sample) names, or a logical
+vector, or a numeric vector of indices used to identify cell controls (for
+example, blank wells or bulk controls).}
 
 \item{nmads}{numeric scalar giving the number of median absolute deviations to be
 used to flag potentially problematic cells based on depth (total number of
@@ -30,6 +35,7 @@ of data and identification of potentially problematic genes and cells.
 data("sc_example_counts")
 data("sc_example_cell_info")
 pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
+rownames(pd) <- pd$Cell
 example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
 example_sceset <- calculateQCMetrics(example_sceset)
 }

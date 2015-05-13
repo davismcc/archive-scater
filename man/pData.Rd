@@ -2,10 +2,15 @@
 % Please edit documentation in R/SCESet-methods.R
 \docType{methods}
 \name{pData<-,SCESet,AnnotatedDataFrame-method}
+\alias{pData}
+\alias{pData,SCESet-method}
 \alias{pData<-,SCESet,AnnotatedDataFrame-method}
+\alias{pData<-,SCESet,data.frame-method}
 \title{Replaces phenoData in an SCESet object}
 \usage{
 \S4method{pData}{SCESet,AnnotatedDataFrame}(x) <- value
+
+\S4method{pData}{SCESet,data.frame}(x) <- value
 }
 \arguments{
 \item{x}{An SCESet object.}

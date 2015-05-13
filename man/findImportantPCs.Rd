@@ -30,6 +30,7 @@ Cells are coloured by their cluster in the plot.
 data("sc_example_counts")
 data("sc_example_cell_info")
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+rownames(pd) <- pd$Cell
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 example_sceset <- calculateQCMetrics(example_sceset)
 findImportantPCs(example_sceset, variable="coverage")

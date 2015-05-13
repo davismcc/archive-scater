@@ -161,7 +161,11 @@ setValidity("SCESet", function(object) {
 #' existing 
 #' @return A matrix of expression count data, where rows correspond to features
 #' (e.g. genes) and columns correspond to cells.
+#' 
 #' @export
+#' @rdname fData
+#' @aliases fData fData,SCESet-method fData<-,SCESet,AnnotatedDataFrame-method fData<-,SCESet,data.frame-method 
+#' 
 #' @examples
 #' \dontrun{
 #' 
@@ -171,6 +175,16 @@ setReplaceMethod("fData", signature(x = "SCESet", value = "AnnotatedDataFrame"),
                      x@featureData <- value
                      x
                  } )
+
+#' @name fData
+#' @rdname fData
+#' @exportMethod "fData<-"
+setReplaceMethod("fData", signature(x = "SCESet", value = "data.frame"), 
+                 function(x, value) {
+                     x@featureData <- new("AnnotatedDataFrame", value)
+                     x
+                 } )
+
 
 
 #' Replaces phenoData in an SCESet object
@@ -183,7 +197,11 @@ setReplaceMethod("fData", signature(x = "SCESet", value = "AnnotatedDataFrame"),
 #' existing 
 #' @return A matrix of expression count data, where rows correspond to features
 #' (e.g. genes) and columns correspond to cells.
-#' @export
+#' 
+#' @exportMethod "pData<-"
+#' @rdname pData
+#' @aliases pData pData,SCESet-method pData<-,SCESet,AnnotatedDataFrame-method pData<-,SCESet,data.frame-method
+#' 
 #' @examples
 #' \dontrun{
 #' 
@@ -195,61 +213,14 @@ setReplaceMethod("pData", signature(x = "SCESet", value = "AnnotatedDataFrame"),
                  } )
 
 
-################################################################################
-### Convenience functions for adding columns to pData and fData in an SCESet 
-### object
-
-#' Add columns to phenoData for an SCESet object
-#'
-#' SCESet objects contain phenotype information (inherited from the 
-#' ExpressionSet class). This function allows convenient addition of one or more 
-#' columns to the phenotype data, and returns an AnnotatedDataFrame.
-#' @param x An SCESet object.
-#' @param df a data.frame to add to phenoData 
-#' @return An AnnotatedDataFrame that can be assigned to \code{pData(x)}.
-#' @export
-#' @examples
-#' \dontrun{
-#' 
-#' }
-addpData <- function(x, df) {
-    if( !is(x, "SCESet") )
-        stop("x must be an SCESet object")
-    df <- as.data.frame(df)
-    if( !is(df, "data.frame") )
-        stop("df cannot be coerced to a data.frame. Make sure df is a data.frame.")
-    if(ncol(x) != nrow(df))
-        stop("Number of rows of df must match number of rows of pData(x)")   
-    pdata_out <- cbind(Biobase::pData(x), df) %>% new("AnnotatedDataFrame", .)
-    pdata_out
-}
-
-#' Add columns to featureData for an SCESet object
-#'
-#' SCESet objects contain feature (i.e. gene) information (inherited from the 
-#' ExpressionSet class). This function allows convenient addition of one or more 
-#' columns to the feature data, and returns an AnnotatedDataFrame that can be 
-#' assigned to \code{fData(x)}.
-#' @param x An SCESet object.
-#' @param df a data.frame to add to phenoData 
-#' @return An AnnotatedDataFrame that can be assigned to \code{pData(x)}.
-#' @export
-#' @examples
-#' \dontrun{
-#' 
-#' }
-addfData <- function(x, df) {
-    if( !is(x, "SCESet") )
-        stop("x must be an SCESet object") 
-    df <- as.data.frame(df)
-    if( !is(df, "data.frame") )
-        stop("df cannot be coerced to a data.frame. Make sure df is a data.frame.")
-    if(nrow(x) != nrow(df))
-        stop("Number of rows of df must match number of rows of fData(x)")  
-    fdata_out <- cbind(Biobase::fData(x), df) %>% new("AnnotatedDataFrame", .)
-    fdata_out
-}
-
+#' @name pData
+#' @rdname pData
+#' @exportMethod "pData<-"
+setReplaceMethod("pData", signature(x = "SCESet", value = "data.frame"), 
+                 function(x, value) {
+                     x@phenoData <- new("AnnotatedDataFrame", value)
+                     x
+                 } )
 
 
 ################################################################################
@@ -340,13 +311,186 @@ setMethod("isExprs", signature(object = "SCESet"), isExprs.SCESet)
 
 #' @name isExprs<-
 #' @rdname isExprs
-#' @export "isExprs<-"
+#' @exportMethod "isExprs<-"
 setReplaceMethod("isExprs", signature(object="SCESet", value="matrix"),
-                 function( object, value ) {
+                 function(object, value) {
                      object@assayData$isExprs <- value
                      validObject(object)
                      object
                  })
+
+################################################################################
+### norm_exprs
+
+#' Accessors for the 'norm_exprs' (normalised expression) element of an SCESet object.
+#'
+#' The \code{norm_exrps} element of the arrayData slot in an SCESet object holds
+#' a matrix containing normalised expression values. It has the same dimensions 
+#' as the 'exprs' and 'counts' elements, which hold the transformed expression 
+#' data and count data, respectively.
+#' 
+#' @usage
+#' \S4method{norm_exprs}{SCESet}(object)
+#'
+#' \S4method{norm_exprs}{SCESet,matrix}(object)<-value
+#'
+#' @docType methods
+#' @name norm_exprs
+#' @rdname norm_exprs
+#' @aliases norm_exprs norm_exprs,SCESet-method norm_exprs<-,SCESet,matrix-method
+#'
+#' @param object a \code{SCESet} object.
+#' @param value an integer matrix
+#' 
+#' @details The default for normalised expression values is mean-centred and 
+#' variance-standardised expression data from the \code{exprs} slot of the 
+#' \code{SCESet} object. The function \code{normaliseExprs} (or 
+#' \code{normalizeExprs}) provides more options and functionality for 
+#' normalising expression data.
+#' 
+#' @author Davis McCarthy
+#' @export
+#' @aliases norm_exprs norm_exprs,SCESet-method, norm_exprs<-,SCESet,matrix-method 
+#' 
+#' 
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' example_sceset <- newSCESet(countData = sc_example_counts)
+#' norm_exprs(example_sceset)
+#'
+norm_exprs.SCESet <- function(object) {
+    object@assayData$norm_exprs
+}
+
+#' @rdname norm_exprs
+#' @export
+setMethod("norm_exprs", signature(object="SCESet"), norm_exprs.SCESet)
+
+#' @name norm_exprs<-
+#' @rdname norm_exprs
+#' @exportMethod "norm_exprs<-"
+setReplaceMethod("norm_exprs", signature(object="SCESet", value="matrix"),
+                 function(object, value) {
+                     object@assayData$norm_exprs <- value
+                     validObject(object)
+                     object
+                 })
+
+
+################################################################################
+### tpm
+
+#' Accessors for the 'tpm' (transcripts per million) element of an SCESet object.
+#'
+#' The \code{tpm} element of the arrayData slot in an SCESet object holds
+#' a matrix containing transcripts-per-million values. It has the same dimensions 
+#' as the 'exprs' and 'counts' elements, which hold the transformed expression 
+#' data and count data, respectively.
+#' 
+#' @usage
+#' \S4method{tpm}{SCESet}(object)
+#'
+#' \S4method{tpm}{SCESet,matrix}(object)<-value
+#'
+#' @docType methods
+#' @name tpm
+#' @rdname tpm
+#' @aliases tpm tpm,SCESet-method tpm<-,SCESet,matrix-method
+#'
+#' @param object a \code{SCESet} object.
+#' @param value a matrix of class \code{"numeric"}
+#' 
+#' @author Davis McCarthy
+#' @export
+#' @aliases tpm tpm,SCESet-method tpm<-,SCESet,matrix-method
+#' 
+#' @examples
+#' \dontrun{
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' example_sceset <- newSCESet(countData = sc_example_counts)
+#' tpm(example_sceset)
+#' }
+tpm.SCESet <- function(object) {
+    object@assayData$tpm
+}
+
+#' @name tpm
+#' @rdname tpm
+#' @export
+#' @aliases tpm,SCESet-method
+setMethod("tpm", signature(object="SCESet"), tpm.SCESet)
+
+#' @name tpm<-
+#' @rdname tpm
+#' @exportMethod "tpm<-"
+#' @aliases tpm<-,SCESet,matrix-method
+setReplaceMethod("tpm", signature(object="SCESet", value="matrix"),
+                 function(object, value) {
+                     object@assayData$tpm <- value
+                     validObject(object)
+                     object
+                 })
+
+
+################################################################################
+### bootstraps
+
+#' Accessor and replacement for bootstrap results in an SCESet object
+#'
+#' SCESet objects can contain an of bootstrap expression values (for example, as 
+#' generated by the kallisto software for quantifying feature abundance). These
+#'  functions conveniently access and replace the 'bootstrap' slot with the value 
+#'  supplied, which must be an matrix of the correct size, namely the same 
+#'  number of rows and columns as the \code{SCEset} object as a whole. 
+#' 
+#' @docType methods
+#' @name bootstraps
+#' @rdname bootstraps
+#' @aliases bootstraps bootstraps,SCESet-method bootstraps<-,SCESet,array-method
+#'
+#' @param object a \code{SCESet} object.
+#' @param value an array of class \code{"numeric"} containing bootstrap 
+#' expression values
+#' @author Davis McCarthy
+#' 
+#' @return If accessing bootstraps slot of an \code{SCESet}, then an array with 
+#' the bootstrap values, otherwise an \code{SCESet} object containing new 
+#' bootstrap values.
+#' 
+#' @export
+#' @aliases bootstraps bootstraps,SCESet-method bootstraps<-,SCE-Set,array-method
+#' 
+#' @examples
+#' \dontrun{
+#' ## If 'object' is an SCESet:
+#' bootstraps(object)
+#' }
+#' 
+bootstraps.SCESet <- function(object) {
+    object@bootstraps
+}
+
+#' @rdname bootstraps
+#' @aliases bootstraps
+#' @export
+setMethod("bootstraps", signature(object="SCESet"), bootstraps.SCESet)
+
+
+#' @name bootstraps<-
+#' @aliases bootstraps
+#' @rdname bootstraps
+#' @export "bootstraps<-"
+setReplaceMethod("bootstraps", signature(object="SCESet", value="array"), 
+                 function(object, value) {
+                     if( (nrow(value) == nrow(object)) & (ncol(value) == ncol(object)) ) {
+                         object@bootstraps <- value
+                         return(object)
+                     } else
+                         stop("Array supplied is of incorrect size.")
+                 } )
+
 
 ################################################################################
 ### cellPairwiseDistances
@@ -361,7 +505,7 @@ setReplaceMethod("isExprs", signature(object="SCESet", value="matrix"),
 #' @docType methods
 #' @name cellPairwiseDistances
 #' @rdname cellPairwiseDistances
-#' @aliases cellPairwiseDistances cellPairwiseDistances,SCESet-method cellPairwiseDistances<-,cellDist cellDist,SCESet-method cellDist<-,SCESet,matrix-method
+#' @aliases cellPairwiseDistances cellPairwiseDistances,SCESet-method cellPairwiseDistances<-,SCESet,matrix-method cellDist,SCESet-method cellDist<-,SCESet,matrix-method
 #'
 #' @param object a \code{SCESet} object.
 #' @param value a matrix of class \code{"numeric"} containing cell pairwise 
@@ -401,7 +545,7 @@ setMethod("cellDist", signature(object="SCESet"), cellDist.SCESet)
 #' @name cellPairwiseDistances<-
 #' @aliases cellPairwiseDistances
 #' @rdname cellPairwiseDistances
-#' @export "cellPairwiseDistances<-"
+#' @exportMethod "cellPairwiseDistances<-"
 setReplaceMethod("cellPairwiseDistances", signature(object="SCESet", value="matrix"), 
                  function(object, value) {
                      if( nrow(value) == ncol(object) ) {
@@ -415,7 +559,7 @@ setReplaceMethod("cellPairwiseDistances", signature(object="SCESet", value="matr
 #' @name cellDist<-
 #' @aliases cellPairwiseDistances
 #' @rdname cellPairwiseDistances
-#' @export "cellDist<-"
+#' @exportMethod "cellDist<-"
 setReplaceMethod("cellDist", signature(object="SCESet", value="matrix"), 
                  function(object, value) {
                      if( nrow(value) == ncol(object) ) {
@@ -437,14 +581,15 @@ setReplaceMethod("cellDist", signature(object="SCESet", value="matrix"),
 #'  supplied, which must be a matrix of the correct size. The function \code{geneDist}
 #'  is simply shorthand for \code{genePairwiseDistances}.
 #'
-#' @docType methods
-#' @name genePairwiseDistances
-#' @rdname genePairwiseDistances
-#' @aliases genePairwiseDistances genePairwiseDistances,SCESet-method genePairwiseDistances<-,geneDist geneDist,SCESet-method geneDist<-,SCESet,matrix-method
-#'
 #' @param object a \code{SCESet} object.
 #' @param value a matrix of class \code{"numeric"} containing gene pairwise 
 #' distances
+#'
+#' @docType methods
+#' @name genePairwiseDistances
+#' @rdname genePairwiseDistances
+#' @aliases genePairwiseDistances genePairwiseDistances,SCESet-method genePairwiseDistances<-,SCESet,matrix-method geneDist geneDist,SCESet-method geneDist<-,SCESet,matrix-method
+#'
 #' @author Davis McCarthy
 #' 
 #' @return An SCESet object containing new gene pairwise distances matrix.
@@ -464,8 +609,6 @@ genePairwiseDistances.SCESet <- function(object) {
 setMethod("genePairwiseDistances", signature(object="SCESet"), 
           genePairwiseDistances.SCESet)
 
-#' 
-#' @param object An \code{SCESet} object from which to get genePairwiseDistances.
 #' @aliases genePairwiseDistances
 #' @rdname genePairwiseDistances
 #' @export

@@ -16,7 +16,7 @@ the most important principal components for a given variable), or
 "explanatory-variables" (showing a set of explanatory variables plotted
 against each other, ordered by marginal variance explained).}
 
-\item{...}{arguments passed to \code{plotMostExpressed},
+\item{...}{arguments passed to \code{plotHighestReadCounts},
 \code{plotImportantPCs} and \code{plotExplanatoryVariables} as appropriate.}
 }
 \description{
@@ -29,8 +29,9 @@ of data and identification of potentially problematic genes and cells.
 \examples{
 data("sc_example_counts")
 data("sc_example_cell_info")
-pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
-example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
+rownames(pd) <- pd$Cell
+example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
 example_sceset <- calculateQCMetrics(example_sceset)
 plotQC(example_sceset, type="most", col_by_variable="Mutation_Status")
 plotQC(example_sceset, type="find", variable="coverage")

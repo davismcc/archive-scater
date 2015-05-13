@@ -5,13 +5,12 @@
 \alias{scater-package}
 \title{Single-cell analysis toolkit for expression in R}
 \description{
-\pkg{scater} provides a class and numerous functions for the analysis and
-visualisation of single-cell RNA-seq expression data.
+\pkg{scater} provides a class and numerous functions for the quality control,
+normalisation and visualisation of single-cell RNA-seq expression data.
 }
 \details{
-In particular, \pkg{scater} provides rank-based methods for finding
-differentially expressed genes. Testing for DE genes using the
-rank-product method can be done with the function
-\code{\link{testRankProduct}}.
+In particular, \pkg{scater} provides easy generation of quality control
+metrics and simple functions to visualise quality control metrics and their
+relationships.
 }
 

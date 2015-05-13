@@ -3,7 +3,7 @@
 ### * calculateQCMetrics
 ### * findImportantPCs
 ### * plotExplanatoryVariables
-### * plotMostExpressed
+### * plotHighestReadCounts
 ### * plotQC
 ### 
 ### * .calculateSilhouetteWidth
@@ -15,9 +15,12 @@
 #'
 #' @param object an SCESet object containing expression values and
 #' experimental information. Must have been appropriately prepared.
-#' @param control_genes a character vector of gene names, or a logical vector, 
-#' or a numeric vector of indices used to identify control genes (for example,
-#' ERCC spike-in genes)
+#' @param gene_controls a character vector of gene names, or a logical vector, 
+#' or a numeric vector of indices used to identify gene controls (for example,
+#' ERCC spike-in genes, mitochondrial genes, etc).
+#' @param cell_controls a character vector of cell (sample) names, or a logical 
+#' vector, or a numeric vector of indices used to identify cell controls (for 
+#' example, blank wells or bulk controls).
 #' @param nmads numeric scalar giving the number of median absolute deviations to be 
 #' used to flag potentially problematic cells based on depth (total number of 
 #' counts for the cell, or library size) and coverage (number of genes with 
@@ -30,10 +33,12 @@
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
+#' rownames(pd) <- pd$Cell
 #' example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' 
-calculateQCMetrics <- function(object, control_genes=NULL, nmads=5) {
+calculateQCMetrics <- function(object, gene_controls=NULL, cell_controls=NULL, 
+                               nmads=5) {
     ## We must have an SCESet object
     if(!is(object, "SCESet"))
         stop("object must be an SCESet object.")
@@ -66,47 +71,167 @@ a lower count threshold of 0.")
     filter_on_coverage <- (findInterval(coverage, keep_coverage) != 1)
     
     ## Contributions from control genes
-    if( is.logical(control_genes) ) {
-        is_control_gene <- control_genes
-        control_genes <- which(control_genes)
+    ### Determine if vector or list
+    if( is.null(gene_controls) | length(gene_controls) == 0 ) {
+        reads_from_gene_controls <- pct_reads_from_gene_controls <- 
+            rep(0, ncol(object))
+        is_gene_control <- rep(FALSE, nrow(object))    
+        gene_controls_pdata <- data.frame(reads_from_gene_controls,
+                                          pct_reads_from_gene_controls) 
+        gene_controls_fdata <- data.frame(is_gene_control)
+        n_sets_gene_controls <- 1
     } else {
-        is_control_gene <- rep(FALSE, nrow(object))    
+        if( is.list(gene_controls) ) {
+            gene_controls_list <- gene_controls
+            n_sets_gene_controls <- length(gene_controls)
+        }
+        else {
+            gene_controls_list <- list(gene_controls)
+            n_sets_gene_controls <- 1
+        }
+        ## Cycle through the gene_controls list and add QC info
+        for( i in seq_len(length(gene_controls_list)) ) {
+            gc_set <- gene_controls_list[[i]]
+            set_name <- names(gene_controls_list)[i]
+            if( is.logical(gc_set) ) {
+                is_gene_control <- gc_set
+                gc_set <- which(gc_set)
+            } else {
+                is_gene_control <- rep(FALSE, nrow(object))    
+            }
+            if(is.character(gc_set))
+                gc_set <- which(rownames(object) %in% gc_set)
+            reads_from_gene_controls <- colSums(counts(object)[gc_set,])
+            is_gene_control[gc_set] <- TRUE
+            pct_reads_from_gene_controls <- 100 * reads_from_gene_controls / depth
+            ## Construct data.frame for pData from this gene control set
+            df_pdata_this <- data.frame(reads_from_gene_controls,
+                                        pct_reads_from_gene_controls)
+            colnames(df_pdata_this) <- paste(colnames(df_pdata_this), set_name, 
+                                             sep="_")
+            if( exists("gene_controls_pdata") )
+                gene_controls_pdata <- cbind(gene_controls_pdata, df_pdata_this)
+            else
+                gene_controls_pdata <- df_pdata_this
+            ## Construct data.frame for fData from this gene control set
+            df_fdata_this <- data.frame(is_gene_control)
+            colnames(df_fdata_this) <- paste(colnames(df_fdata_this), set_name, 
+                                             sep="_")
+            if( exists("gene_controls_fdata") )
+                gene_controls_fdata <- cbind(gene_controls_fdata, df_fdata_this)
+            else 
+                gene_controls_fdata <- df_fdata_this
+        }
     }
-    if( !(is.null(control_genes) | length(control_genes) == 0) ) {
-        if(is.character(control_genes))
-            control_genes <- which(rownames(object) %in% control_genes)
-        reads_from_control_genes <- colSums(counts(object)[control_genes,])
-        is_control_gene[control_genes] <- TRUE
+    
+    ## Fix column names and define gene controls across all control sets
+    if( n_sets_gene_controls == 1 ) {
+        colnames(gene_controls_pdata) <- c("reads_from_gene_controls",
+                                           "pct_reads_from_gene_controls")
+        colnames(gene_controls_fdata) <- "is_gene_control"
     } else {
-        reads_from_control_genes <- 0
+        ## Combine all gene controls
+        is_gene_control <- apply(gene_controls_fdata, 1, any)
+        gene_controls_fdata <- cbind(gene_controls_fdata, is_gene_control)
+        ## Compute metrics using all gene controls
+        reads_from_gene_controls <- colSums(counts(object)[is_gene_control,])
+        pct_reads_from_gene_controls <- 100 * reads_from_gene_controls / depth
+        gene_controls_pdata <- cbind(gene_controls_pdata, 
+                                     reads_from_gene_controls,
+                                     pct_reads_from_gene_controls)
     }
-    reads_from_biological_genes <- depth - reads_from_control_genes
-    pct_reads_from_control_genes <- 100 * reads_from_control_genes / depth
+    
+    ## Define log10 read counts from gene controls
+    read_counts_columns <- grep("^reads_from_gene", 
+                                colnames(gene_controls_pdata))
+    log10_reads_from_gene_controls <- log10(
+        gene_controls_pdata[, read_counts_columns, drop=FALSE] + 1)
+    colnames(log10_reads_from_gene_controls) <- 
+        paste0("log10_", colnames(gene_controls_pdata)[read_counts_columns])
+    ## Define reads from biological genes
+    reads_from_biological_genes <- depth - 
+        gene_controls_pdata$reads_from_gene_controls
+    
+    ## Define cell controls
+    ### Determine if vector or list
+    if( is.null(cell_controls) | length(cell_controls) == 0 ) {
+        is_cell_control <- rep(FALSE, ncol(object))     
+        cell_controls_pdata <- data.frame(is_cell_control)
+        n_sets_cell_controls <- 1
+    } else {
+        if( is.list(cell_controls) ) {
+            cell_controls_list <- cell_controls
+            n_sets_cell_controls <- length(cell_controls)
+        }
+        else {
+            cell_controls_list <- list(cell_controls)
+            n_sets_cell_controls <- 1
+        }
+        for( i in seq_len(length(cell_controls_list)) ) {
+            cc_set <- cell_controls_list[[i]]
+            set_name <- names(cell_controls_list)[i]
+            if( is.logical(cc_set) ) {
+                is_cell_control <- cc_set
+                cc_set <- which(cc_set)
+            } else {
+                is_cell_control <- rep(FALSE, nrow(object))    
+            }
+            if(is.character(cc_set))
+                cc_set <- which(rownames(object) %in% cc_set)
+            is_cell_control[cc_set] <- TRUE
+            ## Construct data.frame for pData from this gene control set
+            col_name <- paste0("is_cell_control_", set_name)
+            if( exists("cell_controls_pdata") ) {
+                cell_controls_pdata <- data.frame(cell_controls_pdata, 
+                                                  col_name=is_cell_control)
+            } else
+                cell_controls_pdata <- data.frame(col_name=is_cell_control)
+        }
+    }
+     
+    ## Check column names and get cell controls across all sets
+    if( n_sets_gene_controls == 1 ) {
+        colnames(cell_controls_pdata) <- "is_cell_control"
+    } else {
+        ## Combine all cell controls
+        is_cell_control <- apply(cell_controls_pdata, 1, any)
+        cell_controls_pdata <- cbind(cell_controls_pdata, is_cell_control)
+    }
     
     ## Add cell-level QC metrics to pData
     new_pdata <- as.data.frame(pData(object))
+    ### Remove columns to be replaced
+    to_replace <- colnames(new_pdata) %in% c(colnames(gene_controls_pdata),
+                                             colnames(cell_controls_pdata),
+                                             "log10_reads_from_gene_controls")
+    new_pdata <- new_pdata[, !to_replace]
+    ### Add new QC metrics
     new_pdata$depth <- depth
     new_pdata$log10_depth <- log10(depth)
     new_pdata$coverage <- coverage
     new_pdata$filter_on_depth <- filter_on_depth
     new_pdata$filter_on_coverage <- filter_on_coverage
-    new_pdata$reads_from_control_genes <- reads_from_control_genes
-    new_pdata$log10_reads_from_control_genes <- log10(reads_from_control_genes+1)
+    new_pdata <- cbind(new_pdata, gene_controls_pdata, 
+                       log10_reads_from_gene_controls)
     new_pdata$reads_from_biological_genes <- reads_from_biological_genes
-    new_pdata$log10_reads_from_biological_genes <- log10(reads_from_biological_genes+1)
-    new_pdata$pct_reads_from_control_genes <- pct_reads_from_control_genes
+    new_pdata$log10_reads_from_biological_genes <- log10(reads_from_biological_genes+1) 
+    new_pdata <- cbind(new_pdata, cell_controls_pdata)
     pData(object) <- new_pdata %>% new("AnnotatedDataFrame", .)
     
-    ## Compute gene-level metrics
+    ## Add gene-level QC metrics to fData
     total_reads <- sum(counts(object))
     new_fdata <- as.data.frame(fData(object))
+    ### Remove columns that are to be replaced
+    to_replace <- colnames(new_fdata) %in% colnames(gene_controls_fdata)
+    new_fdata <- new_fdata[, !to_replace]
+    ### Add new QC information
     new_fdata$mean_exprs <- rowMeans(exprs(object))
     new_fdata$exprs_rank <- rank(rowMeans(exprs(object)))
     new_fdata$total_gene_reads <- rowSums(counts(object))
     new_fdata$log10_total_gene_reads <- log10(new_fdata$total_gene_reads+1)
     new_fdata$prop_total_reads <- rowSums(counts(object)) / total_reads
-    new_fdata$is_control_gene <- is_control_gene
     new_fdata$n_cells_exprs <- rowSums(isExprs(object))
+    new_fdata <- cbind(new_fdata, gene_controls_fdata)
     fData(object) <- new_fdata %>% new("AnnotatedDataFrame", .)
     
     ## Ensure sample names are correct and return object
@@ -138,6 +263,7 @@ a lower count threshold of 0.")
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' rownames(pd) <- pd$Cell
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' findImportantPCs(example_sceset, variable="coverage")
@@ -227,7 +353,7 @@ findImportantPCs <- function(object, variable="coverage") {
 
 ################################################################################
 
-#' Plot the most highly expressed genes
+#' Plot the genes with the highest read counts
 #'
 #' @param object an SCESet object containing expression values and
 #' experimental information. Must have been appropriately prepared.
@@ -247,12 +373,13 @@ findImportantPCs <- function(object, variable="coverage") {
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' rownames(pd) <- pd$Cell
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset <- calculateQCMetrics(example_sceset)
-#' plotMostExpressed(example_sceset, col_by_variable="coverage")
-#' plotMostExpressed(example_sceset, col_by_variable="Mutation_Status")
+#' plotHighestReadCounts(example_sceset, col_by_variable="coverage")
+#' plotHighestReadCounts(example_sceset, col_by_variable="Mutation_Status")
 #' 
-plotMostExpressed <- function(object, col_by_variable="coverage", n=50,
+plotHighestReadCounts <- function(object, col_by_variable="coverage", n=50,
                               drop_genes=NULL) {
     ## Check that variable to colour points exists
     if(!(col_by_variable %in% colnames(pData(object)))) {
@@ -383,6 +510,7 @@ plotMostExpressed <- function(object, col_by_variable="coverage", n=50,
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' rownames(pd) <- pd$Cell
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' vars <- names(pData(example_sceset))[c(2:3, 5:14)]
@@ -461,7 +589,7 @@ This variable will not be plotted."))
 #' the most important principal components for a given variable), or 
 #' "explanatory-variables" (showing a set of explanatory variables plotted 
 #' against each other, ordered by marginal variance explained).
-#' @param ... arguments passed to \code{plotMostExpressed}, 
+#' @param ... arguments passed to \code{plotHighestReadCounts}, 
 #' \code{plotImportantPCs} and \code{plotExplanatoryVariables} as appropriate.
 #'
 #' @details Calculate useful quality control metrics to help with pre-processing
@@ -470,8 +598,9 @@ This variable will not be plotted."))
 #' @examples
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
-#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
-#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
+#' rownames(pd) <- pd$Cell
+#' example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' plotQC(example_sceset, type="most", col_by_variable="Mutation_Status")
 #' plotQC(example_sceset, type="find", variable="coverage")
@@ -482,7 +611,7 @@ plotQC <- function(object, type="most-expressed", ...) {
     type <- match.arg(type, c("most-expressed", "find-pcs", 
                               "explanatory-variables"))
     if(type == "most-expressed") {
-        plot_out <- plotMostExpressed(object, ...)
+        plot_out <- plotHighestReadCounts(object, ...)
         print(plot_out)
         return(plot_out)
     }

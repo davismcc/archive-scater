@@ -27,7 +27,6 @@
 #' @param ncol number of columns to be used for the panels of the plot
 #' @param xlab label for x-axis; if \code{NULL} (default), then \code{x} will be
 #' used as the x-axis label
-#' @param ylab label for y-axis
 #' @param show_median logical, show the median for each group on the plot
 #' @param show_violin logical, show a violin plot for the distribution
 #' for each group on the plot
@@ -43,7 +42,7 @@
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' plotExpression(1:5, example_sceset, x="Mutation_Status", exprs_type="exprs", 
-#' colour="Patient", show_violin=TRUE, show_median=TRUE)
+#' colour="Cell_Cycle", show_violin=TRUE, show_median=TRUE)
 #' 
 plotExpression <- function(features, object, x, exprs_type="exprs", colour=NULL, 
                            shape=NULL, size=NULL, ncol=2, xlab=NULL, 

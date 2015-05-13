@@ -11,7 +11,7 @@
 \alias{cellPairwiseDistances,SCESet-method}
 \alias{cellPairwiseDistances.SCESet}
 \alias{cellPairwiseDistances<-}
-\alias{cellPairwiseDistances<-,cellDist}
+\alias{cellPairwiseDistances<-,SCESet,matrix-method}
 \title{cellPairwiseDistances in an SCESet object}
 \usage{
 cellPairwiseDistances(object)
