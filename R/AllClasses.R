@@ -28,6 +28,8 @@
 #'    containing pairwise distances between cells.}
 #'    \item{\code{genePairwiseDistances}:}{Matrix of class \code{"numeric"}, 
 #'    containing pairwise distances between genes.}
+#'    \item{\code{bootstraps}:}{Array of class \code{"numeric"} that can contain
+#'    bootstrap estimates of the expression or count values.}
 #'}
 #' @name SCESet
 #' @rdname SCESet
@@ -39,10 +41,11 @@ setClass("SCESet",
          slots=c(logged="logical",
                  lowerDetectionLimit="numeric",
                  cellPairwiseDistances="matrix",
-                 genePairwiseDistances="matrix"),
+                 genePairwiseDistances="matrix",
+                 bootstraps="array"),
          prototype = prototype(new("VersionedBiobase",
                                    versions = c(classVersion("ExpressionSet"),
-                                                SCESet = "0.1.1")))
+                                                SCESet = "0.1.2")))
 )
 
 
