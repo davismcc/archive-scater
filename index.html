@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>scater by davismcc</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>scater</h1>
+        <h2>Single cell analysis toolkit for expression from RNA-seq in R</h2>
+        <a href="https://github.com/davismcc/scater" class="button"><small>View project on</small> GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h1>
+<a id="scater-single-cell-analysis-toolkit-for-expression-with-r" class="anchor" href="#scater-single-cell-analysis-toolkit-for-expression-with-r" aria-hidden="true"><span class="octicon octicon-link"></span></a>scater: single-cell analysis toolkit for expression with R</h1>
+
+<p>Let's be honest. We'd rather not do quality control. We'd all rather spend our time answering exciting scientific questions and fitting sexy statistical models to nice clean datasets. Sadly, getting those nice clean datasets takes a lot of work. Work vital for the success of projects in genomics, but boring work. This package, <code>scater</code> aims to ease this burden, making rigorous QC easier so that we can get to the exciting stuff quicker.</p>
+
+<p>This package contains useful tools for the analysis of single-cell gene expression data using the statistical software R. The package places an emphasis on tools for quality control, visualisation and pre-processing of data before further downstream analysis.</p>
+
+<p>By providing wrapper functions to <a href="http://pachterlab.github.io/kallisto/"><code>kallisto</code></a>, a tool for extremely fast quantification of transcript abundance from RNA-seq reads, we can go from a set of FASTQ files to an object in an R session with summarised abundance values in a couple of lines of code, in a remarkably short period of time.</p>
+
+<p>The <code>scater</code> package provides a sane data structure for single-cell RNA-seq data based on <a href="http://www.bioconductor.org/">Bioconductor's</a> <a href="http://www.bioconductor.org/packages/release/bioc/html/Biobase.html"><em>ExpressionSet</em></a>, to organise complicated datasets with convenient subsetting. </p>
+
+<p>We provide many plotting functions and functions to compute QC metrics and make it easy to work through pre-processing, QC and normalisation steps. </p>
+
+<p>We hope that <code>scater</code> fills a useful niche between raw RNA-sequencing data and more focused downstream modelling tools such as 
+<a href="http://www.bioconductor.org/packages/release/bioc/html/monocle.html">monocle</a>, <a href="http://github.com/PMBio/scLVM">scLVM</a>,
+<a href="http://pklab.med.harvard.edu/scde/index.html">SCDE</a>, <a href="http://www.bioconductor.org/packages/release/bioc/html/edgeR.html">edgeR</a>, <a href="http://www.bioconductor.org/packages/release/bioc/html/limma.html">limma</a> and 
+so on.</p>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<p>This package currently lives on GitHub, so I recommend using Hadley Wickham's 
+<code>devtools</code> package to install <code>scater</code> directly from GitHub. If you don't have 
+<code>devtools</code> installed, then install that from CRAN (as shown below) and then run
+the call to install <code>scater</code>:</p>
+
+<div class="highlight highlight-r"><pre>install.packages(<span class="pl-s"><span class="pl-pds">"</span>devtools<span class="pl-pds">"</span></span>)
+<span class="pl-e">devtools</span><span class="pl-k">::</span>install_github(<span class="pl-s"><span class="pl-pds">"</span>davismcc/scater<span class="pl-pds">"</span></span>)</pre></div>
+
+<p>We plan to contribute <code>scater</code> to <a href="http://www.bioconductor.org/">Bioconductor</a> in the near future.</p>
+
+<h2>
+<a id="getting-started" class="anchor" href="#getting-started" aria-hidden="true"><span class="octicon octicon-link"></span></a>Getting started</h2>
+
+<p>The best place to start is the <a href="http://htmlpreview.github.io/?http://github.com/davismcc/scater/blob/master/inst/doc/vignette.html">vignette</a>.</p>
+
+<h2>
+<a id="acknowledgements-and-disclaimer" class="anchor" href="#acknowledgements-and-disclaimer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Acknowledgements and disclaimer</h2>
+
+<p>The package leans heavily on previously published work and packages, namely 
+<a href="http://bioconductor.org/packages/release/bioc/html/edgeR.html">edgeR</a> and 
+<a href="http://bioconductor.org/packages/release/bioc/html/limma.html">limma</a>. The <code>SCESet</code> is heavily inspired by the <code>CellDataSet</code> class from <a href="http://www.bioconductor.org/packages/release/bioc/html/monocle.html">monocle</a>.</p>
+
+
+
+<p>The package is currently in an Alpha state, so is to be used with appropriate 
+caution. Please do try it, though, and contact me with bug reports, feedback, 
+questions and suggestions to improve the package.</p>
+
+<p>Davis McCarthy, May 2015</p>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/davismcc/scater/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/davismcc/scater/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/davismcc/scater"></a> is maintained by <a href="https://github.com/davismcc">davismcc</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
