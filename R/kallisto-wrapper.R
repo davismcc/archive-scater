@@ -274,76 +274,99 @@ readKallistoResults <- function(kallisto_log=NULL, samples=NULL,
 
 
 
+#' Get feature annotation information from Biomart
+#' 
+#' Use the \code{biomaRt} package to add feature annotation information to an 
+#' \code{SCESet}. 
+#' 
+#' @param object an \code{SCESet} object
+#' @param filters character vector defining the "filters" terms to pass to the
+#' biomaRt::getBM function.
+#' @param attributes
+#' 
+#' @details See the documentation for the biomaRt package, specifically for the
+#' functions \code{useMart} and \code{getBM}, for information on what are 
+#' permitted values for the filters, attributes, biomart, dataset and host 
+#' arguments.
+#' 
+#' 
+#' 
+getBMFeatureAnnos <- function(object, filters="ensembl_transcript_id", 
+                              attributes=c("ensembl_transcript_id", 
+                                           "ensembl_gene_id", "mgi_symbol", 
+                                           "chromosome_name", "transcript_biotype"
+                                           "transcript_start", "transcript_end", 
+                                           "transcript_count"), 
+                              gene_symbol="mgi_symbol",
+                              gene_id="ensembl_gene_id",
+                              biomart="ensembl", 
+                              dataset="mmusculus_gene_ensembl",
+                              host=NULL) {
+    ## Define Biomart Mart to use
+    if( is.null(host) )
+        bmart <- biomaRt::useMart(biomart=biomart, dataset=biomart)
+    else 
+        bmart <- biomaRt::useMart(biomart=biomart, dataset=dataset, host=host) 
+    ## Define feature IDs from SCESet object
+    feature_ids <- featureNames(sce_kall_mmus)
+    ## Get annotations from biomaRt
+    feature_info <- biomaRt::getBM(attributes=attributes, 
+                                   filters=filters, 
+                                   values=feature_ids, mart=bmart)
+    ## Match the feature ids to the filters ids used to get info from biomaRt
+    mm <- match(feature_ids, feature_info[[filters]])
+    feature_info_full <- feature_info[mm, ]
+    rownames(feature_info_full) <- feature_ids
+    ## Define gene symbol and gene id
+    feature_info_full$gene_symbol <- feature_info_full[[gene_symbol]]
+    feature_info_full$gene_id <- feature_info_full[[gene_id]]
+    ## Use rownames for gene symbol if gene symbol is missing
+    na_symbol <- (is.na(feature_info_full$gene_symbol) | feature_info_full$gene_symbol == "")
+    feature_info_full$gene_symbol[na_symbol] <- 
+        rownames(feature_info_full)[na_symbol]
+    ## Use rownames from SCESet object (feature IDs) for gene_id if na
+    feature_info_full$gene_id[is.na(feature_info_full$gene_id)] <-
+        rownames(feature_info_full)[is.na(feature_info_full$gene_id)]
+    ## Add new feature annotations to SCESet object
+    fData(object) <- cbind(fData(object), feature_info_full)
+    ## Return SCESet object
+    object
+}
+
 #' Summarise feature counts
 #' 
-#' 
+#' Create a new \code{SCESet} with counts summarised at a different feature 
+#' level. A typical use would be to summarise transcript-level counts at gene
+#' level.
 #' 
 
-# 
-# library(biomaRt)
-# ensembl_mm <- biomaRt::useMart(biomart="ensembl", dataset="mmusculus_gene_ensembl")
-# # host="feb2014.archive.ensembl.org", 
-# filters <- biomaRt::listFilters(ensembl_mm)
-# attributes <- biomaRt::listAttributes(ensembl_mm)
-# 
-# feature_ids <- featureNames(sce_kall_mmus)
-# attr_wanted <- c("ensembl_transcript_id", "ensembl_gene_id", "hgnc_symbol", 
-#                  "chromosome_name", "start_position", "end_position", 
-#                  "transcript_start", "transcript_end", "transcript_count", 
-#                  "transcript_biotype", "cds_length",
-#                  "percentage_gc_content", "description")
-# attr_wanted <- c("ensembl_transcript_id", "ensembl_gene_id", "mgi_symbol", 
-#                  "chromosome_name", "transcript_start", "transcript_end", "transcript_count", 
-#                  "transcript_biotype")
-# feature_info <- biomaRt::getBM(attributes=attr_wanted, filters="ensembl_transcript_id", 
-#                    values=feature_ids, mart=ensembl_mm)
-# # feature_info <- dplyr::mutate(feature_info, 
-# #                        feature_length=(transcript_end - transcript_start))
-# dim(feature_info)
-# length(feature_ids)
-# knitr::kable(head(feature_info))
-# 
-# mm <- match(feature_ids, feature_info$ensembl_transcript_id)
-# feature_info_full <- feature_info[mm, ]
-# rownames(feature_info_full) <- feature_ids
-# feature_info_full %>% head
-# na_symbol <- (is.na(feature_info_full$mgi_symbol) | feature_info_full$gene_symbol == "")
-# feature_info_full$mgi_symbol[na_symbol] <- rownames(feature_info_full)[na_symbol]
-# ## Use ERCC IDs for ensembl_gene_id if na
-# feature_info_full$ensembl_gene_id[is.na(feature_info_full$ensembl_gene_id)] <-
-#     rownames(feature_info_full)[is.na(feature_info_full$ensembl_gene_id)]
-# feature_info_full %>% tail
-# 
-# fData(sce_kall_mmus) <- cbind(fData(sce_kall_mmus), feature_info_full)
-# fData(sce_kall_mmus) %>% head
-# fData(sce_kall_mmus) %>% tail
-# 
-# # Summarise counts at the gene level
-# tmp_counts <- dplyr::tbl_df(data.frame(ensembl_gene_id=fData(sce_kall_mmus)$ensembl_gene_id, 
-#                          counts(sce_kall_mmus)))
-# tmp_counts[1:10, 1:6]
-# tmp_counts_long <- reshape2::melt(tmp_counts)
-# tmp_counts_long %>% head
-# tmp_counts_long <- dplyr::group_by(tmp_counts_long, ensembl_gene_id, variable)
-# counts_gene_long <- dplyr::summarise(tmp_counts_long, est_counts=sum())
-# counts_gene_long %>% head
-# counts_gene <- reshape2::acast(tmp_counts_long, ensembl_gene_id ~ variable, sum)
-# dim(counts_gene)
-# sum(counts_gene != 0)
-# sum(counts_gene == 0)
-# all(counts_gene == 0)
-# counts_gene[sample(nrow(counts_gene), 10), 1:6]
-# counts_gene[,1:6] %>% tail
-# 
-# 
-# ## Use gene symbols for rownames
-# sum(duplicated(fData(sce_kall_mmus)$mgi_symbol))
-# rownames(sce_kall_mmus) <- paste(fData(sce_kall_mmus)$hgnc_symbol, 
-#                              fData(sce_kall_mmus)$ensembl_gene_id, sep="_")
-# rownames(sce_kall_mmus) %>% head
-# fData(sce_kall_mmus) %>% tail(20)
-# 
-# 
+
+# Summarise counts at the gene level
+tmp_counts <- dplyr::tbl_df(data.frame(ensembl_gene_id=fData(sce_kall_mmus)$ensembl_gene_id, 
+                         counts(sce_kall_mmus)))
+tmp_counts[1:10, 1:6]
+tmp_counts_long <- reshape2::melt(tmp_counts)
+tmp_counts_long %>% head
+tmp_counts_long <- dplyr::group_by(tmp_counts_long, ensembl_gene_id, variable)
+counts_gene_long <- dplyr::summarise(tmp_counts_long, est_counts=sum())
+counts_gene_long %>% head
+counts_gene <- reshape2::acast(tmp_counts_long, ensembl_gene_id ~ variable, sum)
+dim(counts_gene)
+sum(counts_gene != 0)
+sum(counts_gene == 0)
+all(counts_gene == 0)
+counts_gene[sample(nrow(counts_gene), 10), 1:6]
+counts_gene[,1:6] %>% tail
+
+
+## Use gene symbols for rownames
+sum(duplicated(fData(sce_kall_mmus)$mgi_symbol))
+rownames(sce_kall_mmus) <- paste(fData(sce_kall_mmus)$hgnc_symbol, 
+                             fData(sce_kall_mmus)$ensembl_gene_id, sep="_")
+rownames(sce_kall_mmus) %>% head
+fData(sce_kall_mmus) %>% tail(20)
+
+
 # # Compare these counts to those produced by WTCHG Core
 # load("~/021_Cell_Cycle/cache/scs_mouse_unfiltered_vers2.RData")
 # scs_mouse
