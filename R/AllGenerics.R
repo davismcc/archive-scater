@@ -229,3 +229,14 @@ setGeneric("plotExpression", function(object, ...) {
 })
 
 
+#' @name plotPCA
+#' @export
+#' @docType methods
+#' @rdname plotPCA
+if( !isGeneric("plotPCA") ) {
+    ## plotPCA is a generic in BiocGenerics_0.14.0 in R 3.2.0 - for earlier
+    ## versions need to manually add it as a generic
+    setGeneric("plotPCA", function(object, ...) {
+        standardGeneric("plotPCA")
+    })
+}

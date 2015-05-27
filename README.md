@@ -28,6 +28,34 @@ devtools::install_github("davismcc/scater")
 
 We plan to contribute `scater` to Bioconductor in the near future.
 
+There are several other packages from CRAN and Bioconductor that `scater` uses, 
+so you will need to have these packages installed as well. Not all of the 
+following are strictly necessary, but they enhance the functionality of `scater`
+and are good packages in their own right.
+
+CRAN packages:
+
+```{r}
+install.packages(c("ggplot2", "ggthemes", "knitr", "magrittr", "matrixStats", 
+                "plyr", "readr", "reshape2", "rjson", "testthat"))
+```
+
+Bioconductor packages:
+
+```{r}
+source("http://bioconductor.org/biocLite.R")
+biocLite(c("Biobase", "BiocGenerics", "biomaRt", "edgeR", "limma", "monocle", 
+        "rhdf5"))
+```
+
+You might like to install `dplyr` from Hadley Wickham's GitHub site (`dplyr` was
+not available on CRAN for R 3.2.0 when this was written):
+
+```{r }
+devtools::install_github("hadley/lazyeval")
+devtools::install_github("hadley/dplyr")
+```
+
 
 ## Getting started
 

@@ -32,5 +32,6 @@ Suggests:
     BiocStyle,
     ggthemes,
     knitr,
+    parallel,
     testthat
 VignetteBuilder: knitr
