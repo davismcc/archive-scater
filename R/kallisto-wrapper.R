@@ -304,3 +304,4 @@ readKallistoResults <- function(kallisto_log=NULL, samples=NULL,
     sce_out
 }
 
+
