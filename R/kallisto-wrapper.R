@@ -308,7 +308,7 @@ getBMFeatureAnnos <- function(object, filters="ensembl_transcript_id",
     else 
         bmart <- biomaRt::useMart(biomart=biomart, dataset=dataset, host=host) 
     ## Define feature IDs from SCESet object
-    feature_ids <- featureNames(sce_kall_mmus)
+    feature_ids <- featureNames(object)
     ## Get annotations from biomaRt
     feature_info <- biomaRt::getBM(attributes=attributes, 
                                    filters=filters, 
@@ -342,30 +342,30 @@ getBMFeatureAnnos <- function(object, filters="ensembl_transcript_id",
 
 
 # Summarise counts at the gene level
-tmp_counts <- dplyr::tbl_df(data.frame(ensembl_gene_id=fData(sce_kall_mmus)$ensembl_gene_id, 
-                         counts(sce_kall_mmus)))
-tmp_counts[1:10, 1:6]
-tmp_counts_long <- reshape2::melt(tmp_counts)
-tmp_counts_long %>% head
-tmp_counts_long <- dplyr::group_by(tmp_counts_long, ensembl_gene_id, variable)
-counts_gene_long <- dplyr::summarise(tmp_counts_long, est_counts=sum())
-counts_gene_long %>% head
-counts_gene <- reshape2::acast(tmp_counts_long, ensembl_gene_id ~ variable, sum)
-dim(counts_gene)
-sum(counts_gene != 0)
-sum(counts_gene == 0)
-all(counts_gene == 0)
-counts_gene[sample(nrow(counts_gene), 10), 1:6]
-counts_gene[,1:6] %>% tail
+# tmp_counts <- dplyr::tbl_df(data.frame(ensembl_gene_id=fData(sce_kall_mmus)$ensembl_gene_id, 
+#                          counts(sce_kall_mmus)))
+# tmp_counts[1:10, 1:6]
+# tmp_counts_long <- reshape2::melt(tmp_counts)
+# tmp_counts_long %>% head
+# tmp_counts_long <- dplyr::group_by(tmp_counts_long, ensembl_gene_id, variable)
+# counts_gene_long <- dplyr::summarise(tmp_counts_long, est_counts=sum())
+# counts_gene_long %>% head
+# counts_gene <- reshape2::acast(tmp_counts_long, ensembl_gene_id ~ variable, sum)
+# dim(counts_gene)
+# sum(counts_gene != 0)
+# sum(counts_gene == 0)
+# all(counts_gene == 0)
+# counts_gene[sample(nrow(counts_gene), 10), 1:6]
+# counts_gene[,1:6] %>% tail
 
 
 ## Use gene symbols for rownames
-sum(duplicated(fData(sce_kall_mmus)$mgi_symbol))
-rownames(sce_kall_mmus) <- paste(fData(sce_kall_mmus)$hgnc_symbol, 
-                             fData(sce_kall_mmus)$ensembl_gene_id, sep="_")
-rownames(sce_kall_mmus) %>% head
-fData(sce_kall_mmus) %>% tail(20)
-
+# sum(duplicated(fData(sce_kall_mmus)$mgi_symbol))
+# rownames(sce_kall_mmus) <- paste(fData(sce_kall_mmus)$hgnc_symbol, 
+#                              fData(sce_kall_mmus)$ensembl_gene_id, sep="_")
+# rownames(sce_kall_mmus) %>% head
+# fData(sce_kall_mmus) %>% tail(20)
+# 
 
 # # Compare these counts to those produced by WTCHG Core
 # load("~/021_Cell_Cycle/cache/scs_mouse_unfiltered_vers2.RData")
