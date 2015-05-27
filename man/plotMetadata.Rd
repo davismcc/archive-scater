@@ -18,8 +18,8 @@ coverage against log10(depth).}
 Plot metadata for cells or genes
 }
 \details{
-Plot phenotype data from an SCESet object. If one variable is
-supplied then a density plot will be returned. If both variables are
+Plot cell or feature metadata from an SCESet object. If one variable
+ is supplied then a density plot will be returned. If both variables are
 continuous (numeric) then a scatter plot will be returned. If one variable is
 discrete and one continuous then a violin plot with jittered points overlaid
 will be returned. If both variables are discrete then a jitter plot will be

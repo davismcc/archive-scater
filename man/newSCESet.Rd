@@ -2,14 +2,23 @@
 % Please edit documentation in R/SCESet-methods.R
 \name{newSCESet}
 \alias{newSCESet}
-\title{Creates a new SCESet object.}
+\title{Create a new SCESet object.}
 \usage{
-newSCESet(cellData = NULL, phenoData = NULL, featureData = NULL,
-  experimentData = NULL, countData = NULL, lowerDetectionLimit = 0,
-  logged = FALSE, isExprs = NULL)
+newSCESet(exprsData = NULL, countData = NULL, tpmData = NULL,
+  fpkmData = NULL, phenoData = NULL, featureData = NULL,
+  experimentData = NULL, is_exprsData = NULL, lowerDetectionLimit = 0,
+  logged = FALSE)
 }
 \arguments{
-\item{cellData}{expression data matrix for an experiment}
+\item{exprsData}{expression data matrix for an experiment}
+
+\item{countData}{data matrix containing raw count expression values}
+
+\item{tpmData}{matrix of class \code{"numeric"} containing
+transcripts-per-million (TPM) expression values}
+
+\item{fpkmData}{matrix of class \code{"numeric"} containing fragments per
+kilobase of exon per million reads mapped (FPKM) expression values}
 
 \item{phenoData}{data frame containing attributes of individual cells}
 
@@ -18,17 +27,15 @@ newSCESet(cellData = NULL, phenoData = NULL, featureData = NULL,
 \item{experimentData}{MIAME class object containing metadata data and details
 about the experiment and dataset.}
 
-\item{countData}{data matrix containing raw count expression values}
+\item{is_exprsData}{matrix of class \code{"logical"}, indicating whether
+or not each observation is above the \code{lowerDetectionLimit}.}
 
 \item{lowerDetectionLimit}{the minimum expression level that constitutes true
 expression (defaults to zero and uses count data to determine if an
 observation is expressed or not)}
 
-\item{logged}{logical, if a value is supplied for the cellData argument, are
+\item{logged}{logical, if a value is supplied for the exprsData argument, are
 the expression values already on the log2 scale, or not?}
-
-\item{isExprs}{matrix of class \code{"logical"}, indicating whether
-or not each observation is above the \code{lowerDetectionLimit}.}
 }
 \value{
 a new SCESet object
@@ -45,12 +52,29 @@ object containing raw count data.
 }
 \details{
 SCESet objects store a matrix of expression values. These values are
-typically counts-per-million (cpm), fragments per kilobase per million mapped
-(FPKM) or some other output from a program that calculates expression values
-from RNA-Seq reads. However, they could also be values from a single cell
-qPCR run or some other type of assay. The newSCESet function can also accept
-raw count values, in which case it uses a function from the package edgeR to
-compute log2(counts-per-million) and uses these as the expression values.
+typically transcripts-per-million (tpm), counts-per-million (cpm), fragments
+per kilobase per million mapped (FPKM) or some other output from a program
+that calculates expression values from RNA-Seq reads. We recommend that
+expression values on the log2 scale are used for the 'exprs' slot in the
+SCESet. For example, you may wish to store raw tpm values in the 'tpm' slot
+and \code{log2(tpm + 1)} values in the 'exprs' slot. However, expression
+values could also be values from a single cell qPCR run or some other type of
+ assay. The newSCESet function can also accept raw count values. In this case
+ see \code{\link{calculateTPM}} and \code{\link{calculateFPKM}} for computing
+ TPM and FPKM expression values, respectively, from counts. The function
+ \code{\link[edgeR]{cpm}} from the package edgeR to can be used to compute
+ log2(counts-per-million), if desired.
+
+ An \code{SCESet} object has to have the \code{'exprs'} slot defined, so if
+ the \code{exprsData} argument is \code{NULL}, then this function will define
+ \code{'exprs'} with the following order of precedence: log2(TPM + 1), if
+ \code{tpmData} is defined; log2(FPKM + 1) if \code{fpkmData} is defined;
+ otherwise log2(counts-per-million + 1) are used. Note that for most analyses
+ counts-per-million are not recommended, and if possible transcripts-per-million
+ should be used.
+
+ In many downstream functions you will likely find it most convenient if the
+ \code{'exprs'} values are on the log2-scale, so this is recommended.
 }
 \examples{
 data("sc_example_counts")

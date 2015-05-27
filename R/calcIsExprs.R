@@ -6,7 +6,7 @@
 #' @param object an SCESet object with expression and/or count data
 #' @param lowerDetectionLimit numeric scalar giving the minimum expression level
 #' for an expression observation in a cell for it to qualify as expressed
-#' @param expr_data character scalar indicating whether the count data ("counts") or the 
+#' @param exprs_data character scalar indicating whether the count data ("counts") or the 
 #' transformed expression data ("exprs") should be used to define if an 
 #' observation is expressed or not
 #' @return a logical matrix indicating whether or not a gene in a particular 
@@ -16,20 +16,20 @@
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' example_sceset <- newSCESet(countData=sc_example_counts)
-#' isExprs(example_sceset) <- calcIsExprs(example_sceset, lowerDetectionLimit=1,
-#' expr_data="exprs")
-calcIsExprs <- function(object, lowerDetectionLimit = NULL, expr_data = "counts")
+#' is_exprs(example_sceset) <- calcIsExprs(example_sceset, lowerDetectionLimit=1,
+#' exprs_data="exprs")
+calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_data = "counts")
 {
     ## Check that args are appropriate
-    expr_data <- match.arg(expr_data, c("counts", "exprs"))
-    if ( expr_data == "counts" ) {
+    exprs_data <- match.arg(exprs_data, c("counts", "exprs"))
+    if ( exprs_data == "counts" ) {
         dat_matrix <- counts(object)
     }
     else {
-        if ( expr_data == "exprs" )
+        if ( exprs_data == "exprs" )
             dat_matrix <- exprs(object)
         else
-            stop("Did not recognise 'expr_data' argument. Should be either 'counts' or 'exprs'.")
+            stop("Did not recognise 'exprs_data' argument. Should be either 'counts' or 'exprs'.")
     }
     ## Extract lowerDetectionLimit if not provided
     if( is.null(lowerDetectionLimit) )

@@ -10,6 +10,21 @@
 ### * .getRSquared
 ### * .getTypeOfVariable
 
+#### Some ideas for adding to QC metrics - proportion of library from top x genes
+#     subset(seq_real_estate_long, Gene == 10) %>% 
+#         ggplot(aes(x = Proportion_Library, colour = culture)) + 
+#         geom_density(aes(fill = culture), alpha = 0.5) + 
+#         facet_wrap(~perturbed, ncol=2) + 
+#         theme_igray(16) + scale_colour_tableau() + scale_fill_tableau() + 
+#         xlab("Cumulative proportion of library from 10 most expressed genes") + 
+#         ylab("Density")
+
+#     subset(seq_real_estate_long, Gene == 50) %>% 
+#         ggplot(aes(x = norm.lib.size, y = Proportion_Library, 
+#                    colour = culture)) + geom_point(size = 4, alpha = 0.7) + geom_rug(alpha = 0.7) + 
+#         facet_wrap(~perturbed, ncol = 2) + theme_igray(16) + scale_colour_tableau() + 
+#         scale_fill_tableau() + ylab("Cumulative proportion of library from 50 most expressed genes") + 
+#         xlab("Normalised library size")
 
 #' Calculate QC metrics
 #'
@@ -44,22 +59,21 @@ calculateQCMetrics <- function(object, gene_controls=NULL, cell_controls=NULL,
         stop("object must be an SCESet object.")
     
     ## Compute cell-level metrics
-    if( is.null(isExprs(object)) ) {
+    if( is.null(is_exprs(object)) ) {
         if(is.null(counts(object))) {
-            stop("Please define isExprs(object). E.g. use isExprs(object) <- exprs(object) > 0.1")
+            stop("Please define is_exprs(object). E.g. use is_exprs(object) <- exprs(object) > 0.1")
         } else {            
-            warning("isExprs(object) is null. Defining 'isExprs' using count data and 
+            warning("is_exprs(object) is null. Defining 'is_exprs' using count data and 
 a lower count threshold of 0.")   
-            
             isexprs <- calcIsExprs(object, lowerDetectionLimit=0)
             rownames(isexprs) <- rownames(counts(object))
             colnames(isexprs) <- colnames(counts(object))
-            isExprs(object) <- isexprs
+            is_exprs(object) <- isexprs
         }       
     }    
     ## Compute depth and coverage and find outliers
     depth <- colSums(counts(object))
-    coverage <- colSums(isExprs(object))
+    coverage <- colSums(is_exprs(object))
     mad_coverage <- mad(coverage)
     med_coverage <- median(coverage)
     keep_coverage <- c(med_coverage - 5*mad_coverage, 
@@ -230,7 +244,7 @@ a lower count threshold of 0.")
     new_fdata$total_gene_reads <- rowSums(counts(object))
     new_fdata$log10_total_gene_reads <- log10(new_fdata$total_gene_reads+1)
     new_fdata$prop_total_reads <- rowSums(counts(object)) / total_reads
-    new_fdata$n_cells_exprs <- rowSums(isExprs(object))
+    new_fdata$n_cells_exprs <- rowSums(is_exprs(object))
     new_fdata <- cbind(new_fdata, gene_controls_fdata)
     fData(object) <- new_fdata %>% new("AnnotatedDataFrame", .)
     

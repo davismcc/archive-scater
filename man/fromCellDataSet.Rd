@@ -9,9 +9,9 @@ fromCellDataSet(cds, useExpression = TRUE, logged = FALSE)
 \arguments{
 \item{cds}{A \code{CellDataSet} from the \code{monocle} package}
 
-\item{useExpression}{logical If TRUE (default), `cellData` is mapped to `exprs(sce)`, otherwise `counts(sce)`}
+\item{useExpression}{logical If TRUE (default), `exprsData` is mapped to `exprs(sce)`, otherwise `counts(sce)`}
 
-\item{logged}{logical, if a value is supplied for the cellData argument, are the expression values already on the log2 scale, or not?}
+\item{logged}{logical, if a value is supplied for the exprsData argument, are the expression values already on the log2 scale, or not?}
 }
 \value{
 An object of class \code{SCESet}

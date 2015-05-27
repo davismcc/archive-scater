@@ -60,34 +60,46 @@ runKallisto <- function(targets_file, transcript_index, single_end=TRUE,
                         output_prefix="output", fragment_length=NULL, n_cores=2, 
                         n_bootstrap_samples=0, bootstrap_seed=NULL,
                         plaintext=FALSE, verbose=TRUE) {
+    targets_dir <- paste0(dirname(targets_file), "/")
     targets <- read.delim(targets_file, stringsAsFactors=FALSE, header=TRUE)
     if( !(ncol(targets)==2 | ncol(targets)==3) )
         stop("Targets file must have either 2 columns (single-end reads) or 
              3 columns (paired-end reads). File should be tab-delimited with
              column headers")
+    if( ncol(targets)==2 & !single_end ) {
+        warning("targets only has two columns; proceeding assuming single-end reads")
+        single_end <- TRUE
+    }
+    if( ncol(targets)==3 & single_end ) {
+        warning("targets only has three columns, but 'single_end' was TRUE; proceeding assuming paired-end reads")
+        single_end <- FALSE
+    }
     samples <- targets[,1]
     ## If we have single-end reads then fragment_length must be defined
     if( single_end & is.null(fragment_length) )
-        stop("If single-end reads are used, then fragment_length must be 
-             defined. Either a scalar giving the average fragment length to use
-             for all samples, or a vector providing the ave fragment length for
-             each sample.")
+        stop("If single-end reads are used, then fragment_length must be defined. Either a scalar giving the average fragment length to use for all samples, or a vector providing the ave fragment length for each sample.")
     else
         paired_end <- !single_end
+    ## Make sure that we'll be able to find the fastq files
+    targets[, 2] <- paste0(targets_dir, targets[, 2])
+    if( ncol(targets) == 3 )
+        targets[, 3] <- paste0(targets_dir, targets[, 3])
     ## Generate calls to kallisto
     output_dirs <- paste(output_prefix, samples, sep="_")
     kallisto_args <- paste("quant -i", transcript_index, "-o",
                             output_dirs, "-b", n_bootstrap_samples)
     names(kallisto_args) <- samples
+    if( single_end )
+        kallisto_args <- paste(kallisto_args, "--single")
     if( !is.null(fragment_length) )
         kallisto_args <- paste(kallisto_args, "-l", fragment_length)
     if( !is.null(bootstrap_seed) )
         kallisto_args <- paste0(kallisto_args, " --seed=", bootstrap_seed)
     if( plaintext ) # output bootstrap results in a plaintext file
         kallisto_args <- paste0(kallisto_args, " --plaintext" )
-    kallisto_args <- paste(kallisto_args, targets[,2])
+    kallisto_args <- paste(kallisto_args, targets[, 2])
     if(paired_end)
-        kallisto_args <- paste(kallisto_args, targets[,3])
+        kallisto_args <- paste(kallisto_args, targets[, 3])
     ##     
     if(verbose)
         print(paste("Analysis started: ", Sys.time()))
@@ -95,9 +107,6 @@ runKallisto <- function(targets_file, transcript_index, single_end=TRUE,
     # one or more parLapply calls to kallisto
     kallisto_log <- parallel::parLapply(cl, kallisto_args, .call_kallisto, 
                                         output_prefix, verbose)
-    #     parallel::parLapply(cl, kallisto_args,
-    #               function(kcall) {system(kcall, ignore.stdout=!verbose, 
-    #                                      ignore.stderr=!verbose))
     parallel::stopCluster(cl)
     ## Return log of kallisto jobs, so user knows where to find results
     names(kallisto_log) <- samples
@@ -117,7 +126,18 @@ runKallisto <- function(targets_file, transcript_index, single_end=TRUE,
     list(kallisto_call=paste("kallisto", kcall), kallisto_log=out)
 }
 
-
+### Possible test for kallisto wrapper, but seems to leave tests hanging (not clear why)
+# context("kallisto tests on inputs")
+# 
+# test_that("tests for presence of average fragment length if single-end reads", {
+#     expect_that(runKallisto("../extdata/targets.txt", 
+#                             "../extdata/transcripts.idx",
+#                             output_prefix="../extdata/output", n_cores=12, 
+#                             fragment_length=NULL, verbose=TRUE), 
+#                 gives_warning("targets only has three columns, but 'single_end' was TRUE; proceeding assuming paired-end reads"))
+# })
+# 
+# 
 
 ################################################################################
 #' Read kallisto results for a single sample into a list
@@ -167,6 +187,8 @@ readKallistoResultsOneSample <- function(directory, read_h5=FALSE) {
     list(abundance=abundance, run_info=run_info)
 }
 
+
+################################################################################
 #' Read kallisto results from a batch of jobs 
 #' 
 #' After generating transcript/feature abundance results using kallisto for a 
@@ -238,13 +260,17 @@ readKallistoResults <- function(kallisto_log=NULL, samples=NULL,
     
     ## Read kallisto results into results objects
     if( verbose )
-        cat(paste("\nReading results for", nsamples, "samples: "))
+        cat(paste("\nReading results for", nsamples, "samples:\n"))
     for( i in seq_len(nsamples) ) {
         tmp_samp <- readKallistoResultsOneSample(directories[i], read_h5=read_h5)
         ## counts
-        est_counts[,i] <- tmp_samp$abundance$est_counts
+        if( length(tmp_samp$abundance$est_counts) != nfeatures )
+            warning(paste("Results for directory", directories[i], "do not match dimensions of other samples."))
+        else            
+            est_counts[,i] <- tmp_samp$abundance$est_counts
         ## tpm
-        tpm[,i] <- tmp_samp$abundance$tpm
+        if( length(tmp_samp$abundance$est_counts) == nfeatures )
+            tpm[,i] <- tmp_samp$abundance$tpm
         ## run info
         pdata$n_targets[i] <- tmp_samp$run_info$n_targets
         pdata$n_bootstraps[i] <- tmp_samp$run_info$n_bootstraps
@@ -255,151 +281,26 @@ readKallistoResults <- function(kallisto_log=NULL, samples=NULL,
         ## bootstraps
         if( read_h5 )
             bootstraps[,i,] <- as.matrix(tmp_samp$abundance[,-c(1:5)])
-        if( verbose )
+        if( verbose ) {
             cat(".")
+            if( i %% 80 == 0)
+                cat("\n")
+        }
     }
     if( verbose )
         cat("\n")
     ## Produce SCESet object
     pdata <- new("AnnotatedDataFrame", pdata)
     fdata <- new("AnnotatedDataFrame", fdata)
-    sce_out <- newSCESet(cellData=NULL, phenoData=pdata, featureData=fdata,
-                         countData=est_counts, lowerDetectionLimit=0)
+    sce_out <- newSCESet(exprsData=log2(tpm + 1), phenoData=pdata, 
+                         featureData=fdata, countData=est_counts, 
+                         lowerDetectionLimit=0)
     tpm(sce_out) <- tpm
+    if( verbose )
+        cat("Using log2(TPM + 1) as 'exprs' values in output.")
     if( read_h5 )
         bootstraps(sce_out) <- bootstraps
     ## Return SCESet object
     sce_out
 }
 
-
-
-#' Get feature annotation information from Biomart
-#' 
-#' Use the \code{biomaRt} package to add feature annotation information to an 
-#' \code{SCESet}. 
-#' 
-#' @param object an \code{SCESet} object
-#' @param filters character vector defining the "filters" terms to pass to the
-#' biomaRt::getBM function.
-#' @param attributes
-#' 
-#' @details See the documentation for the biomaRt package, specifically for the
-#' functions \code{useMart} and \code{getBM}, for information on what are 
-#' permitted values for the filters, attributes, biomart, dataset and host 
-#' arguments.
-#' 
-#' 
-#' 
-getBMFeatureAnnos <- function(object, filters="ensembl_transcript_id", 
-                              attributes=c("ensembl_transcript_id", 
-                                           "ensembl_gene_id", "mgi_symbol", 
-                                           "chromosome_name", "transcript_biotype"
-                                           "transcript_start", "transcript_end", 
-                                           "transcript_count"), 
-                              gene_symbol="mgi_symbol",
-                              gene_id="ensembl_gene_id",
-                              biomart="ensembl", 
-                              dataset="mmusculus_gene_ensembl",
-                              host=NULL) {
-    ## Define Biomart Mart to use
-    if( is.null(host) )
-        bmart <- biomaRt::useMart(biomart=biomart, dataset=biomart)
-    else 
-        bmart <- biomaRt::useMart(biomart=biomart, dataset=dataset, host=host) 
-    ## Define feature IDs from SCESet object
-    feature_ids <- featureNames(sce_kall_mmus)
-    ## Get annotations from biomaRt
-    feature_info <- biomaRt::getBM(attributes=attributes, 
-                                   filters=filters, 
-                                   values=feature_ids, mart=bmart)
-    ## Match the feature ids to the filters ids used to get info from biomaRt
-    mm <- match(feature_ids, feature_info[[filters]])
-    feature_info_full <- feature_info[mm, ]
-    rownames(feature_info_full) <- feature_ids
-    ## Define gene symbol and gene id
-    feature_info_full$gene_symbol <- feature_info_full[[gene_symbol]]
-    feature_info_full$gene_id <- feature_info_full[[gene_id]]
-    ## Use rownames for gene symbol if gene symbol is missing
-    na_symbol <- (is.na(feature_info_full$gene_symbol) | feature_info_full$gene_symbol == "")
-    feature_info_full$gene_symbol[na_symbol] <- 
-        rownames(feature_info_full)[na_symbol]
-    ## Use rownames from SCESet object (feature IDs) for gene_id if na
-    feature_info_full$gene_id[is.na(feature_info_full$gene_id)] <-
-        rownames(feature_info_full)[is.na(feature_info_full$gene_id)]
-    ## Add new feature annotations to SCESet object
-    fData(object) <- cbind(fData(object), feature_info_full)
-    ## Return SCESet object
-    object
-}
-
-#' Summarise feature counts
-#' 
-#' Create a new \code{SCESet} with counts summarised at a different feature 
-#' level. A typical use would be to summarise transcript-level counts at gene
-#' level.
-#' 
-
-
-# Summarise counts at the gene level
-tmp_counts <- dplyr::tbl_df(data.frame(ensembl_gene_id=fData(sce_kall_mmus)$ensembl_gene_id, 
-                         counts(sce_kall_mmus)))
-tmp_counts[1:10, 1:6]
-tmp_counts_long <- reshape2::melt(tmp_counts)
-tmp_counts_long %>% head
-tmp_counts_long <- dplyr::group_by(tmp_counts_long, ensembl_gene_id, variable)
-counts_gene_long <- dplyr::summarise(tmp_counts_long, est_counts=sum())
-counts_gene_long %>% head
-counts_gene <- reshape2::acast(tmp_counts_long, ensembl_gene_id ~ variable, sum)
-dim(counts_gene)
-sum(counts_gene != 0)
-sum(counts_gene == 0)
-all(counts_gene == 0)
-counts_gene[sample(nrow(counts_gene), 10), 1:6]
-counts_gene[,1:6] %>% tail
-
-
-## Use gene symbols for rownames
-sum(duplicated(fData(sce_kall_mmus)$mgi_symbol))
-rownames(sce_kall_mmus) <- paste(fData(sce_kall_mmus)$hgnc_symbol, 
-                             fData(sce_kall_mmus)$ensembl_gene_id, sep="_")
-rownames(sce_kall_mmus) %>% head
-fData(sce_kall_mmus) %>% tail(20)
-
-
-# # Compare these counts to those produced by WTCHG Core
-# load("~/021_Cell_Cycle/cache/scs_mouse_unfiltered_vers2.RData")
-# scs_mouse
-# head(featureNames(scs_mouse))
-# ## Keep overlapping genes for kallisto data
-# sum(colnames(counts_gene) %in% scs_mouse$Readgroup)
-# keep_col <- colnames(counts_gene) %in% scs_mouse$Readgroup
-# keep_row <- rownames(counts_gene) %in% featureNames(scs_mouse)
-# counts_kallisto <- counts_gene[keep_row, keep_col]
-# dim(counts_kallisto)
-# ## Keep overlapping genes for Core data
-# keep_row <- featureNames(scs_mouse) %in% rownames(counts_kallisto)
-# keep_col <- scs_mouse$Readgroup %in% colnames(counts_kallisto)
-# scs_mouse_compare <- scs_mouse[keep_row, keep_col]
-# dim(scs_mouse_compare)
-# ## Get genes and cells ordered the same way
-# mcol <- match(scs_mouse_compare$Readgroup, colnames(counts_kallisto))
-# identical(colnames(counts_kallisto)[mcol], scs_mouse_compare$Readgroup)
-# mrow <- match(featureNames(scs_mouse_compare), rownames(counts_kallisto))
-# identical(rownames(counts_kallisto)[mrow], featureNames(scs_mouse_compare))
-# counts_kallisto <- counts_kallisto[mrow, mcol]
-# ## Plot log-counts to compare quantification
-# par(mfcol=c(2,2))
-# for(i in 1:4) {
-#     rsamp <- sample(nrow(counts_kallisto), 1000)
-#     csamp <- sample(ncol(counts_kallisto), 30)
-#     plot(x=(counts(scs_mouse_compare)[rsamp, csamp] + 0.5), 
-#          y=(counts_kallisto[rsamp, csamp] + 0.5),
-#          pch=21, bg=scales::alpha("gray30", 0.1), col="gray50", cex=0.7,
-#          panel.first=grid(), log="xy", asp=1, xlab="Counts (+0.5) from WTCHG Core",
-#          ylab="Counts (+0.5) from kallisto")
-#     title("Sample from 1000 genes, 30 cells")
-#     abline(0,1)
-# }
-# 
-# 

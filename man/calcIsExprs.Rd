@@ -5,7 +5,7 @@
 \title{Calculate which gene are expressed in which cells using a count
 threshold}
 \usage{
-calcIsExprs(object, lowerDetectionLimit = NULL, expr_data = "counts")
+calcIsExprs(object, lowerDetectionLimit = NULL, exprs_data = "counts")
 }
 \arguments{
 \item{object}{an SCESet object with expression and/or count data}
@@ -13,7 +13,7 @@ calcIsExprs(object, lowerDetectionLimit = NULL, expr_data = "counts")
 \item{lowerDetectionLimit}{numeric scalar giving the minimum expression level
 for an expression observation in a cell for it to qualify as expressed}
 
-\item{expr_data}{character scalar indicating whether the count data ("counts") or the
+\item{exprs_data}{character scalar indicating whether the count data ("counts") or the
 transformed expression data ("exprs") should be used to define if an
 observation is expressed or not}
 }
@@ -29,7 +29,7 @@ threshold
 data("sc_example_counts")
 data("sc_example_cell_info")
 example_sceset <- newSCESet(countData=sc_example_counts)
-isExprs(example_sceset) <- calcIsExprs(example_sceset, lowerDetectionLimit=1,
-expr_data="exprs")
+is_exprs(example_sceset) <- calcIsExprs(example_sceset, lowerDetectionLimit=1,
+exprs_data="exprs")
 }
 

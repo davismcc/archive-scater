@@ -63,7 +63,7 @@ Subsetting is very convenient with this class. For example, we can filter out
 genes that are not expressed in any cells:
 
 ```{r filter-no-exprs}
-keep_gene <- rowSums(isExprs(example_sceset)) > 0
+keep_gene <- rowSums(is_exprs(example_sceset)) > 0
 example_sceset <- example_sceset[keep_gene,]
 ```
 
@@ -114,7 +114,7 @@ We can also make an `SCESet` object with just a matrix of expression values
 (no count data required) like this:
 
 ```{r sceset-make-sceset-exprs-only}
-example2 <- newSCESet(cellData = edgeR::cpm.default(sc_example_counts))
+example2 <- newSCESet(exprsData=edgeR::cpm.default(sc_example_counts))
 pData(example2)
 fData(example2)
 ```
@@ -134,22 +134,22 @@ these are the values to use for expression.
 ```{r exprs-accessor}
 exprs(example2)[1:3, 1:6]
 ```
-* `isExprs(object)`: returns a logical matrix indicating whether each gene 
+* `is_exprs(object)`: returns a logical matrix indicating whether each gene 
 expression observation is above the defined `lowerDetectionLimit` (default is 0).
 This can be determined on the count scale or the "expression" (i.e. `exprs(object)`)
 scale.
 
 ```{r isexprs-accessor}
-isExprs(example2)[1:3, 1:6]
+is_exprs(example2)[1:3, 1:6]
 ```
 
 It is straight-forward to change the threshold by which we decide which 
 observations are expressed or not:
 
 ```{r sceset-define-is-exprs}
-isExprs(example2) <- calcIsExprs(example2, lowerDetectionLimit = 100, 
-                               expr_data = "exprs")
-isExprs(example2)[1:3, 1:6]
+is_exprs(example2) <- calcIsExprs(example2, lowerDetectionLimit = 100, 
+                               exprs_data = "exprs")
+is_exprs(example2)[1:3, 1:6]
 ```
 
 If you later find some count data that you want to add to the `SCESet` object 
@@ -174,7 +174,7 @@ fData(example_sceset) <- fd
 pData(example_sceset) <- pd
 ## replace expression data to be used
 exprs(example_sceset) <- edgeR::cpm.default(counts(example_sceset), 
-                                            prior.count = 5, log = TRUE)
+                                            prior.count=5, log=TRUE)
 ```
 
 
@@ -186,8 +186,8 @@ investigating the some genes identified as being of interest from differential
 expression testing or other means.
 
 ```{r plot-expression}
-plotExpression(rownames(example_sceset)[1:6], example_sceset, 
-               x="Mutation_Status", exprs_type="exprs")
+plotExpression(example_sceset, rownames(example_sceset)[1:6],
+               x="Mutation_Status", use_as_expr="exprs")
 ```
 
 This function uses `ggplot2`, making it easy to change the theme to whatever you 
@@ -195,8 +195,8 @@ prefer. We can also show the median expression level per group on the plot and
 show a violin plot to summarise the distribution of expression values:
 
 ```{r plot-expression-theme-bw}
-plotExpression(rownames(example_sceset)[7:12], example_sceset, 
-               x="Mutation_Status", exprs_type="exprs", colour="IsExpressed",
+plotExpression(example_sceset, rownames(example_sceset)[7:12], 
+               x="Mutation_Status", use_as_expr="exprs", colour="Cell_Cycle",
                show_median=TRUE, show_violin=TRUE,  xlab="Mutation Status")
 ```
 
@@ -296,7 +296,7 @@ These three QC plots can all be accessed through the function `plotQC` (we need
 to make sure there are no genes with zero or constant expression):
 
 ```{r plot-qc}
-keep_gene <- rowSums(isExprs(example_sceset)) > 4
+keep_gene <- rowSums(is_exprs(example_sceset)) > 4
 example_sceset <- example_sceset[keep_gene,]
 ## Plot QC
 plotQC(example_sceset, type="most-expressed")
@@ -435,74 +435,76 @@ called **kallisto** for rapid quantification of transcript abundance from RNA-se
 data. In `scater`, a couple of wrapper functions to `kallisto` enable easy and 
 extremely fast quantification of transcript abundance from within R.
 
-```{r kallisto-demos, eval=FALSE}
+```{r kallisto-demo-kallisto-test-data, eval=FALSE}
 ################################################################################
 ### Tests and Examples
 
-# out <- tryCatch(ex <- system2("ls","xx", stdout=TRUE, stderr=TRUE), warning=function(w){w})
-# out
-# out <- tryCatch(ex <- system2("ls","targets.txt", stdout=TRUE, stderr=TRUE), warning=function(w){w})
-# out
-# tryCatch(ex <- system2("lb","xx", stdout=TRUE, stderr=TRUE), warning=function(w){w}, error=function(e){e})
+# Example if in the kallisto/test directory
+setwd("/home/davis/kallisto/test")
+kallisto_log <- runKallisto("targets.txt", "transcripts.idx", single_end=FALSE, 
+            output_prefix="output", verbose=TRUE, n_bootstrap_samples=10)
 
-## Example if in the kallisto/test directory
-# setwd("/home/davis/kallisto/test")
-# kallisto_log <- runKallisto("targets.txt", "transcripts.idx", single_end=FALSE, 
-#             output_prefix="output", verbose=TRUE, n_bootstrap_samples=10)
-# 
-# abund_test <- readKallistoResultsOneSample("output_sample1", read_h5=TRUE)
-# names(abund_test)
-# abund_test$abundance[1:10,]
-# abund_test$run_info
-# 
-# sce_test <- readKallistoResults(kallisto_log)
-# 
-# sce_test <- readKallistoResults(kallisto_log, read_h5=TRUE)
+sce_test <- readKallistoResults(kallisto_log, read_h5=TRUE)
+sce_test
+```
 
-## Example to read a JSON file into R
-# json_data <- rjson::fromJSON(file="output_sample1/run_info.json")
+An example using real data from a project investigating cell cycle. Not that 
+this analysis is not 'live' (the raw data are not included in the package), but 
+it demonstrates what can be done with `scater` and `kallisto`.
 
-## Example with cell cycle data
-# setwd("/home/davis/021_Cell_Cycle/data/fastq")
-# system("wc -l targets.txt")
-# ave_frag_len <- mean(c(855, 860, 810, 760, 600, 690, 770, 690))
-# klog_err_test <- runKallisto("targets.txt", 
-#                              "Mus_musculus.GRCm38.rel79.cdna.all.ERCC.idx", 
-#                              output_prefix="kallisto_output_Mmus", n_cores=12, 
-#                              fragment_length=NULL, verbose=TRUE)
-# 
-# 
-# setwd("/home/davis/021_Cell_Cycle/data/fastq")
-# system("wc -l targets.txt")
-# ave_frag_len <- mean(c(855, 860, 810, 760, 600, 690, 770, 690))
-# 
-# kallisto_test <- runKallisto("targets.txt", 
-#                              "Mus_musculus.GRCm38.rel79.cdna.all.ERCC.idx", 
-#                              output_prefix="kallisto_output_Mmus", n_cores=12, 
-#                              fragment_length=ave_frag_len, verbose=TRUE)
-# sce_kall_mmus <- readKallistoResults(kallisto_test, read_h5=TRUE)
-# sce_kall_mmus
-# 
-# sce_kall_mmus <- readKallistoResults(kallisto_test)
-# 
-# 
-# head(fData(sce_kall_mmus))
-# head(pData(sce_kall_mmus))
-# counts(sce_kall_mmus)[sample(nrow(sce_kall_mmus), size=15), 1:6]
+```{r kallisto-cell-cycle-example, eval=FALSE}
+setwd("/home/davis/021_Cell_Cycle/data/fastq")
+system("wc -l targets.txt")
+ave_frag_len <- mean(c(855, 860, 810, 760, 600, 690, 770, 690))
 
+kallisto_test <- runKallisto("targets.txt", 
+                             "Mus_musculus.GRCm38.rel79.cdna.all.ERCC.idx", 
+                             output_prefix="kallisto_output_Mmus", n_cores=12, 
+                             fragment_length=ave_frag_len, verbose=TRUE)
+sce_kall_mmus <- readKallistoResults(kallisto_test, read_h5=TRUE)
+sce_kall_mmus
 
+sce_kall_mmus <- readKallistoResults(kallisto_test)
 
-# 
-# abund_test1 <- readKallistoResultsOneSample("kallisto_output_Mmus_WTCHG_166708_712505", read_h5=TRUE)
-# names(abund_test1)
-# abund_test1$abundance[1:10,]
-# abund_test1$run_info
-# 
-# abund_test2 <- readKallistoResultsOneSample("kallisto_output_Mmus_WTCHG_166708_712504", read_h5=TRUE)
-# abund_test2$abundance[1:10,]
-# abund_test2$run_info
+sce_kall_mmus <- getBMFeatureAnnos(sce_kall_mmus)
+
+head(fData(sce_kall_mmus))
+head(pData(sce_kall_mmus))
+sce_kall_mmus[["start_time"]]
+
+counts(sce_kall_mmus)[sample(nrow(sce_kall_mmus), size=15), 1:6]
+
+## Summarise expression at the gene level 
+sce_kall_mmus_gene <- summariseExprsAcrossFeatures(
+    sce_kall_mmus, use_as_exprs="tpm", summarise_by="feature_id")
+
+fData(sce_kall_mmus_gene) %>% datatable
+
+sce_kall_mmus_gene <- getBMFeatureAnnos(
+    sce_kall_mmus_gene, filters="ensembl_gene_id", 
+    attributes=c("ensembl_gene_id", "mgi_symbol", "chromosome_name", 
+                 "gene_biotype", "start_position", "end_position",
+                 "percentage_gc_content", "description"), 
+    feature_symbol="mgi_symbol", feature_id="ensembl_gene_id",
+    biomart="ensembl", dataset="mmusculus_gene_ensembl")
+
+fData(sce_kall_mmus_gene) %>% datatable
+
+## Add gene symbols to featureNames to make them more intuitive
+new_feature_names <- featureNames(sce_kall_mmus_gene)
+notna_mgi_symb <- !is.na(fData(sce_kall_mmus_gene)$mgi_symbol)
+new_feature_names[notna_mgi_symb] <- fData(sce_kall_mmus_gene)$mgi_symbol[notna_mgi_symb]
+notna_ens_gid <- !is.na(fData(sce_kall_mmus_gene)$ensembl_gene_id)
+new_feature_names[notna_ens_gid] <- paste(new_feature_names[notna_ens_gid],
+          fData(sce_kall_mmus_gene)$ensembl_gene_id[notna_ens_gid], sep="_")
+sum(duplicated(new_feature_names))
+featureNames(sce_kall_mmus_gene) <- new_feature_names
+featureNames(sce_kall_mmus_gene) %>% head
+featureNames(sce_kall_mmus_gene) %>% tail
+sum(duplicated(fData(sce_kall_mmus_gene)$mgi_symbol))
 
 ```
+
 
 
 
