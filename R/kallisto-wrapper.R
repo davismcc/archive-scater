@@ -294,7 +294,7 @@ readKallistoResults <- function(kallisto_log=NULL, samples=NULL,
 getBMFeatureAnnos <- function(object, filters="ensembl_transcript_id", 
                               attributes=c("ensembl_transcript_id", 
                                            "ensembl_gene_id", "mgi_symbol", 
-                                           "chromosome_name", "transcript_biotype"
+                                           "chromosome_name", "transcript_biotype",
                                            "transcript_start", "transcript_end", 
                                            "transcript_count"), 
                               gene_symbol="mgi_symbol",
