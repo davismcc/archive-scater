@@ -24,7 +24,6 @@ Imports:
     matrixStats,
     monocle,
     plyr,
-    readr,
     reshape2,
     rhdf5,
     rjson

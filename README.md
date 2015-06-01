@@ -26,12 +26,18 @@ install.packages("devtools")
 devtools::install_github("davismcc/scater")
 ```
 
-We plan to contribute `scater` to Bioconductor in the near future.
+Using the most recent version of R is strongly recommended (R 3.2.0 at the time
+of writing). Effort has been made to ensure the package works with R >3.0, but 
+the package has not been tested with R <3.1.1.
 
 There are several other packages from CRAN and Bioconductor that `scater` uses, 
-so you will need to have these packages installed as well. Not all of the 
-following are strictly necessary, but they enhance the functionality of `scater`
-and are good packages in their own right.
+so you will need to have these packages installed as well. The CRAN packages 
+should install automatically when `scater` is installed, but you will need to 
+install the Bioconductor packages manually.
+
+Not all of the following are strictly necessary, but they enhance the 
+functionality of `scater` and are good packages in their own right. The commands
+below should help with package installations.
 
 CRAN packages:
 
@@ -55,6 +61,8 @@ not available on CRAN for R 3.2.0 when this was written):
 devtools::install_github("hadley/lazyeval")
 devtools::install_github("hadley/dplyr")
 ```
+
+We plan to contribute `scater` to Bioconductor in the near future.
 
 
 ## Getting started
