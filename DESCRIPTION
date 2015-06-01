@@ -18,6 +18,7 @@ Depends:
 Imports: 
     biomaRt,
     cluster,
+    data.table,
     dplyr,
     edgeR,
     limma,

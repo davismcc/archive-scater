@@ -168,9 +168,9 @@ runKallisto <- function(targets_file, transcript_index, single_end=TRUE,
 #' # readKallistoResultsOneSample("output")
 readKallistoResultsOneSample <- function(directory, read_h5=FALSE) {
     ## Read in abundance information for the sample
-    abundance <- read.delim(paste0(directory, "/abundance.txt"),
-                            colClasses=c("character", "integer", "numeric",
-                                         "numeric", "numeric"))
+    abundance <- data.table::fread(paste0(directory, "/abundance.txt"), sep="\t")
+#                             colClasses=c("character", "integer", "numeric",
+#                                          "numeric", "numeric"))
     ## Read in run information
     run_info <- rjson::fromJSON(file=paste0(directory, "/run_info.json"))
     ## Read in HDF5 data file with bootstrap results
