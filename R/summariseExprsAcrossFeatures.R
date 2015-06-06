@@ -40,11 +40,12 @@ summariseExprsAcrossFeatures <- function(object, use_as_exprs="tpm",
     if( !(summarise_by %in% colnames(fData(object))) )
         stop("The summarise_by argument is not a column of fData(object).")
     ## Define an expression matrix depending on which values we're using
-    use_as_exprs <- match.arg(use_as_exprs, c("exprs", "tpm", "fpkm"))
+    use_as_exprs <- match.arg(use_as_exprs, c("exprs", "tpm", "fpkm", "counts"))
     exprs_mat <- switch(use_as_exprs,
                         exprs=exprs(object),
                         tpm=tpm(object),
-                        fpkm=fpkm(object))
+                        fpkm=fpkm(object),
+                        counts=counts(object))
     ## Use reshape2 to make a long version of the expression matrix
     tmp_exprs <- data.frame(feature=fData(object)[[summarise_by]], exprs_mat)
     tmp_exprs_long <- reshape2::melt(tmp_exprs)
@@ -60,7 +61,9 @@ summariseExprsAcrossFeatures <- function(object, use_as_exprs="tpm",
                       tpm=newSCESet(tpmData=exprs_new, phenoData=pd, 
                                     featureData=fd),
                       fpkm=newSCESet(fpkmData=exprs_new, phenoData=pd, 
-                                     featureData=fd))
+                                     featureData=fd),
+                      counts=newSCESet(countData=exprs_new, phenoData=pd, 
+                                       featureData=fd))
     ## Use gene symbols for rownames
     sce_out
 }

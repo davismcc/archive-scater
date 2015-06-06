@@ -5,12 +5,12 @@
 \alias{plot}
 \alias{plot,SCESet,ANY-method}
 \alias{plot,SCESet-method}
-\alias{plot.SCESet}
+\alias{plotSCESet}
 \title{Plot an overview of expression for each cell}
 \usage{
 \S4method{plot}{SCESet,ANY}(x, y, ...)
 
-plot.SCESet(x, block1 = NULL, block2 = NULL, colour_by = NULL,
+plotSCESet(x, block1 = NULL, block2 = NULL, colour_by = NULL,
   nfeatures = 500, use_as_exprs = "tpm", ncol = 3)
 }
 \arguments{
@@ -19,7 +19,7 @@ plot.SCESet(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 \item{y}{optional argument for generic \code{plot} functions, not used for
 plotting an \code{SCESet} object}
 
-\item{...}{arguments passed to \code{plot.SCESet}}
+\item{...}{arguments passed to \code{plotSCESet}}
 
 \item{block1}{character string defining the column of \code{pData(object)} to
 be used as a factor by which to separate the cells into blocks (separate

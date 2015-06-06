@@ -145,37 +145,37 @@ setGeneric("cellDist<-", function(object, value) {
 })
 
 
-#' @name genePairwiseDistances
+#' @name featurePairwiseDistances
 #' @export
 #' @docType methods
-#' @rdname genePairwiseDistances
-setGeneric("genePairwiseDistances", function(object) {
-    standardGeneric("genePairwiseDistances")
+#' @rdname featurePairwiseDistances
+setGeneric("featurePairwiseDistances", function(object) {
+    standardGeneric("featurePairwiseDistances")
 })
 
-#' @name genePairwiseDistances<-
+#' @name featurePairwiseDistances<-
 #' @export
 #' @docType methods
-#' @rdname genePairwiseDistances
-setGeneric("genePairwiseDistances<-", function(object, value) {
-    standardGeneric("genePairwiseDistances<-")
+#' @rdname featurePairwiseDistances
+setGeneric("featurePairwiseDistances<-", function(object, value) {
+    standardGeneric("featurePairwiseDistances<-")
 })
 
 
-#' @name geneDist
+#' @name featDist
 #' @export
 #' @docType methods
-#' @rdname genePairwiseDistances
-setGeneric("geneDist", function(object) {
-    standardGeneric("geneDist")
+#' @rdname featurePairwiseDistances
+setGeneric("featDist", function(object) {
+    standardGeneric("featDist")
 })
 
-#' @name geneDist<-
+#' @name featDist<-
 #' @export
 #' @docType methods
-#' @rdname genePairwiseDistances
-setGeneric("geneDist<-", function(object, value) {
-    standardGeneric("geneDist<-")
+#' @rdname featurePairwiseDistances
+setGeneric("featDist<-", function(object, value) {
+    standardGeneric("featDist<-")
 })
 
 

@@ -122,8 +122,8 @@ fData(example2)
 We have accessor functions to access elements of the `SCESet` object:
 
 * `counts(object)`: returns the matrix of read counts. As you can see above, if 
-no counts are defined for the object, then the counts matrix still exists, but 
-is populated with `NA`.
+no counts are defined for the object, then the counts matrix slot is simpy 
+`NULL`.
 ```{r counts-accessor}
 counts(example2)[1:3, 1:6]
 ```
@@ -306,7 +306,6 @@ plotQC(example_sceset, type="find-pcs", variable="Treatment")
 plotQC(example_sceset, type="expl", 
        variables=c("coverage", "depth", "Mutation_Status", "Treatment"))
 plotQC(example_sceset, type="expl")
-
 ```
 
 In this small dataset depth and coverage explain a very large proportion of the
@@ -414,10 +413,10 @@ distance.
 
 ```{r gene-pairwise-distance-matrices, eval=TRUE}
 gene_dist <- as.matrix(dist(exprs(example_sceset)))
-genePairwiseDistances(example_sceset) <- gene_dist
+featurePairwiseDistances(example_sceset) <- gene_dist
 
 if(require(MASS)) {
-    fit <- MASS::isoMDS(geneDist(example_sceset), k=2) # k is the number of dim
+    fit <- MASS::isoMDS(featDist(example_sceset), k=2) # k is the number of dim
     # plot solution 
     x <- fit$points[,1]
     y <- fit$points[,2]

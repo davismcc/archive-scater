@@ -200,6 +200,46 @@ Using log2(FPKM + 1) for exprs slot. See also ?calculateFPKM and ?calculateTPM."
 ### Define validity check for SCESet class object
 
 setValidity("SCESet", function(object) {
+    ## Check that the dimensions and names of the bootstraps slot are sensible
+    if( (length(object@bootstraps) != 0) && (nrow(object@bootstraps) != nrow(object)) )
+        return(FALSE)
+    if( (length(object@bootstraps) != 0) && (ncol(object@bootstraps) != ncol(object)) )
+        return(FALSE)
+    if(  (length(object@bootstraps) != 0) && 
+         !identical(rownames(object@bootstraps), featureNames(object)) )
+        return(FALSE)
+    if(  (length(object@bootstraps) != 0) && 
+         !identical(colnames(object@bootstraps), sampleNames(object)) )
+        return(FALSE)
+    ## Check that the dimensions of the reducedDimension slot are sensible
+    if( (nrow(object@reducedDimension) != 0) && 
+        (nrow(object@reducedDimension) != ncol(object)) )
+        return(FALSE)
+    if( (nrow(object@reducedDimension) != 0) && 
+        !identical(rownames(object@reducedDimension), sampleNames(object)) )
+        return(FALSE)
+    ## Check that the dimensions of the cellPairwiseDistances slot are sensible
+    if( (nrow(object@cellPairwiseDistances) != ncol(object@cellPairwiseDistances)) ||
+        (nrow(object@cellPairwiseDistances) != 0 && 
+         nrow(object@cellPairwiseDistances) != ncol(object)) )
+        return(FALSE)
+    if( (nrow(object@cellPairwiseDistances) != 0) && 
+        (!identical(rownames(object@cellPairwiseDistances), 
+                    colnames(object@cellPairwiseDistances)) ||
+        !identical(rownames(object@cellPairwiseDistances), sampleNames(object))) )
+        return(FALSE)
+    ## Check that the dimensions of the featurePairwiseDistances slot are sensible
+    if( (nrow(object@featurePairwiseDistances) != 
+         ncol(object@featurePairwiseDistances)) ||
+        (nrow(object@featurePairwiseDistances) != 0 && 
+         nrow(object@featurePairwiseDistances) != nrow(object)) )
+        return(FALSE)
+    if( (nrow(object@featurePairwiseDistances) != 0) && 
+        (!identical(rownames(object@featurePairwiseDistances), 
+                    colnames(object@featurePairwiseDistances)) ||
+         !identical(rownames(object@featurePairwiseDistances), featureNames(object))) )
+        return(FALSE)
+    ## Check that we have sensible values for the counts
     if( is.null(counts(object)) )
         return(TRUE)
     else {
@@ -210,6 +250,87 @@ setValidity("SCESet", function(object) {
             return(TRUE)
     }
 })
+
+
+################################################################################
+### subsetting an SCESet object
+
+#' Subsetting SCESet Objects
+#'
+#' Subset method for SCESet objects, which subsets both the expression data, 
+#' phenotype data, feature data and other slots in the object.
+#'
+#' @rdname SCESet-subset
+#' @name SCESet-subset
+NULL
+
+#' @inheritParams base::Extract
+#' @aliases [,SCESet,ANY-method [,SCESet,ANY,ANY-method [,SCESet,ANY,ANY,ANY-method 
+#' @rdname SCESet-subset
+#' @export
+#' @seealso \code{\link[base]{Extract}}
+#' 
+setMethod('[', 'SCESet', function (x, i, j, ..., drop=FALSE) {
+    if( !missing(i) && missing(j) ){
+        ## Subsetting features only
+        x <- selectMethod('[', 'ExpressionSet')(x, i, , drop=drop)
+        if( nrow(x@featurePairwiseDistances) != 0 )
+            x@featurePairwiseDistances <- x@featurePairwiseDistances[i, i, drop=drop]
+        if( nrow(x@bootstraps) != 0 )
+            x@bootstraps <- x@bootstraps[i, , ..., drop=drop]
+    } else if( missing(i) && !missing(j) ){
+        ## Subsetting cells only
+        x <- selectMethod('[', 'ExpressionSet')(x, , j, drop=drop)
+        if( nrow(x@cellPairwiseDistances) != 0 )
+            x@cellPairwiseDistances <- x@cellPairwiseDistances[j, j, drop=drop]
+        if( nrow(x@reducedDimension) != 0 )
+            x@reducedDimension <- x@reducedDimension[j, , drop=drop]
+        if( ncol(x@bootstraps) != 0 )
+            x@bootstraps <- x@bootstraps[, j, ..., drop=drop]
+    } else if( !missing(i) && !missing(j) ){
+        ## Subsetting features (i) and cells (j)
+        x <- selectMethod('[', 'ExpressionSet')(x, i, j, drop=drop)
+        if( nrow(x@featurePairwiseDistances) != 0 )
+            x@featurePairwiseDistances <- x@featurePairwiseDistances[i, i, drop=drop]
+        if( nrow(x@cellPairwiseDistances) != 0 )
+            x@cellPairwiseDistances <- x@cellPairwiseDistances[j, j, drop=drop]
+        if( nrow(x@reducedDimension) != 0 )
+            x@reducedDimension <- x@reducedDimension[j, , drop=drop]
+        if( nrow(x@bootstraps) != 0 )
+            x@bootstraps <- x@bootstraps[i, j, ..., drop=drop]
+    } else{ 
+        ## All missing: possibly not missing k for subsetting bootstrap samples
+        if( nrow(x@bootstraps) != 0 && ncol(x@bootstraps) != 0 )
+            x@bootstraps <- x@bootstraps[, , ..., drop=drop]
+    }
+    ## Check validity of object    
+    validObject(x)
+    x
+})
+
+
+################################################################################
+## cellNames
+
+#' Get cell names from an SCESet object
+#' 
+#' @param object An SCESet object.
+#' 
+#' @return A vector of cell names.
+#' 
+#' @details Simply a wrapper to \code{\link[Biobase]{sampleNames}}.
+#' 
+#' @export
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' cellNames(example_sceset)
+#' 
+cellNames <- function(object) {
+    sampleNames(object)
+}
 
 
 ################################################################################
@@ -896,81 +1017,82 @@ setReplaceMethod("cellDist", signature(object="SCESet", value="matrix"),
 
 
 ################################################################################
-### genePairwiseDistances
+### featurePairwiseDistances
 
-#' genePairwiseDistances in an SCESet object
+#' featurePairwiseDistances in an SCESet object
 #'
-#' SCESet objects can contain a matrix of pairwise distances between genes. These
-#'  functions conveniently access and replace the gene pairwise distances with the value 
-#'  supplied, which must be a matrix of the correct size. The function \code{geneDist}
-#'  is simply shorthand for \code{genePairwiseDistances}.
+#' SCESet objects can contain a matrix of pairwise distances between features 
+#' (e.g. genes, transcripts). These functions conveniently access and replace 
+#' the gene pairwise distances with the value supplied, which must be a matrix 
+#' of the correct size. The function \code{featDist} is simply shorthand for 
+#' \code{featurePairwiseDistances}.
 #'
 #' @param object a \code{SCESet} object.
-#' @param value a matrix of class \code{"numeric"} containing gene pairwise 
+#' @param value a matrix of class \code{"numeric"} containing feature pairwise 
 #' distances
 #'
 #' @docType methods
-#' @name genePairwiseDistances
-#' @rdname genePairwiseDistances
-#' @aliases genePairwiseDistances genePairwiseDistances,SCESet-method genePairwiseDistances<-,SCESet,matrix-method geneDist geneDist,SCESet-method geneDist<-,SCESet,matrix-method
+#' @name featurePairwiseDistances
+#' @rdname featurePairwiseDistances
+#' @aliases featurePairwiseDistances featurePairwiseDistances,SCESet-method featurePairwiseDistances<-,SCESet,matrix-method featDist featDist,SCESet-method featDist<-,SCESet,matrix-method
 #'
 #' @author Davis McCarthy
 #' 
-#' @return An SCESet object containing new gene pairwise distances matrix.
+#' @return An SCESet object containing new feature pairwise distances matrix.
 #' @export
 #' @examples
 #' \dontrun{
 #' 
 #' }
 #' 
-genePairwiseDistances.SCESet <- function(object) {
-    object@genePairwiseDistances
+featurePairwiseDistances.SCESet <- function(object) {
+    object@featurePairwiseDistances
 }
 
-#' @rdname genePairwiseDistances
-#' @aliases genePairwiseDistances 
+#' @rdname featurePairwiseDistances
+#' @aliases featurePairwiseDistances 
 #' @export
-setMethod("genePairwiseDistances", signature(object="SCESet"), 
-          genePairwiseDistances.SCESet)
+setMethod("featurePairwiseDistances", signature(object="SCESet"), 
+          featurePairwiseDistances.SCESet)
 
-#' @aliases genePairwiseDistances
-#' @rdname genePairwiseDistances
+#' @aliases featurePairwiseDistances
+#' @rdname featurePairwiseDistances
 #' @export
-geneDist.SCESet <- function(object) {
-    object@genePairwiseDistances
+featDist.SCESet <- function(object) {
+    object@featurePairwiseDistances
 }
 
-#' @aliases genePairwiseDistances
-#' @rdname genePairwiseDistances
+#' @aliases featurePairwiseDistances
+#' @rdname featurePairwiseDistances
 #' @export
-setMethod("geneDist", signature(object="SCESet"), geneDist.SCESet)
+setMethod("featDist", signature(object="SCESet"), featDist.SCESet)
 
-#' @name genePairwiseDistances<-
-#' @aliases genePairwiseDistances
-#' @rdname genePairwiseDistances
-#' @export "genePairwiseDistances<-"
-setReplaceMethod("genePairwiseDistances", signature(object="SCESet", value="matrix"), 
+#' @name featurePairwiseDistances<-
+#' @aliases featurePairwiseDistances
+#' @rdname featurePairwiseDistances
+#' @export "featurePairwiseDistances<-"
+setReplaceMethod("featurePairwiseDistances", signature(object="SCESet", value="matrix"), 
                  function(object, value) {
                      if( nrow(value) == nrow(object) ) {
-                         object@genePairwiseDistances <- value
+                         object@featurePairwiseDistances <- value
                          return(object)
                      }
                      else
-                         stop("Gene pairwise distance matrix supplied is of incorrect size.")
+                         stop("Feature pairwise distance matrix supplied is of incorrect size.")
                  } )
 
-#' @name geneDist<-
-#' @rdname genePairwiseDistances
-#' @aliases genePairwiseDistances
-#' @export "geneDist<-"
-setReplaceMethod("geneDist", signature(object="SCESet", value="matrix"), 
+#' @name featDist<-
+#' @rdname featurePairwiseDistances
+#' @aliases featurePairwiseDistances
+#' @export "featDist<-"
+setReplaceMethod("featDist", signature(object="SCESet", value="matrix"), 
                  function(object, value) {
                      if( nrow(value) == nrow(object) ) {
-                         object@genePairwiseDistances <- value
+                         object@featurePairwiseDistances <- value
                          return(object)
                      }
                      else
-                         stop("Gene pairwise distance matrix supplied is of incorrect size.")
+                         stop("Feature pairwise distance matrix supplied is of incorrect size.")
                  } )
 
 

@@ -31,7 +31,7 @@
 #'  on) before making the plot).
 #'  @param y optional argument for generic \code{plot} functions, not used for 
 #'  plotting an \code{SCESet} object
-#'  @param ... arguments passed to \code{plot.SCESet}
+#'  @param ... arguments passed to \code{plotSCESet}
 #' @param ncol number of columns to use for \code{facet_wrap} if only one block is 
 #' defined.
 #' 
@@ -68,13 +68,13 @@
 #' 
 setMethod("plot", signature("SCESet"),
           function(x, ...) {
-              plot.SCESet(x, ...)
+              plotSCESet(x, ...)
           })
 
 #' @rdname plot
 #' @aliases plot
 #' @export
-plot.SCESet <- function(x, block1=NULL, block2=NULL, colour_by=NULL, 
+plotSCESet <- function(x, block1=NULL, block2=NULL, colour_by=NULL, 
                         nfeatures=500, use_as_exprs="tpm", ncol=3) {
     object <- x
     if( !is(object, "SCESet") )

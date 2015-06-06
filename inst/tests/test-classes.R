@@ -18,7 +18,20 @@ test_that("example datasets work", {
 })
 
 
+context("test manipulations")
 
+test_that("we can subset the example SCESet", {
+    data("sc_example_counts")
+    data("sc_example_cell_info")
+    pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
+    example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
+    example_sceset <- plotPCA(example_sceset, return_SCESet=TRUE)
+    ex_subset <- example_sceset[1:200, sample(1:40, 25)]
+    
+    expect_equal(as.integer(nrow(ex_subset)), 200L)
+    expect_equal(as.integer(ncol(ex_subset)), 25L)
+    expect_equal(nrow(redDim(ex_subset)), 25L)
+})
 
 
 # test_that("tests for dat variable",{

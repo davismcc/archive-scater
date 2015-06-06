@@ -26,7 +26,7 @@
 #'    "expressed".}
 #'    \item{\code{cellPairwiseDistances}:}{Matrix of class \code{"numeric"}, 
 #'    containing pairwise distances between cells.}
-#'    \item{\code{genePairwiseDistances}:}{Matrix of class \code{"numeric"}, 
+#'    \item{\code{featurePairwiseDistances}:}{Matrix of class \code{"numeric"}, 
 #'    containing pairwise distances between genes.}
 #'    \item{\code{reducedDimension}:}{Matrix of class \code{"numeric"}, containing
 #'    reduced-dimension coordinates for cells (generated, for example, by PCA).}
@@ -43,7 +43,7 @@ setClass("SCESet",
          slots=c(logged="logical",
                  lowerDetectionLimit="numeric",
                  cellPairwiseDistances="matrix",
-                 genePairwiseDistances="matrix",
+                 featurePairwiseDistances="matrix",
                  reducedDimension="matrix",
                  bootstraps="array"),
          prototype = prototype(new("VersionedBiobase",
