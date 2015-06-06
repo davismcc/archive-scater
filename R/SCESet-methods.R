@@ -59,7 +59,9 @@
 #'  In many downstream functions you will likely find it most convenient if the 
 #'  \code{'exprs'} values are on the log2-scale, so this is recommended.
 #'  
-#'  
+#' @importFrom Biobase annotatedDataFrameFrom
+#' @importFrom Biobase assayDataNew
+#' @import methods
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -265,6 +267,22 @@ setValidity("SCESet", function(object) {
 NULL
 
 #' @inheritParams base::Extract
+#' @param i,j,... indices specifying elements to extract or replace. Indices 
+#' are numeric or character vectors or empty (missing) or \code{NULL}. Numeric 
+#' values are coerced to integer as by \code{\link[base]{as.integer}} (and hence 
+#' truncated towards zero). Character vectors will be matched to the names of 
+#' the object (or for matrices/arrays, the dimnames): see 
+#' \code{\link[base]{Extract}} for further details.
+#' 
+#' For \code{[}-indexing only: \code{i, j, ...} can be logical vectors, indicating 
+#' elements/slices to select. Such vectors are recycled if necessary to match 
+#' the corresponding extent. \code{i, j, ...} can also be negative integers, 
+#' indicating elements/slices to leave out of the selection. When indexing 
+#' arrays by \code{[} a single argument i can be a matrix with as many columns 
+#' as there are dimensions of \code{x}; the result is then a vector with 
+#' elements corresponding to the sets of indices in each row of \code{i}. An 
+#' index value of \code{NULL} is treated as if it were \code{integer(0)}.
+#'  
 #' @aliases [,SCESet,ANY-method [,SCESet,ANY,ANY-method [,SCESet,ANY,ANY,ANY-method 
 #' @rdname SCESet-subset
 #' @export
@@ -319,7 +337,7 @@ setMethod('[', 'SCESet', function (x, i, j, ..., drop=FALSE) {
 #' @return A vector of cell names.
 #' 
 #' @details Simply a wrapper to \code{\link[Biobase]{sampleNames}}.
-#' 
+#' @importFrom Biobase sampleNames
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -353,7 +371,11 @@ cellNames <- function(object) {
 #' 
 #' @examples
 #' \dontrun{
-#' 
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' fData(example_sceset)
 #' }
 setReplaceMethod("fData", signature(x = "SCESet", value = "AnnotatedDataFrame"), 
                  function(x, value) {
@@ -389,7 +411,11 @@ setReplaceMethod("fData", signature(x = "SCESet", value = "data.frame"),
 #' 
 #' @examples
 #' \dontrun{
-#' 
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' pData(example_sceset)
 #' }
 setReplaceMethod("pData", signature(x = "SCESet", value = "AnnotatedDataFrame"), 
                  function(x, value) {
@@ -880,7 +906,11 @@ setReplaceMethod("bootstraps", signature(object="SCESet", value="array"),
 #' @export
 #' @examples
 #' \dontrun{
-#' 
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' reducedDimension(example_sceset)
 #' }
 #' 
 reducedDimension.SCESet <- function(object) {
@@ -962,7 +992,11 @@ setReplaceMethod("redDim", signature(object="SCESet", value="matrix"),
 #' @export
 #' @examples
 #' \dontrun{
-#' 
+#' #' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' cellPairwiseDistances(example_sceset)
 #' }
 #' 
 cellPairwiseDistances.SCESet <- function(object) {
@@ -978,14 +1012,14 @@ setMethod("cellPairwiseDistances", signature(object="SCESet"),
 #' @rdname cellPairwiseDistances
 #' @aliases cellPairwiseDistances
 #' @export
-cellDist.SCESet <- function(object) {
+cellDistSCESet <- function(object) {
     object@cellPairwiseDistances
 }
 
 #' @rdname cellPairwiseDistances
 #' @aliases cellPairwiseDistances
 #' @export
-setMethod("cellDist", signature(object="SCESet"), cellDist.SCESet)
+setMethod("cellDist", signature(object="SCESet"), cellDistSCESet)
 
 #' @name cellPairwiseDistances<-
 #' @aliases cellPairwiseDistances
@@ -1042,10 +1076,14 @@ setReplaceMethod("cellDist", signature(object="SCESet", value="matrix"),
 #' @export
 #' @examples
 #' \dontrun{
-#' 
+#' #' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' featurePairwiseDistances(example_sceset)
 #' }
 #' 
-featurePairwiseDistances.SCESet <- function(object) {
+featurePairwiseDistancesSCESet <- function(object) {
     object@featurePairwiseDistances
 }
 
@@ -1053,19 +1091,19 @@ featurePairwiseDistances.SCESet <- function(object) {
 #' @aliases featurePairwiseDistances 
 #' @export
 setMethod("featurePairwiseDistances", signature(object="SCESet"), 
-          featurePairwiseDistances.SCESet)
+          featurePairwiseDistancesSCESet)
 
 #' @aliases featurePairwiseDistances
 #' @rdname featurePairwiseDistances
 #' @export
-featDist.SCESet <- function(object) {
+featDistSCESet <- function(object) {
     object@featurePairwiseDistances
 }
 
 #' @aliases featurePairwiseDistances
 #' @rdname featurePairwiseDistances
 #' @export
-setMethod("featDist", signature(object="SCESet"), featDist.SCESet)
+setMethod("featDist", signature(object="SCESet"), featDistSCESet)
 
 #' @name featurePairwiseDistances<-
 #' @aliases featurePairwiseDistances
@@ -1132,10 +1170,14 @@ toCellDataSet <- function(sce, useExpression=TRUE) {
 #' Convert a \code{CellDataSet} to an \code{SCESet}
 #' 
 #' @param cds A \code{CellDataSet} from the \code{monocle} package
-#' @param useExpression logical If TRUE (default), `exprsData` is mapped to `exprs(sce)`, otherwise `counts(sce)`
-#' @param logged logical, if a value is supplied for the exprsData argument, are the expression values already on the log2 scale, or not?
+#' @param useExpression logical If TRUE (default), `exprsData` is mapped to 
+#' `exprs(sce)`, otherwise `counts(sce)`
+#' @param logged logical, if a value is supplied for the exprsData argument, are
+#'  the expression values already on the log2 scale, or not?
 #' 
 #' @export
+#' @importFrom Biobase featureData
+#' @importFrom Biobase phenoData
 #' @importClassesFrom monocle CellDataSet
 #' @rdname fromCellDataSet
 #' @name fromCellDataSet
@@ -1151,7 +1193,7 @@ fromCellDataSet <- function(cds, useExpression=TRUE, logged=FALSE) {
             countData <- exprs(cds)
         }
         
-        sce <- newSCESet(exprsData=exprsData, phenoData=phenoData(HSMM),
+        sce <- newSCESet(exprsData=exprsData, phenoData=phenoData(cds),
                          featureData=featureData(cds), countData=countData,
                          lowerDetectionLimit=cds@lowerDetectionLimit,
                          logged=logged)

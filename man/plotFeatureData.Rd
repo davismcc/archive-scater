@@ -4,7 +4,8 @@
 \alias{plotFeatureData}
 \title{Plot feature (gene) data from an SCESet object}
 \usage{
-plotFeatureData(object, aesth = aes(x = n_cells_exprs, y = prop_total_reads))
+plotFeatureData(object, aesth = aes_string(x = "n_cells_exprs", y =
+  "prop_total_reads"))
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and

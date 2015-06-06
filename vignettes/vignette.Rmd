@@ -225,7 +225,17 @@ To compute commonly-used QC metrics we have the function `calculateQCMetrics()`:
 ```{r calc-qc-metrics}
 names(pData(example_sceset))
 example_sceset <- calculateQCMetrics(example_sceset, gene_controls=1:20)
+varLabels(example_sceset)
+```
+
+More than one set of gene controls can be defined if desired.
+
+```{r calc-qc-metrics-multi-gene-controls}
 names(pData(example_sceset))
+example_sceset <- calculateQCMetrics(
+    example_sceset, gene_controls=list(controls1=1:20, controls2=500:1000),
+    cell_controls=list(set_1=1:5, set_2=31:40))
+varLabels(example_sceset)
 ```
 
 This function adds the following columns to `pData(object)`:

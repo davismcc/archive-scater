@@ -43,6 +43,10 @@
 #'
 #' @details Calculate useful quality control metrics to help with pre-processing
 #' of data and identification of potentially problematic genes and cells.
+#' @importFrom Biobase pData
+#' @importFrom Biobase fData
+#' @importFrom Biobase exprs
+#' @importFrom Biobase sampleNames<-
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -181,30 +185,31 @@ a lower count threshold of 0.")
             cell_controls_list <- list(cell_controls)
             n_sets_cell_controls <- 1
         }
-        for( i in seq_len(length(cell_controls_list)) ) {
+        for( i in seq_len(n_sets_cell_controls) ) {
             cc_set <- cell_controls_list[[i]]
             set_name <- names(cell_controls_list)[i]
             if( is.logical(cc_set) ) {
                 is_cell_control <- cc_set
                 cc_set <- which(cc_set)
             } else {
-                is_cell_control <- rep(FALSE, nrow(object))    
+                is_cell_control <- rep(FALSE, ncol(object))    
             }
             if(is.character(cc_set))
-                cc_set <- which(rownames(object) %in% cc_set)
+                cc_set <- which(cellNames(object) %in% cc_set)
             is_cell_control[cc_set] <- TRUE
             ## Construct data.frame for pData from this gene control set
-            col_name <- paste0("is_cell_control_", set_name)
+            is_cell_control <- as.data.frame(is_cell_control)
+            colnames(is_cell_control) <- paste0("is_cell_control_", set_name)
             if( exists("cell_controls_pdata") ) {
                 cell_controls_pdata <- data.frame(cell_controls_pdata, 
-                                                  col_name=is_cell_control)
+                                                  is_cell_control)
             } else
-                cell_controls_pdata <- data.frame(col_name=is_cell_control)
+                cell_controls_pdata <- is_cell_control
         }
     }
      
     ## Check column names and get cell controls across all sets
-    if( n_sets_gene_controls == 1 ) {
+    if( n_sets_cell_controls == 1 ) {
         colnames(cell_controls_pdata) <- "is_cell_control"
     } else {
         ## Combine all cell controls
@@ -215,9 +220,9 @@ a lower count threshold of 0.")
     ## Add cell-level QC metrics to pData
     new_pdata <- as.data.frame(pData(object))
     ### Remove columns to be replaced
-    to_replace <- colnames(new_pdata) %in% c(colnames(gene_controls_pdata),
-                                             colnames(cell_controls_pdata),
-                                             "log10_reads_from_gene_controls")
+    to_replace <- colnames(new_pdata) %in% 
+        c(colnames(gene_controls_pdata), colnames(cell_controls_pdata),
+          colnames(log10_reads_from_gene_controls), "log10_reads_from_gene_controls")
     new_pdata <- new_pdata[, !to_replace]
     ### Add new QC metrics
     new_pdata$depth <- depth
@@ -228,9 +233,10 @@ a lower count threshold of 0.")
     new_pdata <- cbind(new_pdata, gene_controls_pdata, 
                        log10_reads_from_gene_controls)
     new_pdata$reads_from_biological_genes <- reads_from_biological_genes
-    new_pdata$log10_reads_from_biological_genes <- log10(reads_from_biological_genes+1) 
+    new_pdata$log10_reads_from_biological_genes <- 
+        log10(reads_from_biological_genes+1) 
     new_pdata <- cbind(new_pdata, cell_controls_pdata)
-    pData(object) <- new_pdata %>% new("AnnotatedDataFrame", .)
+    pData(object) <-  new("AnnotatedDataFrame", new_pdata)
     
     ## Add gene-level QC metrics to fData
     total_reads <- sum(counts(object))
@@ -246,7 +252,7 @@ a lower count threshold of 0.")
     new_fdata$prop_total_reads <- rowSums(counts(object)) / total_reads
     new_fdata$n_cells_exprs <- rowSums(is_exprs(object))
     new_fdata <- cbind(new_fdata, gene_controls_fdata)
-    fData(object) <- new_fdata %>% new("AnnotatedDataFrame", .)
+    fData(object) <- new("AnnotatedDataFrame", new_fdata)
     
     ## Ensure sample names are correct and return object
     sampleNames(object) <- colnames(exprs(object))
@@ -444,7 +450,7 @@ plotHighestReadCounts <- function(object, col_by_variable="coverage", n=50,
         df_pct_reads_by_cell_long$colour_by <- x
     ## Make plot
     plot_most_expressed <- df_pct_reads_by_cell_long %>%
-        ggplot(aes(y=Var2, x=value, colour=colour_by)) +
+        ggplot(aes_string(y="Var2", x="value", colour="colour_by")) +
         geom_point(size = 180/n, alpha = 0.6, shape=124) +
         ggtitle(paste0("Top ", n, " genes account for ", 
                        format(top50_pctage, digits = 3), "% of all read counts")) +
@@ -462,14 +468,14 @@ plotHighestReadCounts <- function(object, col_by_variable="coverage", n=50,
     if(typeof_x=="discrete") {
         plot_most_expressed <- plot_most_expressed + 
             ggthemes::scale_colour_tableau(name=col_by_variable) +
-            geom_point(aes(x=100*as.numeric(prop_total_reads), y=Gene), 
+            geom_point(aes_string(x="100*as.numeric(prop_total_reads)", y="Gene"), 
                        data=fdata[oo[1:n],], size = 200/n, colour="gray30", 
                        shape=21, fill="wheat")
     } else {
         plot_most_expressed <- plot_most_expressed + 
             scale_colour_gradient(name=col_by_variable, low="lightgoldenrod", 
                                   high="firebrick4", space="Lab") +
-            geom_point(aes(x=100*as.numeric(prop_total_reads), y=Gene), 
+            geom_point(aes_string(x="100*as.numeric(prop_total_reads)", y="Gene"), 
                        data=fdata[oo[1:n],], size = 200/n, colour="gray30", 
                        shape=21, fill="aliceblue")
     }

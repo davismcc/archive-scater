@@ -5,17 +5,17 @@
 \alias{plotExpression}
 \alias{plotExpression,SCESet-method}
 \alias{plotExpression,data.frame-method}
-\alias{plotExpression.SCESet}
-\alias{plotExpression.default}
+\alias{plotExpressionDefault}
+\alias{plotExpressionSCESet}
 \title{Plot expression values for a set of features (e.g. genes or transcripts)}
 \usage{
 plotExpression(object, ...)
 
-plotExpression.SCESet(object, features, x, use_as_exprs = "exprs",
+plotExpressionSCESet(object, features, x, use_as_exprs = "exprs",
   colour_by = NULL, shape_by = NULL, size_by = NULL, ncol = 2,
   xlab = NULL, show_median = FALSE, show_violin = FALSE)
 
-plotExpression.default(object, aesth, ncol = 2, xlab = NULL, ylab = NULL,
+plotExpressionDefault(object, aesth, ncol = 2, xlab = NULL, ylab = NULL,
   show_median = FALSE, show_violin = FALSE)
 
 \S4method{plotExpression}{SCESet}(object, ...)
@@ -27,13 +27,13 @@ plotExpression.default(object, aesth, ncol = 2, xlab = NULL, ylab = NULL,
 \arguments{
 \item{object}{an SCESet object containing expression values and
 experimental information. Must have been appropriately prepared. For the
-\code{plotExpression.default} method, the \code{object} argument is a
+\code{plotExpressionDefault} method, the \code{object} argument is a
 data.frame in 'long' format providing expression values for a set of features
  to plot, plus metadata used in the \code{aesth} argument, but this is not
  meant to be a user-level operation.}
 
 \item{...}{optional arguments (from those listed above) passed to
-\code{plotExpression.SCESet} or \code{plotExpression.default}}
+\code{plotExpressionSCESet} or \code{plotExpressionDefault}}
 
 \item{features}{a character vector of feature names or Boolean
 vector or numeric vector of indices indicating which features should have

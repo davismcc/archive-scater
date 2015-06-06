@@ -4,7 +4,7 @@
 \alias{plotMetadata}
 \title{Plot metadata for cells or genes}
 \usage{
-plotMetadata(object, aesth = aes(x = log10(depth), y = coverage))
+plotMetadata(object, aesth = aes_string(x = "log10(depth)", y = "coverage"))
 }
 \arguments{
 \item{object}{a data.frame (or object that can be coerced to such) object

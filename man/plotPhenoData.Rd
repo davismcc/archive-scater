@@ -4,7 +4,7 @@
 \alias{plotPhenoData}
 \title{Plot phenotype data from an SCESet object}
 \usage{
-plotPhenoData(object, aesth = aes(x = log10(depth), y = coverage))
+plotPhenoData(object, aesth = aes_string(x = "log10(depth)", y = "coverage"))
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and

@@ -4,10 +4,10 @@
 \name{plotPCA}
 \alias{plotPCA}
 \alias{plotPCA,SCESet-method}
-\alias{plotPCA.SCESet}
+\alias{plotPCASCESet}
 \title{Plot PCA for an SCESet object}
 \usage{
-plotPCA.SCESet(object, ntop = 500, ncomponents = 2, colour_by = NULL,
+plotPCASCESet(object, ntop = 500, ncomponents = 2, colour_by = NULL,
   shape_by = NULL, size_by = NULL, feature_set = NULL,
   return_SCESet = FALSE, scale_features = TRUE)
 

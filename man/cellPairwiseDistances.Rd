@@ -4,9 +4,9 @@
 \name{cellPairwiseDistances}
 \alias{cellDist}
 \alias{cellDist,SCESet-method}
-\alias{cellDist.SCESet}
 \alias{cellDist<-}
 \alias{cellDist<-,SCESet,matrix-method}
+\alias{cellDistSCESet}
 \alias{cellPairwiseDistances}
 \alias{cellPairwiseDistances,SCESet-method}
 \alias{cellPairwiseDistances.SCESet}
@@ -26,7 +26,7 @@ cellPairwiseDistances.SCESet(object)
 
 \S4method{cellPairwiseDistances}{SCESet}(object)
 
-cellDist.SCESet(object)
+cellDistSCESet(object)
 
 \S4method{cellDist}{SCESet}(object)
 
@@ -51,7 +51,11 @@ SCESet objects can contain a matrix of pairwise distances between cells. These
 }
 \examples{
 \dontrun{
-
+#' data("sc_example_counts")
+data("sc_example_cell_info")
+pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+cellPairwiseDistances(example_sceset)
 }
 }
 \author{

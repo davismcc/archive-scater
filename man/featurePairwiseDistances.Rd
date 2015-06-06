@@ -4,14 +4,14 @@
 \name{featurePairwiseDistances}
 \alias{featDist}
 \alias{featDist,SCESet-method}
-\alias{featDist.SCESet}
 \alias{featDist<-}
 \alias{featDist<-,SCESet,matrix-method}
+\alias{featDistSCESet}
 \alias{featurePairwiseDistances}
 \alias{featurePairwiseDistances,SCESet-method}
-\alias{featurePairwiseDistances.SCESet}
 \alias{featurePairwiseDistances<-}
 \alias{featurePairwiseDistances<-,SCESet,matrix-method}
+\alias{featurePairwiseDistancesSCESet}
 \title{featurePairwiseDistances in an SCESet object}
 \usage{
 featurePairwiseDistances(object)
@@ -22,11 +22,11 @@ featDist(object)
 
 featDist(object) <- value
 
-featurePairwiseDistances.SCESet(object)
+featurePairwiseDistancesSCESet(object)
 
 \S4method{featurePairwiseDistances}{SCESet}(object)
 
-featDist.SCESet(object)
+featDistSCESet(object)
 
 \S4method{featDist}{SCESet}(object)
 
@@ -52,7 +52,11 @@ of the correct size. The function \code{featDist} is simply shorthand for
 }
 \examples{
 \dontrun{
-
+#' data("sc_example_counts")
+data("sc_example_cell_info")
+pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+featurePairwiseDistances(example_sceset)
 }
 }
 \author{

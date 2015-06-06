@@ -140,12 +140,13 @@ plotSCESet <- function(x, block1=NULL, block2=NULL, colour_by=NULL,
     ## Set up plot
     if( is.null(colour_by) ) {
         plot_out <- ggplot(seq_real_estate_long, 
-                           aes(x=Feature, y=Proportion_Library, group=Cell)) +
+                           aes_string(x="Feature", y="Proportion_Library", 
+                                      group="Cell")) +
             geom_line(linetype="solid", alpha = 0.3)
     } else {
         plot_out <- ggplot(seq_real_estate_long, 
-                           aes(x=Feature, y=Proportion_Library, group=Cell,
-                               colour=colour_by)) +
+                           aes_string(x="Feature", y="Proportion_Library", 
+                                      group="Cell", colour="colour_by")) +
             geom_line(linetype="solid", alpha = 0.3)
     }
     ## Deal with blocks for grid
@@ -242,7 +243,7 @@ plotSCESet <- function(x, block1=NULL, block2=NULL, colour_by=NULL,
 #' plotPCA(example_sceset, ncomponents=4, colour_by="Treatment", 
 #' shape_by="Mutation_Status")
 #' 
-plotPCA.SCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL, 
+plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL, 
                            shape_by=NULL, size_by=NULL, feature_set=NULL, 
                            return_SCESet=FALSE, scale_features=TRUE) {
     ## Check arguments are valid
@@ -321,7 +322,7 @@ setMethod("plotPCA", signature("SCESet"),
           function(object, ntop=500, ncomponents=2, colour_by=NULL, shape_by=NULL, 
                    size_by=NULL, feature_set=NULL, return_SCESet=FALSE, 
                    scale_features=TRUE) {
-              plotPCA.SCESet(object, ntop, ncomponents, colour_by, shape_by, size_by, 
+              plotPCASCESet(object, ntop, ncomponents, colour_by, shape_by, size_by, 
                              feature_set, return_SCESet, scale_features)
           })
 
@@ -329,11 +330,11 @@ setMethod("plotPCA", signature("SCESet"),
 .makePairs <- function(data_matrix) {
     ## with thanks to Gaston Sanchez, who posted this code online
     ## https://gastonsanchez.wordpress.com/2012/08/27/scatterplot-matrices-with-ggplot/
-    grid <- expand.grid(x=1:ncol(data_matrix), y=1:ncol(data_matrix))
-    grid <- subset(grid, x != y)
-    all_panels <- do.call("rbind", lapply(1:nrow(grid), function(i) {
-        xcol <- grid[i, "x"]
-        ycol <- grid[i, "y"]
+    exp_grid <- expand.grid(x=1:ncol(data_matrix), y=1:ncol(data_matrix))
+    exp_grid <- subset(exp_grid, x != y)
+    all_panels <- do.call("rbind", lapply(1:nrow(exp_grid), function(i) {
+        xcol <- exp_grid[i, "x"]
+        ycol <- exp_grid[i, "y"]
         data.frame(xvar=names(data_matrix)[ycol], yvar=names(data_matrix)[xcol], 
                    x=data_matrix[, xcol], y=data_matrix[, ycol], data_matrix)
     }))
@@ -416,7 +417,8 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
         ## pairs plot
         plot_out <- ggplot(df_to_plot_big, aes_string(x="x", y="y")) + 
             facet_grid(xvar ~ yvar, scales="free") + 
-            stat_density(aes(x=x, y=(..scaled.. * diff(range(x)) + min(x))), 
+            stat_density(aes_string(x="x", 
+                                    y="(..scaled.. * diff(range(x)) + min(x))"), 
                          data=gg1$densities, position="identity", 
                          colour="grey20", geom="line") +
             theme_bw(14)
@@ -570,7 +572,7 @@ setMethod("plotReducedDim", signature("data.frame"),
 #'
 #' @param object an SCESet object containing expression values and
 #' experimental information. Must have been appropriately prepared. For the 
-#' \code{plotExpression.default} method, the \code{object} argument is a 
+#' \code{plotExpressionDefault} method, the \code{object} argument is a 
 #' data.frame in 'long' format providing expression values for a set of features
 #'  to plot, plus metadata used in the \code{aesth} argument, but this is not
 #'  meant to be a user-level operation.
@@ -599,7 +601,7 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' @param show_violin logical, show a violin plot for the distribution
 #' for each group on the plot
 #' @param ... optional arguments (from those listed above) passed to 
-#' \code{plotExpression.SCESet} or \code{plotExpression.default}
+#' \code{plotExpressionSCESet} or \code{plotExpressionDefault}
 #'
 #' @details Plot expression values (default log2(counts-per-million +
 #' 1)) for a set of genes or features.
@@ -607,6 +609,8 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' @name plotExpression
 #' @aliases plotExpression plotExpression,SCESet-method plotExpression,data.frame-method
 #' @import ggplot2
+#' @importFrom Biobase varLabels
+#' @importFrom Biobase featureNames
 #' @export
 #' 
 #' @examples
@@ -620,7 +624,7 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' plotExpression(example_sceset, 1:6, x="Mutation_Status", use_as_exprs="counts", 
 #' colour_by="Cell_Cycle", show_violin=TRUE, show_median=TRUE)
 #' 
-plotExpression.SCESet <- function(object, features, x, use_as_exprs="exprs", 
+plotExpressionSCESet <- function(object, features, x, use_as_exprs="exprs", 
                                   colour_by=NULL, shape_by=NULL, size_by=NULL, 
                                   ncol=2, xlab=NULL, show_median=FALSE, 
                                   show_violin=FALSE) {
@@ -737,7 +741,7 @@ plotExpression.SCESet <- function(object, features, x, use_as_exprs="exprs",
     object <- cbind(evals_long, samples_long)
     
     ## Make the plot
-    plotExpression.default(object, aesth, ncol, xlab, ylab, show_median, show_violin)
+    plotExpressionDefault(object, aesth, ncol, xlab, ylab, show_median, show_violin)
 }
 
 
@@ -747,7 +751,7 @@ plotExpression.SCESet <- function(object, features, x, use_as_exprs="exprs",
 #' @rdname plotExpression
 #' @aliases plotExpression
 #' @export
-plotExpression.default <- function(object, aesth, ncol=2, xlab=NULL, 
+plotExpressionDefault <- function(object, aesth, ncol=2, xlab=NULL, 
                                    ylab=NULL, show_median=FALSE, show_violin=FALSE) {
     if( !("Feature" %in% names(object)) )
         stop("object needs a column named 'Feature' to define the feature(s) by which to plot expression.")
@@ -780,7 +784,7 @@ setMethod("plotExpression", signature(object="SCESet"),
           function(object, features, x, use_as_exprs="exprs", colour_by=NULL, 
                    shape_by=NULL, size_by=NULL, ncol=2, xlab=NULL, 
                    show_median=FALSE, show_violin=FALSE) {
-              plotExpression.SCESet(object, features, x, use_as_exprs, 
+              plotExpressionSCESet(object, features, x, use_as_exprs, 
                                         colour_by, shape_by, size_by, ncol, 
                                         xlab, show_median, show_violin)
           })
@@ -790,7 +794,7 @@ setMethod("plotExpression", signature(object="SCESet"),
 #' @export
 setMethod("plotExpression", signature(object="SCESet"),
           function(object, ...) {
-              plotExpression.SCESet(object, ...)
+              plotExpressionSCESet(object, ...)
           })
 
 
@@ -799,7 +803,7 @@ setMethod("plotExpression", signature(object="SCESet"),
 #' @export
 setMethod("plotExpression", signature("data.frame"),
           function(object, ...) {
-              plotExpression.default(object, ...)
+              plotExpressionDefault(object, ...)
           })
 
 ################################################################################
@@ -831,7 +835,8 @@ setMethod("plotExpression", signature("data.frame"),
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' plotMetadata(pData(example_sceset))
 #'
-plotMetadata <- function(object, aesth=aes(x=log10(depth), y=coverage)) {
+plotMetadata <- function(object, aesth=aes_string(x="log10(depth)", 
+                                                  y="coverage")) {
     ## Must have at least an x variable in the aesthetics
     if(is.null(aesth$x))
         stop("No x variable defined. Must have at least an x variable defined
@@ -949,7 +954,8 @@ plotMetadata <- function(object, aesth=aes(x=log10(depth), y=coverage)) {
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' #plotPhenoData(example_sceset, aesth=aes(x=log10(depth), y=coverage, colour=Mutation_Status))
 #' 
-plotPhenoData <- function(object, aesth=aes(x=log10(depth), y=coverage)) {
+plotPhenoData <- function(object, aesth=aes_string(x="log10(depth)", 
+                                                   y="coverage")) {
     ## We must have an SCESet object
     if(!is(object, "SCESet"))
         stop("object must be an SCESet object.")
@@ -990,7 +996,7 @@ plotPhenoData <- function(object, aesth=aes(x=log10(depth), y=coverage)) {
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' plotFeatureData(example_sceset, aesth=aes(x=n_cells_exprs, y=prop_total_reads))
 #' 
-plotFeatureData <- function(object, aesth=aes(x=n_cells_exprs, y=prop_total_reads)) {
+plotFeatureData <- function(object, aesth=aes_string(x="n_cells_exprs", y="prop_total_reads")) {
     ## We must have an SCESet object
     if(!is(object, "SCESet"))
         stop("object must be an SCESet object.")

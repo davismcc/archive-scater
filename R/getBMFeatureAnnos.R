@@ -36,6 +36,7 @@
 #' permitted values for the filters, attributes, biomart, dataset and host 
 #' arguments.
 #' 
+#' @importFrom Biobase featureNames
 #' @export
 #' 
 #' @examples
