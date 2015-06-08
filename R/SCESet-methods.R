@@ -303,8 +303,10 @@ setMethod('[', 'SCESet', function (x, i, j, ..., drop=FALSE) {
             x@cellPairwiseDistances <- x@cellPairwiseDistances[j, j, drop=drop]
         if( nrow(x@reducedDimension) != 0 )
             x@reducedDimension <- x@reducedDimension[j, , drop=drop]
-        if( ncol(x@bootstraps) != 0 )
+        if( !is.na(ncol(x@bootstraps)) ) {
+          if( ncol(x@bootstraps) != 0 )
             x@bootstraps <- x@bootstraps[, j, ..., drop=drop]
+        }
     } else if( !missing(i) && !missing(j) ){
         ## Subsetting features (i) and cells (j)
         x <- selectMethod('[', 'ExpressionSet')(x, i, j, drop=drop)
