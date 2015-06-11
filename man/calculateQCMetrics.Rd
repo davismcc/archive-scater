@@ -5,7 +5,7 @@
 \title{Calculate QC metrics}
 \usage{
 calculateQCMetrics(object, gene_controls = NULL, cell_controls = NULL,
-  nmads = 5)
+  nmads = 5, pct_gene_controls_threshold = 80)
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and
@@ -23,6 +23,11 @@ example, blank wells or bulk controls).}
 used to flag potentially problematic cells based on depth (total number of
 counts for the cell, or library size) and coverage (number of genes with
 non-zero expression). Default value is 5.}
+
+\item{pct_gene_controls_threshold}{numeric scalar giving a threshold for
+percentage of expression values accounted for by gene controls. Used as to
+flag cells that may be filtered based on high percentage of expression from
+gene controls.}
 }
 \description{
 Calculate QC metrics

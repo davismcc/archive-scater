@@ -24,6 +24,9 @@ SCESet.
    \item{\code{logged}:}{Scalar of class \code{"logical"}, indicating whether
    or not the expression data in the `exprs` slot have been log2-transformed
    or not.}
+   \item{\code{logExprsOffset}:}{Scalar of class \code{"numeric"}, providing an offset
+   applied to expression data in the `exprs` slot when undergoing log2-transformation
+   to avoid trying to take logs of zero.}
    \item{\code{lowerDetectionLimit}:}{Scalar of class \code{"numeric"},
    giving the lower limit for an expression value to be classified as
    "expressed".}

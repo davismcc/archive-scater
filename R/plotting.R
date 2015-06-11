@@ -626,8 +626,8 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' 
 plotExpressionSCESet <- function(object, features, x, use_as_exprs="exprs", 
                                   colour_by=NULL, shape_by=NULL, size_by=NULL, 
-                                  ncol=2, xlab=NULL, show_median=FALSE, 
-                                  show_violin=FALSE) {
+                                  ncol=2, xlab=NULL, show_median=TRUE, 
+                                  show_violin=TRUE) {
     ## Check object is an SCESet object
     if( !is(object, "SCESet") )
         stop("object must be an SCESet")
@@ -752,7 +752,7 @@ plotExpressionSCESet <- function(object, features, x, use_as_exprs="exprs",
 #' @aliases plotExpression
 #' @export
 plotExpressionDefault <- function(object, aesth, ncol=2, xlab=NULL, 
-                                   ylab=NULL, show_median=FALSE, show_violin=FALSE) {
+                                   ylab=NULL, show_median=TRUE, show_violin=TRUE) {
     if( !("Feature" %in% names(object)) )
         stop("object needs a column named 'Feature' to define the feature(s) by which to plot expression.")
  
@@ -780,10 +780,10 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab=NULL,
 #' @rdname plotExpression
 #' @aliases plotExpression
 #' @export
-setMethod("plotExpression", signature(object="SCESet"),
-          function(object, features, x, use_as_exprs="exprs", colour_by=NULL, 
-                   shape_by=NULL, size_by=NULL, ncol=2, xlab=NULL, 
-                   show_median=FALSE, show_violin=FALSE) {
+setMethod("plotExpression", signature(object = "SCESet"),
+          function(object, features, x, use_as_exprs = "exprs", colour_by = NULL, 
+                   shape_by = NULL, size_by = NULL, ncol = 2, xlab = NULL, 
+                   show_median=TRUE, show_violin=TRUE) {
               plotExpressionSCESet(object, features, x, use_as_exprs, 
                                         colour_by, shape_by, size_by, ncol, 
                                         xlab, show_median, show_violin)
@@ -792,7 +792,7 @@ setMethod("plotExpression", signature(object="SCESet"),
 #' @rdname plotExpression
 #' @aliases plotExpression
 #' @export
-setMethod("plotExpression", signature(object="SCESet"),
+setMethod("plotExpression", signature(object = "SCESet"),
           function(object, ...) {
               plotExpressionSCESet(object, ...)
           })
@@ -881,7 +881,13 @@ plotMetadata <- function(object, aesth=aes_string(x="log10(depth)",
     }
     
     ## Setup plot
+    if( is.null(aesth$size) )
+        aesth$size <- 4
+    if( is.null(aesth$alpha) )
+        aesth$alpha <- 0.7
+    
     plot_out <- ggplot(object, aesth)
+    
        
     ## Density plot
     if(plot_type == "bar") {
@@ -889,21 +895,21 @@ plotMetadata <- function(object, aesth=aes_string(x="log10(depth)",
     }
     if(plot_type == "density") {
         plot_out <- plot_out + geom_density(kernel = "rectangular", size=2) +
-            geom_rug(alpha=0.5)
+            geom_rug(alpha=0.5, size=1)
     }
     if(plot_type == "jitter") {
-        plot_out <- plot_out + geom_jitter(size=4, alpha=0.7)
+        plot_out <- plot_out + geom_jitter()
     }
     if(plot_type == "scatter") {
         plot_out <- plot_out + 
-            geom_point(size=5, alpha=0.7) +
-            geom_rug(alpha=0.5)
+            geom_point() +
+            geom_rug(alpha=0.5, size=1)
             
     }
     if(plot_type == "violin") {
         plot_out <- plot_out + 
             geom_violin() +
-            geom_jitter(size=4, alpha=0.7)
+            geom_jitter()
     }
     
     ## Define plot colours
@@ -914,13 +920,17 @@ plotMetadata <- function(object, aesth=aes_string(x="log10(depth)",
     plot_out <- plot_out + theme_bw(16) +
         theme(legend.justification=c(0, 0), 
               legend.position=c(0, 0), 
-              legend.title = element_text(size=8),
-              legend.text=element_text(size=7))
+              legend.title = element_text(size=11),
+              legend.text=element_text(size=10))
     
     ## Tweak plot guides
     plot_out <- plot_out + guides(colour=guide_legend(override.aes=list(size=2)),
            shape=guide_legend(override.aes=list(size=2)),
            fill=guide_legend(override.aes=list(size=2)))
+    if( aesth$alpha == 0.7 )
+        plot_out <- plot_out + guides(alpha=FALSE)
+    if( aesth$size == 4 )
+        plot_out <- plot_out + guides(size=FALSE)
     
     ## Return plot object
     plot_out
@@ -952,7 +962,8 @@ plotMetadata <- function(object, aesth=aes_string(x="log10(depth)",
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset <- calculateQCMetrics(example_sceset)
-#' #plotPhenoData(example_sceset, aesth=aes(x=log10(depth), y=coverage, colour=Mutation_Status))
+#' plotPhenoData(example_sceset, 
+#' aesth = aes_string(x = "log10(depth)", y = "coverage", colour = "Mutation_Status"))
 #' 
 plotPhenoData <- function(object, aesth=aes_string(x="log10(depth)", 
                                                    y="coverage")) {
@@ -994,9 +1005,10 @@ plotPhenoData <- function(object, aesth=aes_string(x="log10(depth)",
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset <- calculateQCMetrics(example_sceset)
-#' plotFeatureData(example_sceset, aesth=aes(x=n_cells_exprs, y=prop_total_reads))
+#' plotFeatureData(example_sceset, aesth=aes(x=n_cells_exprs, y=pct_total_counts))
 #' 
-plotFeatureData <- function(object, aesth=aes_string(x="n_cells_exprs", y="prop_total_reads")) {
+plotFeatureData <- function(object, aesth=aes_string(x = "n_cells_exprs",
+                                                     y = "prop_total_counts")) {
     ## We must have an SCESet object
     if(!is(object, "SCESet"))
         stop("object must be an SCESet object.")
@@ -1007,6 +1019,93 @@ plotFeatureData <- function(object, aesth=aes_string(x="n_cells_exprs", y="prop_
     ## Return plot object
     plot_out
 }
+
+
+################################################################################
+### Multiplot function for ggplot2 plots
+
+#' Multiple plot function for ggplot2 plots
+#'
+#' Place multiple \code{\link[ggplot2]{ggplot}} plots on one page. 
+#'
+#' @param ...,plotlist ggplot objects can be passed in ..., or to plotlist (as 
+#' a list of ggplot objects)
+#' @param cols numeric scalar giving the number of columns in the layout
+#' @param layout a matrix specifying the layout. If present, \code{cols} is 
+#' ignored.
+#'
+#' @details If the layout is something like 
+#' \code{matrix(c(1,2,3,3), nrow=2, byrow=TRUE)}, then plot 1 will go in the 
+#' upper left, 2 will go in the upper right, and 3 will go all the way across 
+#' the bottom. There is no way to tweak the relative heights or widths of the 
+#' plots with this simple function. It was adapted from 
+#' \url{http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/}
+#' 
+#' @export
+#' @examples 
+#' library(ggplot2)
+#' ## This example uses the ChickWeight dataset, which comes with ggplot2
+#' ## First plot
+#' p1 <- ggplot(ChickWeight, aes(x=Time, y=weight, colour=Diet, group=Chick)) +
+#'    geom_line() +
+#'    ggtitle("Growth curve for individual chicks")
+#' ## Second plot
+#' p2 <- ggplot(ChickWeight, aes(x=Time, y=weight, colour=Diet)) +
+#'    geom_point(alpha=.3) +
+#'    geom_smooth(alpha=.2, size=1) +
+#'    ggtitle("Fitted growth curve per diet")
+#' ## Third plot
+#' p3 <- ggplot(subset(ChickWeight, Time==21), aes(x=weight, colour=Diet)) +
+#'    geom_density() +
+#'    ggtitle("Final weight, by diet")
+#' ## Fourth plot
+#' p4 <- ggplot(subset(ChickWeight, Time==21), aes(x=weight, fill=Diet)) +
+#'     geom_histogram(colour="black", binwidth=50) +
+#'    facet_grid(Diet ~ .) +
+#'    ggtitle("Final weight, by diet") +
+#'    theme(legend.position="none")        # No legend (redundant in this graph)  
+#' ## Combine plots and display
+#' multiplot(p1, p2, p3, p4, cols=2)   
+#' 
+multiplot <- function(..., plotlist = NULL, cols = 1, layout = NULL) {
+    ## Make a list from the ... arguments and plotlist
+    plots <- c(list(...), plotlist)
+    
+    num_plots = length(plots)
+    
+    ## If layout is NULL, then use 'cols' to determine layout
+    if (is.null(layout)) {
+        ## Make the panel
+        ## ncol: Number of columns of plots
+        ## nrow: Number of rows needed, calculated from # of cols
+        layout <- matrix(seq(1, cols * ceiling(num_plots / cols)),
+                         ncol = cols, nrow = ceiling(num_plots / cols))
+    }
+    
+    if (num_plots == 1) {
+        print(plots[[1]])
+    } else {
+        ## Set up the page
+        grid::grid.newpage()
+        grid::pushViewport(grid::viewport(
+            layout = grid::grid.layout(nrow(layout), ncol(layout))))
+        
+        # Make each plot, in the correct location
+        for (i in 1:num_plots) {
+            # Get the i,j matrix positions of the regions that contain this subplot
+            matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+            print(plots[[i]], vp = grid::viewport(layout.pos.row = matchidx$row,
+                                            layout.pos.col = matchidx$col))
+        }
+    }
+}
+
+
+
+
+
+
+
 
 
 

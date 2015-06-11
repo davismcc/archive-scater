@@ -4,19 +4,19 @@
 \alias{plotQC}
 \title{Produce QC diagnostic plots}
 \usage{
-plotQC(object, type = "most-expressed", ...)
+plotQC(object, type = "highest-expression", ...)
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and
 experimental information. Must have been appropriately prepared.}
 
 \item{type}{character scalar providing type of QC plot to compute:
-"most-expressed" (showing genes with highest expression), "find-pcs" (showing
+"highest-expression" (showing genes with highest expression), "find-pcs" (showing
 the most important principal components for a given variable), or
 "explanatory-variables" (showing a set of explanatory variables plotted
 against each other, ordered by marginal variance explained).}
 
-\item{...}{arguments passed to \code{plotHighestReadCounts},
+\item{...}{arguments passed to \code{plotHighestExprs},
 \code{plotImportantPCs} and \code{plotExplanatoryVariables} as appropriate.}
 }
 \description{
@@ -33,7 +33,7 @@ pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
 rownames(pd) <- pd$Cell
 example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
 example_sceset <- calculateQCMetrics(example_sceset)
-plotQC(example_sceset, type="most", col_by_variable="Mutation_Status")
+plotQC(example_sceset, type="high", col_by_variable="Mutation_Status")
 plotQC(example_sceset, type="find", variable="coverage")
 vars <- names(pData(example_sceset))[c(2:3, 5:14)]
 plotQC(example_sceset, type="expl", variables=vars)

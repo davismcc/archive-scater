@@ -13,10 +13,10 @@ plotExpression(object, ...)
 
 plotExpressionSCESet(object, features, x, use_as_exprs = "exprs",
   colour_by = NULL, shape_by = NULL, size_by = NULL, ncol = 2,
-  xlab = NULL, show_median = FALSE, show_violin = FALSE)
+  xlab = NULL, show_median = TRUE, show_violin = TRUE)
 
 plotExpressionDefault(object, aesth, ncol = 2, xlab = NULL, ylab = NULL,
-  show_median = FALSE, show_violin = FALSE)
+  show_median = TRUE, show_violin = TRUE)
 
 \S4method{plotExpression}{SCESet}(object, ...)
 

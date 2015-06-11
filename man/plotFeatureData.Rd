@@ -5,7 +5,7 @@
 \title{Plot feature (gene) data from an SCESet object}
 \usage{
 plotFeatureData(object, aesth = aes_string(x = "n_cells_exprs", y =
-  "prop_total_reads"))
+  "prop_total_counts"))
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and
@@ -35,6 +35,6 @@ data("sc_example_cell_info")
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 example_sceset <- calculateQCMetrics(example_sceset)
-plotFeatureData(example_sceset, aesth=aes(x=n_cells_exprs, y=prop_total_reads))
+plotFeatureData(example_sceset, aesth=aes(x=n_cells_exprs, y=pct_total_counts))
 }
 

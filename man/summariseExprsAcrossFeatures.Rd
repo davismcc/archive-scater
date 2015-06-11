@@ -17,7 +17,8 @@ transcripts-per-million slot or \code{'fpkm'} the FPKM slot.}
 
 \item{summarise_by}{character string giving the column of \code{fDat(object)}
 that will be used as the features for which summarised expression levels are
-to be produced. Default is \code{'feature_id'}.}
+to be produced. Default is \code{'feature_id'}.
+ \code{"exprs"}.}
 }
 \description{
 Create a new \code{SCESet} with counts summarised at a different feature
@@ -31,13 +32,22 @@ across features. Since counts are not scaled by the length of the feature,
 expression in counts units are not comparable within a sample without
 adjusting for feature length. Thus, we cannot sum counts over a set of
 features to get the expression of that set (for example, we cannot sum counts
- over transcripts to get the expression for a gene). See the following link
- for a discussion of RNA-seq expression units by Harold Pimentel:
+over transcripts to get accurate expression estimates for a gene). See the
+following link for a discussion of RNA-seq expression units by Harold Pimentel:
 \url{https://haroldpimentel.wordpress.com/2014/05/08/what-the-fpkm-a-review-rna-seq-expression-units/}.
 }
 \examples{
-\dontrun{
-object <- summariseExprsAcrossFeatures(object)
-}
+data("sc_example_counts")
+data("sc_example_cell_info")
+pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+fd <- new("AnnotatedDataFrame", data =
+data.frame(gene_id = featureNames(example_sceset),
+feature_id = paste("feature", rep(1:500, each = 4), sep = "_")))
+fData(example_sceset) <- fd
+example_sceset_summarised <-
+summariseExprsAcrossFeatures(example_sceset, use_as_exprs = "counts")
+example_sceset_summarised <-
+summariseExprsAcrossFeatures(example_sceset, use_as_exprs = "exprs")
 }
 

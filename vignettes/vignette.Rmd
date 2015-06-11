@@ -114,8 +114,8 @@ We can also make an `SCESet` object with just a matrix of expression values
 (no count data required) like this:
 
 ```{r sceset-make-sceset-exprs-only}
-example2 <- newSCESet(exprsData=edgeR::cpm.default(sc_example_counts))
-pData(example2)
+example2 <- newSCESet(exprsData = edgeR::cpm.default(sc_example_counts))
+pData(example2) 
 fData(example2)
 ```
 
@@ -187,7 +187,7 @@ expression testing or other means.
 
 ```{r plot-expression}
 plotExpression(example_sceset, rownames(example_sceset)[1:6],
-               x="Mutation_Status", use_as_expr="exprs")
+               x = "Mutation_Status", use_as_expr = "exprs")
 ```
 
 This function uses `ggplot2`, making it easy to change the theme to whatever you 
@@ -196,8 +196,8 @@ show a violin plot to summarise the distribution of expression values:
 
 ```{r plot-expression-theme-bw}
 plotExpression(example_sceset, rownames(example_sceset)[7:12], 
-               x="Mutation_Status", use_as_expr="exprs", colour="Cell_Cycle",
-               show_median=TRUE, show_violin=TRUE,  xlab="Mutation Status")
+               x = "Mutation_Status", use_as_expr = "exprs", colour = "Cell_Cycle",
+               show_median = TRUE, show_violin = TRUE,  xlab = "Mutation Status")
 ```
 
 
@@ -224,7 +224,7 @@ To compute commonly-used QC metrics we have the function `calculateQCMetrics()`:
 
 ```{r calc-qc-metrics}
 names(pData(example_sceset))
-example_sceset <- calculateQCMetrics(example_sceset, gene_controls=1:20)
+example_sceset <- calculateQCMetrics(example_sceset, gene_controls = 1:20)
 varLabels(example_sceset)
 ```
 
@@ -233,14 +233,14 @@ More than one set of gene controls can be defined if desired.
 ```{r calc-qc-metrics-multi-gene-controls}
 names(pData(example_sceset))
 example_sceset <- calculateQCMetrics(
-    example_sceset, gene_controls=list(controls1=1:20, controls2=500:1000),
-    cell_controls=list(set_1=1:5, set_2=31:40))
+    example_sceset, gene_controls = list(controls1 = 1:20, controls2 = 500:1000),
+    cell_controls = list(set_1 = 1:5, set_2 = 31:40))
 varLabels(example_sceset)
 ```
 
 This function adds the following columns to `pData(object)`:
 
-* `depth`: total number of reads for the cell (aka 'library size')
+* `depth`: total number of counts for the cell (aka 'library size')
 * `log10_depth`: depth on the log10-scale
 * `coverage`: the number of genes for the cell that have expression above the 
 detection limit (default detection limit is zero)
@@ -250,30 +250,30 @@ log10-depth for the dataset?
 * `filter_on_coverage`: would this cell be filtered out based on its coverage 
 being (by default) more than 5 median absolute deviations from the median 
 coverage for the dataset?
-* `reads_from_gene_controls`: total number of reads for the cell that come from 
+* `counts_from_gene_controls`: total number of counts for the cell that come from 
 (a set of user-defined) control genes. Defaults to zero if no control genes are 
 indicated.
-* `reads_from_biological_genes`: total number of reads for the cell that come from 
-biological genes (i.e. not control genes). Defaults to `depth` if no control genes are 
+* `counts_from_endogenous_genes`: total number of counts for the cell that come from 
+endogenous genes (i.e. not control genes). Defaults to `depth` if no control genes are 
 indicated.
-* `log10_reads_from_gene_controls`: total number of reads from control genes on 
+* `log10_counts_from_gene_controls`: total number of counts from control genes on 
 the log10-scale. Defaults to zero (i.e. log10(0 + 1), offset to avoid infinite 
 values) if no control genes are indicated.
-* `log10_reads_from_biological_genes`: total number of reads from biological 
+* `log10_counts_from_endogenous_genes`: total number of counts from endogenous 
 genes on the log10-scale. Defaults to zero (i.e. log10(0 + 1), offset to avoid 
 infinite values) if no control genes are indicated.
-*`pct_reads_from_gene_controls`: percentage of all reads that come from the 
+*`pct_counts_from_gene_controls`: percentage of all counts that come from the 
 defined control genes. Defaults to zero if no control genes are defined.
 
 The function further adds the following columns to `fData(object)`:
 
 * `mean_exprs`: the mean expression level of the gene/feature.
 * `exprs_rank`: the rank of the gene's expression level in the cell.
-* `total_gene_reads`: the total number of reads mapped to that gene across all 
+* `total_gene_counts`: the total number of counts mapped to that gene across all 
 cells.
-* `log10_total_gene_reads`: total gene reads on the log10-scale.
-* `prop_total_reads`: the proportion of all reads that are accounted for by the
-reads mapping to the gene.
+* `log10_total_gene_counts`: total gene counts on the log10-scale.
+* `pct_total_counts`: the percentage of all counts that are accounted for by the
+counts mapping to the gene.
 * `is_gene_control`: is the gene a control gene? Default is `FALSE` unless 
 control genes are defined by the user.
 `n_cells_exprs`: the number of cells for which the expression level of the gene
@@ -309,13 +309,13 @@ to make sure there are no genes with zero or constant expression):
 keep_gene <- rowSums(is_exprs(example_sceset)) > 4
 example_sceset <- example_sceset[keep_gene,]
 ## Plot QC
-plotQC(example_sceset, type="most-expressed")
-plotQC(example_sceset, type="find-pcs", variable="coverage")
-plotQC(example_sceset, type="find-pcs", variable="Cell_Cycle")
-plotQC(example_sceset, type="find-pcs", variable="Treatment")
-plotQC(example_sceset, type="expl", 
-       variables=c("coverage", "depth", "Mutation_Status", "Treatment"))
-plotQC(example_sceset, type="expl")
+plotQC(example_sceset, type = "highest-expression")
+plotQC(example_sceset, type = "find-pcs", variable = "coverage")
+plotQC(example_sceset, type = "find-pcs", variable = "Cell_Cycle")
+plotQC(example_sceset, type = "find-pcs", variable = "Treatment")
+plotQC(example_sceset, type = "expl", 
+       variables = c("coverage", "depth", "Mutation_Status", "Treatment"))
+plotQC(example_sceset, type = "expl")
 ```
 
 In this small dataset depth and coverage explain a very large proportion of the
@@ -325,13 +325,13 @@ real dataset should be much smaller (say 1-5%).
 We also have neat functions to plot two cell metadata variables:
 
 ```{r plot-pdata}
-plotPhenoData(example_sceset, aes(x=depth, y=coverage, colour=Mutation_Status))
+plotPhenoData(example_sceset, aes(x = depth, y = coverage, colour = Mutation_Status))
 ```
 
 and to plot two feature metadata variables:
 
 ```{r plot-fdata}
-plotFeatureData(example_sceset, aes(x=n_cells_exprs, y=prop_total_reads))
+plotFeatureData(example_sceset, aes(x = n_cells_exprs, y = pct_total_counts))
 ```
 
 These sorts of plots can be very useful for finding potentially problematic 
@@ -344,16 +344,16 @@ Coverage vs Depth plot above, we can change it:
 
 
 ```{r plot-pdata-move-legend}
-plotPhenoData(example_sceset, aes(x=depth, y=coverage, colour=Mutation_Status)) +
-    theme(legend.position="top")
+plotPhenoData(example_sceset, aes(x = depth, y = coverage, colour = Mutation_Status)) +
+    theme(legend.position = "top")
 ```
 
 We could also add a trend line for each group:
 
 ```{r plot-pdata-move-legend-add-trend}
-plotPhenoData(example_sceset, aes(x=depth, y=coverage, colour=Mutation_Status)) +
-    theme(legend.position="top") +
-    stat_smooth(method="lm", se=FALSE, size=2, fullrange=TRUE)
+plotPhenoData(example_sceset, aes(x = depth, y = coverage, colour = Mutation_Status)) +
+    theme(legend.position = "top") +
+    stat_smooth(method = "lm", se = FALSE, size = 2, fullrange = TRUE)
 ```
 
 Tapping into the powerful capabilities of `ggplot2`, the possibilities are many.

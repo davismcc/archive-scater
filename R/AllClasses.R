@@ -21,6 +21,9 @@
 #'    \item{\code{logged}:}{Scalar of class \code{"logical"}, indicating whether 
 #'    or not the expression data in the `exprs` slot have been log2-transformed
 #'    or not.}
+#'    \item{\code{logExprsOffset}:}{Scalar of class \code{"numeric"}, providing an offset 
+#'    applied to expression data in the `exprs` slot when undergoing log2-transformation
+#'    to avoid trying to take logs of zero.}
 #'    \item{\code{lowerDetectionLimit}:}{Scalar of class \code{"numeric"}, 
 #'    giving the lower limit for an expression value to be classified as 
 #'    "expressed".}
@@ -35,20 +38,22 @@
 #'}
 #' @name SCESet
 #' @rdname SCESet
+#' @inheritParams Biobase ExpressionSet
 #' @aliases SCESet-class
 #' @import BiocGenerics
 #' @exportClass SCESet
 setClass("SCESet",
-         contains="ExpressionSet",
-         slots=c(logged="logical",
-                 lowerDetectionLimit="numeric",
-                 cellPairwiseDistances="matrix",
-                 featurePairwiseDistances="matrix",
-                 reducedDimension="matrix",
-                 bootstraps="array"),
+         contains = "ExpressionSet",
+         slots = c(logged = "logical",
+                   logExprsOffset = "numeric",
+                   lowerDetectionLimit = "numeric",
+                   cellPairwiseDistances = "matrix",
+                   featurePairwiseDistances = "matrix",
+                   reducedDimension = "matrix",
+                   bootstraps = "array"),
          prototype = prototype(new("VersionedBiobase",
                                    versions = c(classVersion("ExpressionSet"),
-                                                SCESet = "0.1.2")))
+                                                SCESet = "0.1.4")))
 )
 
 

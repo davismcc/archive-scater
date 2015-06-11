@@ -6,8 +6,8 @@
 \usage{
 runKallisto(targets_file, transcript_index, single_end = TRUE,
   output_prefix = "output", fragment_length = NULL, n_cores = 2,
-  n_bootstrap_samples = 0, bootstrap_seed = NULL, plaintext = FALSE,
-  verbose = TRUE)
+  n_bootstrap_samples = 0, bootstrap_seed = NULL, correct_bias = TRUE,
+  plaintext = FALSE, kallisto_version = "current", verbose = TRUE)
 }
 \arguments{
 \item{targets_file}{character string giving the path to a tab-delimited text
@@ -41,9 +41,18 @@ in abundance can be quantified.}
 \item{bootstrap_seed}{scalar integer or numeric giving the seed to use for
 the bootstrap sampling (default used by kallisto is 42). Optional argument.}
 
+\item{correct_bias}{logical, should kallisto's option to model and correct
+abundances for sequence specific bias? Requires kallisto version 0.42.2 or
+higher.}
+
 \item{plaintext}{logical, if \code{TRUE} then bootstrapping results are
 returned in a plain text file rather than an HDF5
 \url{https://www.hdfgroup.org/HDF5/} file.}
+
+\item{kallisto_version}{character string indicating whether or not the
+version of kallisto to be used is \code{"pre-0.42.2"} or \code{"current"}.
+This is required because the kallisto developers changed the output file
+extensions and added features in version 0.42.2.}
 
 \item{verbose}{logical, should timings for the run be printed?}
 }

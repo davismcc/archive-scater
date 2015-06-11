@@ -7,7 +7,7 @@
 newSCESet(exprsData = NULL, countData = NULL, tpmData = NULL,
   fpkmData = NULL, phenoData = NULL, featureData = NULL,
   experimentData = NULL, is_exprsData = NULL, lowerDetectionLimit = 0,
-  logged = FALSE)
+  logExprsOffset = 1, logged = FALSE)
 }
 \arguments{
 \item{exprsData}{expression data matrix for an experiment}
@@ -33,6 +33,10 @@ or not each observation is above the \code{lowerDetectionLimit}.}
 \item{lowerDetectionLimit}{the minimum expression level that constitutes true
 expression (defaults to zero and uses count data to determine if an
 observation is expressed or not)}
+
+\item{logExprsOffset}{numeric scalar, providing the offset used when doing
+log2-transformations of expression data to avoid trying to take logs of zero.
+Default offset value is \code{1}.}
 
 \item{logged}{logical, if a value is supplied for the exprsData argument, are
 the expression values already on the log2 scale, or not?}

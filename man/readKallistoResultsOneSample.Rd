@@ -4,7 +4,8 @@
 \alias{readKallistoResultsOneSample}
 \title{Read kallisto results for a single sample into a list}
 \usage{
-readKallistoResultsOneSample(directory, read_h5 = FALSE)
+readKallistoResultsOneSample(directory, read_h5 = FALSE,
+  kallisto_version = "current")
 }
 \arguments{
 \item{directory}{character string giving the path to the directory containing
@@ -12,6 +13,11 @@ the kallisto results for the sample.}
 
 \item{read_h5}{logical, if \code{TRUE} then read in bootstrap results from
 the HDF5 object produced by kallisto.}
+
+\item{kallisto_version}{character string indicating whether or not the
+version of kallisto to be used is \code{"pre-0.42.2"} or \code{"current"}.
+This is required because the kallisto developers changed the output file
+extensions and added features in version 0.42.2.}
 }
 \value{
 A list with two elements: (1) a data.frame \code{abundance} with

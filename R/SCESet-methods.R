@@ -27,6 +27,9 @@
 #' @param lowerDetectionLimit the minimum expression level that constitutes true
 #'  expression (defaults to zero and uses count data to determine if an 
 #'  observation is expressed or not)
+#' @param logExprsOffset numeric scalar, providing the offset used when doing
+#' log2-transformations of expression data to avoid trying to take logs of zero.
+#' Default offset value is \code{1}.
 #' @param logged logical, if a value is supplied for the exprsData argument, are
 #'  the expression values already on the log2 scale, or not?
 #' @param is_exprsData matrix of class \code{"logical"}, indicating whether
@@ -69,60 +72,61 @@
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset
-newSCESet <- function( exprsData=NULL, 
-                       countData=NULL,
-                       tpmData=NULL,
-                       fpkmData=NULL,
-                       phenoData=NULL, 
-                       featureData=NULL,
-                       experimentData=NULL,
-                       is_exprsData=NULL,
-                       lowerDetectionLimit=0,
-                       logged=FALSE)
+newSCESet <- function(exprsData = NULL, 
+                      countData = NULL,
+                      tpmData = NULL,
+                      fpkmData = NULL,
+                      phenoData = NULL, 
+                      featureData = NULL,
+                      experimentData = NULL,
+                      is_exprsData = NULL,
+                      lowerDetectionLimit = 0,
+                      logExprsOffset = 1,
+                      logged = FALSE)
 {
     ## Check that we have some expression data
-    if( is.null(exprsData) & is.null(countData) & is.null(tpmData) & is.null(fpkmData))
+    if ( is.null(exprsData) & is.null(countData) & is.null(tpmData) & is.null(fpkmData))
         stop("Require at least one of exprsData, tpmData, fpkmData or countData arguments.")
     ## Check dimensions of data matrices
     
     ## Check counts are a matrix; renames is_exprsData if not null
-    if( !is.null(countData) )     
+    if ( !is.null(countData) )     
         countData <- as.matrix(countData)
-    if( !is.null(is_exprsData) )
+    if ( !is.null(is_exprsData) )
         isexprs <- is_exprsData
     
     ## If no exprsData provided define is_exprs from tpmData, fpkmData or countData
-    if( is.null(exprsData) ) {
+    if ( is.null(exprsData) ) {
         ## Define exprs data if null
-        if( !is.null(tpmData) ) {
-            exprsData <- log2(tpmData + 1)
+        if ( !is.null(tpmData) ) {
+            exprsData <- log2(tpmData + logExprsOffset)
             logged <- TRUE
             message("exprs(object) (i.e. exprsData) is not defined. 
-Using log2(transcripts-per-million + 1) for exprs slot. See also ?calculateTPM.")
+Using log2(transcripts-per-million + logExprsOffset) for exprs slot. See also ?calculateTPM.")
         } else {
-            if( !is.null(fpkmData) ) {
-                exprsData <- log2(fpkmData + 1)
+            if ( !is.null(fpkmData) ) {
+                exprsData <- log2(fpkmData + logExprsOffset)
                 logged <- TRUE
                 message("exprs(object) (i.e. exprsData) is not defined. 
-Using log2(FPKM + 1) for exprs slot. See also ?calculateFPKM and ?calculateTPM.")
+Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?calculateTPM.")
             } else {
-                exprsData <- edgeR::cpm.default(countData, prior.count = 1, log = TRUE)
+                exprsData <- edgeR::cpm.default(countData, prior.count = logExprsOffset, log = TRUE)
                 logged <- TRUE
                 message("Generating log2(counts-per-million) from counts to use as
-                expression data, with prior.count = 1. See edgeR::cpm().
+                expression data, with prior.count = logExprsOffset. See edgeR::cpm().
                         Note that counts-per-million are not recommended for most analyses. 
                         Consider using transcripts-per-million instead. See ?calculateTPM.")
             }
         }    
         ## Define isexprs if null
-        if( is.null(is_exprsData) ) {
-            if( !is.null(tpmData) ) {
+        if ( is.null(is_exprsData) ) {
+            if ( !is.null(tpmData) ) {
                 isexprs <- tpmData > lowerDetectionLimit
                 rownames(isexprs) <- rownames(tpmData)
                 colnames(isexprs) <- colnames(tpmData)
                 message(paste0("Defining 'is_exprs' using TPM data and a lower TPM threshold of ", lowerDetectionLimit))
             } else { 
-                if( !is.null(fpkmData) ) {
+                if ( !is.null(fpkmData) ) {
                     isexprs <- fpkmData > lowerDetectionLimit
                     rownames(isexprs) <- rownames(fpkmData)
                     colnames(isexprs) <- colnames(fpkmData)
@@ -137,7 +141,7 @@ Using log2(FPKM + 1) for exprs slot. See also ?calculateFPKM and ?calculateTPM."
         }        
     } else {
         exprsData <- as.matrix(exprsData)
-        if( is.null(is_exprsData) ) {
+        if ( is.null(is_exprsData) ) {
             isexprs <- exprsData > lowerDetectionLimit
             rownames(isexprs) <- rownames(exprsData)
             colnames(isexprs) <- colnames(exprsData)
@@ -146,25 +150,25 @@ Using log2(FPKM + 1) for exprs slot. See also ?calculateFPKM and ?calculateTPM."
     }
     
     ## Generate valid phenoData and featureData if not provided
-    if( is.null(phenoData) )
-        phenoData <- annotatedDataFrameFrom(exprsData, byrow=FALSE)
-    if( is.null(featureData) ) 
-        featureData <- annotatedDataFrameFrom(exprsData, byrow=TRUE)
+    if ( is.null(phenoData) )
+        phenoData <- annotatedDataFrameFrom(exprsData, byrow = FALSE)
+    if ( is.null(featureData) ) 
+        featureData <- annotatedDataFrameFrom(exprsData, byrow = TRUE)
    
     ## Check experimentData
     expData_null <- new("MIAME",
-                        name="<your name here>",
-                        lab="<your lab here>",
-                        contact="<email address>",
-                        title="<title for this dataset>",
-                        abstract="An SCESet",
-                        url="<your website here>",
-                        other=list(
-                            notes="This dataset created from ...",
-                            coauthors=c("")
+                        name = "<your name here>",
+                        lab = "<your lab here>",
+                        contact = "<email address>",
+                        title = "<title for this dataset>",
+                        abstract = "An SCESet",
+                        url = "<your website here>",
+                        other = list(
+                            notes = "This dataset created from ...",
+                            coauthors = c("")
                         ))
-    if( !is.null( experimentData ) ) {
-        if( is(experimentData, "MIAME") )
+    if ( !is.null( experimentData ) ) {
+        if ( is(experimentData, "MIAME") )
             expData <- experimentData
         else {
             expData <- expData_null
@@ -175,21 +179,22 @@ Using log2(FPKM + 1) for exprs slot. See also ?calculateFPKM and ?calculateTPM."
     }   
     
     ## Generate new SCESet object
-    assaydata <- assayDataNew("environment", exprs=exprsData, is_exprs=isexprs) 
+    assaydata <- assayDataNew("environment", exprs = exprsData, is_exprs = isexprs) 
     sceset <- new( "SCESet",
-                   assayData=assaydata,
-                   phenoData=phenoData, 
-                   featureData=featureData, 
-                   experimentData=expData,
-                   lowerDetectionLimit=lowerDetectionLimit,
-                   logged=logged)
+                   assayData = assaydata,
+                   phenoData = phenoData, 
+                   featureData = featureData, 
+                   experimentData = expData,
+                   lowerDetectionLimit = lowerDetectionLimit,
+                   logExprsOffset = logExprsOffset,
+                   logged = logged)
     
     ## Add non-null slots to assayData for SCESet object, omitting null slots
-    if( !is.null(tpmData) )
+    if ( !is.null(tpmData) )
         tpm(sceset) <- tpmData
-    if( !is.null(fpkmData) )
+    if ( !is.null(fpkmData) )
         fpkm(sceset) <- fpkmData
-    if( !is.null(countData) )
+    if ( !is.null(countData) )
         counts(sceset) <- countData
     
     ## Check validity of object    
@@ -203,49 +208,49 @@ Using log2(FPKM + 1) for exprs slot. See also ?calculateFPKM and ?calculateTPM."
 
 setValidity("SCESet", function(object) {
     ## Check that the dimensions and names of the bootstraps slot are sensible
-    if( (length(object@bootstraps) != 0) && (nrow(object@bootstraps) != nrow(object)) )
+    if ( (length(object@bootstraps) != 0) && (nrow(object@bootstraps) != nrow(object)) )
         return(FALSE)
-    if( (length(object@bootstraps) != 0) && (ncol(object@bootstraps) != ncol(object)) )
+    if ( (length(object@bootstraps) != 0) && (ncol(object@bootstraps) != ncol(object)) )
         return(FALSE)
-    if(  (length(object@bootstraps) != 0) && 
+    if (  (length(object@bootstraps) != 0) && 
          !identical(rownames(object@bootstraps), featureNames(object)) )
         return(FALSE)
-    if(  (length(object@bootstraps) != 0) && 
+    if (  (length(object@bootstraps) != 0) && 
          !identical(colnames(object@bootstraps), sampleNames(object)) )
         return(FALSE)
     ## Check that the dimensions of the reducedDimension slot are sensible
-    if( (nrow(object@reducedDimension) != 0) && 
+    if ( (nrow(object@reducedDimension) != 0) && 
         (nrow(object@reducedDimension) != ncol(object)) )
         return(FALSE)
-    if( (nrow(object@reducedDimension) != 0) && 
+    if ( (nrow(object@reducedDimension) != 0) && 
         !identical(rownames(object@reducedDimension), sampleNames(object)) )
         return(FALSE)
     ## Check that the dimensions of the cellPairwiseDistances slot are sensible
-    if( (nrow(object@cellPairwiseDistances) != ncol(object@cellPairwiseDistances)) ||
+    if ( (nrow(object@cellPairwiseDistances) != ncol(object@cellPairwiseDistances)) ||
         (nrow(object@cellPairwiseDistances) != 0 && 
          nrow(object@cellPairwiseDistances) != ncol(object)) )
         return(FALSE)
-    if( (nrow(object@cellPairwiseDistances) != 0) && 
+    if ( (nrow(object@cellPairwiseDistances) != 0) && 
         (!identical(rownames(object@cellPairwiseDistances), 
                     colnames(object@cellPairwiseDistances)) ||
         !identical(rownames(object@cellPairwiseDistances), sampleNames(object))) )
         return(FALSE)
     ## Check that the dimensions of the featurePairwiseDistances slot are sensible
-    if( (nrow(object@featurePairwiseDistances) != 
+    if ( (nrow(object@featurePairwiseDistances) != 
          ncol(object@featurePairwiseDistances)) ||
         (nrow(object@featurePairwiseDistances) != 0 && 
          nrow(object@featurePairwiseDistances) != nrow(object)) )
         return(FALSE)
-    if( (nrow(object@featurePairwiseDistances) != 0) && 
+    if ( (nrow(object@featurePairwiseDistances) != 0) && 
         (!identical(rownames(object@featurePairwiseDistances), 
                     colnames(object@featurePairwiseDistances)) ||
          !identical(rownames(object@featurePairwiseDistances), featureNames(object))) )
         return(FALSE)
     ## Check that we have sensible values for the counts
-    if( is.null(counts(object)) )
+    if ( is.null(counts(object)) )
         return(TRUE)
     else {
-        if( any(counts(object) < 0) ) {
+        if ( any(counts(object) < 0) ) {
             warning( "The count data contain negative values." )
             return(FALSE)         
         } else
