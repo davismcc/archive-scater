@@ -67,7 +67,7 @@ We plan to contribute `scater` to Bioconductor in the near future.
 
 ## Getting started
 
-The best place to start is the [vignette](http://htmlpreview.github.io/?http://github.com/davismcc/scater/blob/master/inst/doc/vignette.html).
+The best place to start is the [vignette](http://htmlpreview.github.io/?http://github.com/davismcc/scater/blob/master/vignettes/vignette.html).
 
 
 ## Acknowledgements and disclaimer
