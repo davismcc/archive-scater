@@ -250,11 +250,16 @@ setValidity("SCESet", function(object) {
     if ( is.null(counts(object)) )
         return(TRUE)
     else {
-        if ( any(counts(object) < 0) ) {
-            warning( "The count data contain negative values." )
-            return(FALSE)         
-        } else
-            return(TRUE)
+        if( any(is.na(exprs(object))) ) {
+            warning( "The exprs data contain NA values." )
+            return(TRUE)     
+        } else {
+            if ( any(counts(object) < 0, na.rm = TRUE) ) {
+                warning( "The count data contain negative values." )
+                return(TRUE)         
+            } else
+                return(TRUE)
+        }
     }
 })
 
@@ -299,8 +304,8 @@ setMethod('[', 'SCESet', function (x, i, j, ..., drop=FALSE) {
         x <- selectMethod('[', 'ExpressionSet')(x, i, , drop=drop)
         if( nrow(x@featurePairwiseDistances) != 0 )
             x@featurePairwiseDistances <- x@featurePairwiseDistances[i, i, drop=drop]
-        if( nrow(x@bootstraps) != 0 )
-            x@bootstraps <- x@bootstraps[i, , ..., drop=drop]
+#         if( nrow(x@bootstraps) != 0 )
+#             x@bootstraps <- x@bootstraps[i, , ..., drop=drop]
     } else if( missing(i) && !missing(j) ){
         ## Subsetting cells only
         x <- selectMethod('[', 'ExpressionSet')(x, , j, drop=drop)
@@ -308,10 +313,10 @@ setMethod('[', 'SCESet', function (x, i, j, ..., drop=FALSE) {
             x@cellPairwiseDistances <- x@cellPairwiseDistances[j, j, drop=drop]
         if( nrow(x@reducedDimension) != 0 )
             x@reducedDimension <- x@reducedDimension[j, , drop=drop]
-        if( !is.na(ncol(x@bootstraps)) ) {
-          if( ncol(x@bootstraps) != 0 )
-            x@bootstraps <- x@bootstraps[, j, ..., drop=drop]
-        }
+#         if( !is.na(ncol(x@bootstraps)) ) {
+#           if( ncol(x@bootstraps) != 0 )
+#             x@bootstraps <- x@bootstraps[, j, ..., drop=drop]
+#         }
     } else if( !missing(i) && !missing(j) ){
         ## Subsetting features (i) and cells (j)
         x <- selectMethod('[', 'ExpressionSet')(x, i, j, drop=drop)
@@ -321,12 +326,12 @@ setMethod('[', 'SCESet', function (x, i, j, ..., drop=FALSE) {
             x@cellPairwiseDistances <- x@cellPairwiseDistances[j, j, drop=drop]
         if( nrow(x@reducedDimension) != 0 )
             x@reducedDimension <- x@reducedDimension[j, , drop=drop]
-        if( nrow(x@bootstraps) != 0 )
-            x@bootstraps <- x@bootstraps[i, j, ..., drop=drop]
+#         if( nrow(x@bootstraps) != 0 )
+#             x@bootstraps <- x@bootstraps[i, j, ..., drop=drop]
     } else{ 
         ## All missing: possibly not missing k for subsetting bootstrap samples
-        if( nrow(x@bootstraps) != 0 && ncol(x@bootstraps) != 0 )
-            x@bootstraps <- x@bootstraps[, , ..., drop=drop]
+#         if( nrow(x@bootstraps) != 0 && ncol(x@bootstraps) != 0 )
+#             x@bootstraps <- x@bootstraps[, , ..., drop=drop]
     }
     ## Check validity of object    
     validObject(x)

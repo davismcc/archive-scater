@@ -7,7 +7,8 @@
 runKallisto(targets_file, transcript_index, single_end = TRUE,
   output_prefix = "output", fragment_length = NULL, n_cores = 2,
   n_bootstrap_samples = 0, bootstrap_seed = NULL, correct_bias = TRUE,
-  plaintext = FALSE, kallisto_version = "current", verbose = TRUE)
+  plaintext = FALSE, kallisto_version = "current", verbose = TRUE,
+  dry_run = FALSE)
 }
 \arguments{
 \item{targets_file}{character string giving the path to a tab-delimited text
@@ -55,6 +56,11 @@ This is required because the kallisto developers changed the output file
 extensions and added features in version 0.42.2.}
 
 \item{verbose}{logical, should timings for the run be printed?}
+
+\item{dry_run}{logical, if \code{TRUE} then a list containing the kallisto
+commands that would be run and the output directories is returned. Can be
+used to read in results if kallisto is run outside an R session or to produce
+ a script to run outside of an R session.}
 }
 \value{
 A list containing three elements for each sample for which feature

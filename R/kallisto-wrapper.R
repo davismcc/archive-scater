@@ -43,6 +43,10 @@
 #' This is required because the kallisto developers changed the output file 
 #' extensions and added features in version 0.42.2.
 #' @param verbose logical, should timings for the run be printed?
+#' @param dry_run logical, if \code{TRUE} then a list containing the kallisto 
+#' commands that would be run and the output directories is returned. Can be 
+#' used to read in results if kallisto is run outside an R session or to produce
+#'  a script to run outside of an R session.
 #' 
 #' @details A kallisto transcript index can be built from a FASTA file: 
 #' \code{kallisto index [arguments] FASTA-file}. See the kallisto documentation
@@ -68,7 +72,7 @@ runKallisto <- function(targets_file, transcript_index, single_end = TRUE,
                         n_cores = 2, n_bootstrap_samples = 0, 
                         bootstrap_seed = NULL, correct_bias = TRUE, 
                         plaintext = FALSE, kallisto_version = "current", 
-                        verbose = TRUE) {
+                        verbose = TRUE, dry_run = FALSE) {
     targets_dir <- paste0(dirname(targets_file), "/")
     targets <- read.delim(targets_file, stringsAsFactors = FALSE, header = TRUE)
     if ( !(ncol(targets) == 2 || ncol(targets) == 3) )
@@ -114,21 +118,33 @@ runKallisto <- function(targets_file, transcript_index, single_end = TRUE,
     if(paired_end)
         kallisto_args <- paste(kallisto_args, targets[, 3])
     ##     
-    if(verbose)
-        print(paste("Analysis started: ", Sys.time()))
-    cl <- parallel::makeCluster(n_cores)
-    # one or more parLapply calls to kallisto
-    kallisto_log <- parallel::parLapply(cl, kallisto_args, .call_kallisto, 
-                                        output_prefix, verbose)
-    parallel::stopCluster(cl)
-    ## Return log of kallisto jobs, so user knows where to find results
-    names(kallisto_log) <- samples
-    if(verbose) {
-        print(paste("Analysis completed: ", Sys.time()))
-        print(paste("Processed", length(samples), "samples"))    
-    }
-    for(i in seq_len(length(kallisto_log))) {
-        kallisto_log[[i]]$output_dir <- output_dirs[i]
+    if ( dry_run ) {
+        kallisto_log <- vector("list", length(samples))
+        names(kallisto_log) <- samples
+        kallisto_calls <- paste("kallisto", kallisto_args)
+        for(i in seq_len(length(kallisto_calls))) {
+            kallisto_log[[i]]$output_dir <- output_dirs[i]
+            kallisto_log[[i]]$kallisto_call <- kallisto_calls[i]
+            kallisto_log[[i]]$kallisto_log <- 
+                "Dry run: kallisto commands not executed."
+        }
+    } else {
+        if(verbose)
+            print(paste("Analysis started: ", Sys.time()))
+        cl <- parallel::makeCluster(n_cores)
+        # one or more parLapply calls to kallisto
+        kallisto_log <- parallel::parLapply(cl, kallisto_args, .call_kallisto, 
+                                            output_prefix, verbose)
+        parallel::stopCluster(cl)
+        ## Return log of kallisto jobs, so user knows where to find results
+        names(kallisto_log) <- samples
+        if(verbose) {
+            print(paste("Analysis completed: ", Sys.time()))
+            print(paste("Processed", length(samples), "samples"))    
+        }
+        for(i in seq_len(length(kallisto_log))) {
+            kallisto_log[[i]]$output_dir <- output_dirs[i]
+        }
     }
     kallisto_log
 }

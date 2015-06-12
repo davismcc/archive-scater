@@ -262,8 +262,17 @@ values) if no control genes are indicated.
 * `log10_counts_from_endogenous_genes`: total number of counts from endogenous 
 genes on the log10-scale. Defaults to zero (i.e. log10(0 + 1), offset to avoid 
 infinite values) if no control genes are indicated.
+* `n_detected_gene_controls`: number of defined gene controls that have 
+expression greater than the threshold defined in the object.
 *`pct_counts_from_gene_controls`: percentage of all counts that come from the 
 defined control genes. Defaults to zero if no control genes are defined.
+
+If we define multiple sets of gene controls, then the above will be supplied for
+all gene sets, plus the set of all gene controls combined, as appropriate.
+
+Furthermore, where "counts" appear in the above, the same metrics will also be
+computed for "exprs", "tpm" and "fpkm" (if tpm and fpkm are present in the 
+`SCESet` object).
 
 The function further adds the following columns to `fData(object)`:
 
@@ -279,17 +288,24 @@ control genes are defined by the user.
 `n_cells_exprs`: the number of cells for which the expression level of the gene
 is above the detection limit (default detection limit is zero).
 
-
 ### QC and filtering of genes
 
-
+See `plotFeatureData` below. The subsetting of rows of `SCESet` objects makes it
+easy to drop unwanted genes.
 
 ### QC and filtering of cells
 
+See `plotPhenoData` and other QC plots below. The subsetting of columns (which 
+correspond to cells) of `SCESet` objects makes it easy to drop unwanted cells.
 
+The `plotPCA` function makes it easy to produce a PCA plot directly from an 
+`SCESet` object, which is useful for visualising cells.
 
 ### QC of experimental variables
 
+See the `plotQC` options below. The various plotting functions enable 
+visualisation of the relationship betwen experimental variables and the 
+expression data.
 
 ### Produce diagnostic plots for QC
 
