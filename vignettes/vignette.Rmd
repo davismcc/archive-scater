@@ -11,6 +11,8 @@ vignette: >
 
 
 ```{r knitr-options, echo=FALSE}
+## To render an HTML version that works nicely with github and web pages, do:
+## rmarkdown::render("vignettes/vignette.Rmd", "all")
 library(knitr)
 opts_chunk$set(fig.align='center', fig.width=6, fig.height=5)
 ```
