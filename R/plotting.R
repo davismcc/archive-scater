@@ -104,8 +104,8 @@ plotSCESet <- function(x, block1=NULL, block2=NULL, colour_by=NULL,
         exprs_mat <- exprs(object)
         use_as_exprs <- "exprs"
     }
-    if( use_as_exprs=="exprs" & object@logged )
-        exprs_mat <- 2^(exprs_mat)
+    if( use_as_exprs=="exprs" && object@logged )
+        exprs_mat <- 2^(exprs_mat) - object@logExprsOffset
     
     ## Use plyr to get the sequencing real estate accounted for by features
     nfeatures_total <- nrow(exprs_mat)

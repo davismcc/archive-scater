@@ -191,6 +191,9 @@ a lower count threshold of 0.")
                 df_pdata_this <- cbind(df_pdata_this, df_pdata_fpkm)
             } 
             is_gene_control[gc_set] <- TRUE
+            ## Define number of gene controls expressed
+            n_detected_gene_controls <- colSums(is_exprs(object)[gc_set,])
+            df_pdata_this$n_detected_gene_controls <- n_detected_gene_controls
             colnames(df_pdata_this) <- paste(colnames(df_pdata_this), set_name, 
                                              sep = "_")
             if ( exists("gene_controls_pdata") )
@@ -248,6 +251,8 @@ a lower count threshold of 0.")
                 calc_top_features = TRUE, exprs_type = "fpkm")
             df_pdata_this <- cbind(df_pdata_this, df_pdata_fpkm)
         } 
+        n_detected_gene_controls <- colSums(is_exprs(object)[is_gene_control,])
+        df_pdata_this$n_detected_gene_controls <- n_detected_gene_controls
         gene_controls_pdata <- cbind(gene_controls_pdata, df_pdata_this)
     }
     
@@ -584,40 +589,57 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
             object, gene_controls = fData(object)$is_gene_control)
     else
         object <- calculateQCMetrics(object)
+   
+    ## Define expression values to be used
+    use_as_exprs <- match.arg(use_as_exprs, c("exprs", "tpm", "fpkm", "counts"))
+    exprs_mat <- switch(use_as_exprs,
+                        exprs = exprs(object),
+                        tpm = tpm(object),
+                        fpkm = fpkm(object),
+                        counts = counts(object))
+    if ( is.null(exprs_mat) ) {
+        warning(paste0("The object does not contain ", use_as_exprs, " expression values. Using exprs(object) values instead."))
+        exprs_mat <- exprs(object)
+        use_as_exprs <- "exprs"
+    }
+    if ( use_as_exprs == "exprs" && object@logged )
+        exprs_mat <- 2 ^ (exprs_mat) - object@logExprsOffset
+    
     ## Find the most highly expressed genes in this dataset
     ### Order by total gene counts across whole dataset
-    oo <- fData(object)$total_gene_counts %>% order(decreasing = TRUE) 
     fdata <- fData(object)
-    fdata$Gene <- factor(rownames(object), levels = rownames(object)[rev(oo)])
+    oo <- order(fdata[[paste0("total_gene_", use_as_exprs)]], 
+                decreasing = TRUE)
+    fdata$Gene <- factor(featureNames(object), levels = rownames(object)[rev(oo)])
     ## Check if is_gene_control is defined
     if ( is.null(fdata$is_gene_control) )
         fdata$is_gene_control <- rep(FALSE, nrow(fdata))
     
-    ## Determine percentage counts accounted for by top genes across all cells
-    total_counts <- sum(counts(object))
-    top50_pctage <- 100 * sum(fdata$total_gene_counts[oo[1:n]]) / total_counts
+    ## Determine percentage expression accounted for by top genes across all cells
+    total_exprs <- sum(exprs_mat)
+    total_gene_exprs <- fdata[[paste0("total_gene_", use_as_exprs)]]
+    top50_pctage <- 100 * sum(total_gene_exprs[oo[1:n]]) / total_exprs
     ## Determine percentage of counts for top genes by cell
-    df_pct_counts_by_cell <- (100 * t(counts(object)[oo[1:n],]) / 
-                                 pData(object)$depth)
+    df_pct_exprs_by_cell <- (100 * t(exprs_mat[oo[1:n],]) / colSums(exprs_mat))
    
     ## Melt dataframe so it is conducive to ggplot
-    df_pct_counts_by_cell_long <- reshape2::melt(df_pct_counts_by_cell)
-    df_pct_counts_by_cell_long$Var2 <- factor(df_pct_counts_by_cell_long$Var2, 
+    df_pct_exprs_by_cell_long <- reshape2::melt(df_pct_exprs_by_cell)
+    df_pct_exprs_by_cell_long$Var2 <- factor(df_pct_exprs_by_cell_long$Var2, 
                                              levels = rownames(object)[rev(oo[1:n])])
     ## Add colour variable information
     if (typeof_x == "discrete")
-        df_pct_counts_by_cell_long$colour_by <- factor(x)
+        df_pct_exprs_by_cell_long$colour_by <- factor(x)
     else
-        df_pct_counts_by_cell_long$colour_by <- x
+        df_pct_exprs_by_cell_long$colour_by <- x
     ## Make plot
-    plot_most_expressed <- df_pct_counts_by_cell_long %>%
+    plot_most_expressed <- df_pct_exprs_by_cell_long %>%
         ggplot(aes_string(y = "Var2", x = "value", colour = "colour_by")) +
         geom_point(size = 180/n, alpha = 0.6, shape = 124) +
         ggtitle(paste0("Top ", n, " genes account for ", 
-                       format(top50_pctage, digits = 3), "% of all counts")) +
-        #         coord_flip() +
+                       format(top50_pctage, digits = 3), "% of all ", 
+                       use_as_exprs)) +
         ylab("Gene") +
-        xlab("% of total counts") +
+        xlab(paste0("% of total ", use_as_exprs)) +
         theme_bw() +
         theme(legend.position = c(1, 0), legend.justification = c(1, 0),
               axis.text.x = element_text(colour = "gray35"), 
@@ -635,7 +657,7 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
                                   high = "firebrick4", space = "Lab")
     }
     plot_most_expressed + geom_point(
-        aes_string(x = "as.numeric(pct_total_counts)", 
+        aes_string(x = paste0("as.numeric(pct_total_", use_as_exprs, ")"), 
                    y = "Gene", fill = "is_gene_control"), 
         data = fdata[oo[1:n],], 
         size = 200/n, colour = "gray30", shape = 21) +
@@ -648,16 +670,16 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
     ## Extract variable
     x <- pData(object)[, variable]
     ## Get type
-    if(is.character(x) | is.factor(x)) {
+    if (is.character(x) | is.factor(x)) {
         typeof_x <- "discrete"
     } else {
-        if(is.integer(x)) {
-            if(length(unique(x)) > 10)
+        if (is.integer(x)) {
+            if (length(unique(x)) > 10)
                 typeof_x <- "continuous"
             else
                 typeof_x <- "discrete"
         } else {
-            if(is.numeric(x))
+            if (is.numeric(x))
                 typeof_x <- "continuous"
             else {
                 x <- as.character(x)
@@ -700,12 +722,12 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
 plotExplanatoryVariables <- function(object, variables=c("coverage", "depth")) {
     ## Check that variables are defined
     variables_to_plot <- NULL
-    for(var in variables) {
-        if(!(var %in% colnames(pData(object)))) {
+    for (var in variables) {
+        if (!(var %in% colnames(pData(object)))) {
             warning(paste("variable", var, "not found in pData(object). 
              Please make sure pData(object)[, variable] exists. This variable will not be plotted."))
         } else {
-            if(length(unique(pData(object)[, var])) <= 1) {
+            if (length(unique(pData(object)[, var])) <= 1) {
                 warning(paste("variable", var, "only has one unique value, so R^2 is not meaningful.
 This variable will not be plotted."))
             } else {
@@ -714,8 +736,8 @@ This variable will not be plotted."))
         }
     }
     ## Initialise matrix to score R^2 values for each gene for each variable
-    rsquared_mat <- matrix(NA, nrow=nrow(object), ncol=length(variables_to_plot))
-    val_to_plot_mat <- matrix(NA, nrow=ncol(object), ncol=length(variables_to_plot))
+    rsquared_mat <- matrix(NA, nrow = nrow(object), ncol = length(variables_to_plot))
+    val_to_plot_mat <- matrix(NA, nrow = ncol(object), ncol = length(variables_to_plot))
     colnames(rsquared_mat) <- colnames(val_to_plot_mat) <- variables_to_plot
     rownames(rsquared_mat) <- rownames(object)
     rownames(val_to_plot_mat) <- colnames(object)
@@ -725,7 +747,7 @@ This variable will not be plotted."))
         #     x <- x[!x_na]
         ## Determine type of variable
         typeof_x <- .getTypeOfVariable(object, var)
-        if(typeof_x=="discrete") {
+        if(typeof_x == "discrete") {
             x <- factor(x)
             val_to_plot_mat[, var] <- jitter(as.integer(x))
         } else {
@@ -788,18 +810,18 @@ This variable will not be plotted."))
 #' vars <- names(pData(example_sceset))[c(2:3, 5:14)]
 #' plotQC(example_sceset, type="expl", variables=vars)
 #' 
-plotQC <- function(object, type="highest-expression", ...) {
+plotQC <- function(object, type = "highest-expression", ...) {
     type <- match.arg(type, c("highest-expression", "find-pcs", 
                               "explanatory-variables"))
-    if(type == "highest-expression") {
+    if (type == "highest-expression") {
         plot_out <- plotHighestExprs(object, ...)
         print(plot_out)
         return(plot_out)
     }
-    if(type == "find-pcs") {        
+    if (type == "find-pcs") {        
         findImportantPCs(object, ...)
     }
-    if(type == "explanatory-variables") {
+    if (type == "explanatory-variables") {
         plotExplanatoryVariables(object, ...)
     }
 }
