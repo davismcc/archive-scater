@@ -4,10 +4,11 @@ author: "Davis McCarthy"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{scater}
+  %\VignetteIndexEntry{An introduction to the scater package}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
+
 
 ```{r knitr-options, echo=FALSE}
 library(knitr)
