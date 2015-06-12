@@ -175,7 +175,7 @@ fData(example_sceset) <- fd
 pData(example_sceset) <- pd
 ## replace expression data to be used
 exprs(example_sceset) <- edgeR::cpm.default(counts(example_sceset), 
-                                            prior.count=5, log=TRUE)
+                                            prior.count = 5, log = TRUE)
 ```
 
 
@@ -327,6 +327,7 @@ keep_gene <- rowSums(is_exprs(example_sceset)) > 4
 example_sceset <- example_sceset[keep_gene,]
 ## Plot QC
 plotQC(example_sceset, type = "highest-expression")
+plotQC(example_sceset, type = "highest-expression", use_as_exprs = "exprs")
 plotQC(example_sceset, type = "find-pcs", variable = "coverage")
 plotQC(example_sceset, type = "find-pcs", variable = "Cell_Cycle")
 plotQC(example_sceset, type = "find-pcs", variable = "Treatment")
