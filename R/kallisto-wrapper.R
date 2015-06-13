@@ -203,17 +203,24 @@ readKallistoResultsOneSample <- function(directory, read_h5=FALSE,
                                          kallisto_version = "current") {
     ## Read in abundance information for the sample
     if ( kallisto_version == "pre-0.42.2" )
-        abundance <- data.table::fread(paste0(directory, "/abundance.txt"), 
-                                       sep = "\t")
-    else 
-        abundance <- data.table::fread(paste0(directory, "/abundance.tsv"), 
-                                       sep = "\t")
+        file_to_read <- paste0(directory, "/abundance.txt")
+    else
+        file_to_read <- paste0(directory, "/abundance.tsv")
+    if ( file.exists(file_to_read) )
+        abundance <- data.table::fread(file_to_read, sep = "\t")
+    else
+        stop(paste("File", file_to_read, "not found or does not exist. Please check directory is correct."))
     ## Read in run information
     run_info <- rjson::fromJSON(file = paste0(directory, "/run_info.json"))
     ## Read in HDF5 data file with bootstrap results
     if ( read_h5 ) {
-        h5 <- rhdf5::h5read(paste0(directory, "/abundance.h5"), "/")
-        rhdf5::H5close()
+        file_to_read <- paste0(directory, "/abundance.h5")
+        if ( file.exists(file_to_read) ) {
+            h5 <- rhdf5::h5read(file_to_read, "/")
+            rhdf5::H5close()
+        } else {
+            stop(paste("File", file_to_read, "not found or does not exist. Please check directory is correct and that you want to read results in HDF5 format."))
+        }
         if ( h5$aux$num_bootstrap > 0 ) {
             boot_mat <- data.frame(matrix(unlist(h5$bootstrap), 
                                           nrow = length(h5$est_counts), 
@@ -273,12 +280,23 @@ readKallistoResults <- function(kallisto_log = NULL, samples = NULL,
             stop("The kallisto_log argument should be a list returned by runKallisto()")
         samples <- names(kallisto_log)       
         directories <- sapply(kallisto_log, function(x) {x$output_dir})
+        logs <- lapply(kallisto_log, function(x) {x$kallisto_log})
     } else {
         if ( is.null(samples) | is.null(directories) )
             stop("If kallisto_log argument is not used, then both samples and directories must be provided.")
         if ( length(samples) != length(directories) )
             stop("samples and directories arguments must be the same length")
     }
+    
+    kallisto_fail <- sapply(logs, function(x) {
+        any(grepl("[wW]arning|[eE]rror", x))})
+    if ( any(kallisto_fail) ) {
+        warning(paste0("The kallisto job failed for the following samples:\n ",
+                      paste0(names(logs)[kallisto_fail], collapse = "\n"),
+                      "\n It is recommended that you inspect kallisto_log for these samples."))
+    }
+    samples <- samples[!kallisto_fail]
+    directories <- directories[!kallisto_fail]
     
     ## Read first file to get size of feature set
     s1 <- readKallistoResultsOneSample(directories[1], read_h5 = read_h5, 

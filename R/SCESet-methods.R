@@ -247,19 +247,17 @@ setValidity("SCESet", function(object) {
          !identical(rownames(object@featurePairwiseDistances), featureNames(object))) )
         return(FALSE)
     ## Check that we have sensible values for the counts
+    if( any(is.na(exprs(object))) ) {
+        warning( "The exprs data contain NA values." )
+    }
     if ( is.null(counts(object)) )
         return(TRUE)
     else {
-        if( any(is.na(exprs(object))) ) {
-            warning( "The exprs data contain NA values." )
-            return(TRUE)     
-        } else {
-            if ( any(counts(object) < 0, na.rm = TRUE) ) {
-                warning( "The count data contain negative values." )
-                return(TRUE)         
-            } else
-                return(TRUE)
-        }
+        if ( any(counts(object) < 0, na.rm = TRUE) ) {
+            warning( "The count data contain negative values." )
+            return(TRUE)         
+        } else
+            return(TRUE)
     }
 })
 
