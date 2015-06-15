@@ -12,7 +12,7 @@
 #' assayData from the \code{SCESet} object should be used as expression values. 
 #' Valid options are \code{'exprs'} the expression slot, \code{'tpm'} the 
 #' transcripts-per-million slot or \code{'fpkm'} the FPKM slot.
-#' @param summarise_by character string giving the column of \code{fDat(object)}
+#' @param summarise_by character string giving the column of \code{fData(object)}
 #' that will be used as the features for which summarised expression levels are 
 #' to be produced. Default is \code{'feature_id'}.
 #'  \code{"exprs"}.
@@ -109,7 +109,7 @@ summariseExprsAcrossFeatures <- function(object, use_as_exprs = "tpm",
         cpm(sce_out) <- reshape2::acast(tmp_exprs_long, feature ~ variable, 
                                          sum)
     }
-    ## Use gene symbols for rownames
+    ## Use feature symbols for rownames
     sce_out
 }
 

@@ -2,34 +2,38 @@
 % Please edit documentation in R/calcIsExprs.R
 \name{calcIsExprs}
 \alias{calcIsExprs}
-\title{Calculate which gene are expressed in which cells using a count
-threshold}
+\title{Calculate which features are expressed in which cells using a threshold on
+observed counts, transcripts-per-million, counts-per-million, FPKM, or
+defined expression levels.}
 \usage{
 calcIsExprs(object, lowerDetectionLimit = NULL, exprs_data = "counts")
 }
 \arguments{
-\item{object}{an SCESet object with expression and/or count data}
+\item{object}{an SCESet object with expression and/or count data.}
 
 \item{lowerDetectionLimit}{numeric scalar giving the minimum expression level
-for an expression observation in a cell for it to qualify as expressed}
+for an expression observation in a cell for it to qualify as expressed.}
 
-\item{exprs_data}{character scalar indicating whether the count data ("counts") or the
-transformed expression data ("exprs") should be used to define if an
-observation is expressed or not}
+\item{exprs_data}{character scalar indicating whether the count data
+(\code{"counts"}), the transformed expression data (\code{"exprs"}),
+transcript-per-million (\code{"tpm"}), counts-per-million (\code{"cpm"}) or
+FPKM (\code{"fpkm"}) should be used to define if an observation is expressed
+or not.}
 }
 \value{
-a logical matrix indicating whether or not a gene in a particular
+a logical matrix indicating whether or not a feature in a particular
 cell is expressed.
 }
 \description{
-Calculate which gene are expressed in which cells using a count
-threshold
+Calculate which features are expressed in which cells using a threshold on
+observed counts, transcripts-per-million, counts-per-million, FPKM, or
+defined expression levels.
 }
 \examples{
 data("sc_example_counts")
 data("sc_example_cell_info")
 example_sceset <- newSCESet(countData=sc_example_counts)
-is_exprs(example_sceset) <- calcIsExprs(example_sceset, lowerDetectionLimit=1,
-exprs_data="exprs")
+is_exprs(example_sceset) <- calcIsExprs(example_sceset, lowerDetectionLimit = 1,
+exprs_data = "exprs")
 }
 

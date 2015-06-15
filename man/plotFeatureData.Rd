@@ -13,7 +13,7 @@ experimental information. Must have been appropriately prepared.}
 
 \item{aesth}{aesthetics function call to pass to ggplot. This function
 expects at least x and y variables to be supplied. The default is to produce
-a density plot of number of cells expressing the gene (requires
+a density plot of number of cells expressing the feature (requires
 \code{calculateQCMetrics} to have been run on the SCESet object prior).}
 }
 \description{

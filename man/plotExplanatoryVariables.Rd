@@ -4,21 +4,36 @@
 \alias{plotExplanatoryVariables}
 \title{Plot explanatory variables ordered by percentage of phenotypic variance explained}
 \usage{
-plotExplanatoryVariables(object, variables = c("coverage", "depth"))
+plotExplanatoryVariables(object, nvars_to_plot = 5, min_marginal_r2 = 0,
+  variables = NULL, return_object = FALSE, ...)
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and
 experimental information. Must have been appropriately prepared.}
 
-\item{variables}{vectory of variable names (must be columns of pData(object))
-to be plotted.}
+\item{nvars_to_plot}{integer, the number of variables to plot in the pairs
+plot. Default value is 5.}
+
+\item{min_marginal_r2}{numeric scalar giving the minimal value required for
+median marginal R-squared for a variable to be plotted. Only variables with a
+median marginal R-squared strictly larger than this value will be plotted.}
+
+\item{variables}{optional character vector giving the variables to be plotted.
+Default is \code{NULL}, in which case all variables in \code{pData(object)}
+are considered and the \code{nvars_to_plot} variables with the highest median
+marginal R-squared are plotted.}
+
+\item{return_object}{logical, should an \code{SCESet} object with median
+marginal R-squared values added to \code{varMetadata(object)} be returned?}
+
+\item{...}{parameters to be passed to \code{\link{pairs}}.}
 }
 \description{
 Plot explanatory variables ordered by percentage of phenotypic variance explained
 }
 \details{
 Function produces a pairs plot of the explanatory variables ordered
-by the percentage of gene expression variance (as measured by R-squared in a
+by the percentage of feature expression variance (as measured by R-squared in a
 marginal linear model) explained by variable. Median percentage R-squared is
 reported on the plot for each variable. Discrete variables are coerced to a
 factor and plotted as integers with jittering. Variables with only one unique

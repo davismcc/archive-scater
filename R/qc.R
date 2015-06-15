@@ -10,43 +10,43 @@
 ### * .getRSquared
 ### * .getTypeOfVariable
 
-#### Some ideas for adding to QC metrics - proportion of library from top x genes
-#     subset(seq_real_estate_long, Gene == 10) %>% 
+#### Some ideas for adding to QC metrics - proportion of library from top x features
+#     subset(seq_real_estate_long, feature == 10) %>% 
 #         ggplot(aes(x = Proportion_Library, colour = culture)) + 
 #         geom_density(aes(fill = culture), alpha = 0.5) + 
 #         facet_wrap(~perturbed, ncol=2) + 
 #         theme_igray(16) + scale_colour_tableau() + scale_fill_tableau() + 
-#         xlab("Cumulative proportion of library from 10 most expressed genes") + 
+#         xlab("Cumulative proportion of library from 10 most expressed features") + 
 #         ylab("Density")
 
-#     subset(seq_real_estate_long, Gene == 50) %>% 
+#     subset(seq_real_estate_long, feature == 50) %>% 
 #         ggplot(aes(x = norm.lib.size, y = Proportion_Library, 
 #                    colour = culture)) + geom_point(size = 4, alpha = 0.7) + geom_rug(alpha = 0.7) + 
 #         facet_wrap(~perturbed, ncol = 2) + theme_igray(16) + scale_colour_tableau() + 
-#         scale_fill_tableau() + ylab("Cumulative proportion of library from 50 most expressed genes") + 
+#         scale_fill_tableau() + ylab("Cumulative proportion of library from 50 most expressed features") + 
 #         xlab("Normalised library size")
 
 #' Calculate QC metrics
 #'
 #' @param object an SCESet object containing expression values and
 #' experimental information. Must have been appropriately prepared.
-#' @param gene_controls a character vector of gene names, or a logical vector, 
-#' or a numeric vector of indices used to identify gene controls (for example,
+#' @param feature_controls a character vector of feature names, or a logical vector, 
+#' or a numeric vector of indices used to identify feature controls (for example,
 #' ERCC spike-in genes, mitochondrial genes, etc).
 #' @param cell_controls a character vector of cell (sample) names, or a logical 
 #' vector, or a numeric vector of indices used to identify cell controls (for 
 #' example, blank wells or bulk controls).
 #' @param nmads numeric scalar giving the number of median absolute deviations to be 
 #' used to flag potentially problematic cells based on depth (total number of 
-#' counts for the cell, or library size) and coverage (number of genes with 
+#' counts for the cell, or library size) and coverage (number of features with 
 #' non-zero expression). Default value is 5.
-#' @param pct_gene_controls_threshold numeric scalar giving a threshold for 
-#' percentage of expression values accounted for by gene controls. Used as to 
+#' @param pct_feature_controls_threshold numeric scalar giving a threshold for 
+#' percentage of expression values accounted for by feature controls. Used as to 
 #' flag cells that may be filtered based on high percentage of expression from 
-#' gene controls.
+#' feature controls.
 #'
 #' @details Calculate useful quality control metrics to help with pre-processing
-#' of data and identification of potentially problematic genes and cells.
+#' of data and identification of potentially problematic features and cells.
 #' @importFrom Biobase pData
 #' @importFrom Biobase fData
 #' @importFrom Biobase exprs
@@ -60,8 +60,8 @@
 #' example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' 
-calculateQCMetrics <- function(object, gene_controls=NULL, cell_controls=NULL, 
-                               nmads=5, pct_gene_controls_threshold = 80) {
+calculateQCMetrics <- function(object, feature_controls=NULL, cell_controls=NULL, 
+                               nmads=5, pct_feature_controls_threshold = 80) {
     ## We must have an SCESet object
     if (!is(object, "SCESet"))
         stop("object must be an SCESet object.")
@@ -105,175 +105,175 @@ a lower count threshold of 0.")
     keep_depth <- c(med_depth - 5*mad_depth, med_depth + 5*mad_depth)
     filter_on_depth <- (findInterval(log10(depth), keep_depth) != 1)
     
-    ## Contributions from control genes
+    ## Contributions from control features
     ### Determine if vector or list
-    if ( is.null(gene_controls) | length(gene_controls) == 0 ) {
-        exprs_from_gene_controls <- pct_exprs_from_gene_controls <- 
+    if ( is.null(feature_controls) | length(feature_controls) == 0 ) {
+        exprs_from_feature_controls <- pct_exprs_from_feature_controls <- 
             rep(0, ncol(object))
-        gene_controls_pdata <- data.frame(exprs_from_gene_controls,
-                                          pct_exprs_from_gene_controls) 
+        feature_controls_pdata <- data.frame(exprs_from_feature_controls,
+                                          pct_exprs_from_feature_controls) 
         if ( !is.null(counts_mat) ) {
-            counts_from_gene_controls <- pct_counts_from_gene_controls <- 
+            counts_from_feature_controls <- pct_counts_from_feature_controls <- 
                 rep(0, ncol(object))
-            gene_controls_pdata <- cbind(gene_controls_pdata, 
-                                         data.frame(counts_from_gene_controls,
-                                              pct_counts_from_gene_controls))
+            feature_controls_pdata <- cbind(feature_controls_pdata, 
+                                         data.frame(counts_from_feature_controls,
+                                              pct_counts_from_feature_controls))
         }
         if ( !is.null(tpm_mat) ) {
-            tpm_from_gene_controls <- pct_tpm_from_gene_controls <- 
+            tpm_from_feature_controls <- pct_tpm_from_feature_controls <- 
                 rep(0, ncol(object))
-            gene_controls_pdata <- cbind(gene_controls_pdata,
-                                         data.frame(tpm_from_gene_controls,
-                                                    pct_tpm_from_gene_controls))
+            feature_controls_pdata <- cbind(feature_controls_pdata,
+                                         data.frame(tpm_from_feature_controls,
+                                                    pct_tpm_from_feature_controls))
         }
         if ( !is.null(fpkm_mat) ) {
-            fpkm_from_gene_controls <- pct_fpkm_from_gene_controls <- 
+            fpkm_from_feature_controls <- pct_fpkm_from_feature_controls <- 
                 rep(0, ncol(object))
-            gene_controls_pdata <- cbind(gene_controls_pdata,
-                                         data.frame(fpkm_from_gene_controls,
-                                                    pct_fpkm_from_gene_controls))
+            feature_controls_pdata <- cbind(feature_controls_pdata,
+                                         data.frame(fpkm_from_feature_controls,
+                                                    pct_fpkm_from_feature_controls))
         }
-        is_gene_control <- rep(FALSE, nrow(object))    
-        gene_controls_fdata <- data.frame(is_gene_control)
-        n_sets_gene_controls <- 1
+        is_feature_control <- rep(FALSE, nrow(object))    
+        feature_controls_fdata <- data.frame(is_feature_control)
+        n_sets_feature_controls <- 1
     } else {
-        if ( is.list(gene_controls) ) {
-            gene_controls_list <- gene_controls
-            n_sets_gene_controls <- length(gene_controls)
+        if ( is.list(feature_controls) ) {
+            feature_controls_list <- feature_controls
+            n_sets_feature_controls <- length(feature_controls)
         }
         else {
-            gene_controls_list <- list(gene_controls)
-            n_sets_gene_controls <- 1
+            feature_controls_list <- list(feature_controls)
+            n_sets_feature_controls <- 1
         }
-        ## Cycle through the gene_controls list and add QC info
-        for (i in seq_len(length(gene_controls_list)) ) {
-            gc_set <- gene_controls_list[[i]]
-            set_name <- names(gene_controls_list)[i]
+        ## Cycle through the feature_controls list and add QC info
+        for (i in seq_len(length(feature_controls_list)) ) {
+            gc_set <- feature_controls_list[[i]]
+            set_name <- names(feature_controls_list)[i]
             if ( is.logical(gc_set) ) {
-                is_gene_control <- gc_set
+                is_feature_control <- gc_set
                 gc_set <- which(gc_set)
             } else {
-                is_gene_control <- rep(FALSE, nrow(object))    
+                is_feature_control <- rep(FALSE, nrow(object))    
             }
             if (is.character(gc_set))
                 gc_set <- which(rownames(object) %in% gc_set)
-            ## Get summaries from exprs for gene control set and construct df
-#             exprs_from_gene_controls <- colSums(exprs_mat[gc_set,])
-#             pct_exprs_from_gene_controls <- (100 * exprs_from_gene_controls / 
+            ## Get summaries from exprs for feature control set and construct df
+#             exprs_from_feature_controls <- colSums(exprs_mat[gc_set,])
+#             pct_exprs_from_feature_controls <- (100 * exprs_from_feature_controls / 
 #                 colSums(exprs_mat))
-#             filter_on_pct_exprs_from_gene_controls <- 
-#                 (pct_exprs_from_gene_controls > pct_gene_controls_threshold)
-#             df_pdata_this <- data.frame(exprs_from_gene_controls,
-#                                         pct_exprs_from_gene_controls,
-#                                         filter_on_pct_exprs_from_gene_controls)
+#             filter_on_pct_exprs_from_feature_controls <- 
+#                 (pct_exprs_from_feature_controls > pct_feature_controls_threshold)
+#             df_pdata_this <- data.frame(exprs_from_feature_controls,
+#                                         pct_exprs_from_feature_controls,
+#                                         filter_on_pct_exprs_from_feature_controls)
             df_pdata_this <- .get_qc_metrics_from_exprs_mat(
-                exprs_mat, gc_set, pct_gene_controls_threshold, 
-                calc_top_features = (n_sets_gene_controls == 1), 
+                exprs_mat, gc_set, pct_feature_controls_threshold, 
+                calc_top_features = (n_sets_feature_controls == 1), 
                 exprs_type = "exprs")
             if ( !is.null(counts_mat) ) {
                 df_pdata_counts <- .get_qc_metrics_from_exprs_mat(
-                    counts_mat, gc_set, pct_gene_controls_threshold,
-                    calc_top_features = (n_sets_gene_controls == 1), 
+                    counts_mat, gc_set, pct_feature_controls_threshold,
+                    calc_top_features = (n_sets_feature_controls == 1), 
                     exprs_type = "counts")
                 df_pdata_this <- cbind(df_pdata_this, df_pdata_counts)
             }            
             if ( !is.null(tpm_mat) ) {
                 df_pdata_tpm <- .get_qc_metrics_from_exprs_mat(
-                    tpm_mat, gc_set, pct_gene_controls_threshold,
-                    calc_top_features = (n_sets_gene_controls == 1), 
+                    tpm_mat, gc_set, pct_feature_controls_threshold,
+                    calc_top_features = (n_sets_feature_controls == 1), 
                     exprs_type = "tpm")
                 df_pdata_this <- cbind(df_pdata_this, df_pdata_tpm)
             }  
             if ( !is.null(fpkm_mat) ) {
                 df_pdata_fpkm <- .get_qc_metrics_from_exprs_mat(
-                    fpkm_mat, gc_set, pct_gene_controls_threshold,
-                    calc_top_features = (n_sets_gene_controls == 1), exprs_type = "fpkm")
+                    fpkm_mat, gc_set, pct_feature_controls_threshold,
+                    calc_top_features = (n_sets_feature_controls == 1), exprs_type = "fpkm")
                 df_pdata_this <- cbind(df_pdata_this, df_pdata_fpkm)
             } 
-            is_gene_control[gc_set] <- TRUE
-            ## Define number of gene controls expressed
-            n_detected_gene_controls <- colSums(is_exprs(object)[gc_set,])
-            df_pdata_this$n_detected_gene_controls <- n_detected_gene_controls
+            is_feature_control[gc_set] <- TRUE
+            ## Define number of feature controls expressed
+            n_detected_feature_controls <- colSums(is_exprs(object)[gc_set,])
+            df_pdata_this$n_detected_feature_controls <- n_detected_feature_controls
             colnames(df_pdata_this) <- paste(colnames(df_pdata_this), set_name, 
                                              sep = "_")
-            if ( exists("gene_controls_pdata") )
-                gene_controls_pdata <- cbind(gene_controls_pdata, df_pdata_this)
+            if ( exists("feature_controls_pdata") )
+                feature_controls_pdata <- cbind(feature_controls_pdata, df_pdata_this)
             else
-                gene_controls_pdata <- df_pdata_this
-            ## Construct data.frame for fData from this gene control set
-            df_fdata_this <- data.frame(is_gene_control)
+                feature_controls_pdata <- df_pdata_this
+            ## Construct data.frame for fData from this feature control set
+            df_fdata_this <- data.frame(is_feature_control)
             colnames(df_fdata_this) <- paste(colnames(df_fdata_this), set_name, 
                                           sep = "_")
-            if ( exists("gene_controls_fdata") )
-                gene_controls_fdata <- cbind(gene_controls_fdata, df_fdata_this)
+            if ( exists("feature_controls_fdata") )
+                feature_controls_fdata <- cbind(feature_controls_fdata, df_fdata_this)
             else 
-                gene_controls_fdata <- df_fdata_this
+                feature_controls_fdata <- df_fdata_this
         }
     }
     
-    ## Fix column names and define gene controls across all control sets
-    if ( n_sets_gene_controls == 1 ) {
-        colnames(gene_controls_pdata) <- gsub("_$", "", 
-                                              colnames(gene_controls_pdata))
-        colnames(gene_controls_fdata) <- gsub("_$", "", 
-                                              colnames(gene_controls_fdata))
+    ## Fix column names and define feature controls across all control sets
+    if ( n_sets_feature_controls == 1 ) {
+        colnames(feature_controls_pdata) <- gsub("_$", "", 
+                                              colnames(feature_controls_pdata))
+        colnames(feature_controls_fdata) <- gsub("_$", "", 
+                                              colnames(feature_controls_fdata))
     } else {
-        ## Combine all gene controls
-        is_gene_control <- apply(gene_controls_fdata, 1, any)
-        gene_controls_fdata <- cbind(gene_controls_fdata, is_gene_control)
-        ## Compute metrics using all gene controls
+        ## Combine all feature controls
+        is_feature_control <- apply(feature_controls_fdata, 1, any)
+        feature_controls_fdata <- cbind(feature_controls_fdata, is_feature_control)
+        ## Compute metrics using all feature controls
         df_pdata_this <- .get_qc_metrics_from_exprs_mat(
-            exprs_mat, is_gene_control, pct_gene_controls_threshold,
+            exprs_mat, is_feature_control, pct_feature_controls_threshold,
             calc_top_features = TRUE, exprs_type = "exprs")
-#         exprs_from_gene_controls <- colSums(exprs_mat[is_gene_control,])
-#         pct_exprs_from_gene_controls <- (100 * exprs_from_gene_controls / 
+#         exprs_from_feature_controls <- colSums(exprs_mat[is_feature_control,])
+#         pct_exprs_from_feature_controls <- (100 * exprs_from_feature_controls / 
 #                                              colSums(exprs_mat))
-#         filter_on_pct_exprs_from_gene_controls <- 
-#             (pct_exprs_from_gene_controls > pct_gene_controls_threshold)
-#         df_pdata_this <- data.frame(exprs_from_gene_controls,
-#                                     pct_exprs_from_gene_controls,
-#                                     filter_on_pct_exprs_from_gene_controls)
+#         filter_on_pct_exprs_from_feature_controls <- 
+#             (pct_exprs_from_feature_controls > pct_feature_controls_threshold)
+#         df_pdata_this <- data.frame(exprs_from_feature_controls,
+#                                     pct_exprs_from_feature_controls,
+#                                     filter_on_pct_exprs_from_feature_controls)
         if ( !is.null(counts_mat) ) {
             df_pdata_counts <- .get_qc_metrics_from_exprs_mat(
-                counts_mat, is_gene_control, pct_gene_controls_threshold,
+                counts_mat, is_feature_control, pct_feature_controls_threshold,
                 calc_top_features = TRUE, exprs_type = "counts")
             df_pdata_this <- cbind(df_pdata_this, df_pdata_counts)
         }            
         if ( !is.null(tpm_mat) ) {
             df_pdata_tpm <- .get_qc_metrics_from_exprs_mat(
-                tpm_mat, is_gene_control, pct_gene_controls_threshold,
+                tpm_mat, is_feature_control, pct_feature_controls_threshold,
                 calc_top_features = TRUE, exprs_type = "tpm")
             df_pdata_this <- cbind(df_pdata_this, df_pdata_tpm)
         }  
         if ( !is.null(fpkm_mat) ) {
             df_pdata_fpkm <- .get_qc_metrics_from_exprs_mat(
-                fpkm_mat, is_gene_control, pct_gene_controls_threshold,
+                fpkm_mat, is_feature_control, pct_feature_controls_threshold,
                 calc_top_features = TRUE, exprs_type = "fpkm")
             df_pdata_this <- cbind(df_pdata_this, df_pdata_fpkm)
         } 
-        n_detected_gene_controls <- colSums(is_exprs(object)[is_gene_control,])
-        df_pdata_this$n_detected_gene_controls <- n_detected_gene_controls
-        gene_controls_pdata <- cbind(gene_controls_pdata, df_pdata_this)
+        n_detected_feature_controls <- colSums(is_exprs(object)[is_feature_control,])
+        df_pdata_this$n_detected_feature_controls <- n_detected_feature_controls
+        feature_controls_pdata <- cbind(feature_controls_pdata, df_pdata_this)
     }
     
     
-    ## Define counts from endogenous genes
-    qc_pdata <- gene_controls_pdata
-    qc_pdata$exprs_from_endogenous_genes <- colSums(exprs_mat) - 
-        gene_controls_pdata$exprs_from_gene_controls
+    ## Define counts from endogenous features
+    qc_pdata <- feature_controls_pdata
+    qc_pdata$exprs_from_endogenous_features <- colSums(exprs_mat) - 
+        feature_controls_pdata$exprs_from_feature_controls
     if ( !is.null(counts_mat) ) {
-        qc_pdata$counts_from_endogenous_genes <- depth - 
-            gene_controls_pdata$counts_from_gene_controls
+        qc_pdata$counts_from_endogenous_features <- depth - 
+            feature_controls_pdata$counts_from_feature_controls
     }
     if ( !is.null(tpm_mat) ) {
-        qc_pdata$tpm_from_endogenous_genes <- colSums(tpm_mat) - 
-            gene_controls_pdata$tpm_from_gene_controls
+        qc_pdata$tpm_from_endogenous_features <- colSums(tpm_mat) - 
+            feature_controls_pdata$tpm_from_feature_controls
     }
     if ( !is.null(fpkm_mat) ) {
-        qc_pdata$fpkm_from_endogenous_genes <- colSums(fpkm_mat) - 
-            gene_controls_pdata$fpkm_from_gene_controls
+        qc_pdata$fpkm_from_endogenous_features <- colSums(fpkm_mat) - 
+            feature_controls_pdata$fpkm_from_feature_controls
     }
-    ## Define log10 read counts from gene controls
+    ## Define log10 read counts from feature controls
     cols_to_log <- grep("^counts_from_|^exprs_from_|^tpm_from_|^fpkm_from_", 
                         colnames(qc_pdata))
     log10_cols <- log10(qc_pdata[, cols_to_log, drop = FALSE] + 1)
@@ -308,7 +308,7 @@ a lower count threshold of 0.")
             if (is.character(cc_set))
                 cc_set <- which(cellNames(object) %in% cc_set)
             is_cell_control[cc_set] <- TRUE
-            ## Construct data.frame for pData from this gene control set
+            ## Construct data.frame for pData from this feature control set
             is_cell_control <- as.data.frame(is_cell_control)
             colnames(is_cell_control) <- paste0("is_cell_control_", set_name)
             if ( exists("cell_controls_pdata") ) {
@@ -343,39 +343,39 @@ a lower count threshold of 0.")
     new_pdata <- cbind(new_pdata, qc_pdata, cell_controls_pdata)
     pData(object) <-  new("AnnotatedDataFrame", new_pdata)
     
-    ## Add gene-level QC metrics to fData
+    ## Add feature-level QC metrics to fData
     new_fdata <- as.data.frame(fData(object))
     ### Remove columns that are to be replaced
-    to_replace <- colnames(new_fdata) %in% colnames(gene_controls_fdata)
+    to_replace <- colnames(new_fdata) %in% colnames(feature_controls_fdata)
     new_fdata <- new_fdata[, !to_replace, drop = FALSE]
     ### Add new QC information
     new_fdata$mean_exprs <- rowMeans(exprs(object))
     new_fdata$exprs_rank <- rank(rowMeans(exprs(object)))
     new_fdata$n_cells_exprs <- rowSums(is_exprs(object))
     total_exprs <- sum(exprs_mat)
-    new_fdata$total_gene_exprs <- rowSums(exprs_mat)
-    new_fdata$log10_total_gene_exprs <- log10(new_fdata$total_gene_exprs + 1)
+    new_fdata$total_feature_exprs <- rowSums(exprs_mat)
+    new_fdata$log10_total_feature_exprs <- log10(new_fdata$total_feature_exprs + 1)
     new_fdata$pct_total_exprs <- 100 * rowSums(exprs_mat) / total_exprs
     if ( !is.null(counts_mat) ) {
         total_counts <- sum(counts_mat)
-        new_fdata$total_gene_counts <- rowSums(counts_mat)
-        new_fdata$log10_total_gene_counts <- log10(new_fdata$total_gene_counts + 1)
+        new_fdata$total_feature_counts <- rowSums(counts_mat)
+        new_fdata$log10_total_feature_counts <- log10(new_fdata$total_feature_counts + 1)
         new_fdata$pct_total_counts <- 100 * rowSums(counts_mat) / total_counts
     }
     if ( !is.null(tpm_mat) ) {
         total_tpm <- sum(tpm_mat)
-        new_fdata$total_gene_tpm <- rowSums(tpm_mat)
-        new_fdata$log10_total_gene_tpm <- log10(new_fdata$total_gene_tpm + 1)
+        new_fdata$total_feature_tpm <- rowSums(tpm_mat)
+        new_fdata$log10_total_feature_tpm <- log10(new_fdata$total_feature_tpm + 1)
         new_fdata$pct_total_tpm <- 100 * rowSums(tpm_mat) / total_tpm
     }
     if ( !is.null(fpkm_mat) ) {
         total_fpkm <- sum(fpkm_mat)
-        new_fdata$total_gene_fpkm <- rowSums(fpkm_mat)
-        new_fdata$log10_total_gene_fpkm <- log10(new_fdata$total_gene_fpkm + 1)
+        new_fdata$total_feature_fpkm <- rowSums(fpkm_mat)
+        new_fdata$log10_total_feature_fpkm <- log10(new_fdata$total_feature_fpkm + 1)
         new_fdata$pct_total_fpkm <- 100 * rowSums(fpkm_mat) / total_fpkm
     }
     ## Add new fdata to object
-    new_fdata <- cbind(new_fdata, gene_controls_fdata)
+    new_fdata <- cbind(new_fdata, feature_controls_fdata)
     fData(object) <- new("AnnotatedDataFrame", new_fdata)
     
     ## Ensure sample names are correct and return object
@@ -383,25 +383,25 @@ a lower count threshold of 0.")
     object
 }
 
-.get_qc_metrics_from_exprs_mat <- function(exprs_mat, is_gene_control, 
-                                           pct_gene_controls_threshold,
+.get_qc_metrics_from_exprs_mat <- function(exprs_mat, is_feature_control, 
+                                           pct_feature_controls_threshold,
                                            calc_top_features = FALSE,
                                            exprs_type = "exprs") {
-    ## Get total expression from gene controls
-    exprs_from_gene_controls <- colSums(exprs_mat[is_gene_control,])
-    ## Get % expression from gene controls
-    pct_exprs_from_gene_controls <- (100 * exprs_from_gene_controls / 
+    ## Get total expression from feature controls
+    exprs_from_feature_controls <- colSums(exprs_mat[is_feature_control,])
+    ## Get % expression from feature controls
+    pct_exprs_from_feature_controls <- (100 * exprs_from_feature_controls / 
                                          colSums(exprs_mat))
     ## Indicate whether or not to filter on percentage from controls
-    filter_on_pct_exprs_from_gene_controls <- 
-        (pct_exprs_from_gene_controls > pct_gene_controls_threshold)
+    filter_on_pct_exprs_from_feature_controls <- 
+        (pct_exprs_from_feature_controls > pct_feature_controls_threshold)
     ## Make a data frame
-    df_pdata_this <- data.frame(exprs_from_gene_controls,
-                                pct_exprs_from_gene_controls,
-                                filter_on_pct_exprs_from_gene_controls)
+    df_pdata_this <- data.frame(exprs_from_feature_controls,
+                                pct_exprs_from_feature_controls,
+                                filter_on_pct_exprs_from_feature_controls)
     if (calc_top_features) { ## Do we wnat to calculate exprs accounted for by 
         ## top features?
-        ## Determine percentage of counts for top genes by cell
+        ## Determine percentage of counts for top features by cell
         pct_exprs_by_cell <- (100 * t(t(exprs_mat) / colSums(exprs_mat)))
         pct_exprs_by_cell_sorted <- apply(pct_exprs_by_cell, 2, sort, 
                                           decreasing = TRUE)
@@ -425,15 +425,19 @@ a lower count threshold of 0.")
 #' experimental information. Must have been appropriately prepared.
 #' @param variable character scalar providing a variable name (column from 
 #' \code{pData(object)}) for which to determine the most important PCs.
+#' @param plot_type character string, indicating which type of plot to produce.
+#' Default, \code{"pairs-pcs"} produces a pairs plot for the top 5 PCs based on
+#' their R-squared with the variable of interest. A value of 
+#' \code{"pcs-vs-vars"} produces plots of the top PCs against the variable of 
+#' interest.
 #'
 #' @details Plot the top 5 most important PCs for a given variable. Importance 
-#' here is defined as the average silhouette width (computed with 
-#' \code{cluster::silhouette}) when cells are clustered by the values of the 
-#' variable. If the variable is discrete, unique values of the variable define 
-#' the clusters. If the variable is continuous, it is coerced into three 
+#' here is defined as the R-squared value from a linear model regressing each PC
+#' onto the variable of interest. If the variable is discrete, unique values of 
+#' the variable define  the clusters. If the variable is continuous, it is coerced into three 
 #' discrete values, "low" (bottom quartile), "medium" (middle two quartiles) 
-#' and "high" (upper quartile), and these levels are used to define clusters.
-#' Cells are coloured by their cluster in the plot.
+#' and "high" (upper quartile), and these levels are used as a factor in the 
+#' linear model. Cells are coloured by their cluster in the plot.
 #'  
 #' @export
 #' @examples
@@ -445,70 +449,120 @@ a lower count threshold of 0.")
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' findImportantPCs(example_sceset, variable="coverage")
 #' 
-findImportantPCs <- function(object, variable="coverage") {
-    pca <- prcomp(t(exprs(object)), retx=TRUE, center=TRUE, scale.=TRUE)
+findImportantPCs <- function(object, variable="coverage", plot_type = "pairs-pcs") {
+    pca <- prcomp(t(exprs(object)), retx = TRUE, center = TRUE, scale. = TRUE)
     colnames(pca$x) <- paste("component", 1:ncol(pca$x))
-    if(!(variable %in% colnames(pData(object))))
+    if (!(variable %in% colnames(pData(object))))
         stop("variable not found in pData(object). 
              Please make sure pData(object)[, variable] exists.")
     x <- pData(object)[, variable]
     x_na <- is.na(x)
     x <- x[!x_na]
-    if(length(unique(x)) <= 1)
+    if (length(unique(x)) <= 1)
         stop("variable only has one unique value, so cannot determine important
              principal components.")
     ## Determine type of variable
     typeof_x <- .getTypeOfVariable(object, variable)
-    if( typeof_x == "discrete" ) {
+    if ( typeof_x == "discrete" ) {
         ## If x is a discrete variable
-        x_int <- as.integer(factor(x))
+        x_int <- as.factor(x)
         ## Define colours for plotting
         colour_pal <- c("#1F77B499", "#FF7F0E99", "#2CA02C99", "#D6272899", 
                         "#9467BD99", "#8C564B99", "#E377C299", "#7F7F7F99", 
                         "#BCBD2299", "#17BECF99")
+        ## Compute R-squared for each PC
+        design <- model.matrix(~x_int)
+        pca_r_squared <- .getRSquared(t(pca$x[!x_na,]), design)
         ## Compute ave silhouette widths
-        ave_sil_width <- .calculateSilhouetteWidth(x_int, pca$x[!x_na,])
+        # ave_sil_width <- .calculateSilhouetteWidth(x_int, pca$x[!x_na,])
     } else {
         ## Define plotting colours
         colour_pal <- c("#F7FCF099", "#CCEBC599", "#7BCCC499", "#2B8CBE99",
                         "#08408199")
         ## If x is a continuous variable - turn into an ordinal variable with three
         ## values - low, medium and high - or five values based on quintiles
-        x_int_1 <- cut(x, c(min(x)-1, quantile(x, probs = c(0.2, 0.4, 0.6, 0.8)), 
-                                    max(x)+1), right = TRUE)
+        x_int_1 <- cut(x, c(min(x) - 1, quantile(x, probs = c(0.2, 0.4, 0.6, 0.8)), 
+                                    max(x) + 1), right = TRUE)
         x_int_1 <- as.integer(x_int_1)
-        x_int_2 <- cut(x, c(min(x)-1, quantile(x, probs = c(0.25, 0.75)), 
+        x_int_2 <- cut(x, c(min(x) - 1, quantile(x, probs = c(0.25, 0.75)), 
                           max(x) + 1), right = TRUE)
         x_int_2 <- as.integer(x_int_2)
+        ## Compute R-squared for each PC
+        design1 <- model.matrix(~as.factor(x_int_1))
+        design2 <- model.matrix(~as.factor(x_int_2))
+        pca_r_squared1 <- .getRSquared(t(pca$x[!x_na,]), design1)
+        sum_top5_1 <- sum(sort(pca_r_squared1, decreasing = TRUE)[1:5])
+        pca_r_squared2 <- .getRSquared(t(pca$x[!x_na,]), design1)
+        sum_top5_2 <- sum(sort(pca_r_squared2, decreasing = TRUE)[1:5])
         ## Compute ave silhouette widths
-        ave_sil_width_1 <- .calculateSilhouetteWidth(x_int_1, pca$x[!x_na,])
-        sum_top5_1 <- sum(sort(ave_sil_width_1, decreasing=TRUE)[1:5])
-        ave_sil_width_2 <- .calculateSilhouetteWidth(x_int_2, pca$x[!x_na,])
-        sum_top5_2 <- sum(sort(ave_sil_width_2, decreasing=TRUE)[1:5])
+#         ave_sil_width_1 <- .calculateSilhouetteWidth(x_int_1, pca$x[!x_na,])
+#         sum_top5_1 <- sum(sort(ave_sil_width_1, decreasing = TRUE)[1:5])
+#         ave_sil_width_2 <- .calculateSilhouetteWidth(x_int_2, pca$x[!x_na,])
+#         sum_top5_2 <- sum(sort(ave_sil_width_2, decreasing = TRUE)[1:5])
         ## see which number of clusters gives a larger sum for top 5 sil widths
-        if( sum_top5_1 > sum_top5_2) {
-            ave_sil_width <- ave_sil_width_1
+        if ( sum_top5_1 > sum_top5_2) {
+            # ave_sil_width <- ave_sil_width_1
+            pca_r_squared <- pca_r_squared1
             x_int <- x_int_1
         } else {
-            ave_sil_width <- ave_sil_width_2
+            # ave_sil_width <- ave_sil_width_2
+            pca_r_squared <- pca_r_squared1
             colour_pal <- colour_pal[c(1, 3, 5)]
             x_int <- x_int_2
         }
     }
     ## Tidy up names and choose top 5 most important PCs for the variable
-    names(ave_sil_width) <- colnames(pca$x)
-    colnames(pca$x) <- paste0(colnames(pca$x), "\n(avg silh wdth ",
-                              formatC(signif(ave_sil_width, digits=2), digits=2,
-                                      format="fg", flag="#"), ")")
-    top5 <- order(ave_sil_width, decreasing=TRUE)[1:5]
-    ## Define colours for points
-    Col <- rep("firebrick", nrow(pca$x))
-    Col[!x_na] <- colour_pal[x_int]
-    ## Plot these bad boys
-    ## Get rid of any NA variable columns of PC so that top ordering aligns
-    par(bty="n", col.lab="gray60")
-    pairs(pca$x[, top5], pch=21, col="gray70", bg=Col)
-    #     ave_sil_width
+    # names(ave_sil_width) <- colnames(pca$x)
+    names(pca_r_squared) <- colnames(pca$x)
+    colnames(pca$x) <- paste0(colnames(pca$x), "\n(R-squared ",
+                              formatC(signif(pca_r_squared, digits = 2), 
+                                      digits = 2, format = "fg", flag = "#"), ")")
+    top5 <- order(pca_r_squared, decreasing = TRUE)[1:5]
+    if ( plot_type == "pairs-pcs" ) {
+        ## Define colours for points
+        Col <- rep("firebrick", nrow(pca$x))
+        Col[!x_na] <- colour_pal[x_int]
+        ## Plot these bad boys
+        ## Get rid of any NA variable columns of PC so that top ordering aligns
+        par(bty = "n", col.lab = "gray60")
+        pairs(pca$x[, top5], pch = 21, col = "gray70", bg = Col)
+    } else {
+        top6 <- order(pca_r_squared, decreasing = TRUE)[1:6]
+        df_to_plot <- reshape2::melt(pca$x[, top6])
+        xvar <- pData(object)[, variable]
+        df_to_plot$xvar <- rep(xvar, 6)
+        pcs_vars_plot <- ggplot(df_to_plot, aes_string(x = "xvar", y = "value"),
+                                colour = "black") +
+            facet_wrap(~Var2, nrow = 3, scales = "free_y") +
+            xlab(variable) +
+            ylab("Principal component value") + 
+            theme_bw()
+        if ( typeof_x == "discrete") {
+            pcs_vars_plot <- pcs_vars_plot + 
+                geom_violin(fill = "aliceblue", colour = "gray60", 
+                            alpha = 0.6, scale = "width") +
+                geom_boxplot(width = 0.25, outlier.size = 0) +
+                geom_dotplot(fill = "gray10", alpha = 0.6, shape = 21, 
+                             binaxis = 'y', stackdir = 'center', dotsize = 1)
+#                 geom_point(fill = "gray10", alpha = 0.5, shape = 21,
+#                            position = position_jitter(height = 0, width = 0.2))
+        } else {
+            pcs_vars_plot <- pcs_vars_plot + 
+                geom_point(fill = "gray10", alpha = 0.6, shape = 21) +
+                stat_smooth(aes(group = 1), method = "lm", alpha = 0.3)
+        }
+        return(pcs_vars_plot)
+    }
+}
+
+
+
+#' @importFrom limma lmFit
+.getRSquared <- function(y, design) {
+    fit <- limma::lmFit(y, design = design)
+    sst <- rowSums(y ^ 2)
+    ssr <- sst - fit$df.residual * fit$sigma ^ 2
+    (ssr/sst)
 }
 
 
@@ -521,7 +575,6 @@ findImportantPCs <- function(object, variable="coverage") {
     ave_sil_width
 }
 
-
 # Range of Silhouette Width    Interpretation
 # 0.71-1.0	A strong structure has been found
 # 0.51-0.70	A reasonable structure has been found
@@ -530,7 +583,7 @@ findImportantPCs <- function(object, variable="coverage") {
 
 ################################################################################
 
-#' Plot the genes with the highest read counts
+#' Plot the features with the highest expression values
 #'
 #' @param object an SCESet object containing expression values and
 #' experimental information. Must have been appropriately prepared.
@@ -538,16 +591,16 @@ findImportantPCs <- function(object, variable="coverage") {
 #' to be used to assign colours to cell-level values.
 #' @param n numeric scalar giving the number of the most expressed features to 
 #' show. Default value is 50.
-#' @param drop_genes a character, logical or numeric vector indicating which 
-#' genes (or features) to drop when producing the plot. For example, control 
-#' genes might be dropped to focus attention on contribution from endogenous 
-#' rather than synthetic genes.
+#' @param drop_features a character, logical or numeric vector indicating which 
+#' features (e.g. genes, transcripts) to drop when producing the plot. For 
+#' example, control genes might be dropped to focus attention on contribution 
+#' from endogenous rather than synthetic genes.
 #' @param use_as_exprs which slot of the \code{assayData} in the \code{object} 
 #' should be used to define expression? Valid options are "counts" (default), 
 #' "tpm", "fpkm" and "exprs".
 #'
 #' @details Plot the percentage of counts accounted for by the top n most highly
-#' expressed genes across the dataset.
+#' expressed features across the dataset.
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -555,12 +608,12 @@ findImportantPCs <- function(object, variable="coverage") {
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' rownames(pd) <- pd$Cell
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
-#' example_sceset <- calculateQCMetrics(example_sceset, gene_controls = 1:500)
+#' example_sceset <- calculateQCMetrics(example_sceset, feature_controls = 1:500)
 #' plotHighestExprs(example_sceset, col_by_variable="coverage")
 #' plotHighestExprs(example_sceset, col_by_variable="Mutation_Status")
 #' 
 plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
-                              drop_genes = NULL, use_as_exprs = "counts") {
+                              drop_features = NULL, use_as_exprs = "counts") {
     ## Check that variable to colour points exists
     if (!(col_by_variable %in% colnames(pData(object)))) {
         warning("col_by_variable not found in pData(object). 
@@ -573,28 +626,29 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
     #     x <- x[!x_na]
     ## Determine type of variable
     typeof_x <- .getTypeOfVariable(object, col_by_variable)
-    ## Figure out which genes to drop
-    if ( !(is.null(drop_genes) | length(drop_genes) == 0) ) {
-        if (is.character(drop_genes))
-            drop_genes <- which(rownames(object) %in% drop_genes)
-        if (is.logical(drop_genes))
-            object <- object[!drop_genes,]
+    ## Figure out which features to drop
+    if ( !(is.null(drop_features) | length(drop_features) == 0) ) {
+        if (is.character(drop_features))
+            drop_features <- which(rownames(object) %in% drop_features)
+        if (is.logical(drop_features))
+            object <- object[!drop_features,]
         else
-            object <- object[-drop_genes,]
+            object <- object[-drop_features,]
     }
     ## Compute QC metrics on the (possibly) modified SCESet object to make sure
-    ## we have the relevant values for this set of genes
-    if ( !is.null(fData(object)$is_gene_control) )
+    ## we have the relevant values for this set of features
+    if ( !is.null(fData(object)$is_feature_control) )
         object <- calculateQCMetrics(
-            object, gene_controls = fData(object)$is_gene_control)
+            object, feature_controls = fData(object)$is_feature_control)
     else
         object <- calculateQCMetrics(object)
    
     ## Define expression values to be used
-    use_as_exprs <- match.arg(use_as_exprs, c("exprs", "tpm", "fpkm", "counts"))
+    use_as_exprs <- match.arg(use_as_exprs, c("exprs", "tpm", "cpm", "fpkm", "counts"))
     exprs_mat <- switch(use_as_exprs,
                         exprs = exprs(object),
                         tpm = tpm(object),
+                        cpm = cpm(object),
                         fpkm = fpkm(object),
                         counts = counts(object))
     if ( is.null(exprs_mat) ) {
@@ -605,21 +659,23 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
     if ( use_as_exprs == "exprs" && object@logged )
         exprs_mat <- 2 ^ (exprs_mat) - object@logExprsOffset
     
-    ## Find the most highly expressed genes in this dataset
-    ### Order by total gene counts across whole dataset
+    ## Find the most highly expressed features in this dataset
+    ### Order by total feature counts across whole dataset
     fdata <- fData(object)
-    oo <- order(fdata[[paste0("total_gene_", use_as_exprs)]], 
+    oo <- order(fdata[[paste0("total_feature_", use_as_exprs)]], 
                 decreasing = TRUE)
-    fdata$Gene <- factor(featureNames(object), levels = rownames(object)[rev(oo)])
-    ## Check if is_gene_control is defined
-    if ( is.null(fdata$is_gene_control) )
-        fdata$is_gene_control <- rep(FALSE, nrow(fdata))
+    fdata$feature <- factor(featureNames(object), levels = rownames(object)[rev(oo)])
+    ## Check if is_feature_control is defined
+    if ( is.null(fdata$is_feature_control) )
+        fdata$is_feature_control <- rep(FALSE, nrow(fdata))
+    if ( is.null(fdata$Feature) )
+        fdata$Feature <- featureNames(object)
     
-    ## Determine percentage expression accounted for by top genes across all cells
+    ## Determine percentage expression accounted for by top features across all cells
     total_exprs <- sum(exprs_mat)
-    total_gene_exprs <- fdata[[paste0("total_gene_", use_as_exprs)]]
-    top50_pctage <- 100 * sum(total_gene_exprs[oo[1:n]]) / total_exprs
-    ## Determine percentage of counts for top genes by cell
+    total_feature_exprs <- fdata[[paste0("total_feature_", use_as_exprs)]]
+    top50_pctage <- 100 * sum(total_feature_exprs[oo[1:n]]) / total_exprs
+    ## Determine percentage of counts for top features by cell
     df_pct_exprs_by_cell <- (100 * t(exprs_mat[oo[1:n],]) / colSums(exprs_mat))
    
     ## Melt dataframe so it is conducive to ggplot
@@ -635,10 +691,10 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
     plot_most_expressed <- df_pct_exprs_by_cell_long %>%
         ggplot(aes_string(y = "Var2", x = "value", colour = "colour_by")) +
         geom_point(size = 180/n, alpha = 0.6, shape = 124) +
-        ggtitle(paste0("Top ", n, " genes account for ", 
+        ggtitle(paste0("Top ", n, " features account for ", 
                        format(top50_pctage, digits = 3), "% of all ", 
                        use_as_exprs)) +
-        ylab("Gene") +
+        ylab("Feature") +
         xlab(paste0("% of total ", use_as_exprs)) +
         theme_bw() +
         theme(legend.position = c(1, 0), legend.justification = c(1, 0),
@@ -658,11 +714,11 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
     }
     plot_most_expressed + geom_point(
         aes_string(x = paste0("as.numeric(pct_total_", use_as_exprs, ")"), 
-                   y = "Gene", fill = "is_gene_control"), 
+                   y = "Feature", fill = "is_feature_control"), 
         data = fdata[oo[1:n],], 
         size = 200/n, colour = "gray30", shape = 21) +
         scale_fill_manual(values = c("aliceblue", "wheat")) +
-        guides(fill = guide_legend(title = "Gene control?"))
+        guides(fill = guide_legend(title = "Feature control?"))
 }
 
 
@@ -670,7 +726,7 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
     ## Extract variable
     x <- pData(object)[, variable]
     ## Get type
-    if (is.character(x) | is.factor(x)) {
+    if (is.character(x) || is.factor(x) || is.logical(x)) {
         typeof_x <- "discrete"
     } else {
         if (is.integer(x)) {
@@ -684,8 +740,8 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
             else {
                 x <- as.character(x)
                 typeof_x <- "discrete"
-                warning("Unrecognised variable type. Variable being coerced to discrete.
-                        Please make sure pData(object)[, variable] is a proper discrete or continuous variable")
+                warning(paste0("Unrecognised variable type for ", variable, 
+". Variable being coerced to discrete. Please make sure pData(object)[, variable] is a proper discrete or continuous variable"))
             }        
         }
     }
@@ -699,11 +755,21 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
 #'
 #' @param object an SCESet object containing expression values and
 #' experimental information. Must have been appropriately prepared.
-#' @param variables vectory of variable names (must be columns of pData(object))
-#' to be plotted.
+#' @param nvars_to_plot integer, the number of variables to plot in the pairs 
+#' plot. Default value is 5.
+#' @param min_marginal_r2 numeric scalar giving the minimal value required for
+#' median marginal R-squared for a variable to be plotted. Only variables with a
+#' median marginal R-squared strictly larger than this value will be plotted.
+#' @param variables optional character vector giving the variables to be plotted.
+#' Default is \code{NULL}, in which case all variables in \code{pData(object)} 
+#' are considered and the \code{nvars_to_plot} variables with the highest median
+#' marginal R-squared are plotted.
+#' @param return_object logical, should an \code{SCESet} object with median 
+#' marginal R-squared values added to \code{varMetadata(object)} be returned?
+#' @param ... parameters to be passed to \code{\link{pairs}}.
 #'
 #' @details Function produces a pairs plot of the explanatory variables ordered
-#' by the percentage of gene expression variance (as measured by R-squared in a 
+#' by the percentage of feature expression variance (as measured by R-squared in a 
 #' marginal linear model) explained by variable. Median percentage R-squared is 
 #' reported on the plot for each variable. Discrete variables are coerced to a 
 #' factor and plotted as integers with jittering. Variables with only one unique 
@@ -719,65 +785,147 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
 #' vars <- names(pData(example_sceset))[c(2:3, 5:14)]
 #' plotExplanatoryVariables(example_sceset, variables=vars)
 #' 
-plotExplanatoryVariables <- function(object, variables=c("coverage", "depth")) {
+plotExplanatoryVariables <- function(object, nvars_to_plot = 5, 
+                                     min_marginal_r2 = 0, variables = NULL, 
+                                     return_object = FALSE, ...) {
     ## Check that variables are defined
-    variables_to_plot <- NULL
-    for (var in variables) {
-        if (!(var %in% colnames(pData(object)))) {
-            warning(paste("variable", var, "not found in pData(object). 
-             Please make sure pData(object)[, variable] exists. This variable will not be plotted."))
-        } else {
-            if (length(unique(pData(object)[, var])) <= 1) {
-                warning(paste("variable", var, "only has one unique value, so R^2 is not meaningful.
-This variable will not be plotted."))
+    if ( is.null(variables) ) {
+        variables_to_plot <- varLabels(object)
+    } else {
+        variables_to_plot <- NULL
+        for (var in variables) {
+            if ( !(var %in% colnames(pData(object))) ) {
+                warning(paste("variable", var, "not found in pData(object). 
+                     Please make sure pData(object)[, variable] exists. This variable will not be plotted."))
             } else {
-            variables_to_plot <- c(variables_to_plot, var)
+                variables_to_plot <- c(variables_to_plot, var)
             }
         }
     }
-    ## Initialise matrix to score R^2 values for each gene for each variable
-    rsquared_mat <- matrix(NA, nrow = nrow(object), ncol = length(variables_to_plot))
-    val_to_plot_mat <- matrix(NA, nrow = ncol(object), ncol = length(variables_to_plot))
-    colnames(rsquared_mat) <- colnames(val_to_plot_mat) <- variables_to_plot
+    variables_all <- varLabels(object)
+      
+    ## Initialise matrix to store R^2 values for each feature for each variable
+    rsquared_mat <- matrix(NA, nrow = nrow(object), 
+                           ncol = length(variables_all))
+    val_to_plot_mat <- matrix(NA, nrow = ncol(object), 
+                              ncol = length(variables_all))
+    colnames(rsquared_mat) <- colnames(val_to_plot_mat) <- variables_all
     rownames(rsquared_mat) <- rownames(object)
     rownames(val_to_plot_mat) <- colnames(object)
-    for(var in variables_to_plot) {
-        x <- pData(object)[, var]
-        #     x_na <- is.na(x)
-        #     x <- x[!x_na]
-        ## Determine type of variable
-        typeof_x <- .getTypeOfVariable(object, var)
-        if(typeof_x == "discrete") {
-            x <- factor(x)
-            val_to_plot_mat[, var] <- jitter(as.integer(x))
+    
+    ## Get R^2 values for each feature and each variable
+    for (var in variables_all) {
+        if ( var %in% variables_to_plot ) {
+            if (length(unique(pData(object)[, var])) <= 1) {
+                warning(paste("variable", var, "only has one unique value, so R^2 is not meaningful.
+This variable will not be plotted."))
+                rsquared_mat[, var] <- NA
+            } else {
+                x <- pData(object)[, var]
+                #     x_na <- is.na(x)
+                #     x <- x[!x_na]
+                ## Determine type of variable
+                typeof_x <- .getTypeOfVariable(object, var)
+                if ( typeof_x == "discrete" ) {
+                    x <- factor(x)
+                    val_to_plot_mat[, var] <- jitter(as.integer(x))
+                } else {
+                    val_to_plot_mat[, var] <- x
+                }
+                design <- model.matrix(~x)
+                rsquared_mat[, var] <- .getRSquared(exprs(object), design)
+            }
         } else {
-            val_to_plot_mat[, var] <- x
+            rsquared_mat[, var] <- NA
         }
-        design <- model.matrix(~x)
-        rsquared_mat[, var] <- .getRSquared(exprs(object), design)
     }
+    
     ## Get median R^2 for each variable, add to labels and order by median R^2
     median_rsquared <- apply(rsquared_mat, 2, median)
+#     median_rsquared <- apply(rsquared_mat, 2, quantile, probs = 0.1, 
+#                              na.rm = TRUE)
     colnames(val_to_plot_mat) <- paste0(colnames(val_to_plot_mat), 
-                                        "\n(med var expl = ", 
-                                        formatC(signif(100*median_rsquared, digits=3), 
-                                                digits=3, format="fg", flag="#"),
-                                        "%)")
-    oo_median <- order(median_rsquared, decreasing=TRUE)
+                                        "\n(Med. R-sq = ", 
+                                        formatC(signif(100*median_rsquared, 
+                                                       digits = 3),  digits = 3,
+                                                format = "fg", flag = "#"), "%)")
+    oo_median <- order(median_rsquared, decreasing = TRUE)
+    nvars_to_plot <- min(sum(median_rsquared > min_marginal_r2, na.rm = TRUE), 
+                         nvars_to_plot)
+    
     ## Plot these bad boys
-    par(bty="n", col.lab="gray60")
-    pairs(val_to_plot_mat[, oo_median], pch=21, col="gray60", bg="gray80",
-          col.lab="red")
+    par(bty = "o", col.lab = "gray60")
+    pairs(val_to_plot_mat[, oo_median[1:nvars_to_plot]], pch = 21, 
+          col = "gray60", bg = "gray80", col.lab = "red", ...)
+    ## Return object so that marginal R^2 are added to varMetadata
+    if ( return_object ) {
+        varMetadata(object) <- data.frame(
+            labelDescription = paste("Median marginal R-squared =", 
+                                     median_rsquared))
+        return(object)
+    }
 }
 
 
-#' @importFrom limma lmFit
-.getRSquared <- function(y, design) {
-    fit <- limma::lmFit(y, design=design)
-    sst <- rowSums(y^2)
-    ssr <- sst - fit$df.residual * fit$sigma^2
-    (ssr/sst)
+################################################################################
+### Plot expression mean vs frequency for feature controls
+
+#' Plot mean expression against frequency of expression 
+#' 
+#' @param object an \code{SCESet} object.
+#' @param feature_set character, numeric or logical vector indicating a set of
+#' features to use for the PCA. If character, entries must all be in 
+#' \code{featureNames(object)}. If numeric, values are taken to be indices for 
+#' features. If logical, vector is used to index features and should have length
+#' equal to \code{nrow(object)}. If \code{NULL}, then the function checks if 
+#' feature controls are defined. If so, then only feature controls are plotted,
+#' if not, then all features are plotted.
+#' 
+#' @export
+#' @examples 
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
+#' rownames(pd) <- pd$Cell
+#' ex_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
+#' ex_sceset <- calculateQCMetrics(ex_sceset)
+#' plotExprsMeanVsFreq(ex_sceset)
+#' 
+plotExprsMeanVsFreq <- function(object, feature_set = NULL) {
+    if ( !is(object, "SCESet") )
+        stop("Object must be an SCESet")
+    if ( is.null(fData(object)$n_cells_exprs) || 
+         is.null(fData(object)$mean_exprs)) {
+        stop("fData(object) does not have both 'n_cells_exprs' and 'mean_exprs' columns. Try running 'calculateQCMetrics' on this object, and then rerun this command.") 
+    }
+    if ( !is.null(feature_set) & typeof(feature_set) == "character" ) {
+        if ( !(all(feature_set %in% featureNames(object))) )
+            stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
+    }
+    if ( is.null(feature_set) ) {
+        if ( is.null(fData(object)$is_feature_control) ) {
+            feature_set <- 1:nrow(object)
+            y_lab <- "Mean expression level (all features)"
+        } else {
+            if ( all(!fData(object)$is_feature_control) ) {
+                feature_set <- 1:nrow(object)
+                y_lab <- "Mean expression level (all features)"
+            } else {
+                feature_set <- fData(object)$is_feature_control
+                y_lab <- "Mean expression level (feature controls)"
+            }
+        }
+    } else {
+        y_lab <- "Mean expression level (supplied feature set)"
+    }
+    
+    ## Plot this 
+    plotFeatureData(object[feature_set,], aes_string(x = "n_cells_exprs", 
+                                                     y = "mean_exprs")) +
+        xlab("Frequency of expression (number of cells)") +
+        ylab(y_lab)
 }
+
 
 
 
@@ -788,15 +936,18 @@ This variable will not be plotted."))
 #' @param object an SCESet object containing expression values and
 #' experimental information. Must have been appropriately prepared.
 #' @param type character scalar providing type of QC plot to compute: 
-#' "highest-expression" (showing genes with highest expression), "find-pcs" (showing
-#' the most important principal components for a given variable), or 
+#' "highest-expression" (showing features with highest expression), "find-pcs" (showing
+#' the most important principal components for a given variable), 
 #' "explanatory-variables" (showing a set of explanatory variables plotted 
-#' against each other, ordered by marginal variance explained).
+#' against each other, ordered by marginal variance explained), or 
+#' "exprs-mean-vs-freq" (plotting the mean expression levels against the 
+#' frequency of expression for a set of features).
 #' @param ... arguments passed to \code{plotHighestExprs}, 
-#' \code{plotImportantPCs} and \code{plotExplanatoryVariables} as appropriate.
+#' \code{plotImportantPCs}, \code{plotExplanatoryVariables} and 
+#' \code{plotExprsMeanVsFreq} as appropriate.
 #'
 #' @details Calculate useful quality control metrics to help with pre-processing
-#' of data and identification of potentially problematic genes and cells.
+#' of data and identification of potentially problematic features and cells.
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -812,17 +963,25 @@ This variable will not be plotted."))
 #' 
 plotQC <- function(object, type = "highest-expression", ...) {
     type <- match.arg(type, c("highest-expression", "find-pcs", 
-                              "explanatory-variables"))
+                              "explanatory-variables", "exprs-mean-vs-freq"))
     if (type == "highest-expression") {
         plot_out <- plotHighestExprs(object, ...)
-        print(plot_out)
         return(plot_out)
     }
     if (type == "find-pcs") {        
-        findImportantPCs(object, ...)
+        plot_out <- findImportantPCs(object, ...)
+        if ( !is.null(plot_out) )
+            return(plot_out)
     }
     if (type == "explanatory-variables") {
-        plotExplanatoryVariables(object, ...)
+        plot_out <- plotExplanatoryVariables(object, ...)
+        if ( !is.null(plot_out) )
+            return(plot_out)
+    }
+    if (type == "exprs-mean-vs-freq") {
+        plot_out <- plotExprsMeanVsFreq(object, ...)
+        if ( !is.null(plot_out) )
+            return(plot_out)
     }
 }
 

@@ -56,7 +56,7 @@ calculateFPKM <- function(object, effective_length) {
 
 
 .countToTpm <- function(counts, eff_len) {
-    ## Expecting a count matrix of ngenes x ncells
+    ## Expecting a count matrix of nfeatures x ncells
     ## can't have any zero counts, so expect to apply offset
     rate <- log(counts) - log(eff_len)
     denom <- log(colSums(exp(rate)))
@@ -64,7 +64,7 @@ calculateFPKM <- function(object, effective_length) {
 }
 
 .countToFpkm <- function(counts, eff_len) {
-    ## Expecting a count matrix of ngenes x ncells
+    ## Expecting a count matrix of nfeatures x ncells
     ## can't have any zero counts, so expect to apply offset
     N <- colSums(counts)
     logfpkm <- log(counts) + log(1e9) - log(eff_len)
@@ -73,7 +73,7 @@ calculateFPKM <- function(object, effective_length) {
 }
 
 .fpkmToTpm <- function(fpkm) {
-    ## Expecting an FPKM matrix of ngenes x ncells
+    ## Expecting an FPKM matrix of nfeatures x ncells
     exp( t(t(log(fpkm)) - log(colSums(fpkm))) + log(1e6) )
 }
 

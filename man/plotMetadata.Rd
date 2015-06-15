@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotting.R
 \name{plotMetadata}
 \alias{plotMetadata}
-\title{Plot metadata for cells or genes}
+\title{Plot metadata for cells or features}
 \usage{
 plotMetadata(object, aesth = aes_string(x = "log10(depth)", y = "coverage"))
 }
@@ -15,7 +15,7 @@ expects at least x and y variables to be supplied. The default is to plot
 coverage against log10(depth).}
 }
 \description{
-Plot metadata for cells or genes
+Plot metadata for cells or features
 }
 \details{
 Plot cell or feature metadata from an SCESet object. If one variable

@@ -4,15 +4,15 @@
 \alias{calculateQCMetrics}
 \title{Calculate QC metrics}
 \usage{
-calculateQCMetrics(object, gene_controls = NULL, cell_controls = NULL,
-  nmads = 5, pct_gene_controls_threshold = 80)
+calculateQCMetrics(object, feature_controls = NULL, cell_controls = NULL,
+  nmads = 5, pct_feature_controls_threshold = 80)
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and
 experimental information. Must have been appropriately prepared.}
 
-\item{gene_controls}{a character vector of gene names, or a logical vector,
-or a numeric vector of indices used to identify gene controls (for example,
+\item{feature_controls}{a character vector of feature names, or a logical vector,
+or a numeric vector of indices used to identify feature controls (for example,
 ERCC spike-in genes, mitochondrial genes, etc).}
 
 \item{cell_controls}{a character vector of cell (sample) names, or a logical
@@ -21,20 +21,20 @@ example, blank wells or bulk controls).}
 
 \item{nmads}{numeric scalar giving the number of median absolute deviations to be
 used to flag potentially problematic cells based on depth (total number of
-counts for the cell, or library size) and coverage (number of genes with
+counts for the cell, or library size) and coverage (number of features with
 non-zero expression). Default value is 5.}
 
-\item{pct_gene_controls_threshold}{numeric scalar giving a threshold for
-percentage of expression values accounted for by gene controls. Used as to
+\item{pct_feature_controls_threshold}{numeric scalar giving a threshold for
+percentage of expression values accounted for by feature controls. Used as to
 flag cells that may be filtered based on high percentage of expression from
-gene controls.}
+feature controls.}
 }
 \description{
 Calculate QC metrics
 }
 \details{
 Calculate useful quality control metrics to help with pre-processing
-of data and identification of potentially problematic genes and cells.
+of data and identification of potentially problematic features and cells.
 }
 \examples{
 data("sc_example_counts")

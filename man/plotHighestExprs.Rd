@@ -2,10 +2,10 @@
 % Please edit documentation in R/qc.R
 \name{plotHighestExprs}
 \alias{plotHighestExprs}
-\title{Plot the genes with the highest read counts}
+\title{Plot the features with the highest expression values}
 \usage{
 plotHighestExprs(object, col_by_variable = "coverage", n = 50,
-  drop_genes = NULL, use_as_exprs = "counts")
+  drop_features = NULL, use_as_exprs = "counts")
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and
@@ -17,21 +17,21 @@ to be used to assign colours to cell-level values.}
 \item{n}{numeric scalar giving the number of the most expressed features to
 show. Default value is 50.}
 
-\item{drop_genes}{a character, logical or numeric vector indicating which
-genes (or features) to drop when producing the plot. For example, control
-genes might be dropped to focus attention on contribution from endogenous
-rather than synthetic genes.}
+\item{drop_features}{a character, logical or numeric vector indicating which
+features (e.g. genes, transcripts) to drop when producing the plot. For
+example, control genes might be dropped to focus attention on contribution
+from endogenous rather than synthetic genes.}
 
 \item{use_as_exprs}{which slot of the \code{assayData} in the \code{object}
 should be used to define expression? Valid options are "counts" (default),
 "tpm", "fpkm" and "exprs".}
 }
 \description{
-Plot the genes with the highest read counts
+Plot the features with the highest expression values
 }
 \details{
 Plot the percentage of counts accounted for by the top n most highly
-expressed genes across the dataset.
+expressed features across the dataset.
 }
 \examples{
 data("sc_example_counts")
@@ -39,7 +39,7 @@ data("sc_example_cell_info")
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 rownames(pd) <- pd$Cell
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
-example_sceset <- calculateQCMetrics(example_sceset, gene_controls = 1:500)
+example_sceset <- calculateQCMetrics(example_sceset, feature_controls = 1:500)
 plotHighestExprs(example_sceset, col_by_variable="coverage")
 plotHighestExprs(example_sceset, col_by_variable="Mutation_Status")
 }

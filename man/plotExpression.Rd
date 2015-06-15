@@ -78,8 +78,8 @@ plot.}
 Plot expression values for a set of features (e.g. genes or transcripts)
 }
 \details{
-Plot expression values (default log2(counts-per-million +
-1)) for a set of genes or features.
+Plot expression values (default log2(transcripts-per-million +
+1), if available) for a set of features.
 }
 \examples{
 data("sc_example_counts")

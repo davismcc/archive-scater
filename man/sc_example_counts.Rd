@@ -13,7 +13,7 @@ Wellcome Trust Centre for Human Genetics, Oxford
 sc_example_counts
 }
 \description{
-This data set contains counts for 100 genes for 40 cells. They
+This data set contains counts for 2000 genes for 40 cells. They
 are from a real experiment, but details have been anonymised.
 }
 \author{

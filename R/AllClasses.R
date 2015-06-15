@@ -30,7 +30,7 @@
 #'    \item{\code{cellPairwiseDistances}:}{Matrix of class \code{"numeric"}, 
 #'    containing pairwise distances between cells.}
 #'    \item{\code{featurePairwiseDistances}:}{Matrix of class \code{"numeric"}, 
-#'    containing pairwise distances between genes.}
+#'    containing pairwise distances between features.}
 #'    \item{\code{reducedDimension}:}{Matrix of class \code{"numeric"}, containing
 #'    reduced-dimension coordinates for cells (generated, for example, by PCA).}
 #'    \item{\code{bootstraps}:}{Array of class \code{"numeric"} that can contain

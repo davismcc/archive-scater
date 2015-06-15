@@ -18,7 +18,7 @@ plotPCASCESet(object, ntop = 500, ncomponents = 2, colour_by = NULL,
 \arguments{
 \item{object}{an \code{SCESet} object}
 
-\item{ntop}{numeric scalar indicating the number of most variable genes to
+\item{ntop}{numeric scalar indicating the number of most variable features to
 use for the PCA. Default is \code{500}, but any \code{ntop} argument is
 overrided if the \code{feature_set} argument is non-NULL.}
 
@@ -74,19 +74,19 @@ example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 
 ## Examples plotting PC1 and PC2
 plotPCA(example_sceset)
-plotPCA(example_sceset, colour_by="Cell_Cycle")
-plotPCA(example_sceset, colour_by="Cell_Cycle", shape_by="Treatment")
-plotPCA(example_sceset, colour_by="Cell_Cycle", shape_by="Treatment",
-size_by="Mutation_Status")
-plotPCA(example_sceset, shape_by="Treatment", size_by="Mutation_Status")
-plotPCA(example_sceset, feature_set=1:100, colour_by="Treatment",
-shape_by="Mutation_Status")
+plotPCA(example_sceset, colour_by = "Cell_Cycle")
+plotPCA(example_sceset, colour_by = "Cell_Cycle", shape_by = "Treatment")
+plotPCA(example_sceset, colour_by = "Cell_Cycle", shape_by = "Treatment",
+size_by = "Mutation_Status")
+plotPCA(example_sceset, shape_by = "Treatment", size_by = "Mutation_Status")
+plotPCA(example_sceset, feature_set = 1:100, colour_by = "Treatment",
+shape_by = "Mutation_Status")
 
-plotPCA(example_sceset, shape_by="Treatment", return_SCESet=TRUE)
+plotPCA(example_sceset, shape_by = "Treatment", return_SCESet = TRUE)
 
 ## Examples plotting more than 2 PCs
-plotPCA(example_sceset, ncomponents=8)
-plotPCA(example_sceset, ncomponents=4, colour_by="Treatment",
-shape_by="Mutation_Status")
+plotPCA(example_sceset, ncomponents = 8)
+plotPCA(example_sceset, ncomponents = 4, colour_by = "Treatment",
+shape_by = "Mutation_Status")
 }
 

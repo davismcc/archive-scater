@@ -1,7 +1,7 @@
 #' @name sc_example_counts
 #' @title A small example of single-cell counts dataset to demonstrate 
 #' capabilities of scater
-#' @description This data set contains counts for 100 genes for 40 cells. They 
+#' @description This data set contains counts for 2000 genes for 40 cells. They 
 #' are from a real experiment, but details have been anonymised.
 #' @docType data
 #' @usage sc_example_counts

@@ -4,7 +4,7 @@
 \alias{findImportantPCs}
 \title{Find most important principal components for a given variable}
 \usage{
-findImportantPCs(object, variable = "coverage")
+findImportantPCs(object, variable = "coverage", plot_type = "pairs-pcs")
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and
@@ -12,19 +12,24 @@ experimental information. Must have been appropriately prepared.}
 
 \item{variable}{character scalar providing a variable name (column from
 \code{pData(object)}) for which to determine the most important PCs.}
+
+\item{plot_type}{character string, indicating which type of plot to produce.
+Default, \code{"pairs-pcs"} produces a pairs plot for the top 5 PCs based on
+their R-squared with the variable of interest. A value of
+\code{"pcs-vs-vars"} produces plots of the top PCs against the variable of
+interest.}
 }
 \description{
 Find most important principal components for a given variable
 }
 \details{
 Plot the top 5 most important PCs for a given variable. Importance
-here is defined as the average silhouette width (computed with
-\code{cluster::silhouette}) when cells are clustered by the values of the
-variable. If the variable is discrete, unique values of the variable define
-the clusters. If the variable is continuous, it is coerced into three
+here is defined as the R-squared value from a linear model regressing each PC
+onto the variable of interest. If the variable is discrete, unique values of
+the variable define  the clusters. If the variable is continuous, it is coerced into three
 discrete values, "low" (bottom quartile), "medium" (middle two quartiles)
-and "high" (upper quartile), and these levels are used to define clusters.
-Cells are coloured by their cluster in the plot.
+and "high" (upper quartile), and these levels are used as a factor in the
+linear model. Cells are coloured by their cluster in the plot.
 }
 \examples{
 data("sc_example_counts")

@@ -11,7 +11,7 @@
 \S4method{plot}{SCESet,ANY}(x, y, ...)
 
 plotSCESet(x, block1 = NULL, block2 = NULL, colour_by = NULL,
-  nfeatures = 500, use_as_exprs = "tpm", ncol = 3)
+  nfeatures = 500, use_as_exprs = "tpm", ncol = 3, linewidth = 1.5)
 }
 \arguments{
 \item{x}{an \code{SCESet} object}
@@ -48,6 +48,9 @@ values are set to the power of 2 (so they are back on the raw scale they were
 
 \item{ncol}{number of columns to use for \code{facet_wrap} if only one block is
 defined.}
+
+\item{linewidth}{numeric scalar giving the "size" parameter (in ggplot2
+parlance) for the lines plotted. Default is 1.5.}
 }
 \description{
 Plot the relative proportion of the library accounted for by the most highly
@@ -71,13 +74,13 @@ data("sc_example_cell_info")
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 
-plot(example_sceset, use_as_exprs="exprs")
-plot(example_sceset, use_as_exprs="exprs", colour_by="Cell_Cycle")
-plot(example_sceset, use_as_exprs="exprs", block1="Treatment",
-colour_by="Cell_Cycle")
-plot(example_sceset, use_as_exprs="exprs", block1="Treatment",
-block2="Mutation_Status", colour_by="Cell_Cycle")
+plot(example_sceset, use_as_exprs = "exprs")
+plot(example_sceset, use_as_exprs = "exprs", colour_by = "Cell_Cycle")
+plot(example_sceset, use_as_exprs = "exprs", block1 = "Treatment",
+colour_by = "Cell_Cycle")
+plot(example_sceset, use_as_exprs = "exprs", block1 = "Treatment",
+block2 = "Mutation_Status", colour_by = "Cell_Cycle")
 # What happens if chosen expression values are not available?
-plot(example_sceset, block1="Treatment", colour_by="Cell_Cycle")
+plot(example_sceset, block1 = "Treatment", colour_by = "Cell_Cycle")
 }
 
