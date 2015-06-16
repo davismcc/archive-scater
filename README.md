@@ -42,7 +42,7 @@ below should help with package installations.
 CRAN packages:
 
 ```{r}
-install.packages(c("data.table", "ggplot2", "ggthemes", "knitr", "matrixStats", 
+install.packages(c("data.table", "ggplot2", "ggthemes", "knitr", "matrixStats", "MASS",
                 "plyr", "reshape2", "rjson", "testthat"))
 ```
 
@@ -50,8 +50,7 @@ Bioconductor packages:
 
 ```{r}
 source("http://bioconductor.org/biocLite.R")
-biocLite(c("Biobase", "BiocGenerics", "biomaRt", "edgeR", "limma", "monocle", 
-        "rhdf5"))
+biocLite(c("Biobase", "BiocGenerics", "biomaRt", "edgeR", "limma", "monocle", "rhdf5"))
 ```
 
 You might like to install `dplyr` from Hadley Wickham's GitHub site (`dplyr` was
