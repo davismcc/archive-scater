@@ -23,7 +23,7 @@ the call to install `scater`:
 
 ```{r }
 install.packages("devtools")
-devtools::install_github("davismcc/scater")
+devtools::install_github("davismcc/scater", build_vignettes = TRUE)
 ```
 
 Using the most recent version of R is strongly recommended (R 3.2.0 at the time
@@ -67,14 +67,28 @@ We plan to contribute `scater` to Bioconductor in the near future.
 
 ## Getting started
 
+<!---
 The best place to start is the [vignette](http://htmlpreview.github.io/?http://github.com/davismcc/scater/blob/master/vignettes/vignette.html).
+-->
+
+The best place to start is the vignette. From inside an R session, load `scater`
+and then browse the vignettes:
+
+```{r}
+library(scater)
+browseVignettes("scater")
+```
+
+There is a detailed HTML document available that introduces the main features 
+and functionality of `scater`.
 
 
 ## Acknowledgements and disclaimer
 
 The package leans heavily on previously published work and packages, namely 
 [edgeR](http://bioconductor.org/packages/release/bioc/html/edgeR.html) and 
-[limma](http://bioconductor.org/packages/release/bioc/html/limma.html). The `SCESet` is heavily inspired by the `CellDataSet` class from [monocle](http://www.bioconductor.org/packages/release/bioc/html/monocle.html).
+[limma](http://bioconductor.org/packages/release/bioc/html/limma.html). The 
+`SCESet` class is heavily inspired by the `CellDataSet` class from [monocle](http://www.bioconductor.org/packages/release/bioc/html/monocle.html).
 
 
 <!---
@@ -82,8 +96,9 @@ It also uses and extends code for an approximate rank-product test by [Heskes et
 -->
 
 
-The package is currently in an Alpha state, so is to be used with appropriate 
-caution. Please do try it, though, and contact me with bug reports, feedback, 
-questions and suggestions to improve the package.
+The package is currently in an Alpha state, and under heavy development so may 
+change without warning. Please do try it, though, and contact me with bug 
+reports, feedback, feature requests, questions and suggestions to improve the 
+package.
 
-Davis McCarthy, April 2015
+Davis McCarthy, June 2015
