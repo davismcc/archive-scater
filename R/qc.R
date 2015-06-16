@@ -690,13 +690,12 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
     ## Make plot
     plot_most_expressed <- df_pct_exprs_by_cell_long %>%
         ggplot(aes_string(y = "Var2", x = "value", colour = "colour_by")) +
-        geom_point(size = 180/n, alpha = 0.6, shape = 124) +
-        ggtitle(paste0("Top ", n, " features account for ", 
-                       format(top50_pctage, digits = 3), "% of all ", 
-                       use_as_exprs)) +
+        geom_point(alpha = 0.6, shape = 124) +
+        ggtitle(paste0("Top ", n, " account for ", 
+                       format(top50_pctage, digits = 3), "% of total")) +
         ylab("Feature") +
         xlab(paste0("% of total ", use_as_exprs)) +
-        theme_bw() +
+        theme_bw(8) +
         theme(legend.position = c(1, 0), legend.justification = c(1, 0),
               axis.text.x = element_text(colour = "gray35"), 
               axis.text.y = element_text(colour = "gray35"),
@@ -715,8 +714,7 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
     plot_most_expressed + geom_point(
         aes_string(x = paste0("as.numeric(pct_total_", use_as_exprs, ")"), 
                    y = "Feature", fill = "is_feature_control"), 
-        data = fdata[oo[1:n],], 
-        size = 200/n, colour = "gray30", shape = 21) +
+        data = fdata[oo[1:n],], colour = "gray30", shape = 21) +
         scale_fill_manual(values = c("aliceblue", "wheat")) +
         guides(fill = guide_legend(title = "Feature control?"))
 }

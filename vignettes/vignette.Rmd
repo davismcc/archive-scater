@@ -14,7 +14,9 @@ vignette: >
 ## To render an HTML version that works nicely with github and web pages, do:
 ## rmarkdown::render("vignettes/vignette.Rmd", "all")
 library(knitr)
-opts_chunk$set(fig.align = 'center', fig.width = 6, fig.height = 5)
+opts_chunk$set(fig.align = 'center', fig.width = 6, fig.height = 5, dev = 'png')
+library(ggplot2)
+theme_set(theme_bw(12))
 ```
 
 This document gives an introduction to and overview of the functionality of the 
@@ -60,17 +62,15 @@ with information about the cells we are studying:
 library(scater)
 data("sc_example_counts")
 data("sc_example_cell_info")
-ls()
 ```
 
 We use these objects to form an `SCESet` object containing all of the necessary
 information for our analysis:
 
-```{r quickstart-make-sceset}
+```{r quickstart-make-sceset, results='hide'}
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 rownames(pd) <- pd$Cell
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
-example_sceset
 ```
 
 Subsetting is very convenient with this class. For example, we can filter out 
@@ -83,6 +83,36 @@ example_sceset <- example_sceset[keep_feature,]
 
 Now we have the expression data neatly stored in a structure that can be used 
 for lots of exciting analyses.
+
+It is straight-forward to compute many quality control metrics:
+
+```{r quick-start-calc-qc-metrics, eval=FALSE}
+example_sceset <- calculateQCMetrics(example_sceset, feature_controls = 1:40)
+```
+
+Many plotting functions are available for visualising the data:
+
+* `plot`: a plot method exists for `SCESet` objects, which gives an overview
+of expression across cells.
+* `plotQC`: various methods are available for producing QC diagnostic plots.
+* `plotPCA`: produce a principal components plot for the cells.
+* `plotReducedDim`: plot a reduced-dimension representation of the cells.
+* `plotExpression`: plot expression levels for a defined set of features.
+* `plotPhenoData`: plot cell metadata and QC metrics.
+* `plotFeatureData`: plot feature metadata and QC metrics.
+
+More detail on all plotting methods is given throughout the vignette below.
+
+Visualisations can highlight features and cells to be filtered out, which can be
+done easily with the subsetting capabilities of scater.
+
+The QC plotting functions also enable the identification of important 
+experimental variables, which can be conditioned out in the data normalisation
+step.
+
+After QC and data normalisation (methods are available in `scater`), the dataset
+is ready for downstream statistical modeling.
+
 
 ## A note on terminology
 
@@ -114,9 +144,10 @@ when applied to an `SCESet` object returns the cell IDs.
 ## The SCESet class and methods
 
 In `scater` we organise single-cell expression data in objects of the `SCESet` 
-class. The class is derived from the Bioconductor `ExpressionSet` class, which 
+class. The class inherits the Bioconductor `ExpressionSet` class, which 
 provides a common interface familiar to those who have analyzed microarray 
 experiments with Bioconductor. The class requires three input files:
+
   1. `exprs`, a numeric matrix of expression values, where rows are 
   features, and columns are cells
   2. `phenoData`, an `AnnotatedDataFrame` object, where rows are cells, and 
@@ -125,6 +156,9 @@ experiments with Bioconductor. The class requires three input files:
   3. `featureData`, an `AnnotatedDataFrame` object, where rows are features 
   (e.g. genes), and columns are feature attributes, such as biotype, gc content, 
   etc.
+
+For more details about other features inherited from Bioconductor's 
+`ExpressionSet` class, type `?ExpressionSet` at the R prompt.
 
 The requirements for the `SCESet` class (as with other S4 classes in R and 
 Bioconductor) are strict. The idea is that strictness with generating a valid
@@ -396,7 +430,7 @@ First we look at a plot that shows the top 50 (by default) most-expressed featur
 By default, "expression" is defined using the feature counts (if available), but $tpm$, 
 $cpm$, $fpkm$ or the `exprs` values can be used instead, if desired.
 
-```{r plot-qc-expression}
+```{r plot-qc-expression, fig.height=7.5, fig.width=8.5}
 keep_feature <- rowSums(is_exprs(example_sceset)) > 4
 example_sceset <- example_sceset[keep_feature,]
 ## Plot QC
@@ -429,7 +463,7 @@ to subset the `SCESet` as below. We can compare the most-expressed features in t
 cell controls and in the cells of biological interest with this subsetting, as
 shown below.
 
-```{r plot-qc-expression-cell-controls}
+```{r plot-qc-expression-cell-controls, fig.height=7.5, fig.width=8.5}
 p1 <- plotQC(example_sceset[, !example_sceset$is_cell_control], 
              type = "highest-expression")
 p2 <- plotQC(example_sceset[, example_sceset$is_cell_control], 
@@ -574,7 +608,7 @@ The `SCESet` matrix has a `reducedDimension` slot, where coordinates for a
 reduced dimension representation of the cells can be stored. If we so wish, the
 top principal components can be added to the `reducedDimension` slot:
 
-```{r plot-pca-4comp-colby-shapeby-save-pcs, fig.height=5.5}
+```{r plot-pca-4comp-colby-shapeby-save-pcs}
 example_sceset <- plotPCA(example_sceset, ncomponents = 4, 
                           colour_by = "Treatment", shape_by = "Mutation_Status",
                           return_SCESet = TRUE)
@@ -590,7 +624,7 @@ nearest neighbour embedding (t-SNE) or Gaussian process latent variable models
 or any other dimensionality reduction method. We can store these in the `SCESet`
 object and produce plots just as we did with PCA:
 
-```{r plot-reduceddim-4comp-colby-shapeby, fig.height=5.5}
+```{r plot-reduceddim-4comp-colby-shapeby}
 plotReducedDim(example_sceset, ncomponents = 4, colour_by = "Treatment", 
                shape_by = "Mutation_Status")
 ```
@@ -619,7 +653,7 @@ regressing `exprs` values against just that variable.
 The default approach looks at all variables in `pData(object)` and plots the top
 `nvars_to_plot` variables (default is 10).
 
-```{r plot-qc-expl-variables-all}
+```{r plot-qc-expl-variables-all, warning=FALSE}
 plotQC(example_sceset, type = "expl")
 ```
 
@@ -643,7 +677,9 @@ plotQC(example_sceset, type = "find-pcs", variable = "coverage")
 plotQC(example_sceset, type = "find-pcs", variable = "Cell_Cycle")
 plotQC(example_sceset, type = "find-pcs", variable = "Treatment")
 ```
-```{r plot-qc-find-pcs-pcs-vs-vars}
+
+
+```{r plot-qc-find-pcs-pcs-vs-vars, fig.width=8, fig.height=7}
 p1 <- plotQC(example_sceset, type = "find-pcs", variable = "coverage",
         plot_type = "pcs-vs-vars")
 p2 <- plotQC(example_sceset, type = "find-pcs", variable = "Cell_Cycle", 
