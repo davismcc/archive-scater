@@ -688,8 +688,9 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
     else
         df_pct_exprs_by_cell_long$colour_by <- x
     ## Make plot
-    plot_most_expressed <- df_pct_exprs_by_cell_long %>%
-        ggplot(aes_string(y = "Var2", x = "value", colour = "colour_by")) +
+    plot_most_expressed <- ggplot(df_pct_exprs_by_cell_long, 
+                                  aes_string(y = "Var2", x = "value", 
+                                             colour = "colour_by")) +
         geom_point(alpha = 0.6, shape = 124) +
         ggtitle(paste0("Top ", n, " account for ", 
                        format(top50_pctage, digits = 3), "% of total")) +

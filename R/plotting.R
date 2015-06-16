@@ -112,9 +112,9 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
     
     ## Use plyr to get the sequencing real estate accounted for by features
     nfeatures_total <- nrow(exprs_mat)
-    seq_real_estate <- plyr::aaply(exprs_mat, 2, .fun = function(x) {
+    seq_real_estate <- t(plyr::aaply(exprs_mat, 2, .fun = function(x) {
         cumsum(sort(x, decreasing = TRUE))
-    }) %>% t()
+    }))
     rownames(seq_real_estate) <- 1:nfeatures_total    
     nfeatures_to_plot <- nfeatures
     seq_real_estate_long <- reshape2::melt(seq_real_estate[1:nfeatures_to_plot, ], 
@@ -284,8 +284,7 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL,
     }
     ## Standardise expression if stand_exprs(object) is null
     if ( is.null(stand_exprs(object)) ) {
-        stand_exprs(object) <- exprs(object) %>% t %>% 
-            scale(scale = scale_features) %>% t
+        stand_exprs(object) <- t(scale(t(exprs(object)), scale = scale_features)) 
         message("stand_exprs(object) was null, so standardising exprs values for PCA.")
     } else
         message("stand_exprs(object) was not null, so using these values for PCA.")
@@ -839,7 +838,6 @@ setMethod("plotExpression", signature("data.frame"),
 #' produced. The object returned is a ggplot object, so further layers and 
 #' plotting options (titles, facets, themes etc) can be added.
 #' 
-#' @import magrittr
 #' @export
 #' 
 #' @examples
@@ -860,27 +858,27 @@ plotMetadata <- function(object, aesth=aes_string(x="log10(depth)",
     ## Determine type of plot to make
     ### Define plot type if there is only an x variable but no y
     if (is.null(aesth$y)) {
-        typeof_x <- aesth[[1]] %>% typeof
+        typeof_x <- typeof(aesth[[1]])
         plot_type <- "density"
         if (typeof_x == "symbol") {
-            var_name <- aesth[[1]] %>% as.character
-            x <- object[, var_name] %>% typeof
+            var_name <- as.character(aesth[[1]])
+            x <- typeof(object[, var_name])
             if (is.character(x) | is.factor(x))
                 plot_type <- "bar"
         }   
     } else {
         ### Define plot type if both x and y variables are provided  
-        typeof_x <- aesth$x %>% typeof
-        typeof_y <- aesth$y %>% typeof
+        typeof_x <- typeof(aesth$x)
+        typeof_y <- typeof(aesth$y)
         var_type_x <- var_type_y <- "continuous"
         if (typeof_x == "symbol") {
-            var_name <- aesth$x %>% as.character
+            var_name <- as.character(aesth$x)
             x <- object[, var_name]
             if (is.character(x) | is.factor(x))
                 var_type_x <- "discrete"
         }   
         if (typeof_y == "symbol") {
-            var_name <- aesth$y %>% as.character
+            var_name <- as.character(aesth$y)
             y <- object[, var_name]
             if (is.character(y) | is.factor(y))
                 var_type_x <- "discrete"

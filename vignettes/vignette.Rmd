@@ -823,7 +823,7 @@ counts(sce_kall_mmus)[sample(nrow(sce_kall_mmus), size=15), 1:6]
 sce_kall_mmus_gene <- summariseExprsAcrossFeatures(
     sce_kall_mmus, use_as_exprs="tpm", summarise_by="feature_id")
 
-fData(sce_kall_mmus_gene) %>% datatable
+datatable(fData(sce_kall_mmus_gene))
 
 sce_kall_mmus_gene <- getBMFeatureAnnos(
     sce_kall_mmus_gene, filters="ensembl_gene_id", 
@@ -833,7 +833,7 @@ sce_kall_mmus_gene <- getBMFeatureAnnos(
     feature_symbol="mgi_symbol", feature_id="ensembl_gene_id",
     biomart="ensembl", dataset="mmusculus_gene_ensembl")
 
-fData(sce_kall_mmus_gene) %>% datatable
+datatable(fData(sce_kall_mmus_gene))
 
 ## Add gene symbols to featureNames to make them more intuitive
 new_feature_names <- featureNames(sce_kall_mmus_gene)
@@ -844,8 +844,8 @@ new_feature_names[notna_ens_gid] <- paste(new_feature_names[notna_ens_gid],
           fData(sce_kall_mmus_gene)$ensembl_gene_id[notna_ens_gid], sep="_")
 sum(duplicated(new_feature_names))
 featureNames(sce_kall_mmus_gene) <- new_feature_names
-featureNames(sce_kall_mmus_gene) %>% head
-featureNames(sce_kall_mmus_gene) %>% tail
+head(featureNames(sce_kall_mmus_gene))
+tail(featureNames(sce_kall_mmus_gene))
 sum(duplicated(fData(sce_kall_mmus_gene)$mgi_symbol))
 
 ```

@@ -53,7 +53,7 @@ setClass("SCESet",
                    bootstraps = "array"),
          prototype = prototype(new("VersionedBiobase",
                                    versions = c(classVersion("ExpressionSet"),
-                                                SCESet = "0.1.4")))
+                                                SCESet = "0.1.5")))
 )
 
 
