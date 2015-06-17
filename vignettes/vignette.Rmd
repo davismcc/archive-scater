@@ -409,6 +409,7 @@ computed for "exprs", "tpm" and "fpkm" (if tpm and fpkm are present in the
 
 Visualising the data and metadata in various ways can be very helpful for QC. We
 have a suite of plotting functions to produce diagnostic plots for:
+
 1. Plotting the most expressed features across the dataset.
 2. Finding the most important principal components for a given cell phenotype or 
 metadata variable (from `pData(object)`).

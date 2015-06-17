@@ -253,8 +253,6 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL,
     if ( !is.null(colour_by) ) {
         if ( !(colour_by %in% varLabels(object)) )
             stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)]")
-        if ( nlevels(as.factor(pData(object)[[colour_by]])) > 10 )
-            stop("when coerced to a factor, 'colour_by' should have fewer than 10 levels")
     } else {
         if ( "is_cell_control" %in% varLabels(object) )
             colour_by <- "is_cell_control"
@@ -296,9 +294,14 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL,
     ## Define data.frame for plotting
     df_to_plot <- data.frame(pca$x[, 1:ncomponents], 
                              row.names = sampleNames(object))
-    if ( !is.null(colour_by) )
-        df_to_plot <- data.frame(df_to_plot, 
-                                 colour_by = as.factor(pData(object)[[colour_by]]))
+    if ( !is.null(colour_by) ) {
+        if ( nlevels(as.factor(pData(object)[[colour_by]])) > 10 )
+            df_to_plot <- data.frame(
+                df_to_plot, colour_by = pData(object)[[colour_by]])
+        else
+            df_to_plot <- data.frame(
+                df_to_plot, colour_by = as.factor(pData(object)[[colour_by]]))
+    }
     if ( !is.null(shape_by) )
         df_to_plot <- data.frame(df_to_plot, 
                                  shape_by = as.factor(pData(object)[[shape_by]]))
@@ -426,7 +429,7 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
         plot_out <- ggplot(df_to_plot_big, aes_string(x = "x", y = "y")) + 
             facet_grid(xvar ~ yvar, scales = "free") + 
             stat_density(aes_string(x = "x", 
-                                    y = "(..scaled.. * diff(range(x)) + min(x))"), 
+                                    y = "(..scaled.. * diff(range(x)) + min(x))"),
                          data = gg1$densities, position = "identity", 
                          colour = "grey20", geom = "line") +
             xlab("") + 
@@ -441,10 +444,10 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
             x_lab <- paste0("Component 1: ", round(percentVar[1] * 100), "% variance")
             y_lab <- paste0("Component 2: ", round(percentVar[2] * 100), "% variance")
         }
-        plot_out <- ggplot(data = df_to_plot, aes_string(x = comps[1], y = comps[2])) + 
+        plot_out <- ggplot(df_to_plot, aes_string(x = comps[1], y = comps[2])) + 
             xlab(x_lab) + 
             ylab(y_lab) +
-            geom_rug(colour = "gray20", alpha = 0.5) +
+            geom_rug(colour = "gray20", alpha = 0.65) +
             theme_bw(14)        
     }
     
@@ -452,31 +455,49 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
     if ( !is.null(colour_by) & !is.null(shape_by) & !is.null(size_by) ) {
         plot_out <- plot_out + 
             geom_point(aes_string(colour = "colour_by", shape = "shape_by", 
-                                  size = "size_by"), alpha = 0.5) +
-            ggthemes::scale_colour_tableau(name = colour_by) +
+                                  size = "size_by"), alpha = 0.65) +
             guides(size = guide_legend(title = size_by), 
                    shape = guide_legend(title = shape_by))
+        if( is.numeric(df_to_plot$colour_by) ) {
+            plot_out <- plot_out + scale_colour_gradient(
+                name = colour_by, low = "gold", high="darkred", space="Lab")
+        } else {
+            plot_out <- plot_out + 
+                ggthemes::scale_colour_tableau(name = colour_by)
+        }
     } else {
         if  ( sum(is.null(colour_by) + is.null(shape_by) + is.null(size_by)) == 1 ) {
             if ( !is.null(colour_by) & !is.null(shape_by) ) {
                 plot_out <- plot_out + 
                     geom_point(aes_string(colour = "colour_by", 
                                           shape = "shape_by"), size = 4, 
-                               alpha = 0.5) +
-                    ggthemes::scale_colour_tableau(name = colour_by) +
+                               alpha = 0.65) +
                     guides(shape = guide_legend(title = shape_by))
+                if( is.numeric(df_to_plot$colour_by) ) {
+                    plot_out <- plot_out + scale_colour_gradient(
+                        name = colour_by, low = "gold", high="darkred", space="Lab")
+                } else {
+                    plot_out <- plot_out + 
+                        ggthemes::scale_colour_tableau(name = colour_by)
+                }
             }
             if ( !is.null(colour_by) & !is.null(size_by) ) {
                 plot_out <- plot_out + 
                     geom_point(aes_string(fill = "colour_by", size = "size_by"), 
-                               shape = 21, colour = "gray70", alpha = 0.5) +
-                    ggthemes::scale_fill_tableau(name = colour_by) +
+                               shape = 21, colour = "gray70", alpha = 0.65) +
                     guides(size = guide_legend(title = size_by))
+                if( is.numeric(df_to_plot$colour_by) ) {
+                    plot_out <- plot_out + scale_colour_gradient(
+                        name = colour_by, low = "gold", high="darkred", space="Lab")
+                } else {
+                    plot_out <- plot_out + 
+                        ggthemes::scale_colour_tableau(name = colour_by)
+                }
             }
             if ( !is.null(shape_by) & !is.null(size_by) ) {
                 plot_out <- plot_out + 
                     geom_point(aes_string(shape = "shape_by", size = "size_by"), 
-                               fill = "gray20", colour = "gray20", alpha = 0.5) +
+                               fill = "gray20", colour = "gray20", alpha = 0.65) +
                     guides(size = guide_legend(title = size_by), 
                            shape = guide_legend(title = shape_by))
             } 
@@ -485,25 +506,31 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                 if ( !is.null(colour_by) ) {
                     plot_out <- plot_out + 
                         geom_point(aes_string(fill = "colour_by"), size = 4, 
-                                   shape = 21, colour = "gray70", alpha = 0.5) +
-                        ggthemes::scale_fill_tableau(name = colour_by)
+                                   shape = 21, colour = "gray70", alpha = 0.65)
+                    if( is.numeric(df_to_plot$colour_by) ) {
+                        plot_out <- plot_out + scale_colour_gradient(
+                            name = colour_by, low = "gold", high="darkred", space="Lab")
+                    } else {
+                        plot_out <- plot_out + 
+                            ggthemes::scale_colour_tableau(name = colour_by)
+                    }
                 }
                 if ( !is.null(shape_by) ) {
                     plot_out <- plot_out + 
                         geom_point(aes_string(shape = "shape_by"), size = 4, 
-                                   colour = "gray20", alpha = 0.5) +
+                                   colour = "gray20", alpha = 0.65) +
                         guides(shape = guide_legend(title = shape_by))
                 }
                 if ( !is.null(size_by) ) {
                     plot_out <- plot_out + 
                         geom_point(aes_string(size = "size_by"), fill = "gray20",
-                                   shape = 21, colour = "gray70", alpha = 0.5) +
+                                   shape = 21, colour = "gray70", alpha = 0.65) +
                         guides(size = guide_legend(title = size_by))
                 } 
             } else {
                 plot_out <- plot_out + 
                     geom_point(size = 4, fill = "gray20", shape = 21, 
-                               colour = "gray70", alpha = 0.5)
+                               colour = "gray70", alpha = 0.65)
             }            
         }
     }
@@ -521,8 +548,6 @@ plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
     if ( !is.null(colour_by) ) {
         if ( !(colour_by %in% varLabels(object)) )
             stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)]")
-        if ( nlevels(as.factor(pData(object)[[colour_by]])) > 10 )
-            stop("when coerced to a factor, 'colour_by' should have fewer than 10 levels")
     }
     if ( !is.null(shape_by) ) {
         if ( !(shape_by %in% varLabels(object)) )
@@ -544,9 +569,14 @@ plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
     
     ## Define data.frame for plotting
     df_to_plot <- data.frame(red_dim[, 1:ncomponents])
-    if ( !is.null(colour_by) )
-        df_to_plot <- data.frame(df_to_plot, 
-                                 colour_by=as.factor(pData(object)[[colour_by]]))
+    if ( !is.null(colour_by) ) {
+        if ( nlevels(as.factor(pData(object)[[colour_by]])) > 10 )
+            df_to_plot <- data.frame(
+                df_to_plot, colour_by = pData(object)[[colour_by]])
+        else
+            df_to_plot <- data.frame(
+                df_to_plot, colour_by = as.factor(pData(object)[[colour_by]]))
+    }
     if ( !is.null(shape_by) )
         df_to_plot <- data.frame(df_to_plot, 
                                  shape_by=as.factor(pData(object)[[shape_by]]))
