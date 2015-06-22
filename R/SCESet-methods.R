@@ -207,58 +207,78 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
 ### Define validity check for SCESet class object
 
 setValidity("SCESet", function(object) {
+    msg <- NULL
+    valid <- TRUE
+  
     ## Check that the dimensions and names of the bootstraps slot are sensible
-    if ( (length(object@bootstraps) != 0) && (nrow(object@bootstraps) != nrow(object)) )
-        return(FALSE)
-    if ( (length(object@bootstraps) != 0) && (ncol(object@bootstraps) != ncol(object)) )
-        return(FALSE)
+    if ( (length(object@bootstraps) != 0) && (nrow(object@bootstraps) != nrow(object)) ) {
+      valid <- FALSE
+      msg <- c(msg, "Number of boostrapped genes doesn't match number of genes in SCESet")
+    }
+    if ( (length(object@bootstraps) != 0) && (ncol(object@bootstraps) != ncol(object)) ) {
+      valid <- FALSE
+      msg <- c(msg, "Number of boostrapped samples doesn't match number of samples in SCESet")
+    }
     if (  (length(object@bootstraps) != 0) && 
-         !identical(rownames(object@bootstraps), featureNames(object)) )
-        return(FALSE)
+         !identical(rownames(object@bootstraps), featureNames(object)) ) {
+        valid <- FALSE
+        msg <- c(msg, "Boostrap row names must match SCESet featureNames")
+    }
     if (  (length(object@bootstraps) != 0) && 
-         !identical(colnames(object@bootstraps), sampleNames(object)) )
-        return(FALSE)
+         !identical(colnames(object@bootstraps), sampleNames(object)) ) {
+        valid <- FALSE
+        msg <- c(msg, "Boostrap column names must match SCESet sampleNames")
+    }
     ## Check that the dimensions of the reducedDimension slot are sensible
     if ( (nrow(object@reducedDimension) != 0) && 
-        (nrow(object@reducedDimension) != ncol(object)) )
-        return(FALSE)
+        (nrow(object@reducedDimension) != ncol(object)) ) {
+        valid <- FALSE
+        msg <- c(msg, "Number of samples in reducedDimension doesn't match number of samples in SCESet")
+    }   
     if ( (nrow(object@reducedDimension) != 0) && 
-        !identical(rownames(object@reducedDimension), sampleNames(object)) )
-        return(FALSE)
+        !identical(rownames(object@reducedDimension), sampleNames(object)) ) {
+        valid <- FALSE
+        msg <- c(msg, "Row names of reducedDimension don't match sampleNames of SCESet")   
+    }
     ## Check that the dimensions of the cellPairwiseDistances slot are sensible
     if ( (nrow(object@cellPairwiseDistances) != ncol(object@cellPairwiseDistances)) ||
         (nrow(object@cellPairwiseDistances) != 0 && 
-         nrow(object@cellPairwiseDistances) != ncol(object)) )
-        return(FALSE)
+         nrow(object@cellPairwiseDistances) != ncol(object)) ) {
+        valid <- FALSE
+        msg <- c(msg, "cellPariwiseDistances must be of dimension ncol(SCESet) by ncol(SCESet)")
+    }
     if ( (nrow(object@cellPairwiseDistances) != 0) && 
         (!identical(rownames(object@cellPairwiseDistances), 
                     colnames(object@cellPairwiseDistances)) ||
-        !identical(rownames(object@cellPairwiseDistances), sampleNames(object))) )
-        return(FALSE)
+        !identical(rownames(object@cellPairwiseDistances), sampleNames(object))) ) {
+        valid <- FALSE
+        msg <- c(msg, 
+                 "Row names and column names of cellPairwiseDistances must be equal to sampleNames(SCESet)")
+    }
     ## Check that the dimensions of the featurePairwiseDistances slot are sensible
     if ( (nrow(object@featurePairwiseDistances) != 
          ncol(object@featurePairwiseDistances)) ||
         (nrow(object@featurePairwiseDistances) != 0 && 
-         nrow(object@featurePairwiseDistances) != nrow(object)) )
-        return(FALSE)
+         nrow(object@featurePairwiseDistances) != nrow(object)) ) {
+      valid <- FALSE
+      msg <- c(msg, "featurePariwiseDistances must be of dimension nrow(SCESet) by nrow(SCESet)")
+    }
     if ( (nrow(object@featurePairwiseDistances) != 0) && 
         (!identical(rownames(object@featurePairwiseDistances), 
                     colnames(object@featurePairwiseDistances)) ||
-         !identical(rownames(object@featurePairwiseDistances), featureNames(object))) )
-        return(FALSE)
+         !identical(rownames(object@featurePairwiseDistances), featureNames(object))) ) {
+      valid <- FALSE
+      msg <- c(msg, 
+               "Row names and column names of featurePairwiseDistances must be equal to featureNames(SCESet)")
+    }
     ## Check that we have sensible values for the counts
     if( any(is.na(exprs(object))) ) {
         warning( "The exprs data contain NA values." )
     }
-    if ( is.null(counts(object)) )
-        return(TRUE)
-    else {
-        if ( any(counts(object) < 0, na.rm = TRUE) ) {
-            warning( "The count data contain negative values." )
-            return(TRUE)         
-        } else
-            return(TRUE)
-    }
+    if ( (!is.null(counts(object))) && any(counts(object) < 0, na.rm = TRUE) )
+          warning( "The count data contain negative values." )
+    
+    if(valid) TRUE else msg      
 })
 
 
@@ -979,6 +999,12 @@ setMethod("redDim", signature(object="SCESet"), redDim.SCESet)
 setReplaceMethod("reducedDimension", signature(object="SCESet", value="matrix"), 
                  function(object, value) {
                      if( nrow(value) == ncol(object) ) {
+                        if(is.null(rownames(value))) {
+                          rownames(value) <- sampleNames(object)
+                        } else {
+                          if(!identical(rownames(value), sampleNames(object)))
+                            stop("Rownames of reduced dimension must be NULL or equal to sampleNames(SCESet)")  
+                        }
                          object@reducedDimension <- value
                          return(object)
                      }
@@ -993,12 +1019,18 @@ setReplaceMethod("reducedDimension", signature(object="SCESet", value="matrix"),
 #' @exportMethod "redDim<-"
 setReplaceMethod("redDim", signature(object="SCESet", value="matrix"), 
                  function(object, value) {
-                     if( nrow(value) == ncol(object) ) {
-                         object@reducedDimension <- value
-                         return(object)
+                   if( nrow(value) == ncol(object) ) {
+                     if(is.null(rownames(value))) {
+                       rownames(value) <- sampleNames(object)
+                     } else {
+                       if(!identical(rownames(value), sampleNames(object)))
+                         stop("Rownames of reduced dimension must be NULL or equal to sampleNames(SCESet)")  
                      }
-                     else
-                         stop("Reduced dimension matrix supplied is of incorrect size. 
+                     object@reducedDimension <- value
+                     return(object)
+                   }
+                   else
+                     stop("Reduced dimension matrix supplied is of incorrect size. 
                               Rows of reduced dimension matrix should correspond to cells, i.e. columns of SCESet object.")
                  } )
 
