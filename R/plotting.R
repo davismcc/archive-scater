@@ -36,6 +36,8 @@
 #' @param ... arguments passed to \code{plotSCESet}
 #' @param ncol number of columns to use for \code{facet_wrap} if only one block is 
 #' defined.
+#' @param theme_size numeric scalar giving font size to use for the plotting 
+#' theme
 #' 
 #' @details Plots produced by this function are intended to provide an overview
 #' of large-scale differences between cells. For each cell, the features are 
@@ -78,7 +80,7 @@ setMethod("plot", signature("SCESet"),
 #' @export
 plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL, 
                         nfeatures = 500, use_as_exprs = "tpm", ncol = 3, 
-                       linewidth = 1.5) {
+                       linewidth = 1.5, theme_size = 10) {
     object <- x
     if ( !is(object, "SCESet") )
         stop("Object must be an SCESet")
@@ -166,10 +168,13 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
         }
     }
     ## Add extra plot theme and details
-    plot_out <- plot_out + theme_bw(16) + 
-        ggthemes::scale_colour_tableau(name = colour_by) + 
+    plot_out <- plot_out + ggthemes::scale_colour_tableau(name = colour_by) + 
         xlab("Number of features") + ylab("Cumulative proportion of library")
     
+    if ( library(cowplot, logical.return = TRUE) )
+        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+    else
+        plot_out <- plot_out + theme_bw(theme_size)
     ## Return plot
     plot_out
 }
@@ -208,6 +213,11 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' \code{ggplot} object is returned.
 #' @param scale_features logical, should the expression values be standardised
 #' so that each feature has unit variance? Default is \code{TRUE}.
+#' @param draw_plot logical, should the plot be drawn on the current graphics 
+#' device? Only used if \code{return_SCESet} is \code{TRUE}, otherwise the plot 
+#' is always produced.
+#' @param theme_size numeric scalar giving default font size for plotting theme 
+#' (default is 10).
 #' 
 #' @details The function \code{\link{prcomp}} is used internally to do the PCA. 
 #' The function checks whether the \code{object} has standardised 
@@ -247,8 +257,9 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' shape_by = "Mutation_Status")
 #' 
 plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL, 
-                           shape_by=NULL, size_by=NULL, feature_set=NULL, 
-                           return_SCESet=FALSE, scale_features=TRUE) {
+                          shape_by=NULL, size_by=NULL, feature_set=NULL, 
+                          return_SCESet=FALSE, scale_features=TRUE, 
+                          draw_plot = TRUE, theme_size = 10) {
     ## Check arguments are valid
     if ( !is.null(colour_by) ) {
         if ( !(colour_by %in% varLabels(object)) )
@@ -270,7 +281,7 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL,
         if ( !(size_by %in% varLabels(object)) )
             stop("the argument 'size_by' should specify a column of pData(object) [see varLabels(object)]")
     }
-    if ( !is.null(feature_set) & typeof(feature_set) == "character" ) {
+    if ( !is.null(feature_set) && typeof(feature_set) == "character" ) {
         if ( !(all(feature_set %in% featureNames(object))) )
             stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
     }
@@ -280,15 +291,24 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL,
         rv <- matrixStats::rowVars(exprs(object))
         feature_set <- order(rv, decreasing = TRUE)[seq_len(min(ntop, length(rv)))]
     }
+#     ## Standardise expression if stand_exprs(object) is null
+#     if ( is.null(stand_exprs(object)) ) {
+#         stand_exprs(object) <- t(scale(t(exprs(object)), scale = scale_features)) 
+#         message("stand_exprs(object) was null, so standardising exprs values for PCA.")
+#     } else
+#         message("stand_exprs(object) was not null, so using these values for PCA.")
+
     ## Standardise expression if stand_exprs(object) is null
-    if ( is.null(stand_exprs(object)) ) {
-        stand_exprs(object) <- t(scale(t(exprs(object)), scale = scale_features)) 
-        message("stand_exprs(object) was null, so standardising exprs values for PCA.")
-    } else
-        message("stand_exprs(object) was not null, so using these values for PCA.")
+    exprs_to_plot <- t(scale(t(exprs(object)), scale = scale_features)) 
+    
+    ## Drop any features with zero variance
+    exprs_to_plot <- exprs_to_plot[feature_set,]
+    keep_feature <- (matrixStats::rowVars(exprs_to_plot) > 0.001)
+    keep_feature[is.na(keep_feature)] <- FALSE
+    exprs_to_plot <- exprs_to_plot[keep_feature, ]
     
     ## Compute PCA
-    pca <- prcomp(t(stand_exprs(object)[feature_set, ]))
+    pca <- prcomp(t(exprs_to_plot))
     percentVar <- pca$sdev ^ 2 / sum(pca$sdev ^ 2)
     
     ## Define data.frame for plotting
@@ -311,17 +331,24 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL,
     plot_out <- plotReducedDim.default(df_to_plot, ncomponents, colour_by, shape_by, 
                                        size_by, percentVar)
     
+    ## Define plotting theme
+    if ( library(cowplot, logical.return = TRUE) )
+        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+    else
+        plot_out <- plot_out + theme_bw(theme_size)
+    
     ## Plot PCA and return appropriate object
     if (return_SCESet) {
         df_out <- pca$x[, 1:ncomponents]
         rownames(df_out) <- sampleNames(object)
         attr(df_out, "percentVar") <- percentVar[1:ncomponents]
         reducedDimension(object) <- df_out
-        print(plot_out)
+        if ( draw_plot )
+            print(plot_out)
         return(object)
     } else {
         ## Return PCA plot
-        plot_out   
+        return(plot_out)
     }
 }
     
@@ -332,9 +359,9 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL,
 setMethod("plotPCA", signature("SCESet"),
           function(object, ntop=500, ncomponents=2, colour_by=NULL, shape_by=NULL, 
                    size_by=NULL, feature_set=NULL, return_SCESet=FALSE, 
-                   scale_features=TRUE) {
+                   scale_features=TRUE, draw_plot = TRUE) {
               plotPCASCESet(object, ntop, ncomponents, colour_by, shape_by, size_by, 
-                             feature_set, return_SCESet, scale_features)
+                             feature_set, return_SCESet, scale_features, draw_plot)
           })
 
 
@@ -360,6 +387,188 @@ setMethod("plotPCA", signature("SCESet"),
 
 
 ################################################################################
+### plotTSNE
+
+#' Plot t-SNE for an SCESet object
+#'
+#' Produce a t-distributed stochastic neighbour embedding plot of two components
+#'  for an \code{SCESet} dataset.
+#' 
+#' @param object an \code{SCESet} object
+#' @param ntop numeric scalar indicating the number of most variable features to 
+#' use for the PCA. Default is \code{500}, but any \code{ntop} argument is 
+#' overrided if the \code{feature_set} argument is non-NULL.
+#' @param ncomponents numeric scalar indicating the number of principal 
+#' components to plot, starting from the first principal component. Default is 
+#' 2. If \code{ncomponents} is 2, then a scatterplot of PC2 vs PC1 is produced.
+#' If \code{ncomponents} is greater than 2, a pairs plots for the top components
+#' is produced. NB: computing more than two components for t-SNE can become very
+#' time consuming.
+#' @param colour_by character string defining the column of \code{pData(object)} to
+#' be used as a factor by which to colour the points in the plot.
+#' @param shape_by character string defining the column of \code{pData(object)} to
+#' be used as a factor by which to define the shape of the points in the plot.
+#' @param size_by character string defining the column of \code{pData(object)} to
+#' be used as a factor by which to define the size of points in the plot.
+#' @param feature_set character, numeric or logical vector indicating a set of
+#' features to use for the PCA. If character, entries must all be in 
+#' \code{featureNames(object)}. If numeric, values are taken to be indices for 
+#' features. If logical, vector is used to index features and should have length
+#' equal to \code{nrow(object)}.
+#' @param return_SCESet logical, should the function return an \code{SCESet} 
+#' object with principal component values for cells in the 
+#' \code{reducedDimension} slot. Default is \code{FALSE}, in which case a 
+#' \code{ggplot} object is returned.
+#' @param scale_features logical, should the expression values be standardised
+#' so that each feature has unit variance? Default is \code{TRUE}.
+#' @param draw_plot logical, should the plot be drawn on the current graphics 
+#' device? Only used if \code{return_SCESet} is \code{TRUE}, otherwise the plot 
+#' is always produced.
+#' @param theme_size numeric scalar giving default font size for plotting theme 
+#' (default is 10).
+#' @param rand_seed (optional) numeric scalar that can be passed to 
+#' \code{set.seed} to make plots reproducible.
+#' @param ... further arguments passed to \code{\link[Rtsne]{Rtsne}}
+#' 
+#' @details The function \code{\link[Rtsne]{Rtsne}} is used internally to 
+#' compute the t-SNE. The function checks whether the \code{object} has 
+#' standardised expression values (by looking at \code{stand_exprs(object)}). If
+#' yes, the existing standardised expression values are used for the PCA. If 
+#' not, then standardised expression values are computed using 
+#' \code{\link{scale}} (with feature-wise unit variances or not according to the
+#' \code{scale_features} argument), added to the object and PCA is done using 
+#' these new standardised expression values.
+#'
+#' @name plotTSNE
+#' @aliases plotTSNE plotTSNE,SCESet-method
+#' @export
+#' @seealso 
+#' \code{\link[Rtsne]{Rtsne}}
+#' @references 
+#' L.J.P. van der Maaten. Barnes-Hut-SNE. In Proceedings of the International 
+#' Conference on Learning Representations, 2013.
+#' 
+#' @examples
+#' ## Set up an example SCESet
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' 
+#' ## Examples plotting PC1 and PC2
+#' plotTSNE(example_sceset, perplexity = 10)
+#' plotTSNE(example_sceset, colour_by = "Cell_Cycle", perplexity = 10)
+#' plotTSNE(example_sceset, colour_by = "Cell_Cycle", shape_by = "Treatment",
+#' perplexity = 10)
+#' plotTSNE(example_sceset, colour_by = "Cell_Cycle", shape_by = "Treatment", 
+#' size_by = "Mutation_Status", perplexity = 10)
+#' plotTSNE(example_sceset, shape_by = "Treatment", size_by = "Mutation_Status",
+#' perplexity = 5)
+#' plotTSNE(example_sceset, feature_set = 1:100, colour_by = "Treatment", 
+#' shape_by = "Mutation_Status", perplexity = 5)
+#' 
+#' plotTSNE(example_sceset, shape_by = "Treatment", return_SCESet = TRUE,
+#' perplexity = 10)
+#' 
+#' 
+setMethod("plotTSNE", signature("SCESet"),
+          function(object, ntop = 500, ncomponents = 2, colour_by = NULL, 
+                   shape_by = NULL, size_by = NULL, feature_set = NULL, 
+                   return_SCESet = FALSE, scale_features = TRUE, 
+                   draw_plot = TRUE, theme_size = 10, rand_seed = NULL, ...) {
+              ##
+              if ( !library(Rtsne, logical.return = TRUE) )
+                  stop("This function requires the 'Rtsne' package. Try: install.packages('Rtsne').")
+              ## Check arguments are valid
+              if ( !is.null(colour_by) ) {
+                  if ( !(colour_by %in% varLabels(object)) )
+                      stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)]")
+              } else {
+                  if ( "is_cell_control" %in% varLabels(object) )
+                      colour_by <- "is_cell_control"
+              }
+              if ( !is.null(shape_by) ) {
+                  if ( !(shape_by %in% varLabels(object)) )
+                      stop("the argument 'shape_by' should specify a column of pData(object) [see varLabels(object)]")
+                  if ( nlevels(as.factor(pData(object)[[shape_by]])) > 10 )
+                      stop("when coerced to a factor, 'shape_by' should have fewer than 10 levels")   
+              } else {
+                  if ( "is_cell_control" %in% varLabels(object) )
+                      shape_by <- "is_cell_control"
+              }
+              if ( !is.null(size_by) ) {
+                  if ( !(size_by %in% varLabels(object)) )
+                      stop("the argument 'size_by' should specify a column of pData(object) [see varLabels(object)]")
+              }
+              if ( !is.null(feature_set) && typeof(feature_set) == "character" ) {
+                  if ( !(all(feature_set %in% featureNames(object))) )
+                      stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
+              }
+              
+              ## Define features to use: either ntop, or if a set of features is defined, then those
+              if ( is.null(feature_set) ) {
+                  rv <- matrixStats::rowVars(exprs(object))
+                  feature_set <- order(rv, decreasing = TRUE)[seq_len(min(ntop, length(rv)))]
+              }
+              ## Standardise expression if stand_exprs(object) is null
+              exprs_to_plot <- t(scale(t(exprs(object)), scale = scale_features)) 
+              
+              ## Drop any features with zero variance
+              exprs_to_plot <- exprs_to_plot[feature_set,]
+              keep_feature <- (matrixStats::rowVars(exprs_to_plot) > 0.001)
+              keep_feature[is.na(keep_feature)] <- FALSE
+              exprs_to_plot <- exprs_to_plot[keep_feature, ]
+              
+              ## Compute t-SNE
+              if ( !is.null(rand_seed) )
+                  set.seed(rand_seed)
+              tsne_out <- Rtsne::Rtsne(t(exprs_to_plot),
+                                       initial_dims = max(50, ncol(object)),
+                                       ...)
+              
+              
+              ## Define data.frame for plotting
+              df_to_plot <- data.frame(tsne_out$Y[, 1:ncomponents], 
+                                       row.names = sampleNames(object))
+              if ( !is.null(colour_by) ) {
+                  if ( nlevels(as.factor(pData(object)[[colour_by]])) > 10 )
+                      df_to_plot <- data.frame(
+                          df_to_plot, colour_by = pData(object)[[colour_by]])
+                  else
+                      df_to_plot <- data.frame(
+                          df_to_plot, colour_by = as.factor(pData(object)[[colour_by]]))
+              }
+              if ( !is.null(shape_by) )
+                  df_to_plot <- data.frame(df_to_plot, 
+                                           shape_by = as.factor(pData(object)[[shape_by]]))
+              if ( !is.null(size_by) )
+                  df_to_plot <- data.frame(df_to_plot, size_by = pData(object)[[size_by]])
+              
+              plot_out <- plotReducedDim.default(df_to_plot, ncomponents, 
+                                                 colour_by, shape_by, size_by)
+              
+              ## Define plotting theme
+              if ( library(cowplot, logical.return = TRUE) )
+                  plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+              else
+                  plot_out <- plot_out + theme_bw(theme_size)
+              
+              ## Plot PCA and return appropriate object
+              if (return_SCESet) {
+                  df_out <- tsne_out$Y[, 1:ncomponents]
+                  rownames(df_out) <- sampleNames(object)
+                  reducedDimension(object) <- df_out
+                  if ( draw_plot )
+                      print(plot_out)
+                  return(object)
+              } else {
+                  ## Return PCA plot
+                  return(plot_out)
+              }
+          })
+
+
+################################################################################
 ### plotReducedDim
 
 #' Plot reduced dimension representation of cells
@@ -382,6 +591,8 @@ setMethod("plotPCA", signature("SCESet"),
 #' @param percentVar numeric vector giving the proportion of variance in 
 #' expression explained by each reduced dimension. Only expected to be used 
 #' internally in the \code{\link[scater]{plotPCA}} function.
+#' @param theme_size numeric scalar giving default font size for plotting theme 
+#' (default is 10).
 #' @param ... optional arguments (from those listed above) passed to 
 #' \code{plotReducedDim.SCESet} or \code{plotReducedDim.default}
 #' 
@@ -458,9 +669,9 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                                   size = "size_by"), alpha = 0.65) +
             guides(size = guide_legend(title = size_by), 
                    shape = guide_legend(title = shape_by))
-        if( is.numeric(df_to_plot$colour_by) ) {
+        if ( is.numeric(df_to_plot$colour_by) ) {
             plot_out <- plot_out + scale_colour_gradient(
-                name = colour_by, low = "gold", high="darkred", space="Lab")
+                name = colour_by, low = "gold", high = "darkred", space = "Lab")
         } else {
             plot_out <- plot_out + 
                 ggthemes::scale_colour_tableau(name = colour_by)
@@ -473,9 +684,10 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                                           shape = "shape_by"), size = 4, 
                                alpha = 0.65) +
                     guides(shape = guide_legend(title = shape_by))
-                if( is.numeric(df_to_plot$colour_by) ) {
+                if ( is.numeric(df_to_plot$colour_by) ) {
                     plot_out <- plot_out + scale_colour_gradient(
-                        name = colour_by, low = "gold", high="darkred", space="Lab")
+                        name = colour_by, low = "gold", high = "darkred", 
+                        space = "Lab")
                 } else {
                     plot_out <- plot_out + 
                         ggthemes::scale_colour_tableau(name = colour_by)
@@ -486,9 +698,10 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                     geom_point(aes_string(fill = "colour_by", size = "size_by"), 
                                shape = 21, colour = "gray70", alpha = 0.65) +
                     guides(size = guide_legend(title = size_by))
-                if( is.numeric(df_to_plot$colour_by) ) {
+                if ( is.numeric(df_to_plot$colour_by) ) {
                     plot_out <- plot_out + scale_colour_gradient(
-                        name = colour_by, low = "gold", high="darkred", space="Lab")
+                        name = colour_by, low = "gold", high = "darkred", 
+                        space = "Lab")
                 } else {
                     plot_out <- plot_out + 
                         ggthemes::scale_colour_tableau(name = colour_by)
@@ -507,9 +720,10 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                     plot_out <- plot_out + 
                         geom_point(aes_string(fill = "colour_by"), size = 4, 
                                    shape = 21, colour = "gray70", alpha = 0.65)
-                    if( is.numeric(df_to_plot$colour_by) ) {
+                    if ( is.numeric(df_to_plot$colour_by) ) {
                         plot_out <- plot_out + scale_colour_gradient(
-                            name = colour_by, low = "gold", high="darkred", space="Lab")
+                            name = colour_by, low = "gold", high = "darkred", 
+                            space = "Lab")
                     } else {
                         plot_out <- plot_out + 
                             ggthemes::scale_colour_tableau(name = colour_by)
@@ -543,7 +757,7 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
 #' @aliases plotReducedDim
 #' @export
 plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL, 
-                                  shape_by=NULL, size_by=NULL) {
+                                  shape_by=NULL, size_by=NULL, theme_size = 10) {
     ## Check arguments are valid
     if ( !is.null(colour_by) ) {
         if ( !(colour_by %in% varLabels(object)) )
@@ -579,13 +793,20 @@ plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
     }
     if ( !is.null(shape_by) )
         df_to_plot <- data.frame(df_to_plot, 
-                                 shape_by=as.factor(pData(object)[[shape_by]]))
+                                 shape_by = as.factor(pData(object)[[shape_by]]))
     if ( !is.null(size_by) )
-        df_to_plot <- data.frame(df_to_plot, size_by=pData(object)[[size_by]])
+        df_to_plot <- data.frame(df_to_plot, size_by = pData(object)[[size_by]])
     
     ## Call default method to make the plot
-    plotReducedDim.default(df_to_plot, ncomponents, colour_by, shape_by, size_by,
-                                 percentVar=NULL)
+    plot_out <- plotReducedDim.default(df_to_plot, ncomponents, colour_by, 
+                                       shape_by, size_by, percentVar = NULL)
+    
+    ## Define plotting theme
+    if ( library(cowplot, logical.return = TRUE) )
+        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+    else
+        plot_out <- plot_out + theme_bw(theme_size)
+    plot_out
 }
 
 #' @rdname plotReducedDim
@@ -643,6 +864,8 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' @param show_median logical, show the median for each group on the plot
 #' @param show_violin logical, show a violin plot for the distribution
 #' for each group on the plot
+#' @param theme_size numeric scalar giving default font size for plotting theme 
+#' (default is 10)
 #' @param ... optional arguments (from those listed above) passed to 
 #' \code{plotExpressionSCESet} or \code{plotExpressionDefault}
 #'
@@ -667,10 +890,11 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' plotExpression(example_sceset, 1:6, x="Mutation_Status", use_as_exprs="counts", 
 #' colour_by="Cell_Cycle", show_violin=TRUE, show_median=TRUE)
 #' 
-plotExpressionSCESet <- function(object, features, x, use_as_exprs="exprs", 
-                                  colour_by=NULL, shape_by=NULL, size_by=NULL, 
-                                  ncol=2, xlab=NULL, show_median=TRUE, 
-                                  show_violin=TRUE) {
+plotExpressionSCESet <- function(object, features, x, use_as_exprs = "exprs", 
+                                 colour_by = NULL, shape_by = NULL, 
+                                 size_by = NULL, ncol = 2, xlab = NULL, 
+                                 show_median = TRUE, show_violin = TRUE, 
+                                 theme_size = 10) {
     ## Check object is an SCESet object
     if ( !is(object, "SCESet") )
         stop("object must be an SCESet")
@@ -681,23 +905,39 @@ plotExpressionSCESet <- function(object, features, x, use_as_exprs="exprs",
     else
         nfeatures <- length(features)
     
-    ## Checking arguments for expresion values
+    ## Checking arguments for expression values
     use_as_exprs <- match.arg(use_as_exprs, 
-                              choices=c("exprs", "counts", "tpm", "fpkm"))
-    if ( !(use_as_exprs == "exprs" | use_as_exprs == "counts" | use_as_exprs == "fpkm" | use_as_exprs == "fpkm") )
-        stop("The argument 'use_as_exprs' must either be 'tpm' (transcripts-per-million), 'fpkm', exprs' to use expression values, or 'counts', to use read counts.")
-    if ( use_as_exprs == "counts" & is.null(counts(object)) ) {
+                              choices = c("exprs", "norm_exprs", "counts", 
+                                          "norm_counts", "tpm", "norm_tpm", 
+                                          "fpkm", "norm_fpkm", "cpm", "norm_cpm"))
+    if ( use_as_exprs == "counts" && is.null(counts(object)) ) {
         warning("'use_as_exprs' argument is 'counts', but counts(object) is NULL. Plotting 'exprs' values instead.")
         use_as_exprs <- "exprs"
     }
-    if ( use_as_exprs == "tpm" & is.null(tpm(object)) ) {
+    if ( use_as_exprs == "tpm" && is.null(tpm(object)) ) {
         warning("'use_as_exprs' argument is 'tpm', but tpm(object) is NULL. Plotting 'exprs' values instead.")
         use_as_exprs <- "exprs"
     } 
-    if ( use_as_exprs == "fpkm" & is.null(fpkm(object)) ) {
+    if ( use_as_exprs == "norm_tpm" && is.null(norm_tpm(object)) ) {
+        warning("'use_as_exprs' argument is 'norm_tpm', but norm_tpm(object) is NULL. Plotting 'exprs' values instead.")
+        use_as_exprs <- "exprs"
+    } 
+    if ( use_as_exprs == "fpkm" && is.null(fpkm(object)) ) {
         warning("'use_as_exprs' argument is 'fpkm', but fpkm(object) is NULL. Plotting 'exprs' values instead.")
         use_as_exprs <- "exprs"
     }
+    if ( use_as_exprs == "norm_fpkm" && is.null(norm_fpkm(object)) ) {
+        warning("'use_as_exprs' argument is 'norm_fpkm', but norm_fpkm(object) is NULL. Plotting 'exprs' values instead.")
+        use_as_exprs <- "exprs"
+    }
+    if ( use_as_exprs == "cpm" && is.null(cpm(object)) ) {
+        warning("'use_as_exprs' argument is 'cpm', but cpm(object) is NULL. Plotting 'exprs' values instead.")
+        use_as_exprs <- "exprs"
+    } 
+    if ( use_as_exprs == "norm_cpm" && is.null(norm_cpm(object)) ) {
+        warning("'use_as_exprs' argument is 'norm_cpm', but norm_cpm(object) is NULL. Plotting 'exprs' values instead.")
+        use_as_exprs <- "exprs"
+    } 
     
     ## Check arguments are valid
     if ( !(x %in% varLabels(object)) )
@@ -724,15 +964,20 @@ plotExpressionSCESet <- function(object, features, x, use_as_exprs="exprs",
     }
     
     ## Define expression values to use
-    if ( use_as_exprs == "exprs" ) {
-        to_melt <- as.matrix(exprs(object)[features, , drop = FALSE])
+    if ( use_as_exprs == "exprs" || use_as_exprs == "norm_exprs" ) {
+        to_melt <- switch(use_as_exprs,
+                          exprs = as.matrix(exprs(object)[features, , 
+                                                          drop = FALSE]),
+                          norm_exprs = as.matrix(norm_exprs(object)[features, , 
+                                                               drop = FALSE]))
         if ( !object@logged ) {
             to_melt <- log2(to_melt + 1)
             message("Expression values have been transformed to a log2 scale")
         }
-        ylab <- "Expression (log2 scale)"
-    }
-    else {
+        ylab <- switch(use_as_exprs,
+                       exprs = "Expression (log2 scale)",
+                       norm_exprs = "Normalised expression (log2 scale)")
+    } else {
         if ( use_as_exprs == "counts" ) {
             count_mtrx <- as.matrix(counts(object))
             lib_size <- colSums(count_mtrx)
@@ -740,23 +985,50 @@ plotExpressionSCESet <- function(object, features, x, use_as_exprs="exprs",
             to_melt <- as.matrix(cpm_to_plot[features, , drop = FALSE])
             ylab <- "log2(counts-per-million + 1)"
         }
+        if ( use_as_exprs == "norm_counts" ) {
+            count_mtrx <- as.matrix(norm_counts(object))
+            lib_size <- colSums(count_mtrx)
+            cpm_to_plot <- log2(t(t(count_mtrx) / lib_size) + 1)
+            to_melt <- as.matrix(cpm_to_plot[features, , drop = FALSE])
+            ylab <- "normalised log2(counts-per-million + 1)"
+        }
         if ( use_as_exprs == "tpm" ) {
             tpm_mtrx <- as.matrix(tpm(object)[features, , drop = FALSE])
             to_melt <- log2(tpm_mtrx + 1)
             ylab <- "log2(transcripts-per-million + 1)"
+        }
+        if ( use_as_exprs == "norm_tpm" ) {
+            tpm_mtrx <- as.matrix(norm_tpm(object)[features, , drop = FALSE])
+            to_melt <- log2(tpm_mtrx + 1)
+            ylab <- "normalised log2(transcripts-per-million + 1)"
         }
         if ( use_as_exprs == "fpkm" ) {
             fpkm_mtrx <- as.matrix(fpkm(object)[features, , drop = FALSE])
             to_melt <- log2(fpkm_mtrx + 1)
             ylab <- "log2(FPKM + 1)"
         }
+        if ( use_as_exprs == "norm_fpkm" ) {
+            fpkm_mtrx <- as.matrix(norm_fpkm(object)[features, , drop = FALSE])
+            to_melt <- log2(fpkm_mtrx + 1)
+            ylab <- "normalised log2(FPKM + 1)"
+        }
+        if ( use_as_exprs == "cpm" ) {
+            cpm_mtrx <- as.matrix(cpm(object)[features, , drop = FALSE])
+            to_melt <- log2(cpm_mtrx + 1)
+            ylab <- "log2(counts-per-million + 1)"
+        }
+        if ( use_as_exprs == "norm_cpm" ) {
+            cpm_mtrx <- as.matrix(norm_cpm(object)[features, , drop = FALSE])
+            to_melt <- log2(cpm_mtrx + 1)
+            ylab <- "normalised log2(counts-per-million + 1)"
+        }
     }
     
     ## Melt the expression data and metadata into a convenient form
-    evals_long <- reshape2::melt(to_melt, value.name="evals")
+    evals_long <- reshape2::melt(to_melt, value.name = "evals")
     colnames(evals_long) <- c("Feature", "Cell", "evals")
     ## Extend the samples information
-    samples_long <- pData(object)[rep(seq_len(ncol(object)), each=nfeatures), ]
+    samples_long <- pData(object)[rep(seq_len(ncol(object)), each = nfeatures), ]
     
     ## Construct a ggplot2 aesthetic for the plot
     aesth <- aes()
@@ -770,7 +1042,7 @@ plotExpressionSCESet <- function(object, features, x, use_as_exprs="exprs",
             isexpr_long <- reshape2::melt(is_exprs(object)[features,], 
                                           value.name = "is_exprs")
             evals_long <- dplyr::mutate(evals_long, 
-                                        Is_Expressed=as.vector(isexpr_long$is_exprs))
+                                        Is_Expressed = as.vector(isexpr_long$is_exprs))
             aesth$colour <- as.symbol("Is_Expressed")
         }
     }
@@ -784,8 +1056,15 @@ plotExpressionSCESet <- function(object, features, x, use_as_exprs="exprs",
     object <- cbind(evals_long, samples_long)
     
     ## Make the plot
-    plotExpressionDefault(object, aesth, ncol, xlab, ylab, show_median, 
-                          show_violin)
+    plot_out <- plotExpressionDefault(object, aesth, ncol, xlab, ylab, 
+                                      show_median, show_violin)
+    
+    ## Define plotting theme
+    if ( library(cowplot, logical.return = TRUE) )
+        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+    else
+        plot_out <- plot_out + theme_bw(theme_size)
+    plot_out
 }
 
 
@@ -859,6 +1138,13 @@ setMethod("plotExpression", signature("data.frame"),
 #' @param aesth aesthetics function call to pass to ggplot. This function 
 #' expects at least x and y variables to be supplied. The default is to plot 
 #' coverage against log10(depth).
+#' @param shape numeric scalar to define the plotting shape. Ignored if shape is
+#' included in the \code{aesth} argument.
+#' @param alpha numeric scalar (in the interval 0 to 1) to define the alpha 
+#' level (transparency) of plotted points. Ignored if alpha is included in the 
+#' \code{aesth} argument.
+#' @param size numeric scalar to define the plotting size. Ignored if size is
+#' included in the \code{aesth} argument.
 #'
 #' @details Plot cell or feature metadata from an SCESet object. If one variable
 #'  is supplied then a density plot will be returned. If both variables are 
@@ -878,8 +1164,9 @@ setMethod("plotExpression", signature("data.frame"),
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' plotMetadata(pData(example_sceset))
 #'
-plotMetadata <- function(object, aesth=aes_string(x="log10(depth)", 
-                                                  y="coverage")) {
+plotMetadata <- function(object, 
+                         aesth=aes_string(x = "log10(depth)", y = "coverage"), 
+                         shape = NULL, alpha = NULL, size = NULL) {
     ## Must have at least an x variable in the aesthetics
     if (is.null(aesth$x))
         stop("No x variable defined. Must have at least an x variable defined
@@ -924,14 +1211,30 @@ plotMetadata <- function(object, aesth=aes_string(x="log10(depth)",
     }
     
     ## Setup plot
-    if ( is.null(aesth$size) )
-        aesth$size <- 4
-    if ( is.null(aesth$alpha) )
-        aesth$alpha <- 0.7
+    show_size_guide <- show_alpha_guide <- show_shape_guide <- TRUE
+    if ( is.null(aesth$size) ) {
+        show_size_guide <- FALSE
+        if ( is.null(size) )
+            aesth$size <- 4
+        else 
+            aesth$size <- size
+    }
+    if ( is.null(aesth$alpha) ) {
+        show_alpha_guide <- FALSE
+        if ( is.null(alpha) )
+            aesth$alpha <- 0.7
+        else
+            aesth$alpha <- alpha
+    }
+    if ( is.null(aesth$shape) ) {
+        show_shape_guide <- FALSE
+        if ( is.null(shape) )
+            shape <- 16
+    }
     
+    ## Set up basics of plot
     plot_out <- ggplot(object, aesth)
     
-       
     ## Density plot
     if (plot_type == "bar") {
         plot_out <- plot_out + geom_bar(stat = "identity") 
@@ -941,18 +1244,24 @@ plotMetadata <- function(object, aesth=aes_string(x="log10(depth)",
             geom_rug(alpha = 0.5, size = 1)
     }
     if (plot_type == "jitter") {
-        plot_out <- plot_out + geom_jitter()
+        if ( !show_shape_guide )
+            plot_out <- plot_out + geom_jitter(shape = shape)
+        else 
+            plot_out <- plot_out + geom_jitter()
     }
     if (plot_type == "scatter") {
-        plot_out <- plot_out + 
-            geom_point() +
-            geom_rug(alpha = 0.5, size = 1)
-            
+        if ( !show_shape_guide )
+            plot_out <- plot_out + geom_point(shape = shape)
+        else
+            plot_out <- plot_out + geom_point()
+        plot_out <- plot_out + geom_rug(alpha = 0.5, size = 1)
     }
     if (plot_type == "violin") {
-        plot_out <- plot_out + 
-            geom_violin(scale = "width") +
-            geom_jitter()
+        plot_out <- plot_out + geom_violin(scale = "width")
+        if ( !show_shape_guide )
+            plot_out  <- plot_out + geom_jitter(shape = shape)
+        else
+            plot_out  <- plot_out + geom_jitter()
     }
     
     ## Define plot colours
@@ -967,14 +1276,16 @@ plotMetadata <- function(object, aesth=aes_string(x="log10(depth)",
               legend.text = element_text(size = 10))
     
     ## Tweak plot guides
-    plot_out <- plot_out + guides(colour = guide_legend(override.aes = list(size = 2)),
-           shape = guide_legend(override.aes = list(size = 2)),
-           fill = guide_legend(override.aes = list(size = 2)))
-    if ( aesth$alpha == 0.7 )
-        plot_out <- plot_out + guides(alpha = FALSE)
-    if ( aesth$size == 4 )
+#     plot_out <- plot_out + guides(colour = guide_legend(override.aes = list(size = 2)),
+#            shape = guide_legend(override.aes = list(size = 2)),
+#            fill = guide_legend(override.aes = list(size = 2)))
+    if ( !show_alpha_guide )
+    plot_out <- plot_out + guides(alpha = FALSE)
+    if ( !show_shape_guide )
+        plot_out <- plot_out + guides(shape = FALSE)
+    if ( !show_size_guide )
         plot_out <- plot_out + guides(size = FALSE)
-    
+
     ## Return plot object
     plot_out
 }
@@ -989,6 +1300,9 @@ plotMetadata <- function(object, aesth=aes_string(x="log10(depth)",
 #' @param aesth aesthetics function call to pass to ggplot. This function 
 #' expects at least x and y variables to be supplied. The default is to plot 
 #' coverage against log10(depth).
+#' @param theme_size numeric scalar giving default font size for plotting theme 
+#' (default is 10).
+#' @param ... arguments passed to \code{\link{plotMetadata}}.
 #'
 #' @details Plot phenotype data from an SCESet object. If one variable is 
 #' supplied then a density plot will be returned. If both variables are 
@@ -1008,15 +1322,21 @@ plotMetadata <- function(object, aesth=aes_string(x="log10(depth)",
 #' plotPhenoData(example_sceset, 
 #' aesth = aes_string(x = "log10(depth)", y = "coverage", colour = "Mutation_Status"))
 #' 
-plotPhenoData <- function(object, aesth=aes_string(x="log10(depth)", 
-                                                   y="coverage")) {
+plotPhenoData <- function(object, aesth=aes_string(x = "log10(depth)", 
+                                                   y = "coverage"), 
+                          theme_size = 10, ...) {
     ## We must have an SCESet object
     if (!is(object, "SCESet"))
         stop("object must be an SCESet object.")
 
     ## Pass pData(object) to plotMetadata
-    plot_out <- plotMetadata(pData(object), aesth)   
+    plot_out <- plotMetadata(pData(object), aesth, ...)   
     
+    ## Define plotting theme
+    if ( library(cowplot, logical.return = TRUE) )
+        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+    else
+        plot_out <- plot_out + theme_bw(theme_size)
     ## Return plot object
     plot_out
 }
@@ -1032,6 +1352,9 @@ plotPhenoData <- function(object, aesth=aes_string(x="log10(depth)",
 #' expects at least x and y variables to be supplied. The default is to produce 
 #' a density plot of number of cells expressing the feature (requires 
 #' \code{calculateQCMetrics} to have been run on the SCESet object prior).
+#' @param theme_size numeric scalar giving default font size for plotting theme 
+#' (default is 10).
+#' @param ... arguments passed to \code{\link{plotMetadata}}.
 #'
 #' @details Plot feature (gene) data from an SCESet object. If one variable is 
 #' supplied then a density plot will be returned. If both variables are 
@@ -1040,7 +1363,7 @@ plotPhenoData <- function(object, aesth=aes_string(x="log10(depth)",
 #' will be returned. If both variables are discrete then a jitter plot will be 
 #' produced. The object returned is a ggplot object, so further layers and 
 #' plotting options (titles, facets, themes etc) can be added.
-#' .
+#' 
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -1050,15 +1373,22 @@ plotPhenoData <- function(object, aesth=aes_string(x="log10(depth)",
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' plotFeatureData(example_sceset, aesth=aes(x=n_cells_exprs, y=pct_total_counts))
 #' 
-plotFeatureData <- function(object, aesth = aes_string(x = "n_cells_exprs",
-                                                     y = "prop_total_counts")) {
+plotFeatureData <- function(object, 
+                            aesth = aes_string(x = "n_cells_exprs",
+                                               y = "prop_total_counts"), 
+                            theme_size = 10, ...) {
     ## We must have an SCESet object
     if (!is(object, "SCESet"))
         stop("object must be an SCESet object.")
     
     ## Pass pData(object) to plotMetadata
-    plot_out <- plotMetadata(fData(object), aesth)   
-    
+    plot_out <- plotMetadata(fData(object), aesth, ...)   
+
+    ## Define plotting theme
+    if ( library(cowplot, logical.return = TRUE) )
+        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+    else
+        plot_out <- plot_out + theme_bw(theme_size)
     ## Return plot object
     plot_out
 }

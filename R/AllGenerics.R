@@ -99,6 +99,54 @@ setGeneric("fpkm", function(object) {standardGeneric("fpkm")})
 #' @rdname fpkm
 setGeneric("fpkm<-", function(object, value) {standardGeneric("fpkm<-")})
 
+#' @name norm_counts
+#' @export
+#' @docType methods
+#' @rdname norm_counts
+setGeneric("norm_counts", function(object) {standardGeneric("norm_counts")})
+
+#' @name norm_counts<-
+#' @export
+#' @docType methods
+#' @rdname norm_counts
+setGeneric("norm_counts<-", function(object, value) {standardGeneric("norm_counts<-")})
+
+#' @name norm_tpm
+#' @export
+#' @docType methods
+#' @rdname norm_tpm
+setGeneric("norm_tpm", function(object) {standardGeneric("norm_tpm")})
+
+#' @name norm_tpm<-
+#' @export
+#' @docType methods
+#' @rdname norm_tpm
+setGeneric("norm_tpm<-", function(object, value) {standardGeneric("norm_tpm<-")})
+
+#' @name norm_cpm
+#' @export
+#' @docType methods
+#' @rdname norm_cpm
+setGeneric("norm_cpm", function(object) {standardGeneric("norm_cpm")})
+
+#' @name norm_cpm<-
+#' @export
+#' @docType methods
+#' @rdname norm_cpm
+setGeneric("norm_cpm<-", function(object, value) {standardGeneric("norm_cpm<-")})
+
+#' @name norm_fpkm
+#' @export
+#' @docType methods
+#' @rdname norm_fpkm
+setGeneric("norm_fpkm", function(object) {standardGeneric("norm_fpkm")})
+
+#' @name norm_fpkm<-
+#' @export
+#' @docType methods
+#' @rdname norm_fpkm
+setGeneric("norm_fpkm<-", function(object, value) {standardGeneric("norm_fpkm<-")})
+
 #' @name bootstraps
 #' @export
 #' @docType methods
@@ -233,10 +281,19 @@ setGeneric("plotExpression", function(object, ...) {
 #' @export
 #' @docType methods
 #' @rdname plotPCA
-if( !isGeneric("plotPCA") ) {
+if ( !isGeneric("plotPCA") ) {
     ## plotPCA is a generic in BiocGenerics_0.14.0 in R 3.2.0 - for earlier
     ## versions need to manually add it as a generic
     setGeneric("plotPCA", function(object, ...) {
         standardGeneric("plotPCA")
     })
 }
+
+#' @name plotTSNE
+#' @export
+#' @docType methods
+#' @rdname plotTSNE
+setGeneric("plotTSNE", function(object, ...) {
+    standardGeneric("plotTSNE")
+})
+

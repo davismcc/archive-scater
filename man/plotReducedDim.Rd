@@ -16,7 +16,7 @@ plotReducedDim.default(df_to_plot, ncomponents = 2, colour_by = NULL,
   shape_by = NULL, size_by = NULL, percentVar = NULL)
 
 plotReducedDim.SCESet(object, ncomponents = 2, colour_by = NULL,
-  shape_by = NULL, size_by = NULL)
+  shape_by = NULL, size_by = NULL, theme_size = 10)
 
 \S4method{plotReducedDim}{SCESet}(object, ncomponents = 2, colour_by = NULL,
   shape_by = NULL, size_by = NULL)
@@ -52,6 +52,9 @@ be used as a factor by which to define the size of points in the plot.}
 \item{percentVar}{numeric vector giving the proportion of variance in
 expression explained by each reduced dimension. Only expected to be used
 internally in the \code{\link[scater]{plotPCA}} function.}
+
+\item{theme_size}{numeric scalar giving default font size for plotting theme
+(default is 10).}
 }
 \description{
 Plot reduced dimension representation of cells

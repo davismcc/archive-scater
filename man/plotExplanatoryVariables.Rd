@@ -4,15 +4,27 @@
 \alias{plotExplanatoryVariables}
 \title{Plot explanatory variables ordered by percentage of phenotypic variance explained}
 \usage{
-plotExplanatoryVariables(object, nvars_to_plot = 5, min_marginal_r2 = 0,
-  variables = NULL, return_object = FALSE, ...)
+plotExplanatoryVariables(object, method = "density", use_as_exprs = "exprs",
+  nvars_to_plot = 10, min_marginal_r2 = 0, variables = NULL,
+  return_object = FALSE, theme_size = 10, ...)
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and
 experimental information. Must have been appropriately prepared.}
 
+\item{method}{character scalar indicating the type of plot to produce. If
+"density", the function produces a density plot of R-squared values for each
+variable when fitted as the only explanatory variable in a linear model. If
+"pairs", then the function produces a pairs plot of the explanatory variables
+ordered by the percentage of feature expression variance (as measured by
+R-squared in a marginal linear model) explained.}
+
+\item{use_as_exprs}{which slot of the \code{assayData} in the \code{object}
+should be used to define expression? Valid options are "exprs" (default),
+"tpm", "fpkm", "cpm", and "counts".}
+
 \item{nvars_to_plot}{integer, the number of variables to plot in the pairs
-plot. Default value is 5.}
+plot. Default value is 10.}
 
 \item{min_marginal_r2}{numeric scalar giving the minimal value required for
 median marginal R-squared for a variable to be plotted. Only variables with a
@@ -26,18 +38,22 @@ marginal R-squared are plotted.}
 \item{return_object}{logical, should an \code{SCESet} object with median
 marginal R-squared values added to \code{varMetadata(object)} be returned?}
 
+\item{theme_size}{numeric scalar giving font size to use for the plotting
+theme}
+
 \item{...}{parameters to be passed to \code{\link{pairs}}.}
 }
 \description{
 Plot explanatory variables ordered by percentage of phenotypic variance explained
 }
 \details{
-Function produces a pairs plot of the explanatory variables ordered
-by the percentage of feature expression variance (as measured by R-squared in a
-marginal linear model) explained by variable. Median percentage R-squared is
-reported on the plot for each variable. Discrete variables are coerced to a
-factor and plotted as integers with jittering. Variables with only one unique
-value are quietly ignored.
+If the \code{method} argument is "pairs", then the function produces
+a pairs plot of the explanatory variables ordered by the percentage of
+feature expression variance (as measured by R-squared in a marginal linear
+model) explained by variable. Median percentage R-squared is reported on the
+plot for each variable. Discrete variables are coerced to a factor and
+plotted as integers with jittering. Variables with only one unique value are
+quietly ignored.
 }
 \examples{
 data("sc_example_counts")

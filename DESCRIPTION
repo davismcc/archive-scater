@@ -3,7 +3,7 @@ Type: Package
 Maintainer: Davis McCarthy <davismcc@gmail.com>
 Author: Davis McCarthy
 Authors@R: c(person("Davis", "McCarthy", role=c("aut", "cre"), email="davismcc@gmail.com"), person("Quin", "Wills", role=c("aut"), email="qilin@quinwills.net"), person("Kieran", "Campbell", role=c("aut"), email="kieran.campbell@sjc.ox.ac.uk"))
-Version: 0.1.5
+Version: 0.1.6
 Date: 2015-06-16
 License: GPL (>= 2)
 Title: Single-cell analysis toolkit for gene expression data in R
@@ -27,7 +27,8 @@ Imports:
     plyr,
     reshape2,
     rhdf5,
-    rjson
+    rjson,
+    Rtsne
 Suggests: 
     BiocStyle,
     cowplot,

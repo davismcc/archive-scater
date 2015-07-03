@@ -4,7 +4,8 @@
 \alias{plotPhenoData}
 \title{Plot phenotype data from an SCESet object}
 \usage{
-plotPhenoData(object, aesth = aes_string(x = "log10(depth)", y = "coverage"))
+plotPhenoData(object, aesth = aes_string(x = "log10(depth)", y = "coverage"),
+  theme_size = 10, ...)
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and
@@ -13,6 +14,11 @@ experimental information. Must have been appropriately prepared.}
 \item{aesth}{aesthetics function call to pass to ggplot. This function
 expects at least x and y variables to be supplied. The default is to plot
 coverage against log10(depth).}
+
+\item{theme_size}{numeric scalar giving default font size for plotting theme
+(default is 10).}
+
+\item{...}{arguments passed to \code{\link{plotMetadata}}.}
 }
 \description{
 Plot phenotype data from an SCESet object

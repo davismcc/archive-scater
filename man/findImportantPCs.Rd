@@ -4,7 +4,7 @@
 \alias{findImportantPCs}
 \title{Find most important principal components for a given variable}
 \usage{
-findImportantPCs(object, variable = "coverage", plot_type = "pairs-pcs")
+findImportantPCs(object, variable = "coverage", plot_type = "pcs-vs-vars")
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and

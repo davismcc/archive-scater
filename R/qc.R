@@ -449,7 +449,8 @@ a lower count threshold of 0.")
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' findImportantPCs(example_sceset, variable="coverage")
 #' 
-findImportantPCs <- function(object, variable="coverage", plot_type = "pairs-pcs") {
+findImportantPCs <- function(object, variable="coverage", 
+                             plot_type = "pcs-vs-vars") {
     pca <- prcomp(t(exprs(object)), retx = TRUE, center = TRUE, scale. = TRUE)
     colnames(pca$x) <- paste("component", 1:ncol(pca$x))
     if (!(variable %in% colnames(pData(object))))
@@ -510,6 +511,9 @@ findImportantPCs <- function(object, variable="coverage", plot_type = "pairs-pcs
             colour_pal <- colour_pal[c(1, 3, 5)]
             x_int <- x_int_2
         }
+        design <- model.matrix(~x)
+        pca_r_squared <- .getRSquared(t(pca$x[!x_na,]), design)
+        x_int <- x_int_1
     }
     ## Tidy up names and choose top 5 most important PCs for the variable
     # names(ave_sil_width) <- colnames(pca$x)
@@ -559,16 +563,20 @@ findImportantPCs <- function(object, variable="coverage", plot_type = "pairs-pcs
 
 #' @importFrom limma lmFit
 .getRSquared <- function(y, design) {
-    fit <- limma::lmFit(y, design = design)
-    sst <- rowSums(y ^ 2)
+    ## Mean-centre rows to get correct R-squared values with the limma formula below
+    y0 <- t(scale(t(y), center = TRUE, scale = FALSE))
+    ## Get linear model fit
+    fit <- limma::lmFit(y0, design = design)
+    ## Compute total sum of squares
+    sst <- rowSums(y0 ^ 2)
+    ## Compute residual sum of squares
     ssr <- sst - fit$df.residual * fit$sigma ^ 2
     (ssr/sst)
 }
 
-
 .calculateSilhouetteWidth <- function(x, mat) {
     ave_sil_width <- rep(NA, ncol(mat))
-    for(i in 1:ncol(mat)) {
+    for (i in 1:ncol(mat)) {
         si <- cluster::silhouette(x, dist(mat[,i]))
         ave_sil_width[i] <- summary(si)$avg.width
     }
@@ -754,8 +762,17 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
 #'
 #' @param object an SCESet object containing expression values and
 #' experimental information. Must have been appropriately prepared.
+#' @param method character scalar indicating the type of plot to produce. If 
+#' "density", the function produces a density plot of R-squared values for each 
+#' variable when fitted as the only explanatory variable in a linear model. If 
+#' "pairs", then the function produces a pairs plot of the explanatory variables
+#' ordered by the percentage of feature expression variance (as measured by 
+#' R-squared in a marginal linear model) explained.
+#' @param use_as_exprs which slot of the \code{assayData} in the \code{object} 
+#' should be used to define expression? Valid options are "exprs" (default), 
+#' "tpm", "fpkm", "cpm", and "counts".
 #' @param nvars_to_plot integer, the number of variables to plot in the pairs 
-#' plot. Default value is 5.
+#' plot. Default value is 10.
 #' @param min_marginal_r2 numeric scalar giving the minimal value required for
 #' median marginal R-squared for a variable to be plotted. Only variables with a
 #' median marginal R-squared strictly larger than this value will be plotted.
@@ -765,14 +782,18 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
 #' marginal R-squared are plotted.
 #' @param return_object logical, should an \code{SCESet} object with median 
 #' marginal R-squared values added to \code{varMetadata(object)} be returned?
+#' @param theme_size numeric scalar giving font size to use for the plotting 
+#' theme
 #' @param ... parameters to be passed to \code{\link{pairs}}.
 #'
-#' @details Function produces a pairs plot of the explanatory variables ordered
-#' by the percentage of feature expression variance (as measured by R-squared in a 
-#' marginal linear model) explained by variable. Median percentage R-squared is 
-#' reported on the plot for each variable. Discrete variables are coerced to a 
-#' factor and plotted as integers with jittering. Variables with only one unique 
-#' value are quietly ignored. 
+#' @details If the \code{method} argument is "pairs", then the function produces
+#' a pairs plot of the explanatory variables ordered by the percentage of 
+#' feature expression variance (as measured by R-squared in a marginal linear 
+#' model) explained by variable. Median percentage R-squared is reported on the 
+#' plot for each variable. Discrete variables are coerced to a factor and 
+#' plotted as integers with jittering. Variables with only one unique value are 
+#' quietly ignored. 
+#' 
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -784,9 +805,34 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
 #' vars <- names(pData(example_sceset))[c(2:3, 5:14)]
 #' plotExplanatoryVariables(example_sceset, variables=vars)
 #' 
-plotExplanatoryVariables <- function(object, nvars_to_plot = 5, 
+plotExplanatoryVariables <- function(object, method = "density", 
+                                     use_as_exprs = "exprs", nvars_to_plot = 10,
                                      min_marginal_r2 = 0, variables = NULL, 
-                                     return_object = FALSE, ...) {
+                                     return_object = FALSE, theme_size = 10, 
+                                     ...) {
+    ## Check method argument
+    method <- match.arg(method, c("density", "pairs"))
+    ## Checking arguments for expression values
+    use_as_exprs <- match.arg(use_as_exprs, 
+                              choices = c("exprs", "norm_exprs", "counts", 
+                                          "norm_counts", "tpm", "norm_tpm", 
+                                          "fpkm", "norm_fpkm", "cpm", "norm_cpm"))
+    exprs_mat <- switch(use_as_exprs,
+                        exprs = exprs(object),
+                        norm_exprs = norm_exprs(object),
+                        tpm = tpm(object),
+                        norm_tpm = norm_tpm(object),
+                        cpm = cpm(object),
+                        norm_cpm = norm_cpm(object),
+                        fpkm = fpkm(object),
+                        norm_fpkm = norm_fpkm(object),
+                        norm_counts = norm_counts(object))
+    if ( is.null(exprs_mat) ) {
+        warning(paste0("The object does not contain ", use_as_exprs, " expression values. Using exprs(object) values instead."))
+        exprs_mat <- exprs(object)
+        use_as_exprs <- "exprs"
+    }
+    
     ## Check that variables are defined
     if ( is.null(variables) ) {
         variables_to_plot <- varLabels(object)
@@ -832,7 +878,10 @@ This variable will not be plotted."))
                     val_to_plot_mat[, var] <- x
                 }
                 design <- model.matrix(~x)
-                rsquared_mat[, var] <- .getRSquared(exprs(object), design)
+                rsquared_mat[, var] <- .getRSquared(exprs_mat, design)
+#                 rsq_base <- apply(exprs_mat, 1, function(y) {
+#                     lm.first <- lm(y ~ -1 + design); summary(lm.first)$r.squared})
+#                 all(abs(rsq_base - rsquared_mat[, var]) < 0.000000000001)
             }
         } else {
             rsquared_mat[, var] <- NA
@@ -841,35 +890,99 @@ This variable will not be plotted."))
     
     ## Get median R^2 for each variable, add to labels and order by median R^2
     median_rsquared <- apply(rsquared_mat, 2, median)
-#     median_rsquared <- apply(rsquared_mat, 2, quantile, probs = 0.1, 
-#                              na.rm = TRUE)
-    colnames(val_to_plot_mat) <- paste0(colnames(val_to_plot_mat), 
-                                        "\n(Med. R-sq = ", 
-                                        formatC(signif(100*median_rsquared, 
-                                                       digits = 3),  digits = 3,
-                                                format = "fg", flag = "#"), "%)")
     oo_median <- order(median_rsquared, decreasing = TRUE)
     nvars_to_plot <- min(sum(median_rsquared > min_marginal_r2, na.rm = TRUE), 
                          nvars_to_plot)
     
-    ## Plot these bad boys
-    par(bty = "o", col.lab = "gray60")
-    pairs(val_to_plot_mat[, oo_median[1:nvars_to_plot]], pch = 21, 
-          col = "gray60", bg = "gray80", col.lab = "red", ...)
-    ## Return object so that marginal R^2 are added to varMetadata
+    if ( method == "pairs") {
+        #     median_rsquared <- apply(rsquared_mat, 2, quantile, probs = 0.1, 
+        #                              na.rm = TRUE)
+        colnames(val_to_plot_mat) <- paste0(colnames(val_to_plot_mat), 
+                                            "\n(Med. R-sq = ", 
+                                            formatC(signif(100*median_rsquared, 
+                                                       digits = 3),  digits = 3,
+                                                format = "fg", flag = "#"), "%)")
+        
+        ## Plot these bad boys
+        par(bty = "o", col.lab = "gray60")
+        pairs(val_to_plot_mat[, oo_median[1:nvars_to_plot]], pch = 21, 
+              col = "gray60", bg = "gray80", col.lab = "red", ...)
+    } else {
+        df_to_plot <- suppressMessages(reshape2::melt(
+            rsquared_mat[, oo_median[1:nvars_to_plot]]))
+        colnames(df_to_plot) <- c("Feature", "Expl_Var", "R_squared")
+        df_to_plot$Pct_Var_Explained <- 100 * df_to_plot$R_squared
+        df_to_plot$Expl_Var <- factor(
+            df_to_plot$Expl_Var, levels = colnames(rsquared_mat)[oo_median[1:nvars_to_plot]])
+        plot_out <- ggplot(df_to_plot, aes_string(x = "Pct_Var_Explained", 
+                                                  colour = "Expl_Var")) +
+            geom_line(stat = "density", alpha = 0.7, size = 2, trim = TRUE) +
+            geom_vline(xintercept = 1, linetype = 2) +
+            scale_x_log10(breaks = 10 ^ (-3:2), labels = c(0.001, 0.01, 0.1, 1, 10, 100)) +
+            xlab(paste0("% variance explained (log10-scale)")) +
+            ylab("") +
+            coord_cartesian(xlim = c(10 ^ (-3), 100)) +
+            ggthemes::scale_color_tableau(name = "", palette = "tableau20")            
+        if ( library(cowplot, logical.return = TRUE) )
+            plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+        else
+            plot_out <- plot_out + theme_bw(theme_size)
+    }
+    
     if ( return_object ) {
+        ## Return object so that marginal R^2 are added to varMetadata
         varMetadata(object) <- data.frame(
             labelDescription = paste("Median marginal R-squared =", 
                                      median_rsquared))
+        fdata <- fData(object)
+        rsq_out <- rsquared_mat[, oo_median[1:nvars_to_plot]]
+        colnames(rsq_out) <- paste0("Rsq_", colnames(rsq_out))
+        fdata_new <- new("AnnotatedDataFrame", cbind(fdata, rsq_out))
+        fData(object) <- fdata_new
+        if ( method == "density" )
+            print(plot_out)
         return(object)
+    } else {
+        if ( method == "density" )
+            return(plot_out)
     }
 }
 
 
-################################################################################
-### Plot expression mean vs frequency for feature controls
+# ### Emergency test code
+# rsq <- fData(sce_simmons_filt_strict)[, grep("^Rsq", names(fData(sce_simmons_filt_strict)))]
+# head(rsq)
+# colSums(rsq > 0.99)
+# 
+# rsq[rsq$Rsq_batch > 0.99,]
+# 
+# plotExpression(sce_simmons_filt_strict, rownames(rsq)[rsq$Rsq_batch > 0.99], x = "batch",
+#                ncol = 6, colour_by = "tissue_type", use_as_exprs = "norm_exprs")
+# 
+# design <- model.matrix(~sce_simmons_filt_strict$batch)
+# lm.first <- lm(norm_exprs(sce_simmons_filt_strict)["ERCC-00002",] ~ -1 + design)
+# summary(lm.first)$r.squared
+# summary(lm.first)$residuals
+# plot(lm.first)
+# lm2 <- lm(norm_exprs(sce_simmons_filt_strict)["ERCC-00002",] ~ sce_simmons_filt_strict$batch)
+# summary(lm2)$r.squared
+# 
+# rsq_limma <- .getRSquared(norm_exprs(sce_simmons_filt_strict), design)
+# 
+# rsq_base2 <- apply(norm_exprs(sce_simmons_filt_strict), 1, function(y) {
+#     lm.first <- lm(y ~ sce_simmons_filt_strict$batch); summary(lm.first)$r.squared})
+# 
+# all(abs(rsq_base2 - rsq_limma) < 0.00000000000001)
+# 
+# rsq_base <- apply(norm_exprs(sce_simmons_filt_strict), 1, function(y) {
+#     lm.first <- lm(y ~ -1 + design); summary(lm.first)$r.squared})
+# all(abs(rsq_base - rsq$Rsq_batch) < 0.000000000001)
 
-#' Plot mean expression against frequency of expression 
+
+################################################################################
+### Plot expression frequency vs mean for feature controls
+
+#' Plot frequency of expression against mean expression level
 #' 
 #' @param object an \code{SCESet} object.
 #' @param feature_set character, numeric or logical vector indicating a set of
@@ -879,6 +992,11 @@ This variable will not be plotted."))
 #' equal to \code{nrow(object)}. If \code{NULL}, then the function checks if 
 #' feature controls are defined. If so, then only feature controls are plotted,
 #' if not, then all features are plotted.
+#' @param shape (optional) numeric scalar to define the plotting shape. 
+#' @param alpha (optional) numeric scalar (in the interval 0 to 1) to define the
+#'  alpha level (transparency) of plotted points.
+#' @param ... further arguments passed to \code{\link{plotMetadata}} (should 
+#' only be \code{size}, if anythin).
 #' 
 #' @export
 #' @examples 
@@ -888,41 +1006,53 @@ This variable will not be plotted."))
 #' rownames(pd) <- pd$Cell
 #' ex_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
 #' ex_sceset <- calculateQCMetrics(ex_sceset)
-#' plotExprsMeanVsFreq(ex_sceset)
+#' plotExprsFreqVsMean(ex_sceset)
 #' 
-plotExprsMeanVsFreq <- function(object, feature_set = NULL) {
+plotExprsFreqVsMean <- function(object, feature_set = NULL, shape = 1,
+                                alpha = 0.7, ...) {
     if ( !is(object, "SCESet") )
         stop("Object must be an SCESet")
     if ( is.null(fData(object)$n_cells_exprs) || 
          is.null(fData(object)$mean_exprs)) {
         stop("fData(object) does not have both 'n_cells_exprs' and 'mean_exprs' columns. Try running 'calculateQCMetrics' on this object, and then rerun this command.") 
     }
-    if ( !is.null(feature_set) & typeof(feature_set) == "character" ) {
+    if ( !is.null(feature_set) && feature_set != "feature_controls" && 
+         typeof(feature_set) == "character" ) {
         if ( !(all(feature_set %in% featureNames(object))) )
-            stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
+            stop("when the argument 'feature_set' is of type character and not 'feature_controls', all features must be in featureNames(object)")
     }
     if ( is.null(feature_set) ) {
-        if ( is.null(fData(object)$is_feature_control) ) {
-            feature_set <- 1:nrow(object)
-            y_lab <- "Mean expression level (all features)"
-        } else {
-            if ( all(!fData(object)$is_feature_control) ) {
-                feature_set <- 1:nrow(object)
-                y_lab <- "Mean expression level (all features)"
-            } else {
-                feature_set <- fData(object)$is_feature_control
-                y_lab <- "Mean expression level (feature controls)"
-            }
-        }
+        feature_set <- 1:nrow(object)
+        x_lab <- "Mean expression level (all features)"
     } else {
-        y_lab <- "Mean expression level (supplied feature set)"
+        if ( length(feature_set) == 1 && feature_set == "feature_controls" ) {
+            feature_set <- fData(object)$is_feature_control
+            x_lab <- "Mean expression level (feature controls)"
+        } else
+            x_lab <- "Mean expression level (supplied feature set)"
     }
     
     ## Plot this 
-    plotFeatureData(object[feature_set,], aes_string(x = "n_cells_exprs", 
-                                                     y = "mean_exprs")) +
-        xlab("Frequency of expression (number of cells)") +
-        ylab(y_lab)
+    if ( any(fData(object)$is_feature_control[feature_set]) && 
+         !all(fData(object)$is_feature_control[feature_set]) ) {
+        plot_out <- plotFeatureData(object[feature_set,], 
+                                    aes_string(x = "mean_exprs", 
+                                               y = "n_cells_exprs", 
+                                               colour = "is_feature_control",
+                                               shape = "is_feature_control"),
+                                    alpha = alpha, ...) +
+            scale_shape_manual(values = c(1, 17)) +
+            ylab("Frequency of expression (number of cells)") +
+            xlab(x_lab)
+    } else {
+        plot_out <- plotFeatureData(object[feature_set,], 
+                                    aes_string(x = "mean_exprs", 
+                                               y = "n_cells_exprs"), 
+                                    alpha = alpha, shape = shape, ...) +
+            ylab("Frequency of expression (number of cells)") +
+            xlab(x_lab)
+    }
+    plot_out
 }
 
 
@@ -962,7 +1092,7 @@ plotExprsMeanVsFreq <- function(object, feature_set = NULL) {
 #' 
 plotQC <- function(object, type = "highest-expression", ...) {
     type <- match.arg(type, c("highest-expression", "find-pcs", 
-                              "explanatory-variables", "exprs-mean-vs-freq"))
+                              "explanatory-variables", "exprs-freq-vs-mean"))
     if (type == "highest-expression") {
         plot_out <- plotHighestExprs(object, ...)
         return(plot_out)
@@ -977,10 +1107,11 @@ plotQC <- function(object, type = "highest-expression", ...) {
         if ( !is.null(plot_out) )
             return(plot_out)
     }
-    if (type == "exprs-mean-vs-freq") {
-        plot_out <- plotExprsMeanVsFreq(object, ...)
+    if (type == "exprs-freq-vs-mean") {
+        plot_out <- plotExprsFreqVsMean(object, ...)
         if ( !is.null(plot_out) )
             return(plot_out)
     }
+    
 }
 

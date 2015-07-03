@@ -4,7 +4,8 @@
 \alias{plotMetadata}
 \title{Plot metadata for cells or features}
 \usage{
-plotMetadata(object, aesth = aes_string(x = "log10(depth)", y = "coverage"))
+plotMetadata(object, aesth = aes_string(x = "log10(depth)", y = "coverage"),
+  shape = NULL, alpha = NULL, size = NULL)
 }
 \arguments{
 \item{object}{a data.frame (or object that can be coerced to such) object
@@ -13,6 +14,16 @@ containing metadata in columns to plot.}
 \item{aesth}{aesthetics function call to pass to ggplot. This function
 expects at least x and y variables to be supplied. The default is to plot
 coverage against log10(depth).}
+
+\item{shape}{numeric scalar to define the plotting shape. Ignored if shape is
+included in the \code{aesth} argument.}
+
+\item{alpha}{numeric scalar (in the interval 0 to 1) to define the alpha
+level (transparency) of plotted points. Ignored if alpha is included in the
+\code{aesth} argument.}
+
+\item{size}{numeric scalar to define the plotting size. Ignored if size is
+included in the \code{aesth} argument.}
 }
 \description{
 Plot metadata for cells or features

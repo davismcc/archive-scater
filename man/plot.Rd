@@ -11,7 +11,8 @@
 \S4method{plot}{SCESet,ANY}(x, y, ...)
 
 plotSCESet(x, block1 = NULL, block2 = NULL, colour_by = NULL,
-  nfeatures = 500, use_as_exprs = "tpm", ncol = 3, linewidth = 1.5)
+  nfeatures = 500, use_as_exprs = "tpm", ncol = 3, linewidth = 1.5,
+  theme_size = 10)
 }
 \arguments{
 \item{x}{an \code{SCESet} object}
@@ -51,6 +52,9 @@ defined.}
 
 \item{linewidth}{numeric scalar giving the "size" parameter (in ggplot2
 parlance) for the lines plotted. Default is 1.5.}
+
+\item{theme_size}{numeric scalar giving font size to use for the plotting
+theme}
 }
 \description{
 Plot the relative proportion of the library accounted for by the most highly

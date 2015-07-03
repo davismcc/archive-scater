@@ -527,14 +527,62 @@ counts.SCESet <- function(object) {
 
 #' @rdname counts
 #' @export
-setMethod("counts", signature(object="SCESet"), counts.SCESet)
+setMethod("counts", signature(object = "SCESet"), counts.SCESet)
 
 #' @name counts
 #' @rdname counts
 #' @exportMethod "counts<-"
-setReplaceMethod("counts", signature(object="SCESet", value="matrix"),
-                 function( object, value ) {
+setReplaceMethod("counts", signature(object = "SCESet", value = "matrix"),
+                 function(object, value) {
                      object@assayData$counts <- value
+                     validObject(object)
+                     object
+                 })
+
+################################################################################
+### norm_counts
+
+#' Accessors for the 'norm_counts' element of an SCESet object.
+#'
+#' The norm_counts element holds normalised count data as a matrix of 
+#' non-negative values, one row for each feature (gene, exon, region, etc), and one
+#' column for each cell. It is an element of the assayData slot of the SCESet
+#' object.
+#'
+#' @usage
+#' \S4method{norm_counts}{SCESet}(object)
+#'
+#' \S4method{norm_counts}{SCESet,matrix}(object)<-value
+#'
+#' @docType methods
+#' @name norm_counts
+#' @rdname norm_counts
+#' @aliases norm_counts norm_counts,SCESet-method norm_counts<-,SCESet,matrix-method
+#'
+#' @param object a \code{SCESet} object.
+#' @param value an integer matrix
+#' @author Davis McCarthy
+#' @export
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' example_sceset <- newSCESet(countData = sc_example_counts)
+#' norm_counts(example_sceset)
+#'
+norm_counts.SCESet <- function(object) {
+    object@assayData$norm_counts
+}
+
+#' @rdname norm_counts
+#' @export
+setMethod("norm_counts", signature(object = "SCESet"), norm_counts.SCESet)
+
+#' @name norm_counts
+#' @rdname norm_counts
+#' @exportMethod "norm_counts<-"
+setReplaceMethod("norm_counts", signature(object = "SCESet", value = "matrix"),
+                 function(object, value) {
+                     object@assayData$norm_counts <- value
                      validObject(object)
                      object
                  })
@@ -580,7 +628,7 @@ setMethod("is_exprs", signature(object = "SCESet"), is_exprs.SCESet)
 #' @name is_exprs<-
 #' @rdname is_exprs
 #' @exportMethod "is_exprs<-"
-setReplaceMethod("is_exprs", signature(object="SCESet", value="matrix"),
+setReplaceMethod("is_exprs", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
                      object@assayData$is_exprs <- value
                      validObject(object)
@@ -633,12 +681,12 @@ norm_exprs.SCESet <- function(object) {
 
 #' @rdname norm_exprs
 #' @export
-setMethod("norm_exprs", signature(object="SCESet"), norm_exprs.SCESet)
+setMethod("norm_exprs", signature(object = "SCESet"), norm_exprs.SCESet)
 
 #' @name norm_exprs<-
 #' @rdname norm_exprs
 #' @exportMethod "norm_exprs<-"
-setReplaceMethod("norm_exprs", signature(object="SCESet", value="matrix"),
+setReplaceMethod("norm_exprs", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
                      object@assayData$norm_exprs <- value
                      validObject(object)
@@ -693,12 +741,12 @@ stand_exprs.SCESet <- function(object) {
 
 #' @rdname stand_exprs
 #' @export
-setMethod("stand_exprs", signature(object="SCESet"), stand_exprs.SCESet)
+setMethod("stand_exprs", signature(object = "SCESet"), stand_exprs.SCESet)
 
 #' @name stand_exprs<-
 #' @rdname stand_exprs
 #' @exportMethod "stand_exprs<-"
-setReplaceMethod("stand_exprs", signature(object="SCESet", value="matrix"),
+setReplaceMethod("stand_exprs", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
                      object@assayData$stand_exprs <- value
                      validObject(object)
@@ -749,15 +797,71 @@ tpm.SCESet <- function(object) {
 #' @rdname tpm
 #' @export
 #' @aliases tpm,SCESet-method
-setMethod("tpm", signature(object="SCESet"), tpm.SCESet)
+setMethod("tpm", signature(object = "SCESet"), tpm.SCESet)
 
 #' @name tpm<-
 #' @rdname tpm
 #' @exportMethod "tpm<-"
 #' @aliases tpm<-,SCESet,matrix-method
-setReplaceMethod("tpm", signature(object="SCESet", value="matrix"),
+setReplaceMethod("tpm", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
                      object@assayData$tpm <- value
+                     validObject(object)
+                     object
+                 })
+
+
+################################################################################
+### norm_tpm
+
+#' Accessors for the 'norm_tpm' (transcripts per million) element of an SCESet object.
+#'
+#' The \code{norm_tpm} element of the arrayData slot in an SCESet object holds
+#' a matrix containing normalised transcripts-per-million values. It has the 
+#' same dimensions as the 'exprs' and 'counts' elements, which hold the 
+#' transformed expression data and count data, respectively.
+#' 
+#' @usage
+#' \S4method{norm_tpm}{SCESet}(object)
+#'
+#' \S4method{norm_tpm}{SCESet,matrix}(object)<-value
+#'
+#' @docType methods
+#' @name norm_tpm
+#' @rdname norm_tpm
+#' @aliases norm_tpm norm_tpm,SCESet-method norm_tpm<-,SCESet,matrix-method
+#'
+#' @param object a \code{SCESet} object.
+#' @param value a matrix of class \code{"numeric"}
+#' 
+#' @author Davis McCarthy
+#' @export
+#' @aliases norm_tpm norm_tpm,SCESet-method norm_tpm<-,SCESet,matrix-method
+#' 
+#' @examples
+#' \dontrun{
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' example_sceset <- newSCESet(countData = sc_example_counts)
+#' norm_tpm(example_sceset)
+#' }
+norm_tpm.SCESet <- function(object) {
+    object@assayData$norm_tpm
+}
+
+#' @name norm_tpm
+#' @rdname norm_tpm
+#' @export
+#' @aliases norm_tpm,SCESet-method
+setMethod("norm_tpm", signature(object = "SCESet"), norm_tpm.SCESet)
+
+#' @name norm_tpm<-
+#' @rdname norm_tpm
+#' @exportMethod "norm_tpm<-"
+#' @aliases norm_tpm<-,SCESet,matrix-method
+setReplaceMethod("norm_tpm", signature(object = "SCESet", value = "matrix"),
+                 function(object, value) {
+                     object@assayData$norm_tpm <- value
                      validObject(object)
                      object
                  })
@@ -805,15 +909,71 @@ cpm.SCESet <- function(object) {
 #' @rdname cpm
 #' @export
 #' @aliases cpm,SCESet-method
-setMethod("cpm", signature(object="SCESet"), cpm.SCESet)
+setMethod("cpm", signature(object = "SCESet"), cpm.SCESet)
 
 #' @name cpm<-
 #' @rdname cpm
 #' @exportMethod "cpm<-"
 #' @aliases cpm<-,SCESet,matrix-method
-setReplaceMethod("cpm", signature(object="SCESet", value="matrix"),
+setReplaceMethod("cpm", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
                      object@assayData$cpm <- value
+                     validObject(object)
+                     object
+                 })
+
+
+################################################################################
+### norm_cpm
+
+#' Accessors for the 'norm_cpm' (normalised counts per million) element of an SCESet object.
+#'
+#' The \code{norm_cpm} element of the arrayData slot in an SCESet object holds
+#' a matrix containing normalised counts-per-million values. It has the same dimensions 
+#' as the 'exprs' and 'counts' elements, which hold the transformed expression 
+#' data and count data, respectively.
+#' 
+#' @usage
+#' \S4method{norm_cpm}{SCESet}(object)
+#'
+#' \S4method{norm_cpm}{SCESet,matrix}(object)<-value
+#'
+#' @docType methods
+#' @name norm_cpm
+#' @rdname norm_cpm
+#' @aliases norm_cpm norm_cpm,SCESet-method norm_cpm<-,SCESet,matrix-method
+#'
+#' @param object a \code{SCESet} object.
+#' @param value a matrix of class \code{"numeric"}
+#' 
+#' @author Davis McCarthy
+#' @export
+#' @aliases norm_cpm norm_cpm,SCESet-method norm_cpm<-,SCESet,matrix-method
+#' 
+#' @examples
+#' \dontrun{
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' example_sceset <- newSCESet(countData=sc_example_counts)
+#' norm_cpm(example_sceset)
+#' }
+norm_cpm.SCESet <- function(object) {
+    object@assayData$norm_cpm
+}
+
+#' @name norm_cpm
+#' @rdname norm_cpm
+#' @export
+#' @aliases norm_cpm,SCESet-method
+setMethod("norm_cpm", signature(object = "SCESet"), norm_cpm.SCESet)
+
+#' @name norm_cpm<-
+#' @rdname norm_cpm
+#' @exportMethod "norm_cpm<-"
+#' @aliases norm_cpm<-,SCESet,matrix-method
+setReplaceMethod("norm_cpm", signature(object = "SCESet", value = "matrix"),
+                 function(object, value) {
+                     object@assayData$norm_cpm <- value
                      validObject(object)
                      object
                  })
@@ -861,13 +1021,13 @@ fpkm.SCESet <- function(object) {
 #' @rdname fpkm
 #' @export
 #' @aliases fpkm,SCESet-method
-setMethod("fpkm", signature(object="SCESet"), fpkm.SCESet)
+setMethod("fpkm", signature(object = "SCESet"), fpkm.SCESet)
 
 #' @name fpkm<-
 #' @rdname fpkm
 #' @exportMethod "fpkm<-"
 #' @aliases fpkm<-,SCESet,matrix-method
-setReplaceMethod("fpkm", signature(object="SCESet", value="matrix"),
+setReplaceMethod("fpkm", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
                      object@assayData$fpkm <- value
                      validObject(object)
@@ -875,6 +1035,60 @@ setReplaceMethod("fpkm", signature(object="SCESet", value="matrix"),
                  })
 
 
+################################################################################
+### norm_fpkm
+
+#' Accessors for the 'norm_fpkm' (normalised fragments per kilobase of exon per million reads mapped) element of an SCESet object.
+#'
+#' The \code{norm_fpkm} element of the arrayData slot in an SCESet object holds
+#' a matrix containing normalised fragments per kilobase of exon per million 
+#' reads mapped (FPKM) values. It has the same dimensions as the 'exprs' and 
+#' 'counts' elements, which hold the transformed expression data and count data, 
+#' respectively.
+#' 
+#' @usage
+#' \S4method{norm_fpkm}{SCESet}(object)
+#'
+#' \S4method{norm_fpkm}{SCESet,matrix}(object)<-value
+#'
+#' @docType methods
+#' @name norm_fpkm
+#' @rdname norm_fpkm
+#' @aliases norm_fpkm norm_fpkm,SCESet-method norm_fpkm<-,SCESet,matrix-method
+#'
+#' @param object a \code{SCESet} object.
+#' @param value a matrix of class \code{"numeric"}
+#' 
+#' @author Davis McCarthy
+#' @export
+#' 
+#' @examples
+#' \dontrun{
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' example_sceset <- newSCESet(countData = sc_example_counts)
+#' norm_fpkm(example_sceset)
+#' }
+norm_fpkm.SCESet <- function(object) {
+    object@assayData$norm_fpkm
+}
+
+#' @name norm_fpkm
+#' @rdname norm_fpkm
+#' @export
+#' @aliases norm_fpkm,SCESet-method
+setMethod("norm_fpkm", signature(object = "SCESet"), norm_fpkm.SCESet)
+
+#' @name norm_fpkm<-
+#' @rdname norm_fpkm
+#' @exportMethod "norm_fpkm<-"
+#' @aliases norm_fpkm<-,SCESet,matrix-method
+setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
+                 function(object, value) {
+                     object@assayData$norm_fpkm <- value
+                     validObject(object)
+                     object
+                 })
 
 
 ################################################################################

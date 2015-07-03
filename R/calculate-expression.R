@@ -9,24 +9,34 @@
 #' @param effective_length vector of class \code{"numeric"} providing the 
 #' effective length for each feature in the \code{SCESet} object
 #' @param calc_from character string indicating whether to compute TPM from 
-#' \code{"counts"} or \code{"fpkm"}. Default is to use \code{"counts"}, in which 
-#' case the \code{effective_length} argument must be supplied.
+#' \code{"counts"}, \code{"norm_counts"}, \code{"fpkm"} or \code{"norm_fpkm"}. 
+#' Default is to use \code{"counts"}, in which case the \code{effective_length} 
+#' argument must be supplied.
 #' 
 #' @return Matrix of TPM values.
-#' 
+#' @export
 #' @examples
 #' \dontrun{
 #' tpm(object) <- calculateTPM(object, effective_length, calc_from="counts")
 #' }
-calculateTPM <- function(object, effective_length=NULL, calc_from="counts") {
-    calc_from <- match.arg(calc_from, c("counts", "fpkm"), several.ok=FALSE)
-    if( calc_from=="fpkm" )
-        tpm_to_add <- .fpkmToTpm(fpkm(object))
-    else {
-        if( is.null(effective_length) )
+calculateTPM <- function(object, effective_length = NULL, calc_from = "counts") {
+    if ( !is(object, "SCESet"))
+        stop("object must be an SCESet")
+    ## Check that arguments are correct
+    calc_from <- match.arg(calc_from, c("counts", "norm_counts", "fpkm", 
+                                        "norm_fpkm"), several.ok = FALSE)
+    if ( calc_from == "counts" || calc_from == "norm_counts" ) {
+        if ( is.null(effective_length) )
             stop("effective_length argument is required if computing TPM from counts")
-        tpm_to_add <- .countToTpm(counts(object), effective_length)
     }
+    ## Compute values to return
+    tpm_to_add <- switch(calc_from,
+                         counts = .countToTpm(counts(object), effective_length),
+                         norm_counts = .countToTpm(norm_counts(object), 
+                                                    effective_length),
+                         fpkm = .fpkmToTpm(fpkm(object)),
+                         norm_fpkm = .fpkmToTpm(norm_fpkm(object)))
+    
     ## Return TPM values
     tpm_to_add
 }
@@ -42,12 +52,15 @@ calculateTPM <- function(object, effective_length=NULL, calc_from="counts") {
 #' effective length for each feature in the \code{SCESet} object
 #' 
 #' @return Matrix of FPKM values.
-#' 
+#' @export
 #' @examples
 #' \dontrun{
 #' fpkm(object) <- calculateFPKM(object, effective_length)
 #' }
 calculateFPKM <- function(object, effective_length) {
+    if ( !is(object, "SCESet"))
+        stop("object must be an SCESet")
+    ## Compute values to add
     fpkm_to_add <- .countToFpkm(counts(object), effective_length)
     ## Return matrix of FPKM values
     fpkm_to_add
@@ -58,18 +71,26 @@ calculateFPKM <- function(object, effective_length) {
 .countToTpm <- function(counts, eff_len) {
     ## Expecting a count matrix of nfeatures x ncells
     ## can't have any zero counts, so expect to apply offset
-    rate <- log(counts) - log(eff_len)
+    counts0 <- counts
+    counts0[counts == 0] <- NA
+    rate <- log(counts0) - log(eff_len)
     denom <- log(colSums(exp(rate)))
-    exp( t(t(rate) - denom) + log(1e6) )
+    out <- exp( t(t(rate) - denom) + log(1e6) )
+    out[is.na(out)] <- 0
+    out
 }
 
 .countToFpkm <- function(counts, eff_len) {
     ## Expecting a count matrix of nfeatures x ncells
-    ## can't have any zero counts, so expect to apply offset
+    ## Need to be careful with zero counts
+    counts0 <- counts
+    counts0[counts == 0] <- NA
     N <- colSums(counts)
-    logfpkm <- log(counts) + log(1e9) - log(eff_len)
+    logfpkm <- log(counts0) + log(1e9) - log(eff_len)
     logfpkm <- t(t(logfpkm) - log(N))
-    exp( logfpkm )
+    out <- exp( logfpkm )
+    out[is.na(out)] <- 0
+    out
 }
 
 .fpkmToTpm <- function(fpkm) {

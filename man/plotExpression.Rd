@@ -13,7 +13,7 @@ plotExpression(object, ...)
 
 plotExpressionSCESet(object, features, x, use_as_exprs = "exprs",
   colour_by = NULL, shape_by = NULL, size_by = NULL, ncol = 2,
-  xlab = NULL, show_median = TRUE, show_violin = TRUE)
+  xlab = NULL, show_median = TRUE, show_violin = TRUE, theme_size = 10)
 
 plotExpressionDefault(object, aesth, ncol = 2, xlab = NULL, ylab = NULL,
   show_median = TRUE, show_violin = TRUE)
@@ -68,6 +68,9 @@ used as the x-axis label}
 
 \item{show_violin}{logical, show a violin plot for the distribution
 for each group on the plot}
+
+\item{theme_size}{numeric scalar giving default font size for plotting theme
+(default is 10)}
 
 \item{aesth}{an \code{aes} object to use in the call to \code{\link{ggplot}}.}
 
