@@ -1471,7 +1471,7 @@ fromCellDataSet <- function(cds, use_exprs_as = "tpm", logged=FALSE) {
     if(pkgAvail) {
         if(!is(cds,'CellDataSet')) stop('cds must be of type CellDataSet from package monocle')
         exprsData <- countData <- NULL
-        use_exprs_as <- match.arg(use_as_exprs, c("exprs", "tpm", "fpkm", "counts"))
+        use_exprs_as <- match.arg(use_exprs_as, c("exprs", "tpm", "fpkm", "counts"))
         exprsData <- countData <- tpmData <- fpkmData <- NULL
         if(use_exprs_as == "exprs") {
           exprsData <- exprs(cds)
@@ -1486,7 +1486,7 @@ fromCellDataSet <- function(cds, use_exprs_as = "tpm", logged=FALSE) {
         sce <- newSCESet(exprsData = exprsData, tpmData = tpmData,
                          fpkmData = fpkmData, countData = countData,
                          phenoData=phenoData(cds),
-                         featureData = featureData(cds), countData = countData,
+                         featureData = featureData(cds),
                          lowerDetectionLimit = cds@lowerDetectionLimit,
                          logged = logged)
         return( sce )    
