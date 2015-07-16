@@ -4,12 +4,13 @@
 \alias{toCellDataSet}
 \title{Convert an \code{SCESet} to a \code{CellDataSet}}
 \usage{
-toCellDataSet(sce, useExpression = TRUE)
+toCellDataSet(sce, use_as_exprs = "exprs")
 }
 \arguments{
 \item{sce}{An \code{SCESet} object}
 
-\item{useExpression}{If TRUE (default), `exprs(sce)` is used as the `exprsData`, otherwise `counts(sce)`}
+\item{use_as_expr}{What should \code{exprs(cds)} be mapped from in the \code{SCESet}? Should be
+one of "exprs", "tpm", "fpkm", "counts"}
 }
 \value{
 An object of class \code{SCESet}

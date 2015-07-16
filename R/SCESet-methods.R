@@ -1423,24 +1423,25 @@ setReplaceMethod("featDist", signature(object="SCESet", value="matrix"),
 #' Convert an \code{SCESet} to a \code{CellDataSet}
 #' 
 #' @param sce An \code{SCESet} object 
-#' @param useExpression If TRUE (default), `exprs(sce)` is used as the `exprsData`, otherwise `counts(sce)`
-#' 
+#' @param use_as_expr What should \code{exprs(cds)} be mapped from in the \code{SCESet}? Should be 
+#' one of "exprs", "tpm", "fpkm", "counts"
+#'
 #' @export
 #' @importClassesFrom monocle CellDataSet
 #' @rdname toCellDataSet
 #' @name toCellDataSet
 #' @return An object of class \code{SCESet}
-toCellDataSet <- function(sce, useExpression=TRUE) {
+toCellDataSet <- function(sce, use_as_exprs = "exprs") {
     pkgAvail <- requireNamespace("monocle", character.only=TRUE) 
     if(pkgAvail) {
         if(!is(sce,'SCESet')) stop('sce must be of type SCESet')
         exprsData <- NULL
-        if(useExpression) {
-            exprsData <- exprs(sce)
-        } else {
-            exprsData <- counts(sce)
-        }
-        
+        use_as_exprs <- match.arg(use_as_exprs, c("exprs", "tpm", "fpkm", "counts"))
+        exprsData <- switch(use_as_exprs,
+                            exprs = exprs(sce),
+                            tpm = tpm(sce),
+                            fpkm = fpkm(sce),
+                            counts = counts(sce))
         cds <- monocle::newCellDataSet(exprsData, phenoData=phenoData(sce),
                                        featureData=featureData(sce),
                                        lowerDetectionLimit=sce@lowerDetectionLimit)
@@ -1453,8 +1454,8 @@ toCellDataSet <- function(sce, useExpression=TRUE) {
 #' Convert a \code{CellDataSet} to an \code{SCESet}
 #' 
 #' @param cds A \code{CellDataSet} from the \code{monocle} package
-#' @param useExpression logical If TRUE (default), `exprsData` is mapped to 
-#' `exprs(sce)`, otherwise `counts(sce)`
+#' @param use_exprs_as What should \code{exprs(cds)} be mapped to in the \code{SCESet}? Should be 
+#' one of "exprs", "tpm", "fpkm", "counts"
 #' @param logged logical, if a value is supplied for the exprsData argument, are
 #'  the expression values already on the log2 scale, or not?
 #' 
@@ -1465,21 +1466,29 @@ toCellDataSet <- function(sce, useExpression=TRUE) {
 #' @rdname fromCellDataSet
 #' @name fromCellDataSet
 #' @return An object of class \code{SCESet}
-fromCellDataSet <- function(cds, useExpression=TRUE, logged=FALSE) {
+fromCellDataSet <- function(cds, use_exprs_as = "tpm", logged=FALSE) {
     pkgAvail <- requireNamespace("monocle", character.only=TRUE) 
     if(pkgAvail) {
         if(!is(cds,'CellDataSet')) stop('cds must be of type CellDataSet from package monocle')
         exprsData <- countData <- NULL
-        if(useExpression) {
-            exprsData <- exprs(cds)
+        use_exprs_as <- match.arg(use_as_exprs, c("exprs", "tpm", "fpkm", "counts"))
+        exprsData <- countData <- tpmData <- fpkmData <- NULL
+        if(use_exprs_as == "exprs") {
+          exprsData <- exprs(cds)
+        } else if(use_exprs_as == "tpm") {
+          tpmData <- exprs(cds)
+        } else if(use_exprs_as == "fpkm") {
+          fpkmData <- exprs(cds)
         } else {
-            countData <- exprs(cds)
+          countData <- exprs(cds)
         }
-        
-        sce <- newSCESet(exprsData=exprsData, phenoData=phenoData(cds),
-                         featureData=featureData(cds), countData=countData,
-                         lowerDetectionLimit=cds@lowerDetectionLimit,
-                         logged=logged)
+
+        sce <- newSCESet(exprsData = exprsData, tpmData = tpmData,
+                         fpkmData = fpkmData, countData = countData,
+                         phenoData=phenoData(cds),
+                         featureData = featureData(cds), countData = countData,
+                         lowerDetectionLimit = cds@lowerDetectionLimit,
+                         logged = logged)
         return( sce )    
     }
     else 

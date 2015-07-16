@@ -4,13 +4,13 @@
 \alias{fromCellDataSet}
 \title{Convert a \code{CellDataSet} to an \code{SCESet}}
 \usage{
-fromCellDataSet(cds, useExpression = TRUE, logged = FALSE)
+fromCellDataSet(cds, use_exprs_as = "tpm", logged = FALSE)
 }
 \arguments{
 \item{cds}{A \code{CellDataSet} from the \code{monocle} package}
 
-\item{useExpression}{logical If TRUE (default), `exprsData` is mapped to
-`exprs(sce)`, otherwise `counts(sce)`}
+\item{use_exprs_as}{What should \code{exprs(cds)} be mapped to in the \code{SCESet}? Should be
+one of "exprs", "tpm", "fpkm", "counts"}
 
 \item{logged}{logical, if a value is supplied for the exprsData argument, are
  the expression values already on the log2 scale, or not?}
