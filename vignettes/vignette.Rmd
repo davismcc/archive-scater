@@ -39,7 +39,8 @@ ahead of downstream statistical analysis and modeling.
 Future versions of `scater` may also incorporate:
 
 * Methods for identifying cells at different stages of the cell cycle;
-* Differential testing methods for finding features with differences in behaviour between experimental conditions.
+* Differential testing methods for finding features with differences in 
+behaviour between experimental conditions.
 
 To get up and running as quickly as possible, see the [Quick Start](#quickstart)
 section below. For see the various in-depth sections on various aspects of the
@@ -636,9 +637,21 @@ PCA plot above.)
 Based on PCA or dimensionality reduction plots we may identify outlier cells
 and, if we wish, filter them out of the analysis.
 
+We can also use t-SNE to visualise cells in a reduced-dimension space:
+
+```{r plot-tsne-colby-shapeby, fig.height=5.5}
+plotTSNE(example_sceset, colour_by = "Treatment", shape_by = "Mutation_Status",
+         perplexity = 8)
+```
+
+
+
 #### Filtering cells
 
-On this example dataset there are no
+On this example dataset there are no cells that need filtering, but the 
+subsetting capabilities of `scater` make it easy to filter out unwanted cells. 
+Column subsetting selects cells, while row subsetting selects features (genes 
+or transcripts).
 
 ### QC of experimental variables
 

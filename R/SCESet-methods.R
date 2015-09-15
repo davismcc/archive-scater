@@ -1423,7 +1423,7 @@ setReplaceMethod("featDist", signature(object="SCESet", value="matrix"),
 #' Convert an \code{SCESet} to a \code{CellDataSet}
 #' 
 #' @param sce An \code{SCESet} object 
-#' @param use_as_expr What should \code{exprs(cds)} be mapped from in the \code{SCESet}? Should be 
+#' @param use_as_exprs What should \code{exprs(cds)} be mapped from in the \code{SCESet}? Should be 
 #' one of "exprs", "tpm", "fpkm", "counts"
 #'
 #' @export
@@ -1454,7 +1454,7 @@ toCellDataSet <- function(sce, use_as_exprs = "exprs") {
 #' Convert a \code{CellDataSet} to an \code{SCESet}
 #' 
 #' @param cds A \code{CellDataSet} from the \code{monocle} package
-#' @param use_exprs_as What should \code{exprs(cds)} be mapped to in the \code{SCESet}? Should be 
+#' @param use_as_exprs What should \code{exprs(cds)} be mapped to in the \code{SCESet}? Should be 
 #' one of "exprs", "tpm", "fpkm", "counts"
 #' @param logged logical, if a value is supplied for the exprsData argument, are
 #'  the expression values already on the log2 scale, or not?
@@ -1466,7 +1466,7 @@ toCellDataSet <- function(sce, use_as_exprs = "exprs") {
 #' @rdname fromCellDataSet
 #' @name fromCellDataSet
 #' @return An object of class \code{SCESet}
-fromCellDataSet <- function(cds, use_exprs_as = "tpm", logged=FALSE) {
+fromCellDataSet <- function(cds, use_as_exprs = "tpm", logged=FALSE) {
     pkgAvail <- requireNamespace("monocle", character.only=TRUE) 
     if(pkgAvail) {
         if(!is(cds,'CellDataSet')) stop('cds must be of type CellDataSet from package monocle')

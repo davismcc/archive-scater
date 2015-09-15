@@ -9,7 +9,7 @@ toCellDataSet(sce, use_as_exprs = "exprs")
 \arguments{
 \item{sce}{An \code{SCESet} object}
 
-\item{use_as_expr}{What should \code{exprs(cds)} be mapped from in the \code{SCESet}? Should be
+\item{use_as_exprs}{What should \code{exprs(cds)} be mapped from in the \code{SCESet}? Should be
 one of "exprs", "tpm", "fpkm", "counts"}
 }
 \value{
