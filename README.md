@@ -14,6 +14,15 @@ count data and more focused downstream modelling tools such as
 [limma](http://www.bioconductor.org/packages/release/bioc/html/limma.html) and
 so on.
 
+Briefly, `scater` enables the following:
+1. Automated computation of QC metrics
+1. Transcript quantification from read data with pseudo-alignment
+2. Data format standardisation
+3. Rich visualisations for exploratory analysis
+4. Seamless integration into the Bioconductor universe
+5. Simple normalisation methods
+
+See below for information about installation, getting started and highlights of the package.
 
 ## Installation
 This package currently lives on GitHub, so I recommend using Hadley Wickham's
@@ -26,7 +35,7 @@ install.packages("devtools")
 devtools::install_github("davismcc/scater", build_vignettes = TRUE)
 ```
 
-Using the most recent version of R is strongly recommended (R 3.2.0 at the time
+Using the most recent version of R is strongly recommended (R 3.2.2 at the time
 of writing). Effort has been made to ensure the package works with R >3.0, but
 the package has not been tested with R <3.1.1.
 
@@ -92,11 +101,24 @@ The diagram below provised an overview of the pre-processing and QC workflow pos
 
 ## Highlights
 
-The `scater` package allows you to do some neat things relatively quickly. Some highlights are shown below with example code and screenshots. For details of how to use these functions, please consult the **vignette** and **package documentation**.  The plots shown use the example data included with the package (for which there is no interesting structure) and as shown require only one or two lines of code to generate.
+The `scater` package allows you to do some neat things relatively quickly. Some highlights are shown below with example code and screenshots.
+
+1. Automated computation of QC metrics
+1. Transcript quantification from read data with pseudo-alignment
+2. Data format standardisation
+3. Rich visualisations for exploratory analysis
+4. Seamless integration into the Bioconductor universe
+5. Simple normalisation methods
+
+For details of how to use these functions, please consult the **vignette** and **package documentation**.  The plots shown use the example data included with the package (for which there is no interesting structure) and as shown require only one or two lines of code to generate.
 
 ### Automatic computation of QC metrics
 
 Use the `calculateQCMetrics` function to compute many metrics useful for gene/transcript-level and cell-level QC. Metrics computed include number of genes expressed per cell, percentage of expression from control genes (e.g. ERCC spike-ins) and many more.
+
+### Transcript quantification with `kallisto`
+
+The `runKallisto` function provides a wrapper to the [`kallisto`](http://pachterlab.github.io/kallisto) software for quantifying transcript abundance from FASTQ files using a pseudo-alignment approach. This new approach is extremely fast. With `readKallisto`, transcript quantities can be read into a data object in `R`.
 
 ### Default `plot` for an SCESet object
 
