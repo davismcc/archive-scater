@@ -15,6 +15,7 @@ count data and more focused downstream modelling tools such as
 so on.
 
 Briefly, `scater` enables the following:
+
 1. Automated computation of QC metrics
 1. Transcript quantification from read data with pseudo-alignment
 2. Data format standardisation
