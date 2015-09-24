@@ -13,7 +13,7 @@
 plotReducedDim(object, ...)
 
 plotReducedDim.default(df_to_plot, ncomponents = 2, colour_by = NULL,
-  shape_by = NULL, size_by = NULL, percentVar = NULL)
+  shape_by = NULL, size_by = NULL, percentVar = NULL, theme_size = 10)
 
 plotReducedDim.SCESet(object, ncomponents = 2, colour_by = NULL,
   shape_by = NULL, size_by = NULL, theme_size = 10)

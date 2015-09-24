@@ -28,7 +28,8 @@ Imports:
     reshape2,
     rhdf5,
     rjson,
-    Rtsne
+    Rtsne,
+    viridis
 Suggests: 
     BiocStyle,
     cowplot,

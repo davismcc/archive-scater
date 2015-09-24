@@ -613,7 +613,7 @@ top principal components can be added to the `reducedDimension` slot:
 ```{r plot-pca-4comp-colby-shapeby-save-pcs}
 example_sceset <- plotPCA(example_sceset, ncomponents = 4,
                           colour_by = "Treatment", shape_by = "Mutation_Status",
-                          return_SCESet = TRUE)
+                          return_SCESet = TRUE, theme_size = 12)
 head(reducedDimension(example_sceset))
 ```
 
@@ -683,14 +683,20 @@ experimental and QC variables of interest. The function ranks the principal
 components in decreasing order of $R^2$ from a linear model regressing PC value
 against the variable of interest.
 
-The default behaviour is to produce a pairs plot of the top five PCs.
+We can also produce a pairs plot of potential explanatory variables ranked by
+their median percentage of expression variance explained in a marginal (only 
+one explanatory variable) linear model.
 
-```{r plot-qc-find-pcs-pairs}
-plotQC(example_sceset, type = "find-pcs", variable = "coverage")
-plotQC(example_sceset, type = "find-pcs", variable = "Cell_Cycle")
-plotQC(example_sceset, type = "find-pcs", variable = "Treatment")
+```{r plot-qc-pairs-pc}
+plotQC(example_sceset, type = "expl", method = "pairs")
 ```
 
+In this small dataset depth and coverage explain a very large proportion of the
+variance in feature expression. The proportion of variance that they explain for a
+real dataset should be much smaller (say 1-5%).
+
+The default is to plot six most-associated principal components against the 
+variable of interest.
 
 ```{r plot-qc-find-pcs-pcs-vs-vars, fig.width=8, fig.height=7}
 p1 <- plotQC(example_sceset, type = "find-pcs", variable = "coverage",
@@ -702,10 +708,17 @@ plotQC(example_sceset, type = "find-pcs", variable = "Treatment",
        plot_type = "pcs-vs-vars")
 ```
 
+An alternative is to produce a pairs plot of the top five PCs.
 
-In this small dataset depth and coverage explain a very large proportion of the
-variance in feature expression. The proportion of variance that they explain for a
-real dataset should be much smaller (say 1-5%).
+```{r plot-qc-find-pcs-pairs}
+plotQC(example_sceset, type = "find-pcs", variable = "coverage",
+       plot_type = "pairs-pcs")
+plotQC(example_sceset, type = "find-pcs", variable = "Cell_Cycle",
+       plot_type = "pairs-pcs")
+plotQC(example_sceset, type = "find-pcs", variable = "Treatment",
+       plot_type = "pairs-pcs", theme_size = 20)
+```
+
 
 Combined with the excellent subsetting capabilities of the `SCESet` class, we
 have convenient tools for conducting QC and pre-processing (e.g. filtering) data

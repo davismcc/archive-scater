@@ -4,7 +4,8 @@
 \alias{findImportantPCs}
 \title{Find most important principal components for a given variable}
 \usage{
-findImportantPCs(object, variable = "coverage", plot_type = "pcs-vs-vars")
+findImportantPCs(object, variable = "coverage", plot_type = "pcs-vs-vars",
+  theme_size = 10)
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and
@@ -18,6 +19,8 @@ Default, \code{"pairs-pcs"} produces a pairs plot for the top 5 PCs based on
 their R-squared with the variable of interest. A value of
 \code{"pcs-vs-vars"} produces plots of the top PCs against the variable of
 interest.}
+
+\item{theme_size}{numeric scalar providing base font size for ggplot theme.}
 }
 \description{
 Find most important principal components for a given variable

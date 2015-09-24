@@ -430,6 +430,7 @@ a lower count threshold of 0.")
 #' their R-squared with the variable of interest. A value of 
 #' \code{"pcs-vs-vars"} produces plots of the top PCs against the variable of 
 #' interest.
+#' @param theme_size numeric scalar providing base font size for ggplot theme.
 #'
 #' @details Plot the top 5 most important PCs for a given variable. Importance 
 #' here is defined as the R-squared value from a linear model regressing each PC
@@ -439,6 +440,7 @@ a lower count threshold of 0.")
 #' and "high" (upper quartile), and these levels are used as a factor in the 
 #' linear model. Cells are coloured by their cluster in the plot.
 #'  
+#' @import viridis
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -450,7 +452,7 @@ a lower count threshold of 0.")
 #' findImportantPCs(example_sceset, variable="coverage")
 #' 
 findImportantPCs <- function(object, variable="coverage", 
-                             plot_type = "pcs-vs-vars") {
+                             plot_type = "pcs-vs-vars", theme_size = 10) {
     pca <- prcomp(t(exprs(object)), retx = TRUE, center = TRUE, scale. = TRUE)
     colnames(pca$x) <- paste("component", 1:ncol(pca$x))
     if (!(variable %in% colnames(pData(object))))
@@ -467,54 +469,17 @@ findImportantPCs <- function(object, variable="coverage",
     if ( typeof_x == "discrete" ) {
         ## If x is a discrete variable
         x_int <- as.factor(x)
-        ## Define colours for plotting
-        colour_pal <- c("#1F77B499", "#FF7F0E99", "#2CA02C99", "#D6272899", 
-                        "#9467BD99", "#8C564B99", "#E377C299", "#7F7F7F99", 
-                        "#BCBD2299", "#17BECF99")
         ## Compute R-squared for each PC
         design <- model.matrix(~x_int)
-        pca_r_squared <- .getRSquared(t(pca$x[!x_na,]), design)
-        ## Compute ave silhouette widths
-        # ave_sil_width <- .calculateSilhouetteWidth(x_int, pca$x[!x_na,])
     } else {
-        ## Define plotting colours
-        colour_pal <- c("#F7FCF099", "#CCEBC599", "#7BCCC499", "#2B8CBE99",
-                        "#08408199")
         ## If x is a continuous variable - turn into an ordinal variable with three
         ## values - low, medium and high - or five values based on quintiles
-        x_int_1 <- cut(x, c(min(x) - 1, quantile(x, probs = c(0.2, 0.4, 0.6, 0.8)), 
+        x_int <- cut(x, c(min(x) - 1, quantile(x, probs = c(0.2, 0.4, 0.6, 0.8)), 
                                     max(x) + 1), right = TRUE)
-        x_int_1 <- as.integer(x_int_1)
-        x_int_2 <- cut(x, c(min(x) - 1, quantile(x, probs = c(0.25, 0.75)), 
-                          max(x) + 1), right = TRUE)
-        x_int_2 <- as.integer(x_int_2)
-        ## Compute R-squared for each PC
-        design1 <- model.matrix(~as.factor(x_int_1))
-        design2 <- model.matrix(~as.factor(x_int_2))
-        pca_r_squared1 <- .getRSquared(t(pca$x[!x_na,]), design1)
-        sum_top5_1 <- sum(sort(pca_r_squared1, decreasing = TRUE)[1:5])
-        pca_r_squared2 <- .getRSquared(t(pca$x[!x_na,]), design1)
-        sum_top5_2 <- sum(sort(pca_r_squared2, decreasing = TRUE)[1:5])
-        ## Compute ave silhouette widths
-#         ave_sil_width_1 <- .calculateSilhouetteWidth(x_int_1, pca$x[!x_na,])
-#         sum_top5_1 <- sum(sort(ave_sil_width_1, decreasing = TRUE)[1:5])
-#         ave_sil_width_2 <- .calculateSilhouetteWidth(x_int_2, pca$x[!x_na,])
-#         sum_top5_2 <- sum(sort(ave_sil_width_2, decreasing = TRUE)[1:5])
-        ## see which number of clusters gives a larger sum for top 5 sil widths
-        if ( sum_top5_1 > sum_top5_2) {
-            # ave_sil_width <- ave_sil_width_1
-            pca_r_squared <- pca_r_squared1
-            x_int <- x_int_1
-        } else {
-            # ave_sil_width <- ave_sil_width_2
-            pca_r_squared <- pca_r_squared1
-            colour_pal <- colour_pal[c(1, 3, 5)]
-            x_int <- x_int_2
-        }
         design <- model.matrix(~x)
-        pca_r_squared <- .getRSquared(t(pca$x[!x_na,]), design)
-        x_int <- x_int_1
     }
+    ## Get R-squared for each PC for the variable of interest
+    pca_r_squared <- .getRSquared(t(pca$x[!x_na,]), design)
     ## Tidy up names and choose top 5 most important PCs for the variable
     # names(ave_sil_width) <- colnames(pca$x)
     names(pca_r_squared) <- colnames(pca$x)
@@ -523,13 +488,43 @@ findImportantPCs <- function(object, variable="coverage",
                                       digits = 2, format = "fg", flag = "#"), ")")
     top5 <- order(pca_r_squared, decreasing = TRUE)[1:5]
     if ( plot_type == "pairs-pcs" ) {
-        ## Define colours for points
-        Col <- rep("firebrick", nrow(pca$x))
-        Col[!x_na] <- colour_pal[x_int]
-        ## Plot these bad boys
-        ## Get rid of any NA variable columns of PC so that top ordering aligns
-        par(bty = "n", col.lab = "gray60")
-        pairs(pca$x[, top5], pch = 21, col = "gray70", bg = Col)
+#         ## Define colours for points
+#         Col <- rep("firebrick", nrow(pca$x))
+#         Col[!x_na] <- colour_pal[x_int]
+#         ## Plot these bad boys
+#         ## Get rid of any NA variable columns of PC so that top ordering aligns
+#         par(bty = "n", col.lab = "gray60")
+#         pairs(pca$x[, top5], pch = 21, col = "gray70", bg = Col)
+        colour_by <- pData(object)[, variable]
+        ## Generate a larger data.frame for pairs plot
+        df_to_expand <- pca$x[, top5]
+#         colnames(df_to_expand) <- colnames(pca$x)[, top5]
+#         rownames(df_to_expand) <- sampleNames(object)
+        names(df_to_expand) <- colnames(df_to_expand)
+        gg1 <- .makePairs(df_to_expand)
+        ## new data frame 
+        df_to_plot_big <- data.frame(gg1$all, colour_by)
+        # colnames(df_to_plot_big)[-c(1:4)] <- get("variable")
+        ## pairs plot
+        plot_out <- ggplot(df_to_plot_big, aes_string(x = "x", y = "y")) + 
+            geom_point(aes_string(fill = "colour_by"), colour = "gray40", 
+                       shape = 21, alpha = 0.65) +
+            facet_grid(xvar ~ yvar, scales = "free") + 
+            stat_density(aes_string(x = "x", 
+                                    y = "(..scaled.. * diff(range(x)) + min(x))"),
+                         data = gg1$densities, position = "identity", 
+                         colour = "grey20", geom = "line") +
+            xlab("") + 
+            ylab("") +
+            theme_bw(theme_size)
+        if ( typeof_x == "discrete" ) {
+            plot_out <- plot_out + 
+                ggthemes::scale_fill_tableau(name = get("variable"))
+        } else {
+            plot_out <- plot_out +
+                viridis::scale_fill_viridis(name = get("variable"))
+        }
+        return(plot_out)
     } else {
         top6 <- order(pca_r_squared, decreasing = TRUE)[1:6]
         df_to_plot <- reshape2::melt(pca$x[, top6])
@@ -537,10 +532,10 @@ findImportantPCs <- function(object, variable="coverage",
         df_to_plot$xvar <- rep(xvar, 6)
         pcs_vars_plot <- ggplot(df_to_plot, aes_string(x = "xvar", y = "value"),
                                 colour = "black") +
-            facet_wrap(~Var2, nrow = 3, scales = "free_y") +
+            facet_wrap(~ Var2, nrow = 3, scales = "free_y") +
             xlab(variable) +
             ylab("Principal component value") + 
-            theme_bw()
+            theme_bw(theme_size)
         if ( typeof_x == "discrete") {
             pcs_vars_plot <- pcs_vars_plot + 
                 geom_violin(fill = "aliceblue", colour = "gray60", 
@@ -574,14 +569,15 @@ findImportantPCs <- function(object, variable="coverage",
     (ssr/sst)
 }
 
-.calculateSilhouetteWidth <- function(x, mat) {
-    ave_sil_width <- rep(NA, ncol(mat))
-    for (i in 1:ncol(mat)) {
-        si <- cluster::silhouette(x, dist(mat[,i]))
-        ave_sil_width[i] <- summary(si)$avg.width
-    }
-    ave_sil_width
-}
+# 
+# .calculateSilhouetteWidth <- function(x, mat) {
+#     ave_sil_width <- rep(NA, ncol(mat))
+#     for (i in 1:ncol(mat)) {
+#         si <- cluster::silhouette(x, dist(mat[,i]))
+#         ave_sil_width[i] <- summary(si)$avg.width
+#     }
+#     ave_sil_width
+# }
 
 # Range of Silhouette Width    Interpretation
 # 0.71-1.0	A strong structure has been found

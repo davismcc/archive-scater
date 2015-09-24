@@ -368,6 +368,8 @@ setMethod("plotPCA", signature("SCESet"),
 .makePairs <- function(data_matrix) {
     ## with thanks to Gaston Sanchez, who posted this code online
     ## https://gastonsanchez.wordpress.com/2012/08/27/scatterplot-matrices-with-ggplot/
+    if ( is.null(names(data_matrix)) )
+        names(data_matrix) <- paste0("row", 1:nrow(data_matrix))
     exp_grid <- expand.grid(x = 1:ncol(data_matrix), y = 1:ncol(data_matrix))
     exp_grid <- subset(exp_grid, x != y)
     all_panels <- do.call("rbind", lapply(1:nrow(exp_grid), function(i) {
@@ -552,13 +554,16 @@ setMethod("plotTSNE", signature("SCESet"),
                           df_to_plot, colour_by = pData(object)[[colour_by]])
                   else
                       df_to_plot <- data.frame(
-                          df_to_plot, colour_by = as.factor(pData(object)[[colour_by]]))
+                          df_to_plot, 
+                          colour_by = as.factor(pData(object)[[colour_by]]))
               }
               if ( !is.null(shape_by) )
-                  df_to_plot <- data.frame(df_to_plot, 
-                                           shape_by = as.factor(pData(object)[[shape_by]]))
+                  df_to_plot <- data.frame(
+                      df_to_plot, 
+                      shape_by = as.factor(pData(object)[[shape_by]]))
               if ( !is.null(size_by) )
-                  df_to_plot <- data.frame(df_to_plot, size_by = pData(object)[[size_by]])
+                  df_to_plot <- data.frame(df_to_plot, 
+                                           size_by = pData(object)[[size_by]])
               
               plot_out <- plotReducedDim.default(df_to_plot, ncomponents, 
                                                  colour_by, shape_by, size_by)
@@ -636,7 +641,8 @@ setMethod("plotTSNE", signature("SCESet"),
 #' 
 #' 
 plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL, 
-                           shape_by=NULL, size_by=NULL, percentVar=NULL) {
+                           shape_by=NULL, size_by=NULL, percentVar=NULL,
+                           theme_size = 10) {
     ## Define plot
     if ( ncomponents > 2 ) {
         ## expanding numeric columns for pairs plot
@@ -661,7 +667,7 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                          colour = "grey20", geom = "line") +
             xlab("") + 
             ylab("") +
-            theme_bw(14)
+            theme_bw(theme_size)
     } else {
         comps <- colnames(df_to_plot)[1:2]
         if ( is.null(percentVar) ) {
@@ -675,7 +681,7 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
             xlab(x_lab) + 
             ylab(y_lab) +
             geom_rug(colour = "gray20", alpha = 0.65) +
-            theme_bw(14)        
+            theme_bw(theme_size)        
     }
     
     ## Apply colour_by, shape_by and size_by variables if defined
@@ -815,7 +821,8 @@ plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
     
     ## Call default method to make the plot
     plot_out <- plotReducedDim.default(df_to_plot, ncomponents, colour_by, 
-                                       shape_by, size_by, percentVar = NULL)
+                                       shape_by, size_by, percentVar = NULL,
+                                       theme_size)
     
     ## Define plotting theme
     if ( library(cowplot, logical.return = TRUE) )
