@@ -14,7 +14,8 @@ plotPCASCESet(object, ntop = 500, ncomponents = 2, colour_by = NULL,
 
 \S4method{plotPCA}{SCESet}(object, ntop = 500, ncomponents = 2,
   colour_by = NULL, shape_by = NULL, size_by = NULL, feature_set = NULL,
-  return_SCESet = FALSE, scale_features = TRUE, draw_plot = TRUE)
+  return_SCESet = FALSE, scale_features = TRUE, draw_plot = TRUE,
+  theme_size = 10)
 }
 \arguments{
 \item{object}{an \code{SCESet} object}

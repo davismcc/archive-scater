@@ -359,9 +359,9 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL,
 setMethod("plotPCA", signature("SCESet"),
           function(object, ntop=500, ncomponents=2, colour_by=NULL, shape_by=NULL, 
                    size_by=NULL, feature_set=NULL, return_SCESet=FALSE, 
-                   scale_features=TRUE, draw_plot = TRUE) {
+                   scale_features=TRUE, draw_plot = TRUE, theme_size = 10) {
               plotPCASCESet(object, ntop, ncomponents, colour_by, shape_by, size_by, 
-                             feature_set, return_SCESet, scale_features, draw_plot)
+                             feature_set, return_SCESet, scale_features, draw_plot, theme_size)
           })
 
 
@@ -478,34 +478,41 @@ setMethod("plotTSNE", signature("SCESet"),
                    draw_plot = TRUE, theme_size = 10, rand_seed = NULL, ...) {
               ##
               if ( !library(Rtsne, logical.return = TRUE) )
-                  stop("This function requires the 'Rtsne' package. Try: install.packages('Rtsne').")
+                  stop("This function requires the 'Rtsne' package. 
+                       Try: install.packages('Rtsne').")
               ## Check arguments are valid
               if ( !is.null(colour_by) ) {
                   if ( !(colour_by %in% varLabels(object)) )
-                      stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)]")
+                      stop("the argument 'colour_by' should specify a column of 
+                           pData(object) [see varLabels(object)]")
               } else {
                   if ( "is_cell_control" %in% varLabels(object) )
                       colour_by <- "is_cell_control"
               }
               if ( !is.null(shape_by) ) {
                   if ( !(shape_by %in% varLabels(object)) )
-                      stop("the argument 'shape_by' should specify a column of pData(object) [see varLabels(object)]")
+                      stop("the argument 'shape_by' should specify a column of 
+                           pData(object) [see varLabels(object)]")
                   if ( nlevels(as.factor(pData(object)[[shape_by]])) > 10 )
-                      stop("when coerced to a factor, 'shape_by' should have fewer than 10 levels")   
+                      stop("when coerced to a factor, 'shape_by' should have 
+                           fewer than 10 levels")   
               } else {
                   if ( "is_cell_control" %in% varLabels(object) )
                       shape_by <- "is_cell_control"
               }
               if ( !is.null(size_by) ) {
                   if ( !(size_by %in% varLabels(object)) )
-                      stop("the argument 'size_by' should specify a column of pData(object) [see varLabels(object)]")
+                      stop("the argument 'size_by' should specify a column of 
+                           pData(object) [see varLabels(object)]")
               }
               if ( !is.null(feature_set) && typeof(feature_set) == "character" ) {
                   if ( !(all(feature_set %in% featureNames(object))) )
-                      stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
+                      stop("when the argument 'feature_set' is of type character,
+                           all features must be in featureNames(object)")
               }
               
-              ## Define features to use: either ntop, or if a set of features is defined, then those
+              ## Define features to use: either ntop, or if a set of features is
+              ## defined, then those
               if ( is.null(feature_set) ) {
                   rv <- matrixStats::rowVars(exprs(object))
                   feature_set <- order(rv, decreasing = TRUE)[seq_len(min(ntop, length(rv)))]
