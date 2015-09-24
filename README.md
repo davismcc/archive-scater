@@ -53,8 +53,8 @@ below should help with package installations.
 CRAN packages:
 
 ```{r}
-install.packages(c("data.table", "ggplot2", "ggthemes", "knitr", "matrixStats", "MASS",
-                "plyr", "reshape2", "rjson", "testthat"))
+install.packages(c("cowplot", "data.table", "ggplot2", "ggthemes", "knitr",
+    "matrixStats", "MASS", "plyr", "reshape2", "rjson", "Rtsne", "testthat"))
 ```
 
 Bioconductor packages:
