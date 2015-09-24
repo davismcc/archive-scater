@@ -428,6 +428,9 @@ setMethod("plotPCA", signature("SCESet"),
 #' (default is 10).
 #' @param rand_seed (optional) numeric scalar that can be passed to 
 #' \code{set.seed} to make plots reproducible.
+#' @param perplexity numeric scalar value defining the "perplexity parameter" 
+#' for the t-SNE plot. Passed to \code{\link[Rtsne]{Rtsne}} - see documentation
+#' for that package for more details.
 #' @param ... further arguments passed to \code{\link[Rtsne]{Rtsne}}
 #' 
 #' @details The function \code{\link[Rtsne]{Rtsne}} is used internally to 
@@ -439,8 +442,11 @@ setMethod("plotPCA", signature("SCESet"),
 #' \code{scale_features} argument), added to the object and PCA is done using 
 #' these new standardised expression values.
 #'
+#' @return If \code{return_SCESet} is \code{TRUE}, then the function returns an
+#' \code{SCESet} object, otherwise it returns a \code{ggplot} object.
 #' @name plotTSNE
 #' @aliases plotTSNE plotTSNE,SCESet-method
+#' @import Rtsne
 #' @export
 #' @seealso 
 #' \code{\link[Rtsne]{Rtsne}}
@@ -475,7 +481,8 @@ setMethod("plotTSNE", signature("SCESet"),
           function(object, ntop = 500, ncomponents = 2, colour_by = NULL, 
                    shape_by = NULL, size_by = NULL, feature_set = NULL, 
                    return_SCESet = FALSE, scale_features = TRUE, 
-                   draw_plot = TRUE, theme_size = 10, rand_seed = NULL, ...) {
+                   draw_plot = TRUE, theme_size = 10, rand_seed = NULL, 
+                   perplexity = floor(ncol(object) / 5), ...) {
               ##
               if ( !library(Rtsne, logical.return = TRUE) )
                   stop("This function requires the 'Rtsne' package. 
@@ -515,7 +522,9 @@ setMethod("plotTSNE", signature("SCESet"),
               ## defined, then those
               if ( is.null(feature_set) ) {
                   rv <- matrixStats::rowVars(exprs(object))
-                  feature_set <- order(rv, decreasing = TRUE)[seq_len(min(ntop, length(rv)))]
+                  feature_set <- 
+                      order(rv, decreasing = TRUE)[seq_len(min(ntop, 
+                                                               length(rv)))]
               }
               ## Standardise expression if stand_exprs(object) is null
               exprs_to_plot <- t(scale(t(exprs(object)), scale = scale_features)) 
@@ -531,7 +540,7 @@ setMethod("plotTSNE", signature("SCESet"),
                   set.seed(rand_seed)
               tsne_out <- Rtsne::Rtsne(t(exprs_to_plot),
                                        initial_dims = max(50, ncol(object)),
-                                       ...)
+                                       perplexity = perplexity, ...)
               
               
               ## Define data.frame for plotting

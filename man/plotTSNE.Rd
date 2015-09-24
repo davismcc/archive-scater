@@ -11,7 +11,8 @@ plotTSNE(object, ...)
 \S4method{plotTSNE}{SCESet}(object, ntop = 500, ncomponents = 2,
   colour_by = NULL, shape_by = NULL, size_by = NULL, feature_set = NULL,
   return_SCESet = FALSE, scale_features = TRUE, draw_plot = TRUE,
-  theme_size = 10, rand_seed = NULL, ...)
+  theme_size = 10, rand_seed = NULL, perplexity = floor(ncol(object)/5),
+  ...)
 }
 \arguments{
 \item{object}{an \code{SCESet} object}
@@ -61,6 +62,14 @@ is always produced.}
 
 \item{rand_seed}{(optional) numeric scalar that can be passed to
 \code{set.seed} to make plots reproducible.}
+
+\item{perplexity}{numeric scalar value defining the "perplexity parameter"
+for the t-SNE plot. Passed to \code{\link[Rtsne]{Rtsne}} - see documentation
+for that package for more details.}
+}
+\value{
+If \code{return_SCESet} is \code{TRUE}, then the function returns an
+\code{SCESet} object, otherwise it returns a \code{ggplot} object.
 }
 \description{
 Produce a t-distributed stochastic neighbour embedding plot of two components

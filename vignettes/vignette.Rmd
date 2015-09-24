@@ -640,8 +640,7 @@ and, if we wish, filter them out of the analysis.
 We can also use t-SNE to visualise cells in a reduced-dimension space:
 
 ```{r plot-tsne-colby-shapeby, fig.height=5.5}
-plotTSNE(example_sceset, colour_by = "Treatment", shape_by = "Mutation_Status",
-         perplexity = 8)
+plotTSNE(example_sceset, colour_by = "Treatment", shape_by = "Mutation_Status")
 ```
 
 
