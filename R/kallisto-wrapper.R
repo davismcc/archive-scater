@@ -273,6 +273,8 @@ readKallistoResults <- function(kallisto_log = NULL, samples = NULL,
                                 kallisto_version = "current", 
                                 logExprsOffset = 1, 
                                 verbose = TRUE) {
+    kallisto_fail <- rep(FALSE, length(samples))
+    
     ## Checks on arguments
     if ( !is.null(kallisto_log) ) {
         cat("Using kallisto_log argument to define samples and results directories.")
@@ -281,20 +283,25 @@ readKallistoResults <- function(kallisto_log = NULL, samples = NULL,
         samples <- names(kallisto_log)       
         directories <- sapply(kallisto_log, function(x) {x$output_dir})
         logs <- lapply(kallisto_log, function(x) {x$kallisto_log})
+        
+        ## Can only check kallisto fail if log provided
+        kallisto_fail <- sapply(logs, function(x) {
+          any(grepl("[wW]arning|[eE]rror", x))})
+        if ( any(kallisto_fail) ) {
+          warning(paste0("The kallisto job failed for the following samples:\n ",
+                         paste0(names(logs)[kallisto_fail], collapse = "\n"),
+                         "\n It is recommended that you inspect kallisto_log for these samples."))
+        }
+        
     } else {
+      cat("Kallisto log not provided - assuming all runs successful")
         if ( is.null(samples) | is.null(directories) )
             stop("If kallisto_log argument is not used, then both samples and directories must be provided.")
         if ( length(samples) != length(directories) )
             stop("samples and directories arguments must be the same length")
     }
     
-    kallisto_fail <- sapply(logs, function(x) {
-        any(grepl("[wW]arning|[eE]rror", x))})
-    if ( any(kallisto_fail) ) {
-        warning(paste0("The kallisto job failed for the following samples:\n ",
-                      paste0(names(logs)[kallisto_fail], collapse = "\n"),
-                      "\n It is recommended that you inspect kallisto_log for these samples."))
-    }
+
     samples <- samples[!kallisto_fail]
     directories <- directories[!kallisto_fail]
     
@@ -330,7 +337,7 @@ readKallistoResults <- function(kallisto_log = NULL, samples = NULL,
         cat(paste("\nReading results for", nsamples, "samples:\n"))
     for(i in seq_len(nsamples)) {
         tmp_samp <- readKallistoResultsOneSample(directories[i], 
-                                                 read_h5 = read_h5)
+                                                 read_h5 = read_h5, kallisto_version = kallisto_version)
         ## counts
         if ( length(tmp_samp$abundance$est_counts) != nfeatures )
             warning(paste("Results for directory", directories[i], "do not match dimensions of other samples."))
