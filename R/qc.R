@@ -340,6 +340,7 @@ a lower count threshold of 0.")
     new_pdata$filter_on_depth <- filter_on_depth
     new_pdata$coverage <- coverage
     new_pdata$filter_on_coverage <- filter_on_coverage
+    new_pdata$pct_dropout <- 100 * colSums(!is_exprs(object)) / nrow(object)
     new_pdata <- cbind(new_pdata, qc_pdata, cell_controls_pdata)
     pData(object) <-  new("AnnotatedDataFrame", new_pdata)
     
@@ -356,6 +357,8 @@ a lower count threshold of 0.")
     new_fdata$total_feature_exprs <- rowSums(exprs_mat)
     new_fdata$log10_total_feature_exprs <- log10(new_fdata$total_feature_exprs + 1)
     new_fdata$pct_total_exprs <- 100 * rowSums(exprs_mat) / total_exprs
+    new_fdata$pct_dropout <- 100 * rowSums(!is_exprs(object)) / ncol(object)
+  
     if ( !is.null(counts_mat) ) {
         total_counts <- sum(counts_mat)
         new_fdata$total_feature_counts <- rowSums(counts_mat)
