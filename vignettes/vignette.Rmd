@@ -688,7 +688,7 @@ their median percentage of expression variance explained in a marginal (only
 one explanatory variable) linear model.
 
 ```{r plot-qc-pairs-pc}
-plotQC(example_sceset, type = "expl", method = "pairs")
+plotQC(example_sceset, type = "expl", method = "pairs", theme_size = 6)
 ```
 
 In this small dataset depth and coverage explain a very large proportion of the

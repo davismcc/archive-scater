@@ -790,6 +790,8 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
 #' plotted as integers with jittering. Variables with only one unique value are 
 #' quietly ignored. 
 #' 
+#' @return A ggplot object
+#' 
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -824,7 +826,7 @@ plotExplanatoryVariables <- function(object, method = "density",
                         norm_fpkm = norm_fpkm(object),
                         norm_counts = norm_counts(object))
     if ( is.null(exprs_mat) ) {
-        warning(paste0("The object does not contain ", use_as_exprs, " expression values. Using exprs(object) values instead."))
+        message(paste0("The object does not contain ", use_as_exprs, " expression values. Using exprs(object) values instead."))
         exprs_mat <- exprs(object)
         use_as_exprs <- "exprs"
     }
@@ -858,7 +860,7 @@ plotExplanatoryVariables <- function(object, method = "density",
     for (var in variables_all) {
         if ( var %in% variables_to_plot ) {
             if (length(unique(pData(object)[, var])) <= 1) {
-                warning(paste("variable", var, "only has one unique value, so R^2 is not meaningful.
+                message(paste("The variable", var, "only has one unique value, so R^2 is not meaningful.
 This variable will not be plotted."))
                 rsquared_mat[, var] <- NA
             } else {
@@ -890,19 +892,37 @@ This variable will not be plotted."))
     nvars_to_plot <- min(sum(median_rsquared > min_marginal_r2, na.rm = TRUE), 
                          nvars_to_plot)
     
-    if ( method == "pairs") {
-        #     median_rsquared <- apply(rsquared_mat, 2, quantile, probs = 0.1, 
-        #                              na.rm = TRUE)
-        colnames(val_to_plot_mat) <- paste0(colnames(val_to_plot_mat), 
-                                            "\n(Med. R-sq = ", 
-                                            formatC(signif(100*median_rsquared, 
-                                                       digits = 3),  digits = 3,
-                                                format = "fg", flag = "#"), "%)")
-        
+    if ( method == "pairs" ) {
+        ## Generate a larger data.frame for pairs plot
+        df_to_expand <- val_to_plot_mat[, oo_median[1:nvars_to_plot]]
+        names(df_to_expand) <- colnames(df_to_expand)
+        gg1 <- .makePairs(df_to_expand)
+        diag_labs <-  paste0("Median\n R-sq = \n", 
+                             formatC(signif(100*median_rsquared, digits = 3),  
+                                     digits = 3, format = "fg", flag = "#"), 
+                             "%")[oo_median[1:nvars_to_plot]]
+        centres <- apply(df_to_expand, 2, 
+                         function(x) {diff(range(x))/2 + min(x)})
+        gg1$diags <- data.frame(xvar = colnames(df_to_expand),
+                                yvar = colnames(df_to_expand),
+                                x = centres, y = centres,
+                                xmax = apply(df_to_expand, 2, max),
+                                xmin = apply(df_to_expand, 2, min),
+                                label = diag_labs)
         ## Plot these bad boys
-        par(bty = "o", col.lab = "gray60")
-        pairs(val_to_plot_mat[, oo_median[1:nvars_to_plot]], pch = 21, 
-              col = "gray60", bg = "gray80", col.lab = "red", ...)
+        plot_out <- ggplot(gg1$all, aes_string(x = "x", y = "y")) + 
+            geom_point(fill = "gray60", colour = "gray40", 
+                       shape = 21, alpha = 0.65) +
+            facet_grid(xvar ~ yvar, scales = "free") + 
+            geom_rect(aes_string(xmin = "xmin", ymin = "xmin", xmax = "xmax",
+                                 ymax = "xmax"), colour = "white", 
+                      fill = "white", data = gg1$diags) +
+            geom_text(aes_string(x = "x", y = "y", label = "label", 
+                                 size = theme_size), data = gg1$diags) +
+            xlab("") + 
+            ylab("") +
+            theme_bw(theme_size) +
+            theme(legend.position = "none")
     } else {
         df_to_plot <- suppressMessages(reshape2::melt(
             rsquared_mat[, oo_median[1:nvars_to_plot]]))
@@ -935,12 +955,10 @@ This variable will not be plotted."))
         colnames(rsq_out) <- paste0("Rsq_", colnames(rsq_out))
         fdata_new <- new("AnnotatedDataFrame", cbind(fdata, rsq_out))
         fData(object) <- fdata_new
-        if ( method == "density" )
-            print(plot_out)
+        print(plot_out)
         return(object)
     } else {
-        if ( method == "density" )
-            return(plot_out)
+        return(plot_out)
     }
 }
 

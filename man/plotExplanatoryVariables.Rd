@@ -43,6 +43,9 @@ theme}
 
 \item{...}{parameters to be passed to \code{\link{pairs}}.}
 }
+\value{
+A ggplot object
+}
 \description{
 Plot explanatory variables ordered by percentage of phenotypic variance explained
 }
