@@ -932,7 +932,8 @@ This variable will not be plotted."))
         colnames(df_to_plot) <- c("Feature", "Expl_Var", "R_squared")
         df_to_plot$Pct_Var_Explained <- 100 * df_to_plot$R_squared
         df_to_plot$Expl_Var <- factor(
-            df_to_plot$Expl_Var, levels = colnames(rsquared_mat)[oo_median[1:nvars_to_plot]])
+            df_to_plot$Expl_Var, 
+            levels = colnames(rsquared_mat)[oo_median[1:nvars_to_plot]])
         plot_out <- ggplot(df_to_plot, aes_string(x = "Pct_Var_Explained", 
                                                   colour = "Expl_Var")) +
             geom_line(stat = "density", alpha = 0.7, size = 2, trim = TRUE) +

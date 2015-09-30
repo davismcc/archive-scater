@@ -260,10 +260,18 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL,
                           shape_by=NULL, size_by=NULL, feature_set=NULL, 
                           return_SCESet=FALSE, scale_features=TRUE, 
                           draw_plot = TRUE, theme_size = 10) {
+    ## Set up indicator for whether to use pData or features for size_by and
+    ## colour_by
+    colour_by_use_pdata <- TRUE
+    size_by_use_pdata <- TRUE
     ## Check arguments are valid
     if ( !is.null(colour_by) ) {
-        if ( !(colour_by %in% varLabels(object)) )
-            stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)]")
+        if ( !(colour_by %in% varLabels(object)) && 
+             !(colour_by %in% featureNames(object)) )
+            stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
+        if ( !(colour_by %in% varLabels(object)) && 
+             (colour_by %in% featureNames(object)) )
+            colour_by_use_pdata <- FALSE
     } else {
         if ( "is_cell_control" %in% varLabels(object) )
             colour_by <- "is_cell_control"
@@ -278,8 +286,12 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL,
             shape_by <- "is_cell_control"
     }
     if ( !is.null(size_by) ) {
-        if ( !(size_by %in% varLabels(object)) )
-            stop("the argument 'size_by' should specify a column of pData(object) [see varLabels(object)]")
+        if ( !(size_by %in% varLabels(object)) && 
+             !(size_by %in% featureNames(object)) )
+            stop("the argument 'size_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
+        if ( !(size_by %in% varLabels(object)) && 
+             (size_by %in% featureNames(object)) )
+            size_by_use_pdata <- FALSE
     }
     if ( !is.null(feature_set) && typeof(feature_set) == "character" ) {
         if ( !(all(feature_set %in% featureNames(object))) )
@@ -315,21 +327,31 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL,
     df_to_plot <- data.frame(pca$x[, 1:ncomponents], 
                              row.names = sampleNames(object))
     if ( !is.null(colour_by) ) {
-        if ( nlevels(as.factor(pData(object)[[colour_by]])) > 10 )
+        if ( colour_by_use_pdata )
+            colour_by_vals <- pData(object)[[colour_by]]
+        else 
+            colour_by_vals <- exprs(object)[colour_by,]
+        if ( nlevels(as.factor(colour_by_vals)) > 10 )
             df_to_plot <- data.frame(
-                df_to_plot, colour_by = pData(object)[[colour_by]])
+                df_to_plot, colour_by = colour_by_vals)
         else
             df_to_plot <- data.frame(
-                df_to_plot, colour_by = as.factor(pData(object)[[colour_by]]))
+                df_to_plot, colour_by = as.factor(colour_by_vals))
     }
     if ( !is.null(shape_by) )
         df_to_plot <- data.frame(df_to_plot, 
                                  shape_by = as.factor(pData(object)[[shape_by]]))
-    if ( !is.null(size_by) )
-        df_to_plot <- data.frame(df_to_plot, size_by = pData(object)[[size_by]])
+    if ( !is.null(size_by) ) {
+        if ( size_by_use_pdata )
+            size_by_vals <- pData(object)[[size_by]]
+        else 
+            size_by_vals <- exprs(object)[size_by,]
+        df_to_plot <- data.frame(df_to_plot, size_by = size_by_vals)
+    }
     
-    plot_out <- plotReducedDim.default(df_to_plot, ncomponents, colour_by, shape_by, 
-                                       size_by, percentVar)
+    ## Make reduced-dimension plot
+    plot_out <- plotReducedDim.default(df_to_plot, ncomponents, colour_by, 
+                                       shape_by, size_by, percentVar)
     
     ## Define plotting theme
     if ( library(cowplot, logical.return = TRUE) )
@@ -489,35 +511,42 @@ setMethod("plotTSNE", signature("SCESet"),
               if ( !library(Rtsne, logical.return = TRUE) )
                   stop("This function requires the 'Rtsne' package. 
                        Try: install.packages('Rtsne').")
+              ## Set up indicator for whether to use pData or features for size_by and
+              ## colour_by
+              colour_by_use_pdata <- TRUE
+              size_by_use_pdata <- TRUE
               ## Check arguments are valid
               if ( !is.null(colour_by) ) {
-                  if ( !(colour_by %in% varLabels(object)) )
-                      stop("the argument 'colour_by' should specify a column of 
-                           pData(object) [see varLabels(object)]")
+                  if ( !(colour_by %in% varLabels(object)) && 
+                       !(colour_by %in% featureNames(object)) )
+                      stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
+                  if ( !(colour_by %in% varLabels(object)) && 
+                       (colour_by %in% featureNames(object)) )
+                      colour_by_use_pdata <- FALSE
               } else {
                   if ( "is_cell_control" %in% varLabels(object) )
                       colour_by <- "is_cell_control"
               }
               if ( !is.null(shape_by) ) {
                   if ( !(shape_by %in% varLabels(object)) )
-                      stop("the argument 'shape_by' should specify a column of 
-                           pData(object) [see varLabels(object)]")
+                      stop("the argument 'shape_by' should specify a column of pData(object) [see varLabels(object)]")
                   if ( nlevels(as.factor(pData(object)[[shape_by]])) > 10 )
-                      stop("when coerced to a factor, 'shape_by' should have 
-                           fewer than 10 levels")   
+                      stop("when coerced to a factor, 'shape_by' should have fewer than 10 levels")   
               } else {
                   if ( "is_cell_control" %in% varLabels(object) )
                       shape_by <- "is_cell_control"
               }
               if ( !is.null(size_by) ) {
-                  if ( !(size_by %in% varLabels(object)) )
-                      stop("the argument 'size_by' should specify a column of 
-                           pData(object) [see varLabels(object)]")
+                  if ( !(size_by %in% varLabels(object)) && 
+                       !(size_by %in% featureNames(object)) )
+                      stop("the argument 'size_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
+                  if ( !(size_by %in% varLabels(object)) && 
+                       (size_by %in% featureNames(object)) )
+                      size_by_use_pdata <- FALSE
               }
               if ( !is.null(feature_set) && typeof(feature_set) == "character" ) {
                   if ( !(all(feature_set %in% featureNames(object))) )
-                      stop("when the argument 'feature_set' is of type character,
-                           all features must be in featureNames(object)")
+                      stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
               }
               
               ## Define features to use: either ntop, or if a set of features is
@@ -549,22 +578,29 @@ setMethod("plotTSNE", signature("SCESet"),
               df_to_plot <- data.frame(tsne_out$Y[, 1:ncomponents], 
                                        row.names = sampleNames(object))
               if ( !is.null(colour_by) ) {
-                  if ( nlevels(as.factor(pData(object)[[colour_by]])) > 10 )
+                  if ( colour_by_use_pdata )
+                      colour_by_vals <- pData(object)[[colour_by]]
+                  else 
+                      colour_by_vals <- exprs(object)[colour_by,]
+                  if ( nlevels(as.factor(colour_by_vals)) > 10 )
                       df_to_plot <- data.frame(
-                          df_to_plot, colour_by = pData(object)[[colour_by]])
+                          df_to_plot, colour_by = colour_by_vals)
                   else
                       df_to_plot <- data.frame(
-                          df_to_plot, 
-                          colour_by = as.factor(pData(object)[[colour_by]]))
+                          df_to_plot, colour_by = as.factor(colour_by_vals))
               }
               if ( !is.null(shape_by) )
-                  df_to_plot <- data.frame(
-                      df_to_plot, 
-                      shape_by = as.factor(pData(object)[[shape_by]]))
-              if ( !is.null(size_by) )
                   df_to_plot <- data.frame(df_to_plot, 
-                                           size_by = pData(object)[[size_by]])
+                                           shape_by = as.factor(pData(object)[[shape_by]]))
+              if ( !is.null(size_by) ) {
+                  if ( size_by_use_pdata )
+                      size_by_vals <- pData(object)[[size_by]]
+                  else 
+                      size_by_vals <- exprs(object)[size_by,]
+                  df_to_plot <- data.frame(df_to_plot, size_by = size_by_vals)
+              }
               
+              ## Make reduced-dimension plot
               plot_out <- plotReducedDim.default(df_to_plot, ncomponents, 
                                                  colour_by, shape_by, size_by)
               
@@ -622,8 +658,11 @@ setMethod("plotTSNE", signature("SCESet"),
 #'  components to plot, and that any subsequent columns define factors for 
 #'  \code{colour_by}, \code{shape_by} and \code{size_by} in the plot.
 #' 
+#' @return a ggplot plot object
+#' 
 #' @name plotReducedDim
 #' @aliases plotReducedDim plotReducedDim,SCESet-method plotReducedDim,data.frame-method 
+#' @import viridis
 #' @export
 #' 
 #' @examples
@@ -692,8 +731,10 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
             guides(size = guide_legend(title = size_by), 
                    shape = guide_legend(title = shape_by))
         if ( is.numeric(df_to_plot$colour_by) ) {
-            plot_out <- plot_out + scale_colour_gradient(
-                name = colour_by, low = "gold", high = "darkred", space = "Lab")
+            plot_out <- plot_out + 
+                viridis::scale_color_viridis(name = colour_by)
+#                 scale_colour_gradient(name = colour_by, low = "gold", 
+#                                       high = "darkred", space = "Lab")
         } else {
             plot_out <- plot_out + 
                 ggthemes::scale_colour_tableau(name = colour_by)
@@ -707,9 +748,10 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                                alpha = 0.65) +
                     guides(shape = guide_legend(title = shape_by))
                 if ( is.numeric(df_to_plot$colour_by) ) {
-                    plot_out <- plot_out + scale_colour_gradient(
-                        name = colour_by, low = "gold", high = "darkred", 
-                        space = "Lab")
+                    plot_out <- plot_out + 
+                        viridis::scale_color_viridis(name = colour_by)
+#                         scale_colour_gradient(name = colour_by, low = "gold", 
+#                                               high = "darkred", space = "Lab")
                 } else {
                     plot_out <- plot_out + 
                         ggthemes::scale_colour_tableau(name = colour_by)
@@ -721,9 +763,10 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                                shape = 21, colour = "gray70", alpha = 0.65) +
                     guides(size = guide_legend(title = size_by))
                 if ( is.numeric(df_to_plot$colour_by) ) {
-                    plot_out <- plot_out + scale_colour_gradient(
-                        name = colour_by, low = "gold", high = "darkred", 
-                        space = "Lab")
+                    plot_out <- plot_out + 
+                        viridis::scale_color_viridis(name = colour_by)
+#                         scale_colour_gradient(name = colour_by, low = "gold", 
+#                                               high = "darkred", space = "Lab")
                 } else {
                     plot_out <- plot_out + 
                         ggthemes::scale_colour_tableau(name = colour_by)
@@ -743,9 +786,12 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                         geom_point(aes_string(fill = "colour_by"), size = 4, 
                                    shape = 21, colour = "gray70", alpha = 0.65)
                     if ( is.numeric(df_to_plot$colour_by) ) {
-                        plot_out <- plot_out + scale_colour_gradient(
-                            name = colour_by, low = "gold", high = "darkred", 
-                            space = "Lab")
+                        plot_out <- plot_out + 
+                            viridis::scale_color_viridis(name = colour_by)
+#                             scale_colour_gradient(name = colour_by, 
+#                                                   low = "gold", 
+#                                                   high = "darkred", 
+#                                                   space = "Lab")
                     } else {
                         plot_out <- plot_out + 
                             ggthemes::scale_colour_tableau(name = colour_by)
@@ -780,20 +826,38 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
 #' @export
 plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL, 
                                   shape_by=NULL, size_by=NULL, theme_size = 10) {
+    ## Set up indicator for whether to use pData or features for size_by and
+    ## colour_by
+    colour_by_use_pdata <- TRUE
+    size_by_use_pdata <- TRUE
     ## Check arguments are valid
     if ( !is.null(colour_by) ) {
-        if ( !(colour_by %in% varLabels(object)) )
-            stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)]")
+        if ( !(colour_by %in% varLabels(object)) && 
+             !(colour_by %in% featureNames(object)) )
+            stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
+        if ( !(colour_by %in% varLabels(object)) && 
+             (colour_by %in% featureNames(object)) )
+            colour_by_use_pdata <- FALSE
+    } else {
+        if ( "is_cell_control" %in% varLabels(object) )
+            colour_by <- "is_cell_control"
     }
     if ( !is.null(shape_by) ) {
         if ( !(shape_by %in% varLabels(object)) )
             stop("the argument 'shape_by' should specify a column of pData(object) [see varLabels(object)]")
         if ( nlevels(as.factor(pData(object)[[shape_by]])) > 10 )
             stop("when coerced to a factor, 'shape_by' should have fewer than 10 levels")   
+    } else {
+        if ( "is_cell_control" %in% varLabels(object) )
+            shape_by <- "is_cell_control"
     }
     if ( !is.null(size_by) ) {
-        if ( !(size_by %in% varLabels(object)) )
-            stop("the argument 'size_by' should specify a column of pData(object) [see varLabels(object)]")
+        if ( !(size_by %in% varLabels(object)) && 
+             !(size_by %in% featureNames(object)) )
+            stop("the argument 'size_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
+        if ( !(size_by %in% varLabels(object)) && 
+             (size_by %in% featureNames(object)) )
+            size_by_use_pdata <- FALSE
     }
     
     ## Extract reduced dimension representation of cells
@@ -806,18 +870,27 @@ plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
     ## Define data.frame for plotting
     df_to_plot <- data.frame(red_dim[, 1:ncomponents])
     if ( !is.null(colour_by) ) {
-        if ( nlevels(as.factor(pData(object)[[colour_by]])) > 10 )
+        if ( colour_by_use_pdata )
+            colour_by_vals <- pData(object)[[colour_by]]
+        else 
+            colour_by_vals <- exprs(object)[colour_by,]
+        if ( nlevels(as.factor(colour_by_vals)) > 10 )
             df_to_plot <- data.frame(
-                df_to_plot, colour_by = pData(object)[[colour_by]])
+                df_to_plot, colour_by = colour_by_vals)
         else
             df_to_plot <- data.frame(
-                df_to_plot, colour_by = as.factor(pData(object)[[colour_by]]))
+                df_to_plot, colour_by = as.factor(colour_by_vals))
     }
     if ( !is.null(shape_by) )
         df_to_plot <- data.frame(df_to_plot, 
                                  shape_by = as.factor(pData(object)[[shape_by]]))
-    if ( !is.null(size_by) )
-        df_to_plot <- data.frame(df_to_plot, size_by = pData(object)[[size_by]])
+    if ( !is.null(size_by) ) {
+        if ( size_by_use_pdata )
+            size_by_vals <- pData(object)[[size_by]]
+        else 
+            size_by_vals <- exprs(object)[size_by,]
+        df_to_plot <- data.frame(df_to_plot, size_by = size_by_vals)
+    }
     
     ## Call default method to make the plot
     plot_out <- plotReducedDim.default(df_to_plot, ncomponents, colour_by, 
@@ -894,6 +967,7 @@ setMethod("plotReducedDim", signature("data.frame"),
 #'
 #' @details Plot expression values (default log2(transcripts-per-million +
 #' 1), if available) for a set of features.
+#' @return a ggplot plot object
 #' 
 #' @name plotExpression
 #' @aliases plotExpression plotExpression,SCESet-method plotExpression,data.frame-method
@@ -1168,6 +1242,8 @@ setMethod("plotExpression", signature("data.frame"),
 #' \code{aesth} argument.
 #' @param size numeric scalar to define the plotting size. Ignored if size is
 #' included in the \code{aesth} argument.
+#' @param theme_size numeric scalar giving default font size for plotting theme 
+#' (default is 10)
 #'
 #' @details Plot cell or feature metadata from an SCESet object. If one variable
 #'  is supplied then a density plot will be returned. If both variables are 
@@ -1176,6 +1252,8 @@ setMethod("plotExpression", signature("data.frame"),
 #' will be returned. If both variables are discrete then a jitter plot will be 
 #' produced. The object returned is a ggplot object, so further layers and 
 #' plotting options (titles, facets, themes etc) can be added.
+#' 
+#' @return a ggplot plot object
 #' 
 #' @export
 #' 
@@ -1189,7 +1267,8 @@ setMethod("plotExpression", signature("data.frame"),
 #'
 plotMetadata <- function(object, 
                          aesth=aes_string(x = "log10(depth)", y = "coverage"), 
-                         shape = NULL, alpha = NULL, size = NULL) {
+                         shape = NULL, alpha = NULL, size = NULL, 
+                         theme_size = 10) {
     ## Must have at least an x variable in the aesthetics
     if (is.null(aesth$x))
         stop("No x variable defined. Must have at least an x variable defined
@@ -1291,19 +1370,22 @@ plotMetadata <- function(object,
     plot_out <- plot_out + ggthemes::scale_colour_tableau() +
         ggthemes::scale_fill_tableau()
     
-    ## Define plot theme
-    plot_out <- plot_out + theme_bw(16) +
+    ## Define plotting theme
+    if ( library(cowplot, logical.return = TRUE) )
+        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+    else
+        plot_out <- plot_out + theme_bw(theme_size)
+    
+    ## Define legend on plot
+    plot_out <- plot_out + 
         theme(legend.justification = c(0, 0), 
               legend.position = c(0, 0), 
-              legend.title = element_text(size = 11),
-              legend.text = element_text(size = 10))
+              legend.title = element_text(size = theme_size - 3),
+              legend.text = element_text(size = theme_size - 4))
     
     ## Tweak plot guides
-#     plot_out <- plot_out + guides(colour = guide_legend(override.aes = list(size = 2)),
-#            shape = guide_legend(override.aes = list(size = 2)),
-#            fill = guide_legend(override.aes = list(size = 2)))
     if ( !show_alpha_guide )
-    plot_out <- plot_out + guides(alpha = FALSE)
+        plot_out <- plot_out + guides(alpha = FALSE)
     if ( !show_shape_guide )
         plot_out <- plot_out + guides(shape = FALSE)
     if ( !show_size_guide )

@@ -606,6 +606,29 @@ plotPCA(example_sceset, ncomponents = 4, colour_by = "Treatment",
 When more than two components are plotted, the diagonal boxes in the scatter
 plot matrix show the density for each component.
 
+We can also use the colour and size of point in the plot to reflect feature 
+expression values.
+
+```{r plot-pca-4comp-colby-sizeby-exprs, fig.height=5.5}
+plotPCA(example_sceset, colour_by = "Gene_0001", size_by = "Gene_1000")
+```
+
+
+```{r plot-pca-4comp-sizeby-exprs, fig.height=5.5}
+plotPCA(example_sceset, size_by = "Gene_1000")
+```
+
+```{r plot-pca-4comp-colby-exprs, fig.height=5.5}
+plotPCA(example_sceset, colour_by = "Gene_1000")
+```
+
+Thus, expression levels of two marker genes or transcripts can be shown overlaid
+onto reduced-dimension representations of cells. This also works for `plotTSNE`
+plots.
+
+When more than two components are plotted, the diagonal boxes in the scatter
+plot matrix show the density for each component.
+
 The `SCESet` matrix has a `reducedDimension` slot, where coordinates for a
 reduced dimension representation of the cells can be stored. If we so wish, the
 top principal components can be added to the `reducedDimension` slot:
@@ -631,6 +654,13 @@ plotReducedDim(example_sceset, ncomponents = 4, colour_by = "Treatment",
                shape_by = "Mutation_Status")
 ```
 
+As for the PCA plots we can also colour and size points by feature expression.
+
+```{r plot-reduceddim-4comp-colby-sizeby-exprs}
+plotReducedDim(example_sceset, ncomponents = 4, colour_by = "Gene_1000",
+               size_by = "Gene_0500")
+```
+
 (Here, the dimensionality reduction is just PCA, so we have the same plot as the
 PCA plot above.)
 
@@ -641,6 +671,18 @@ We can also use t-SNE to visualise cells in a reduced-dimension space:
 
 ```{r plot-tsne-colby-shapeby, fig.height=5.5}
 plotTSNE(example_sceset, colour_by = "Treatment", shape_by = "Mutation_Status")
+```
+
+```{r plot-tsne-4comp-colby-sizeby-exprs, fig.height=5.5}
+plotTSNE(example_sceset, colour_by = "Gene_0001", size_by = "Gene_1000")
+```
+
+```{r plot-tsne-4comp-sizeby-exprs, fig.height=5.5}
+plotTSNE(example_sceset, size_by = "Gene_1000")
+```
+
+```{r plot-tsne-4comp-colby-exprs, fig.height=5.5}
+plotTSNE(example_sceset, colour_by = "Gene_1000")
 ```
 
 

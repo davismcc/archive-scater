@@ -77,6 +77,9 @@ for each group on the plot}
 \item{ylab}{character string defining a label for the y-axis (y-axes) of the
 plot.}
 }
+\value{
+a ggplot plot object
+}
 \description{
 Plot expression values for a set of features (e.g. genes or transcripts)
 }

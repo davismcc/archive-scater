@@ -5,7 +5,7 @@
 \title{Plot metadata for cells or features}
 \usage{
 plotMetadata(object, aesth = aes_string(x = "log10(depth)", y = "coverage"),
-  shape = NULL, alpha = NULL, size = NULL)
+  shape = NULL, alpha = NULL, size = NULL, theme_size = 10)
 }
 \arguments{
 \item{object}{a data.frame (or object that can be coerced to such) object
@@ -24,6 +24,12 @@ level (transparency) of plotted points. Ignored if alpha is included in the
 
 \item{size}{numeric scalar to define the plotting size. Ignored if size is
 included in the \code{aesth} argument.}
+
+\item{theme_size}{numeric scalar giving default font size for plotting theme
+(default is 10)}
+}
+\value{
+a ggplot plot object
 }
 \description{
 Plot metadata for cells or features

@@ -56,6 +56,9 @@ internally in the \code{\link[scater]{plotPCA}} function.}
 \item{theme_size}{numeric scalar giving default font size for plotting theme
 (default is 10).}
 }
+\value{
+a ggplot plot object
+}
 \description{
 Plot reduced dimension representation of cells
 }
