@@ -21,6 +21,9 @@ a density plot of number of cells expressing the feature (requires
 
 \item{...}{arguments passed to \code{\link{plotMetadata}}.}
 }
+\value{
+a ggplot plot object
+}
 \description{
 Plot feature (gene) data from an SCESet object
 }

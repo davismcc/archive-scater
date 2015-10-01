@@ -1339,11 +1339,11 @@ plotMetadata <- function(object,
     
     ## Density plot
     if (plot_type == "bar") {
-        plot_out <- plot_out + geom_bar(stat = "identity") 
+        plot_out <- plot_out + geom_bar(stat = "identity")
     }
     if (plot_type == "density") {
         plot_out <- plot_out + geom_density(kernel = "rectangular", size = 2) +
-            geom_rug(alpha = 0.5, size = 1)
+            geom_rug(alpha = 0.5, size = 1) 
     }
     if (plot_type == "jitter") {
         if ( !show_shape_guide )
@@ -1366,20 +1366,33 @@ plotMetadata <- function(object,
             plot_out  <- plot_out + geom_jitter()
     }
     
-    ## Define plot colours
-    plot_out <- plot_out + ggthemes::scale_colour_tableau() +
-        ggthemes::scale_fill_tableau()
-    
     ## Define plotting theme
     if ( library(cowplot, logical.return = TRUE) )
         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
     else
         plot_out <- plot_out + theme_bw(theme_size)
     
+    ## Define plot colours
+    if ( "colour" %in% names(aesth) || "color" %in% names(aesth) ) {
+        colvar <- ifelse(is.null(aesth$colour), as.character(aesth$color), 
+                         as.character(aesth$colour))
+        
+        if ( is.numeric(object[, colvar]) )
+            plot_out <- plot_out + viridis::scale_color_viridis()
+        else
+            plot_out <- plot_out + ggthemes::scale_colour_tableau()
+    }
+    if ( !is.null(aesth$fill) ) {
+        if ( is.numeric(object[, aesth$fill]) )
+            plot_out <- plot_out + viridis::scale_fill_viridis()
+        else
+            plot_out <- plot_out + ggthemes::scale_fill_tableau()
+    }
+    
     ## Define legend on plot
     plot_out <- plot_out + 
-        theme(legend.justification = c(0, 0), 
-              legend.position = c(0, 0), 
+        theme(legend.justification = c(1, 1), 
+              legend.position = c(1, 1), 
               legend.title = element_text(size = theme_size - 3),
               legend.text = element_text(size = theme_size - 4))
     
@@ -1416,7 +1429,9 @@ plotMetadata <- function(object,
 #' will be returned. If both variables are discrete then a jitter plot will be 
 #' produced. The object returned is a ggplot object, so further layers and 
 #' plotting options (titles, facets, themes etc) can be added.
-#' .
+#' 
+#' @return a ggplot plot object
+#' 
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -1434,14 +1449,27 @@ plotPhenoData <- function(object, aesth=aes_string(x = "log10(depth)",
     if (!is(object, "SCESet"))
         stop("object must be an SCESet object.")
 
+    ## Define dataframe to pass to plotMetadata
+    df_to_plot <- pData(object)
+    
+    ## Check that aesthetics make sense for feature names if used
+    for (item in unlist(aesth)) {
+        item <- as.character(item)
+        if ( !(item %in% varLabels(object)) && 
+             (item %in% featureNames(object)) ) {
+            df_to_plot <- data.frame(df_to_plot, exprs(object)[item,])
+            colnames(df_to_plot)[ncol(df_to_plot)] <- item
+        }
+    }
+    
     ## Pass pData(object) to plotMetadata
-    plot_out <- plotMetadata(pData(object), aesth, ...)   
+    plot_out <- plotMetadata(df_to_plot, aesth, ...)   
     
     ## Define plotting theme
-    if ( library(cowplot, logical.return = TRUE) )
-        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
-    else
-        plot_out <- plot_out + theme_bw(theme_size)
+#     if ( library(cowplot, logical.return = TRUE) )
+#         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+#     else
+#         plot_out <- plot_out + theme_bw(theme_size)
     ## Return plot object
     plot_out
 }
@@ -1469,6 +1497,8 @@ plotPhenoData <- function(object, aesth=aes_string(x = "log10(depth)",
 #' produced. The object returned is a ggplot object, so further layers and 
 #' plotting options (titles, facets, themes etc) can be added.
 #' 
+#' @return a ggplot plot object
+#' 
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -1490,10 +1520,10 @@ plotFeatureData <- function(object,
     plot_out <- plotMetadata(fData(object), aesth, ...)   
 
     ## Define plotting theme
-    if ( library(cowplot, logical.return = TRUE) )
-        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
-    else
-        plot_out <- plot_out + theme_bw(theme_size)
+#     if ( library(cowplot, logical.return = TRUE) )
+#         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+#     else
+#         plot_out <- plot_out + theme_bw(theme_size)
     ## Return plot object
     plot_out
 }

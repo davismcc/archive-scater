@@ -522,9 +522,34 @@ plotPhenoData(example_sceset, aes(x = depth, y = coverage,
                                   colour = Mutation_Status))
 ```
 
+```{r plot-pdata-cont-col}
+plotPhenoData(example_sceset, aes(x = Mutation_Status, y = coverage,
+                                  colour = log10_depth))
+```
+
+Note that ggplot aesthetics will work correctly (in general) for everything 
+except `colour` (`color`) and `fill`, which must be either columns of `pData` 
+or feature names (i.e. gene/transcript names).
 
 These sorts of plots can be very useful for finding potentially problematic
 cells.
+
+```{r plot-pdata-col-gene-exprs}
+plotPhenoData(example_sceset, aes(x = depth, y = coverage,
+                                  colour = Gene_1000))
+```
+
+```{r plot-pdatacol-gene-exprs-2}
+plotPhenoData(example_sceset, aes(x = pct_exprs_from_feature_controls, 
+                                  y = coverage, colour = Gene_0500))
+```
+
+
+```{r plot-pdatacol-gene-exprs-3}
+plotPhenoData(example_sceset, aes(x = pct_exprs_from_feature_controls, 
+                                  y = pct_exprs_from_top_50_features, 
+                                  colour = Gene_0001))
+```
 
 The output of these functions is a `ggplot` object, which can be added to,
 amended and altered. For example, if we don't like the legend position in the
@@ -540,8 +565,8 @@ plotPhenoData(example_sceset, aes(x = depth, y = coverage,
 We could also add a trend line for each group:
 
 ```{r plot-pdata-move-legend-add-trend}
-plotPhenoData(example_sceset, aes(x = depth, y = coverage,
-                                  colour = Mutation_Status)) +
+plotPhenoData(example_sceset, aes(x = log10_exprs_from_feature_controls, 
+                                  y = coverage, colour = Mutation_Status)) +
     theme(legend.position = "top") +
     stat_smooth(method = "lm", se = FALSE, size = 2, fullrange = TRUE)
 ```
@@ -552,7 +577,8 @@ A particularly useful plot for cell QC is plotting the percentage of expression
 accounted for by feature controls against coverage.
 
 ```{r plot-pdata-pct-exprs-controls}
-plotPhenoData(example_sceset, aes(x = coverage, y = pct_exprs_from_feature_controls,
+plotPhenoData(example_sceset, aes(x = coverage, 
+                                  y = pct_exprs_from_feature_controls,
                                   colour = Mutation_Status)) +
     theme(legend.position = "top") +
     stat_smooth(method = "lm", se = FALSE, size = 2, fullrange = TRUE)
