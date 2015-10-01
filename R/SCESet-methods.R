@@ -1507,4 +1507,39 @@ fromCellDataSet <- function(cds, use_as_exprs = "tpm", logged=FALSE) {
         stop("Require package monocle to be installed to use this function.")
 }
 
-
+#' Retrieve a representation of gene expression
+#' 
+#' Gene expression can be summarised in a variety of ways, e.g. as TPM, FPKM or
+#' as raw counts. Many internal methods and external packages rely on accessing
+#' a generic representation of expression without worrying about the particulars.
+#' Scater allows the user to set \code{object@@useForExprs} to the preferred
+#' type (either "exprs", "TPM", "fpkm" or "counts") and that particular representation
+#' will be returned by calls to \code{getExprs}. Note if such representation is
+#' not defined, this method returns \code{NULL}.
+#' 
+#' @param object An object of type \code{SCESet}
+#' @return A matrix representation of expression corresponding to \code{object@@useForExprs}.
+#' 
+#' @export
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd, useForExprs = "exprs")
+#' all(exprs(example_sceset) == getExprs(example_sceset)) # TRUE
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd, useForExprs = "counts")
+#' all(exprs(example_sceset) == getExprs(example_sceset)) # FALSE
+#' all(counts(example_sceset) == getExprs(example_sceset)) # TRUE
+getExprs <- function(object) {
+  if(!is(object,'SCESet')) stop('object must be of type SCESet')
+  
+  x <- switch(object@useForExprs,
+              exprs = exprs(object),
+              tpm = tpm(object),
+              fpkm = fpkm(object),
+              counts = counts(object))
+  
+  if(is.null(x)) warning(paste("Slot for", object@useForExprs, "is empty; returning NULL"))
+  
+  return( x )
+}
