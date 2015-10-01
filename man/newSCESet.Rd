@@ -7,7 +7,7 @@
 newSCESet(exprsData = NULL, countData = NULL, tpmData = NULL,
   fpkmData = NULL, phenoData = NULL, featureData = NULL,
   experimentData = NULL, is_exprsData = NULL, lowerDetectionLimit = 0,
-  logExprsOffset = 1, logged = FALSE)
+  logExprsOffset = 1, logged = FALSE, useForExprs = "exprs")
 }
 \arguments{
 \item{exprsData}{expression data matrix for an experiment}
@@ -40,6 +40,10 @@ Default offset value is \code{1}.}
 
 \item{logged}{logical, if a value is supplied for the exprsData argument, are
 the expression values already on the log2 scale, or not?}
+
+\item{useForExprs}{character string, either 'exprs' (default),'tpm','counts' or
+'fpkm' indicating which expression representation both internal methods and
+external packages should use when performing analyses.}
 }
 \value{
 a new SCESet object

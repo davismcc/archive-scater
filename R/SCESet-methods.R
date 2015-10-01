@@ -34,6 +34,9 @@
 #'  the expression values already on the log2 scale, or not?
 #' @param is_exprsData matrix of class \code{"logical"}, indicating whether
 #'    or not each observation is above the \code{lowerDetectionLimit}.
+#' @param useForExprs character string, either 'exprs' (default),'tpm','counts' or 
+#'    'fpkm' indicating which expression representation both internal methods and 
+#'    external packages should use when performing analyses.
 #' @return a new SCESet object
 #'
 #' @details
@@ -82,7 +85,8 @@ newSCESet <- function(exprsData = NULL,
                       is_exprsData = NULL,
                       lowerDetectionLimit = 0,
                       logExprsOffset = 1,
-                      logged = FALSE)
+                      logged = FALSE,
+                      useForExprs = "exprs")
 {
     ## Check that we have some expression data
     if ( is.null(exprsData) & is.null(countData) & is.null(tpmData) & is.null(fpkmData))
@@ -178,6 +182,9 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
         expData <- expData_null
     }   
     
+    ## Check valid useForExprs
+    useForExprs <- match.arg(useForExprs, c("exprs","tpm","counts","fpkm"))
+    
     ## Generate new SCESet object
     assaydata <- assayDataNew("environment", exprs = exprsData, is_exprs = isexprs) 
     sceset <- new( "SCESet",
@@ -187,7 +194,8 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
                    experimentData = expData,
                    lowerDetectionLimit = lowerDetectionLimit,
                    logExprsOffset = logExprsOffset,
-                   logged = logged)
+                   logged = logged,
+                   useForExprs = useForExprs)
     
     ## Add non-null slots to assayData for SCESet object, omitting null slots
     if ( !is.null(tpmData) )
@@ -261,7 +269,7 @@ setValidity("SCESet", function(object) {
         (nrow(object@featurePairwiseDistances) != 0 && 
          nrow(object@featurePairwiseDistances) != nrow(object)) ) {
       valid <- FALSE
-      msg <- c(msg, "featurePariwiseDistances must be of dimension nrow(SCESet) by nrow(SCESet)")
+      msg <- c(msg, "featurePairwiseDistances must be of dimension nrow(SCESet) by nrow(SCESet)")
     }
     if ( (nrow(object@featurePairwiseDistances) != 0) && 
         (!identical(rownames(object@featurePairwiseDistances), 
@@ -277,6 +285,10 @@ setValidity("SCESet", function(object) {
     }
     if ( (!is.null(counts(object))) && any(counts(object) < 0, na.rm = TRUE) )
           warning( "The count data contain negative values." )
+    if( !(object@useForExprs %in% c("exprs", "tpm", "fpkm", "counts")) ) {
+      valid <- FALSE
+      msg <- c(msg, "object@useForExprs must be one of 'exprs', 'tpm', 'fpkm', 'counts'")
+    }
     
     if(valid) TRUE else msg      
 })
@@ -1494,4 +1506,5 @@ fromCellDataSet <- function(cds, use_as_exprs = "tpm", logged=FALSE) {
     else 
         stop("Require package monocle to be installed to use this function.")
 }
+
 
