@@ -54,7 +54,8 @@ CRAN packages:
 
 ```{r}
 install.packages(c("cowplot", "data.table", "ggplot2", "ggthemes", "knitr",
-    "matrixStats", "MASS", "plyr", "reshape2", "rjson", "Rtsne", "testthat"))
+    "matrixStats", "MASS", "plyr", "reshape2", "rjson", "Rtsne", "testthat",
+    "viridis"))
 ```
 
 Bioconductor packages:
