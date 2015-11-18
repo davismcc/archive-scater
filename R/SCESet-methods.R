@@ -34,6 +34,9 @@
 #'  the expression values already on the log2 scale, or not?
 #' @param is_exprsData matrix of class \code{"logical"}, indicating whether
 #'    or not each observation is above the \code{lowerDetectionLimit}.
+#' @param useForExprs character string, either 'exprs' (default),'tpm','counts' or 
+#'    'fpkm' indicating which expression representation both internal methods and 
+#'    external packages should use when performing analyses.
 #' @return a new SCESet object
 #'
 #' @details
@@ -82,7 +85,8 @@ newSCESet <- function(exprsData = NULL,
                       is_exprsData = NULL,
                       lowerDetectionLimit = 0,
                       logExprsOffset = 1,
-                      logged = FALSE)
+                      logged = FALSE,
+                      useForExprs = "exprs")
 {
     ## Check that we have some expression data
     if ( is.null(exprsData) & is.null(countData) & is.null(tpmData) & is.null(fpkmData))
@@ -178,6 +182,9 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
         expData <- expData_null
     }   
     
+    ## Check valid useForExprs
+    useForExprs <- match.arg(useForExprs, c("exprs","tpm","counts","fpkm"))
+    
     ## Generate new SCESet object
     assaydata <- assayDataNew("environment", exprs = exprsData, is_exprs = isexprs) 
     sceset <- new( "SCESet",
@@ -187,7 +194,8 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
                    experimentData = expData,
                    lowerDetectionLimit = lowerDetectionLimit,
                    logExprsOffset = logExprsOffset,
-                   logged = logged)
+                   logged = logged,
+                   useForExprs = useForExprs)
     
     ## Add non-null slots to assayData for SCESet object, omitting null slots
     if ( !is.null(tpmData) )
@@ -261,7 +269,7 @@ setValidity("SCESet", function(object) {
         (nrow(object@featurePairwiseDistances) != 0 && 
          nrow(object@featurePairwiseDistances) != nrow(object)) ) {
       valid <- FALSE
-      msg <- c(msg, "featurePariwiseDistances must be of dimension nrow(SCESet) by nrow(SCESet)")
+      msg <- c(msg, "featurePairwiseDistances must be of dimension nrow(SCESet) by nrow(SCESet)")
     }
     if ( (nrow(object@featurePairwiseDistances) != 0) && 
         (!identical(rownames(object@featurePairwiseDistances), 
@@ -277,6 +285,10 @@ setValidity("SCESet", function(object) {
     }
     if ( (!is.null(counts(object))) && any(counts(object) < 0, na.rm = TRUE) )
           warning( "The count data contain negative values." )
+    if( !(object@useForExprs %in% c("exprs", "tpm", "fpkm", "counts")) ) {
+      valid <- FALSE
+      msg <- c(msg, "object@useForExprs must be one of 'exprs', 'tpm', 'fpkm', 'counts'")
+    }
     
     if(valid) TRUE else msg      
 })
@@ -1454,7 +1466,7 @@ toCellDataSet <- function(sce, use_as_exprs = "exprs") {
 #' Convert a \code{CellDataSet} to an \code{SCESet}
 #' 
 #' @param cds A \code{CellDataSet} from the \code{monocle} package
-#' @param use_as_exprs What should \code{exprs(cds)} be mapped to in the \code{SCESet}? Should be 
+#' @param use_exprs_as What should \code{exprs(cds)} be mapped to in the \code{SCESet}? Should be 
 #' one of "exprs", "tpm", "fpkm", "counts"
 #' @param logged logical, if a value is supplied for the exprsData argument, are
 #'  the expression values already on the log2 scale, or not?
@@ -1466,7 +1478,7 @@ toCellDataSet <- function(sce, use_as_exprs = "exprs") {
 #' @rdname fromCellDataSet
 #' @name fromCellDataSet
 #' @return An object of class \code{SCESet}
-fromCellDataSet <- function(cds, use_as_exprs = "tpm", logged=FALSE) {
+fromCellDataSet <- function(cds, use_exprs_as = "tpm", logged=FALSE) {
     pkgAvail <- requireNamespace("monocle", character.only=TRUE) 
     if(pkgAvail) {
         if(!is(cds,'CellDataSet')) stop('cds must be of type CellDataSet from package monocle')
@@ -1495,3 +1507,39 @@ fromCellDataSet <- function(cds, use_as_exprs = "tpm", logged=FALSE) {
         stop("Require package monocle to be installed to use this function.")
 }
 
+#' Retrieve a representation of gene expression
+#' 
+#' Gene expression can be summarised in a variety of ways, e.g. as TPM, FPKM or
+#' as raw counts. Many internal methods and external packages rely on accessing
+#' a generic representation of expression without worrying about the particulars.
+#' Scater allows the user to set \code{object@@useForExprs} to the preferred
+#' type (either "exprs", "TPM", "fpkm" or "counts") and that particular representation
+#' will be returned by calls to \code{getExprs}. Note if such representation is
+#' not defined, this method returns \code{NULL}.
+#' 
+#' @param object An object of type \code{SCESet}
+#' @return A matrix representation of expression corresponding to \code{object@@useForExprs}.
+#' 
+#' @export
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd, useForExprs = "exprs")
+#' all(exprs(example_sceset) == getExprs(example_sceset)) # TRUE
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd, useForExprs = "counts")
+#' all(exprs(example_sceset) == getExprs(example_sceset)) # FALSE
+#' all(counts(example_sceset) == getExprs(example_sceset)) # TRUE
+getExprs <- function(object) {
+  if(!is(object,'SCESet')) stop('object must be of type SCESet')
+  
+  x <- switch(object@useForExprs,
+              exprs = exprs(object),
+              tpm = tpm(object),
+              fpkm = fpkm(object),
+              counts = counts(object))
+  
+  if(is.null(x)) warning(paste("Slot for", object@useForExprs, "is empty; returning NULL"))
+  
+  return( x )
+}
