@@ -27,14 +27,14 @@
 #' \code{"ensembl_gene_id"}, Ensembl gene IDs for mouse. This should be changed 
 #' if the organism is not Mus musculus!
 #' @param biomart character string defining the biomaRt to be used. Default is 
-#' \code{"ensembl"}.
+#' \code{"ENSEMBL_MART_ENSEMBL"}.
 #' @param dataset character string defining the biomaRt dataset to use. Default
 #' is \code{"mmusculus_gene_ensembl"}, which should be changed if the organism 
 #' is not the mouse!
 #' @param host optional character string argument which can be used to select a
 #' particular \code{"host"} from biomaRt to use. Useful for accessing archived
-#' versions of biomaRt data. Default is \code{NULL}, in which case the current 
-#' version of the biomaRt is used.
+#' versions of biomaRt data. Default is \code{"www.ensembl.org"}, in which case the current 
+#' version of the biomaRt (now hosted by Ensembl) is used.
 #' 
 #' @details See the documentation for the biomaRt package, specifically for the
 #' functions \code{useMart} and \code{getBM}, for information on what are 
@@ -57,9 +57,9 @@ getBMFeatureAnnos <- function(object, filters="ensembl_transcript_id",
                                            "transcript_count"), 
                               feature_symbol="mgi_symbol",
                               feature_id="ensembl_gene_id",
-                              biomart="ensembl", 
+                              biomart="ENSEMBL_MART_ENSEMBL", 
                               dataset="mmusculus_gene_ensembl",
-                              host=NULL) {
+                              host="www.ensembl.org") {
     ## Define Biomart Mart to use
     if( is.null(host) )
         bmart <- biomaRt::useMart(biomart=biomart, dataset=dataset)

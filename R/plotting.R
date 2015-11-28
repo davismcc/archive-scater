@@ -238,6 +238,8 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' data("sc_example_cell_info")
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' drop_genes <- apply(exprs(example_sceset), 1, function(x) {var(x) == 0})
+#' example_sceset <- example_sceset[!drop_genes, ]
 #' 
 #' ## Examples plotting PC1 and PC2
 #' plotPCA(example_sceset)
@@ -484,6 +486,8 @@ setMethod("plotPCA", signature("SCESet"),
 #' data("sc_example_cell_info")
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' drop_genes <- apply(exprs(example_sceset), 1, function(x) {var(x) == 0})
+#' example_sceset <- example_sceset[!drop_genes, ]
 #' 
 #' ## Examples plotting PC1 and PC2
 #' plotTSNE(example_sceset, perplexity = 10)
@@ -670,6 +674,9 @@ setMethod("plotTSNE", signature("SCESet"),
 #' data("sc_example_cell_info")
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' drop_genes <- apply(exprs(example_sceset), 1, function(x) {var(x) == 0})
+#' example_sceset <- example_sceset[!drop_genes, ]
+#' 
 #' reducedDimension(example_sceset) <- prcomp(t(exprs(example_sceset)), scale. = TRUE)$x
 #' plotReducedDim(example_sceset)
 #' plotReducedDim(example_sceset, colour_by="Cell_Cycle")

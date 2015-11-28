@@ -451,6 +451,8 @@ a lower count threshold of 0.")
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' rownames(pd) <- pd$Cell
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' drop_genes <- apply(exprs(example_sceset), 1, function(x) {var(x) == 0})
+#' example_sceset <- example_sceset[!drop_genes, ]
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' findImportantPCs(example_sceset, variable="coverage")
 #' 
@@ -802,6 +804,8 @@ plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' rownames(pd) <- pd$Cell
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' drop_genes <- apply(exprs(example_sceset), 1, function(x) {var(x) == 0})
+#' example_sceset <- example_sceset[!drop_genes, ]
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' vars <- names(pData(example_sceset))[c(2:3, 5:14)]
 #' plotExplanatoryVariables(example_sceset, variables=vars)
@@ -1102,6 +1106,8 @@ plotExprsFreqVsMean <- function(object, feature_set = NULL, shape = 1,
 #' pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
 #' rownames(pd) <- pd$Cell
 #' example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
+#' drop_genes <- apply(exprs(example_sceset), 1, function(x) {var(x) == 0})
+#' example_sceset <- example_sceset[!drop_genes, ]
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' plotQC(example_sceset, type="high", col_by_variable="Mutation_Status")
 #' plotQC(example_sceset, type="find", variable="coverage")

@@ -20,6 +20,8 @@
 #' transcripts-per-million (TPM) expression values
 #' @param fpkmData matrix of class \code{"numeric"} containing fragments per 
 #' kilobase of exon per million reads mapped (FPKM) expression values
+#' @param cpmData matrix of class \code{"numeric"} containing counts per 
+#' million (CPM) expression values (optional)
 #' @param phenoData data frame containing attributes of individual cells
 #' @param featureData data frame containing attributes of features (e.g. genes)
 #' @param experimentData MIAME class object containing metadata data and details
@@ -79,6 +81,7 @@ newSCESet <- function(exprsData = NULL,
                       countData = NULL,
                       tpmData = NULL,
                       fpkmData = NULL,
+                      cpmData = NULL,
                       phenoData = NULL, 
                       featureData = NULL,
                       experimentData = NULL,
@@ -89,7 +92,8 @@ newSCESet <- function(exprsData = NULL,
                       useForExprs = "exprs")
 {
     ## Check that we have some expression data
-    if ( is.null(exprsData) & is.null(countData) & is.null(tpmData) & is.null(fpkmData))
+    if ( is.null(exprsData) & is.null(countData) & is.null(tpmData) & 
+         is.null(fpkmData) & is.null(cpmData))
         stop("Require at least one of exprsData, tpmData, fpkmData or countData arguments.")
     ## Check dimensions of data matrices
     
@@ -114,14 +118,25 @@ Using log2(transcripts-per-million + logExprsOffset) for exprs slot. See also ?c
                 message("exprs(object) (i.e. exprsData) is not defined. 
 Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?calculateTPM.")
             } else {
-                exprsData <- edgeR::cpm.default(countData, prior.count = logExprsOffset, log = TRUE)
-                logged <- TRUE
-                message("Generating log2(counts-per-million) from counts to use as
+                if ( !is.null(cpmData) ) {
+                    exprsData <- log2(cpmData + logExprsOffset)
+                    logged <- TRUE
+                    message("exprs(object) (i.e. exprsData) is not defined. 
+                            Using log2(CPM + logExprsOffset) for exprs slot. 
+                            See also ?calculateFPKM and ?calculateTPM.")
+                }  else {
+                    cpmData <- edgeR::cpm.default(countData, 
+                                                  prior.count = logExprsOffset, 
+                                                  log = FALSE)
+                    exprsData <- log2(cpmData + logExprsOffset)
+                    logged <- TRUE
+                    message("Generating log2(counts-per-million + offset) from counts to use as
                 expression data, with prior.count = logExprsOffset. See edgeR::cpm().
                         Note that counts-per-million are not recommended for most analyses. 
                         Consider using transcripts-per-million instead. See ?calculateTPM.")
-            }
-        }    
+                }
+            }    
+        }
         ## Define isexprs if null
         if ( is.null(is_exprsData) ) {
             if ( !is.null(tpmData) ) {
@@ -186,7 +201,8 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
     useForExprs <- match.arg(useForExprs, c("exprs","tpm","counts","fpkm"))
     
     ## Generate new SCESet object
-    assaydata <- assayDataNew("environment", exprs = exprsData, is_exprs = isexprs) 
+    assaydata <- assayDataNew("environment", exprs = exprsData, 
+                              is_exprs = isexprs) 
     sceset <- new( "SCESet",
                    assayData = assaydata,
                    phenoData = phenoData, 
@@ -204,6 +220,9 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
         fpkm(sceset) <- fpkmData
     if ( !is.null(countData) )
         counts(sceset) <- countData
+    if ( !is.null(cpmData) )
+        cpm(sceset) <- cpmData
+    
     
     ## Check validity of object    
     validObject(sceset)
@@ -219,11 +238,13 @@ setValidity("SCESet", function(object) {
     valid <- TRUE
   
     ## Check that the dimensions and names of the bootstraps slot are sensible
-    if ( (length(object@bootstraps) != 0) && (nrow(object@bootstraps) != nrow(object)) ) {
+    if ( (length(object@bootstraps) != 0) && (nrow(object@bootstraps) 
+                                              != nrow(object)) ) {
       valid <- FALSE
       msg <- c(msg, "Number of boostrapped genes doesn't match number of genes in SCESet")
     }
-    if ( (length(object@bootstraps) != 0) && (ncol(object@bootstraps) != ncol(object)) ) {
+    if ( (length(object@bootstraps) != 0) && (ncol(object@bootstraps) 
+                                              != ncol(object)) ) {
       valid <- FALSE
       msg <- c(msg, "Number of boostrapped samples doesn't match number of samples in SCESet")
     }
