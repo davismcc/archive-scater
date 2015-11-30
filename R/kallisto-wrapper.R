@@ -47,6 +47,11 @@
 #' commands that would be run and the output directories is returned. Can be 
 #' used to read in results if kallisto is run outside an R session or to produce
 #'  a script to run outside of an R session.
+#' @param kallisto_cmd (optional) string giving full command to use fo call
+#' kallisto, if simply typing "kallisto" at the command line does not give the
+#' required version of kallisto or does not work. Default is simply "kalliso".
+#' If used, this argument should give the full path to the desired kallisto
+#' binary. 
 #' 
 #' @details A kallisto transcript index can be built from a FASTA file: 
 #' \code{kallisto index [arguments] FASTA-file}. See the kallisto documentation
@@ -72,7 +77,8 @@ runKallisto <- function(targets_file, transcript_index, single_end = TRUE,
                         n_cores = 2, n_bootstrap_samples = 0, 
                         bootstrap_seed = NULL, correct_bias = TRUE, 
                         plaintext = FALSE, kallisto_version = "current", 
-                        verbose = TRUE, dry_run = FALSE) {
+                        verbose = TRUE, dry_run = FALSE,
+                        kallisto_cmd = "kallisto") {
     targets_dir <- paste0(dirname(targets_file), "/")
     targets <- read.delim(targets_file, stringsAsFactors = FALSE, header = TRUE)
     if ( !(ncol(targets) == 2 || ncol(targets) == 3) )
@@ -80,17 +86,21 @@ runKallisto <- function(targets_file, transcript_index, single_end = TRUE,
              3 columns (paired-end reads). File should be tab-delimited with
              column headers")
     if ( ncol(targets) == 2 && !single_end ) {
-        warning("targets only has two columns; proceeding assuming single-end reads")
+        warning("targets only has two columns; proceeding assuming single-end
+reads")
         single_end <- TRUE
     }
     if ( ncol(targets) == 3 && single_end ) {
-        warning("targets only has three columns, but 'single_end' was TRUE; proceeding assuming paired-end reads")
+        warning("targets only has three columns, but 'single_end' was TRUE;
+proceeding assuming paired-end reads")
         single_end <- FALSE
     }
     samples <- targets[,1]
     ## If we have single-end reads then fragment_length must be defined
     if ( single_end && is.null(fragment_length) )
-        stop("If single-end reads are used, then fragment_length must be defined. Either a scalar giving the average fragment length to use for all samples, or a vector providing the ave fragment length for each sample.")
+        stop("If single-end reads are used, then fragment_length must be
+defined. Either a scalar giving the average fragment length to use for all
+samples, or a vector providing the ave fragment length for each sample.")
     else
         paired_end <- !single_end
     if ( correct_bias && kallisto_version == "pre-0.42.2" )
@@ -134,7 +144,7 @@ runKallisto <- function(targets_file, transcript_index, single_end = TRUE,
         cl <- parallel::makeCluster(n_cores)
         # one or more parLapply calls to kallisto
         kallisto_log <- parallel::parLapply(cl, kallisto_args, .call_kallisto, 
-                                            output_prefix, verbose)
+                                            kallisto_cmd, verbose)
         parallel::stopCluster(cl)
         ## Return log of kallisto jobs, so user knows where to find results
         names(kallisto_log) <- samples
@@ -149,10 +159,10 @@ runKallisto <- function(targets_file, transcript_index, single_end = TRUE,
     kallisto_log
 }
 
-.call_kallisto <- function(kcall, output_prefix, verbose=TRUE) {
-    out <- tryCatch(ex <- system2("kallisto", kcall, stdout=TRUE, stderr=TRUE), 
+.call_kallisto <- function(kcall, kallisto_cmd, verbose=TRUE) {
+    out <- tryCatch(ex <- system2(kallisto_cmd, kcall, stdout=TRUE, stderr=TRUE), 
                     warning=function(w){w}, error=function(e){e})
-    list(kallisto_call=paste("kallisto", kcall), kallisto_log=out)
+    list(kallisto_call=paste(kallisto_cmd, kcall), kallisto_log=out)
 }
 
 ### Possible test for kallisto wrapper, but seems to leave tests hanging (not clear why)
