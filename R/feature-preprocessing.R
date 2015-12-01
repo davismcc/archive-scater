@@ -170,9 +170,12 @@ summariseExprsAcrossFeatures <- function(object, use_as_exprs = "tpm",
     tmp_exprs_long <- suppressMessages(reshape2::melt(tmp_exprs))
     exprs_new <- reshape2::acast(tmp_exprs_long, feature ~ variable, sum)
     cat("Collapsing expression to", nrow(exprs_new), "features.")
+    ## ensure sample names haven't been corrupted
+    colnames(exprs_new) <- sampleNames(object) 
     ## Create a new SCESet object
     pd <- new("AnnotatedDataFrame", pData(object))
-    fd <- new("AnnotatedDataFrame", data.frame(exprs_collapsed_to = rownames(exprs_new)))
+    fd <- new("AnnotatedDataFrame",
+              data.frame(exprs_collapsed_to = rownames(exprs_new)))
     rownames(fd) <- rownames(exprs_new)
     if ( use_as_exprs == "exprs" && object@logged ) {
         exprs_new <- log2(exprs_new + object@logExprsOffset)
@@ -191,29 +194,37 @@ summariseExprsAcrossFeatures <- function(object, use_as_exprs = "tpm",
         tmp_exprs <- data.frame(feature = fData(object)[[summarise_by]], 
                                 counts(object))
         tmp_exprs_long <- reshape2::melt(tmp_exprs)
-        counts(sce_out) <- reshape2::acast(tmp_exprs_long, feature ~ variable, 
-                                           sum)
+        counts_new <- reshape2::acast(tmp_exprs_long, feature ~ variable, sum)
+        colnames(counts_new) <- sampleNames(object) 
+        counts(sce_out) <- counts_new
+        rm(counts_new)
     }
     if ( use_as_exprs != "tpm" && !is.null(tpm(object)) ) {
         tmp_exprs <- data.frame(feature = fData(object)[[summarise_by]], 
                                 tpm(object))
         tmp_exprs_long <- reshape2::melt(tmp_exprs)
-        tpm(sce_out) <- reshape2::acast(tmp_exprs_long, feature ~ variable, 
-                                        sum)
+        tpm_new <- reshape2::acast(tmp_exprs_long, feature ~ variable, sum)
+        colnames(tpm_new) <- sampleNames(object) 
+        tpm(sce_out) <- tpm_new
+        rm(tpm_new)
     }
     if ( use_as_exprs != "fpkm" && !is.null(fpkm(object)) ) {
         tmp_exprs <- data.frame(feature = fData(object)[[summarise_by]], 
                                 fpkm(object))
         tmp_exprs_long <- reshape2::melt(tmp_exprs)
-        fpkm(sce_out) <- reshape2::acast(tmp_exprs_long, feature ~ variable, 
-                                         sum)
+        fpkm_new <- reshape2::acast(tmp_exprs_long, feature ~ variable, sum)
+        colnames(fpkm_new) <- sampleNames(object) 
+        fpkm(sce_out) <- fpkm_new
+        rm(fpkm_new)
     }
     if ( !is.null(cpm(object)) ) {
         tmp_exprs <- data.frame(feature = fData(object)[[summarise_by]], 
                                 cpm(object))
         tmp_exprs_long <- reshape2::melt(tmp_exprs)
-        cpm(sce_out) <- reshape2::acast(tmp_exprs_long, feature ~ variable, 
-                                        sum)
+        cpm_new <- reshape2::acast(tmp_exprs_long, feature ~ variable, sum)
+        colnames(cpm_new) <- sampleNames(object) 
+        cpm(sce_out) <- cpm_new
+        rm(cpm_new)
     }
     ## Use feature symbols for rownames
     sce_out
