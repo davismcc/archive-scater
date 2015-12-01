@@ -8,7 +8,7 @@ runKallisto(targets_file, transcript_index, single_end = TRUE,
   output_prefix = "output", fragment_length = NULL, n_cores = 2,
   n_bootstrap_samples = 0, bootstrap_seed = NULL, correct_bias = TRUE,
   plaintext = FALSE, kallisto_version = "current", verbose = TRUE,
-  dry_run = FALSE)
+  dry_run = FALSE, kallisto_cmd = "kallisto")
 }
 \arguments{
 \item{targets_file}{character string giving the path to a tab-delimited text 
@@ -61,6 +61,12 @@ extensions and added features in version 0.42.2.}
 commands that would be run and the output directories is returned. Can be 
 used to read in results if kallisto is run outside an R session or to produce
  a script to run outside of an R session.}
+
+\item{kallisto_cmd}{(optional) string giving full command to use fo call
+kallisto, if simply typing "kallisto" at the command line does not give the
+required version of kallisto or does not work. Default is simply "kalliso".
+If used, this argument should give the full path to the desired kallisto
+binary.}
 }
 \value{
 A list containing three elements for each sample for which feature 
