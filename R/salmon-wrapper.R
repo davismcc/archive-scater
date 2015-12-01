@@ -44,9 +44,9 @@ readSalmonResultsOneSample <- function(directory, nlines_header = 11) {
         ## extract run info
         header <- data.table::fread(file_to_read, sep = "|", header = FALSE,
                                     nrows = nlines_header)
-        header <- header[-nrow(header), ] 
+        header <- header[-nrow(header),] 
         variables <- "salmon_version"
-        values <- header$V1[1]
+        values <- header[1]
         header <- strsplit(header$V1[-1], " => ")
         for (i in seq_len(length(header))) {
             var <- header[[i]][1]
