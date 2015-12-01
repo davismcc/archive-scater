@@ -47,7 +47,7 @@ readSalmonResultsOneSample <- function(directory, nlines_header = 11) {
         header <- header[-nrow(header),] 
         variables <- "salmon_version"
         values <- header[1]
-        header <- strsplit(header$V1[-1], " => ")
+        header <- strsplit(header[-1], " => ")
         for (i in seq_len(length(header))) {
             var <- header[[i]][1]
             val <- header[[i]][2]
