@@ -4,30 +4,30 @@
 ### constructor function for SCESet class
 
 #' Create a new SCESet object.
-#' 
-#' Scater requires that all data be housed in SCESet objects. SCESet extends 
-#' Bioconductor's ExpressionSet class, and the same basic interface is 
-#' supported. newSCESet() expects a matrix of expression values as its first 
-#' argument, with rows as features (usually genes) and columns as cells. 
-#' Per-feature and per-cell metadata can be supplied with the featureData and 
-#' phenoData arguments, respectively. Use of these optional arguments is 
-#' strongly encouraged. The SCESet also includes a slot 'counts' to store an 
-#' object containing raw count data. 
-#' 
+#'
+#' Scater requires that all data be housed in SCESet objects. SCESet extends
+#' Bioconductor's ExpressionSet class, and the same basic interface is
+#' supported. newSCESet() expects a matrix of expression values as its first
+#' argument, with rows as features (usually genes) and columns as cells.
+#' Per-feature and per-cell metadata can be supplied with the featureData and
+#' phenoData arguments, respectively. Use of these optional arguments is
+#' strongly encouraged. The SCESet also includes a slot 'counts' to store an
+#' object containing raw count data.
+#'
 #' @param exprsData expression data matrix for an experiment
 #' @param countData data matrix containing raw count expression values
-#' @param tpmData matrix of class \code{"numeric"} containing 
+#' @param tpmData matrix of class \code{"numeric"} containing
 #' transcripts-per-million (TPM) expression values
-#' @param fpkmData matrix of class \code{"numeric"} containing fragments per 
+#' @param fpkmData matrix of class \code{"numeric"} containing fragments per
 #' kilobase of exon per million reads mapped (FPKM) expression values
-#' @param cpmData matrix of class \code{"numeric"} containing counts per 
+#' @param cpmData matrix of class \code{"numeric"} containing counts per
 #' million (CPM) expression values (optional)
 #' @param phenoData data frame containing attributes of individual cells
 #' @param featureData data frame containing attributes of features (e.g. genes)
 #' @param experimentData MIAME class object containing metadata data and details
 #' about the experiment and dataset.
 #' @param lowerDetectionLimit the minimum expression level that constitutes true
-#'  expression (defaults to zero and uses count data to determine if an 
+#'  expression (defaults to zero and uses count data to determine if an
 #'  observation is expressed or not)
 #' @param logExprsOffset numeric scalar, providing the offset used when doing
 #' log2-transformations of expression data to avoid trying to take logs of zero.
@@ -36,37 +36,37 @@
 #'  the expression values already on the log2 scale, or not?
 #' @param is_exprsData matrix of class \code{"logical"}, indicating whether
 #'    or not each observation is above the \code{lowerDetectionLimit}.
-#' @param useForExprs character string, either 'exprs' (default),'tpm','counts' or 
-#'    'fpkm' indicating which expression representation both internal methods and 
+#' @param useForExprs character string, either 'exprs' (default),'tpm','counts' or
+#'    'fpkm' indicating which expression representation both internal methods and
 #'    external packages should use when performing analyses.
 #' @return a new SCESet object
 #'
 #' @details
-#' SCESet objects store a matrix of expression values. These values are 
-#' typically transcripts-per-million (tpm), counts-per-million (cpm), fragments 
-#' per kilobase per million mapped (FPKM) or some other output from a program 
-#' that calculates expression values from RNA-Seq reads. We recommend that 
-#' expression values on the log2 scale are used for the 'exprs' slot in the 
-#' SCESet. For example, you may wish to store raw tpm values in the 'tpm' slot 
-#' and \code{log2(tpm + 1)} values in the 'exprs' slot. However, expression 
+#' SCESet objects store a matrix of expression values. These values are
+#' typically transcripts-per-million (tpm), counts-per-million (cpm), fragments
+#' per kilobase per million mapped (FPKM) or some other output from a program
+#' that calculates expression values from RNA-Seq reads. We recommend that
+#' expression values on the log2 scale are used for the 'exprs' slot in the
+#' SCESet. For example, you may wish to store raw tpm values in the 'tpm' slot
+#' and \code{log2(tpm + 1)} values in the 'exprs' slot. However, expression
 #' values could also be values from a single cell qPCR run or some other type of
 #'  assay. The newSCESet function can also accept raw count values. In this case
 #'  see \code{\link{calculateTPM}} and \code{\link{calculateFPKM}} for computing
-#'  TPM and FPKM expression values, respectively, from counts. The function 
-#'  \code{\link[edgeR]{cpm}} from the package edgeR to can be used to compute 
+#'  TPM and FPKM expression values, respectively, from counts. The function
+#'  \code{\link[edgeR]{cpm}} from the package edgeR to can be used to compute
 #'  log2(counts-per-million), if desired.
-#'  
+#'
 #'  An \code{SCESet} object has to have the \code{'exprs'} slot defined, so if
 #'  the \code{exprsData} argument is \code{NULL}, then this function will define
-#'  \code{'exprs'} with the following order of precedence: log2(TPM + 1), if 
-#'  \code{tpmData} is defined; log2(FPKM + 1) if \code{fpkmData} is defined; 
+#'  \code{'exprs'} with the following order of precedence: log2(TPM + 1), if
+#'  \code{tpmData} is defined; log2(FPKM + 1) if \code{fpkmData} is defined;
 #'  otherwise log2(counts-per-million + 1) are used. Note that for most analyses
 #'  counts-per-million are not recommended, and if possible transcripts-per-million
 #'  should be used.
-#'  
-#'  In many downstream functions you will likely find it most convenient if the 
+#'
+#'  In many downstream functions you will likely find it most convenient if the
 #'  \code{'exprs'} values are on the log2-scale, so this is recommended.
-#'  
+#'
 #' @importFrom Biobase annotatedDataFrameFrom
 #' @importFrom Biobase assayDataNew
 #' @import methods
@@ -77,12 +77,12 @@
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset
-newSCESet <- function(exprsData = NULL, 
+newSCESet <- function(exprsData = NULL,
                       countData = NULL,
                       tpmData = NULL,
                       fpkmData = NULL,
                       cpmData = NULL,
-                      phenoData = NULL, 
+                      phenoData = NULL,
                       featureData = NULL,
                       experimentData = NULL,
                       is_exprsData = NULL,
@@ -92,50 +92,50 @@ newSCESet <- function(exprsData = NULL,
                       useForExprs = "exprs")
 {
     ## Check that we have some expression data
-    if ( is.null(exprsData) & is.null(countData) & is.null(tpmData) & 
+    if ( is.null(exprsData) & is.null(countData) & is.null(tpmData) &
          is.null(fpkmData) & is.null(cpmData))
         stop("Require at least one of exprsData, tpmData, fpkmData or countData arguments.")
     ## Check dimensions of data matrices
-    
+
     ## Check counts are a matrix; renames is_exprsData if not null
-    if ( !is.null(countData) )     
+    if ( !is.null(countData) )
         countData <- as.matrix(countData)
     if ( !is.null(is_exprsData) )
         isexprs <- is_exprsData
-    
+
     ## If no exprsData provided define is_exprs from tpmData, fpkmData or countData
     if ( is.null(exprsData) ) {
         ## Define exprs data if null
         if ( !is.null(tpmData) ) {
             exprsData <- log2(tpmData + logExprsOffset)
             logged <- TRUE
-            message("exprs(object) (i.e. exprsData) is not defined. 
+            message("exprs(object) (i.e. exprsData) is not defined.
 Using log2(transcripts-per-million + logExprsOffset) for exprs slot. See also ?calculateTPM.")
         } else {
             if ( !is.null(fpkmData) ) {
                 exprsData <- log2(fpkmData + logExprsOffset)
                 logged <- TRUE
-                message("exprs(object) (i.e. exprsData) is not defined. 
+                message("exprs(object) (i.e. exprsData) is not defined.
 Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?calculateTPM.")
             } else {
                 if ( !is.null(cpmData) ) {
                     exprsData <- log2(cpmData + logExprsOffset)
                     logged <- TRUE
-                    message("exprs(object) (i.e. exprsData) is not defined. 
-                            Using log2(CPM + logExprsOffset) for exprs slot. 
+                    message("exprs(object) (i.e. exprsData) is not defined.
+                            Using log2(CPM + logExprsOffset) for exprs slot.
                             See also ?calculateFPKM and ?calculateTPM.")
                 }  else {
-                    cpmData <- edgeR::cpm.default(countData, 
-                                                  prior.count = logExprsOffset, 
+                    cpmData <- edgeR::cpm.default(countData,
+                                                  prior.count = logExprsOffset,
                                                   log = FALSE)
                     exprsData <- log2(cpmData + logExprsOffset)
                     logged <- TRUE
                     message("Generating log2(counts-per-million + offset) from counts to use as
                 expression data, with prior.count = logExprsOffset. See edgeR::cpm().
-                        Note that counts-per-million are not recommended for most analyses. 
+                        Note that counts-per-million are not recommended for most analyses.
                         Consider using transcripts-per-million instead. See ?calculateTPM.")
                 }
-            }    
+            }
         }
         ## Define isexprs if null
         if ( is.null(is_exprsData) ) {
@@ -144,12 +144,12 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
                 rownames(isexprs) <- rownames(tpmData)
                 colnames(isexprs) <- colnames(tpmData)
                 message(paste0("Defining 'is_exprs' using TPM data and a lower TPM threshold of ", lowerDetectionLimit))
-            } else { 
+            } else {
                 if ( !is.null(fpkmData) ) {
                     isexprs <- fpkmData > lowerDetectionLimit
                     rownames(isexprs) <- rownames(fpkmData)
                     colnames(isexprs) <- colnames(fpkmData)
-                    message(paste0("Defining 'is_exprs' using FPKM data and a lower FPKM threshold of ", lowerDetectionLimit))    
+                    message(paste0("Defining 'is_exprs' using FPKM data and a lower FPKM threshold of ", lowerDetectionLimit))
                 } else {
                     isexprs <- countData > lowerDetectionLimit
                     rownames(isexprs) <- rownames(countData)
@@ -157,7 +157,7 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
                     message(paste0("Defining 'is_exprs' using count data and a lower count threshold of ", lowerDetectionLimit))
                 }
             }
-        }        
+        }
     } else {
         exprsData <- as.matrix(exprsData)
         if ( is.null(is_exprsData) ) {
@@ -167,13 +167,13 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
             message(paste0("Defining 'is_exprs' using exprsData and a lower exprs threshold of ", lowerDetectionLimit))
         }
     }
-    
+
     ## Generate valid phenoData and featureData if not provided
     if ( is.null(phenoData) )
         phenoData <- annotatedDataFrameFrom(exprsData, byrow = FALSE)
-    if ( is.null(featureData) ) 
+    if ( is.null(featureData) )
         featureData <- annotatedDataFrameFrom(exprsData, byrow = TRUE)
-   
+
     ## Check experimentData
     expData_null <- new("MIAME",
                         name = "<your name here>",
@@ -195,24 +195,24 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
         }
     } else {
         expData <- expData_null
-    }   
-    
+    }
+
     ## Check valid useForExprs
     useForExprs <- match.arg(useForExprs, c("exprs","tpm","counts","fpkm"))
-    
+
     ## Generate new SCESet object
-    assaydata <- assayDataNew("environment", exprs = exprsData, 
-                              is_exprs = isexprs) 
+    assaydata <- assayDataNew("environment", exprs = exprsData,
+                              is_exprs = isexprs)
     sceset <- new( "SCESet",
                    assayData = assaydata,
-                   phenoData = phenoData, 
-                   featureData = featureData, 
+                   phenoData = phenoData,
+                   featureData = featureData,
                    experimentData = expData,
                    lowerDetectionLimit = lowerDetectionLimit,
                    logExprsOffset = logExprsOffset,
                    logged = logged,
                    useForExprs = useForExprs)
-    
+
     ## Add non-null slots to assayData for SCESet object, omitting null slots
     if ( !is.null(tpmData) )
         tpm(sceset) <- tpmData
@@ -222,9 +222,9 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
         counts(sceset) <- countData
     if ( !is.null(cpmData) )
         cpm(sceset) <- cpmData
-    
-    
-    ## Check validity of object    
+
+
+    ## Check validity of object
     validObject(sceset)
     sceset
 }
@@ -236,68 +236,68 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
 setValidity("SCESet", function(object) {
     msg <- NULL
     valid <- TRUE
-  
+
     ## Check that the dimensions and names of the bootstraps slot are sensible
-    if ( (length(object@bootstraps) != 0) && (nrow(object@bootstraps) 
+    if ( (length(object@bootstraps) != 0) && (nrow(object@bootstraps)
                                               != nrow(object)) ) {
       valid <- FALSE
       msg <- c(msg, "Number of boostrapped genes doesn't match number of genes in SCESet")
     }
-    if ( (length(object@bootstraps) != 0) && (ncol(object@bootstraps) 
+    if ( (length(object@bootstraps) != 0) && (ncol(object@bootstraps)
                                               != ncol(object)) ) {
       valid <- FALSE
       msg <- c(msg, "Number of boostrapped samples doesn't match number of samples in SCESet")
     }
-    if (  (length(object@bootstraps) != 0) && 
+    if (  (length(object@bootstraps) != 0) &&
          !identical(rownames(object@bootstraps), featureNames(object)) ) {
         valid <- FALSE
         msg <- c(msg, "Boostrap row names must match SCESet featureNames")
     }
-    if (  (length(object@bootstraps) != 0) && 
+    if (  (length(object@bootstraps) != 0) &&
          !identical(colnames(object@bootstraps), sampleNames(object)) ) {
         valid <- FALSE
         msg <- c(msg, "Boostrap column names must match SCESet sampleNames")
     }
     ## Check that the dimensions of the reducedDimension slot are sensible
-    if ( (nrow(object@reducedDimension) != 0) && 
+    if ( (nrow(object@reducedDimension) != 0) &&
         (nrow(object@reducedDimension) != ncol(object)) ) {
         valid <- FALSE
         msg <- c(msg, "Number of samples in reducedDimension doesn't match number of samples in SCESet")
-    }   
-    if ( (nrow(object@reducedDimension) != 0) && 
+    }
+    if ( (nrow(object@reducedDimension) != 0) &&
         !identical(rownames(object@reducedDimension), sampleNames(object)) ) {
         valid <- FALSE
-        msg <- c(msg, "Row names of reducedDimension don't match sampleNames of SCESet")   
+        msg <- c(msg, "Row names of reducedDimension don't match sampleNames of SCESet")
     }
     ## Check that the dimensions of the cellPairwiseDistances slot are sensible
     if ( (nrow(object@cellPairwiseDistances) != ncol(object@cellPairwiseDistances)) ||
-        (nrow(object@cellPairwiseDistances) != 0 && 
+        (nrow(object@cellPairwiseDistances) != 0 &&
          nrow(object@cellPairwiseDistances) != ncol(object)) ) {
         valid <- FALSE
         msg <- c(msg, "cellPariwiseDistances must be of dimension ncol(SCESet) by ncol(SCESet)")
     }
-    if ( (nrow(object@cellPairwiseDistances) != 0) && 
-        (!identical(rownames(object@cellPairwiseDistances), 
+    if ( (nrow(object@cellPairwiseDistances) != 0) &&
+        (!identical(rownames(object@cellPairwiseDistances),
                     colnames(object@cellPairwiseDistances)) ||
         !identical(rownames(object@cellPairwiseDistances), sampleNames(object))) ) {
         valid <- FALSE
-        msg <- c(msg, 
+        msg <- c(msg,
                  "Row names and column names of cellPairwiseDistances must be equal to sampleNames(SCESet)")
     }
     ## Check that the dimensions of the featurePairwiseDistances slot are sensible
-    if ( (nrow(object@featurePairwiseDistances) != 
+    if ( (nrow(object@featurePairwiseDistances) !=
          ncol(object@featurePairwiseDistances)) ||
-        (nrow(object@featurePairwiseDistances) != 0 && 
+        (nrow(object@featurePairwiseDistances) != 0 &&
          nrow(object@featurePairwiseDistances) != nrow(object)) ) {
       valid <- FALSE
       msg <- c(msg, "featurePairwiseDistances must be of dimension nrow(SCESet) by nrow(SCESet)")
     }
-    if ( (nrow(object@featurePairwiseDistances) != 0) && 
-        (!identical(rownames(object@featurePairwiseDistances), 
+    if ( (nrow(object@featurePairwiseDistances) != 0) &&
+        (!identical(rownames(object@featurePairwiseDistances),
                     colnames(object@featurePairwiseDistances)) ||
          !identical(rownames(object@featurePairwiseDistances), featureNames(object))) ) {
       valid <- FALSE
-      msg <- c(msg, 
+      msg <- c(msg,
                "Row names and column names of featurePairwiseDistances must be equal to featureNames(SCESet)")
     }
     ## Check that we have sensible values for the counts
@@ -310,8 +310,8 @@ setValidity("SCESet", function(object) {
       valid <- FALSE
       msg <- c(msg, "object@useForExprs must be one of 'exprs', 'tpm', 'fpkm', 'counts'")
     }
-    
-    if(valid) TRUE else msg      
+
+    if(valid) TRUE else msg
 })
 
 
@@ -320,7 +320,7 @@ setValidity("SCESet", function(object) {
 
 #' Subsetting SCESet Objects
 #'
-#' Subset method for SCESet objects, which subsets both the expression data, 
+#' Subset method for SCESet objects, which subsets both the expression data,
 #' phenotype data, feature data and other slots in the object.
 #'
 #' @rdname SCESet-subset
@@ -328,27 +328,27 @@ setValidity("SCESet", function(object) {
 NULL
 
 #' @inheritParams base::Extract
-#' @param i,j,... indices specifying elements to extract or replace. Indices 
-#' are numeric or character vectors or empty (missing) or \code{NULL}. Numeric 
-#' values are coerced to integer as by \code{\link[base]{as.integer}} (and hence 
-#' truncated towards zero). Character vectors will be matched to the names of 
-#' the object (or for matrices/arrays, the dimnames): see 
+#' @param i,j,... indices specifying elements to extract or replace. Indices
+#' are numeric or character vectors or empty (missing) or \code{NULL}. Numeric
+#' values are coerced to integer as by \code{\link[base]{as.integer}} (and hence
+#' truncated towards zero). Character vectors will be matched to the names of
+#' the object (or for matrices/arrays, the dimnames): see
 #' \code{\link[base]{Extract}} for further details.
-#' 
-#' For \code{[}-indexing only: \code{i, j, ...} can be logical vectors, indicating 
-#' elements/slices to select. Such vectors are recycled if necessary to match 
-#' the corresponding extent. \code{i, j, ...} can also be negative integers, 
-#' indicating elements/slices to leave out of the selection. When indexing 
-#' arrays by \code{[} a single argument i can be a matrix with as many columns 
-#' as there are dimensions of \code{x}; the result is then a vector with 
-#' elements corresponding to the sets of indices in each row of \code{i}. An 
+#'
+#' For \code{[}-indexing only: \code{i, j, ...} can be logical vectors, indicating
+#' elements/slices to select. Such vectors are recycled if necessary to match
+#' the corresponding extent. \code{i, j, ...} can also be negative integers,
+#' indicating elements/slices to leave out of the selection. When indexing
+#' arrays by \code{[} a single argument i can be a matrix with as many columns
+#' as there are dimensions of \code{x}; the result is then a vector with
+#' elements corresponding to the sets of indices in each row of \code{i}. An
 #' index value of \code{NULL} is treated as if it were \code{integer(0)}.
-#'  
-#' @aliases [,SCESet,ANY-method [,SCESet,ANY,ANY-method [,SCESet,ANY,ANY,ANY-method 
+#'
+#' @aliases [,SCESet,ANY-method [,SCESet,ANY,ANY-method [,SCESet,ANY,ANY,ANY-method
 #' @rdname SCESet-subset
 #' @export
 #' @seealso \code{\link[base]{Extract}}
-#' 
+#'
 setMethod('[', 'SCESet', function (x, i, j, ..., drop=FALSE) {
     if ( !missing(i) && missing(j) ){
         ## Subsetting features only
@@ -359,7 +359,7 @@ setMethod('[', 'SCESet', function (x, i, j, ..., drop=FALSE) {
             if( !is.na(ncol(x@bootstraps)) ) {
                 if(  nrow(x@bootstraps) != 0 && length(dim(x@bootstraps)) > 2 )
                     x@bootstraps <- x@bootstraps[i, , ..., drop=drop]
-            }   
+            }
         } else {
             if( !is.na(ncol(x@bootstraps)) ) {
                 if( nrow(x@bootstraps) != 0 )
@@ -377,7 +377,7 @@ setMethod('[', 'SCESet', function (x, i, j, ..., drop=FALSE) {
             if( !is.na(ncol(x@bootstraps)) ) {
                 if( ncol(x@bootstraps) != 0 && length(dim(x@bootstraps)) > 2 )
                     x@bootstraps <- x@bootstraps[, j, ..., drop=drop]
-            }        
+            }
         } else {
             if( !is.na(ncol(x@bootstraps)) ) {
                 if( ncol(x@bootstraps) != 0 )
@@ -397,21 +397,21 @@ setMethod('[', 'SCESet', function (x, i, j, ..., drop=FALSE) {
             if( !is.na(ncol(x@bootstraps)) ) {
                 if( nrow(x@bootstraps) != 0 && ncol(x@bootstraps) != 0 && length(dim(x@bootstraps)) > 2 )
                     x@bootstraps <- x@bootstraps[i, j, ..., drop=drop]
-            }        
+            }
         } else {
             if( !is.na(ncol(x@bootstraps)) ) {
                 if( nrow(x@bootstraps) != 0 && ncol(x@bootstraps) != 0 )
                     x@bootstraps <- x@bootstraps[i, j, , drop=drop]
             }
         }
-    } else{ 
+    } else{
         ## All missing: possibly not missing ... for subsetting bootstrap samples
         if ( !is.na(ncol(x@bootstraps)) ) {
             if( nrow(x@bootstraps) != 0 && ncol(x@bootstraps) != 0 && length(dim(x@bootstraps)) > 2 )
                 x@bootstraps <- x@bootstraps[, , ..., drop=drop]
         }
     }
-    ## Check validity of object    
+    ## Check validity of object
     validObject(x)
     x
 })
@@ -421,11 +421,11 @@ setMethod('[', 'SCESet', function (x, i, j, ..., drop=FALSE) {
 ## cellNames
 
 #' Get cell names from an SCESet object
-#' 
+#'
 #' @param object An SCESet object.
-#' 
+#'
 #' @return A vector of cell names.
-#' 
+#'
 #' @details Simply a wrapper to \code{\link[Biobase]{sampleNames}}.
 #' @importFrom Biobase sampleNames
 #' @export
@@ -435,7 +435,7 @@ setMethod('[', 'SCESet', function (x, i, j, ..., drop=FALSE) {
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' cellNames(example_sceset)
-#' 
+#'
 cellNames <- function(object) {
     sampleNames(object)
 }
@@ -447,18 +447,18 @@ cellNames <- function(object) {
 #' Replaces featureData in an SCESet object
 #'
 #' SCESet objects contain feature information (inherited from the ExpressionSet
-#' class). This function conveniently replaces the feature data with the 
+#' class). This function conveniently replaces the feature data with the
 #' value supplied, which must be an AnnotatedDataFrame.
 #' @param x An SCESet object.
-#' @param value an AnnotatedDataFrame with updated featureData to replace 
-#' existing 
+#' @param value an AnnotatedDataFrame with updated featureData to replace
+#' existing
 #' @return A matrix of expression count data, where rows correspond to features
 #' (e.g. genes) and columns correspond to cells.
-#' 
+#'
 #' @export
 #' @rdname fData
-#' @aliases fData fData,SCESet-method fData<-,SCESet,AnnotatedDataFrame-method fData<-,SCESet,data.frame-method 
-#' 
+#' @aliases fData fData,SCESet-method fData<-,SCESet,AnnotatedDataFrame-method fData<-,SCESet,data.frame-method
+#'
 #' @examples
 #' \dontrun{
 #' data("sc_example_counts")
@@ -467,7 +467,7 @@ cellNames <- function(object) {
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' fData(example_sceset)
 #' }
-setReplaceMethod("fData", signature(x = "SCESet", value = "AnnotatedDataFrame"), 
+setReplaceMethod("fData", signature(x = "SCESet", value = "AnnotatedDataFrame"),
                  function(x, value) {
                      x@featureData <- value
                      x
@@ -476,7 +476,7 @@ setReplaceMethod("fData", signature(x = "SCESet", value = "AnnotatedDataFrame"),
 #' @name fData
 #' @rdname fData
 #' @exportMethod "fData<-"
-setReplaceMethod("fData", signature(x = "SCESet", value = "data.frame"), 
+setReplaceMethod("fData", signature(x = "SCESet", value = "data.frame"),
                  function(x, value) {
                      x@featureData <- new("AnnotatedDataFrame", value)
                      x
@@ -486,19 +486,19 @@ setReplaceMethod("fData", signature(x = "SCESet", value = "data.frame"),
 
 #' Replaces phenoData in an SCESet object
 #'
-#' SCESet objects contain phenotype information (inherited from the 
-#' ExpressionSet class). This function conveniently replaces the phenotype data 
+#' SCESet objects contain phenotype information (inherited from the
+#' ExpressionSet class). This function conveniently replaces the phenotype data
 #' with the value supplied, which must be an AnnotatedDataFrame.
 #' @param x An SCESet object.
-#' @param value an AnnotatedDataFrame with updated phenoData to replace 
-#' existing 
+#' @param value an AnnotatedDataFrame with updated phenoData to replace
+#' existing
 #' @return A matrix of expression count data, where rows correspond to features
 #' (e.g. genes) and columns correspond to cells.
-#' 
+#'
 #' @exportMethod "pData<-"
 #' @rdname pData
 #' @aliases pData pData,SCESet-method pData<-,SCESet,AnnotatedDataFrame-method pData<-,SCESet,data.frame-method
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' data("sc_example_counts")
@@ -507,7 +507,7 @@ setReplaceMethod("fData", signature(x = "SCESet", value = "data.frame"),
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' pData(example_sceset)
 #' }
-setReplaceMethod("pData", signature(x = "SCESet", value = "AnnotatedDataFrame"), 
+setReplaceMethod("pData", signature(x = "SCESet", value = "AnnotatedDataFrame"),
                  function(x, value) {
                      x@phenoData <- value
                      x
@@ -517,7 +517,7 @@ setReplaceMethod("pData", signature(x = "SCESet", value = "AnnotatedDataFrame"),
 #' @name pData
 #' @rdname pData
 #' @exportMethod "pData<-"
-setReplaceMethod("pData", signature(x = "SCESet", value = "data.frame"), 
+setReplaceMethod("pData", signature(x = "SCESet", value = "data.frame"),
                  function(x, value) {
                      x@phenoData <- new("AnnotatedDataFrame", value)
                      x
@@ -577,7 +577,7 @@ setReplaceMethod("counts", signature(object = "SCESet", value = "matrix"),
 
 #' Accessors for the 'norm_counts' element of an SCESet object.
 #'
-#' The norm_counts element holds normalised count data as a matrix of 
+#' The norm_counts element holds normalised count data as a matrix of
 #' non-negative values, one row for each feature (gene, exon, region, etc), and one
 #' column for each cell. It is an element of the assayData slot of the SCESet
 #' object.
@@ -625,11 +625,11 @@ setReplaceMethod("norm_counts", signature(object = "SCESet", value = "matrix"),
 
 #' Accessors for the 'is_exprs' element of an SCESet object.
 #'
-#' The is_exprs element holds a logical matrix indicating whether or not each 
+#' The is_exprs element holds a logical matrix indicating whether or not each
 #' observation is above the defined lowerDetectionLimit in the SCESet object. It
-#' has the same dimensions as the 'exprs' and 'counts' elements, which hold the 
+#' has the same dimensions as the 'exprs' and 'counts' elements, which hold the
 #' transformed expression data and count data, respectively.
-#' 
+#'
 #' @usage
 #' \S4method{is_exprs}{SCESet}(object)
 #'
@@ -674,10 +674,10 @@ setReplaceMethod("is_exprs", signature(object = "SCESet", value = "matrix"),
 #' Accessors for the 'norm_exprs' (normalised expression) element of an SCESet object.
 #'
 #' The \code{norm_exprs} element of the arrayData slot in an SCESet object holds
-#' a matrix containing normalised expression values. It has the same dimensions 
-#' as the 'exprs' and 'counts' elements, which hold the transformed expression 
+#' a matrix containing normalised expression values. It has the same dimensions
+#' as the 'exprs' and 'counts' elements, which hold the transformed expression
 #' data and count data, respectively.
-#' 
+#'
 #' @usage
 #' \S4method{norm_exprs}{SCESet}(object)
 #'
@@ -690,18 +690,18 @@ setReplaceMethod("is_exprs", signature(object = "SCESet", value = "matrix"),
 #'
 #' @param object a \code{SCESet} object.
 #' @param value an integer matrix
-#' 
-#' @details The default for normalised expression values is mean-centred and 
-#' variance-standardised expression data from the \code{exprs} slot of the 
-#' \code{SCESet} object. The function \code{normaliseExprs} (or 
-#' \code{normalizeExprs}) provides more options and functionality for 
+#'
+#' @details The default for normalised expression values is mean-centred and
+#' variance-standardised expression data from the \code{exprs} slot of the
+#' \code{SCESet} object. The function \code{normaliseExprs} (or
+#' \code{normalizeExprs}) provides more options and functionality for
 #' normalising expression data.
-#' 
+#'
 #' @author Davis McCarthy
 #' @export
-#' @aliases norm_exprs norm_exprs,SCESet-method, norm_exprs<-,SCESet,matrix-method 
-#' 
-#' 
+#' @aliases norm_exprs norm_exprs,SCESet-method, norm_exprs<-,SCESet,matrix-method
+#'
+#'
 #' @examples
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
@@ -733,11 +733,11 @@ setReplaceMethod("norm_exprs", signature(object = "SCESet", value = "matrix"),
 #' Accessors for the 'stand_exprs' (standardised expression) element of an SCESet object.
 #'
 #' The \code{stand_exprs} element of the arrayData slot in an SCESet object holds
-#' a matrix containing standardised (mean-centred, variance standardised, by 
-#' feature) expression values. It has the same dimensions as the 'exprs' and 
+#' a matrix containing standardised (mean-centred, variance standardised, by
+#' feature) expression values. It has the same dimensions as the 'exprs' and
 #' 'counts' elements, which hold the transformed expression data and count data,
 #'  respectively.
-#' 
+#'
 #' @usage
 #' \S4method{stand_exprs}{SCESet}(object)
 #'
@@ -750,18 +750,18 @@ setReplaceMethod("norm_exprs", signature(object = "SCESet", value = "matrix"),
 #'
 #' @param object a \code{SCESet} object.
 #' @param value an integer matrix
-#' 
-#' @details The default for normalised expression values is mean-centred and 
-#' variance-standardised expression data from the \code{exprs} slot of the 
-#' \code{SCESet} object. The function \code{normaliseExprs} (or 
-#' \code{normalizeExprs}) provides more options and functionality for 
+#'
+#' @details The default for normalised expression values is mean-centred and
+#' variance-standardised expression data from the \code{exprs} slot of the
+#' \code{SCESet} object. The function \code{normaliseExprs} (or
+#' \code{normalizeExprs}) provides more options and functionality for
 #' normalising expression data.
-#' 
+#'
 #' @author Davis McCarthy
 #' @export
-#' @aliases stand_exprs stand_exprs,SCESet-method, stand_exprs<-,SCESet,matrix-method 
-#' 
-#' 
+#' @aliases stand_exprs stand_exprs,SCESet-method, stand_exprs<-,SCESet,matrix-method
+#'
+#'
 #' @examples
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
@@ -794,10 +794,10 @@ setReplaceMethod("stand_exprs", signature(object = "SCESet", value = "matrix"),
 #' Accessors for the 'tpm' (transcripts per million) element of an SCESet object.
 #'
 #' The \code{tpm} element of the arrayData slot in an SCESet object holds
-#' a matrix containing transcripts-per-million values. It has the same dimensions 
-#' as the 'exprs' and 'counts' elements, which hold the transformed expression 
+#' a matrix containing transcripts-per-million values. It has the same dimensions
+#' as the 'exprs' and 'counts' elements, which hold the transformed expression
 #' data and count data, respectively.
-#' 
+#'
 #' @usage
 #' \S4method{tpm}{SCESet}(object)
 #'
@@ -810,11 +810,11 @@ setReplaceMethod("stand_exprs", signature(object = "SCESet", value = "matrix"),
 #'
 #' @param object a \code{SCESet} object.
 #' @param value a matrix of class \code{"numeric"}
-#' 
+#'
 #' @author Davis McCarthy
 #' @export
 #' @aliases tpm tpm,SCESet-method tpm<-,SCESet,matrix-method
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' data("sc_example_counts")
@@ -850,10 +850,10 @@ setReplaceMethod("tpm", signature(object = "SCESet", value = "matrix"),
 #' Accessors for the 'norm_tpm' (transcripts per million) element of an SCESet object.
 #'
 #' The \code{norm_tpm} element of the arrayData slot in an SCESet object holds
-#' a matrix containing normalised transcripts-per-million values. It has the 
-#' same dimensions as the 'exprs' and 'counts' elements, which hold the 
+#' a matrix containing normalised transcripts-per-million values. It has the
+#' same dimensions as the 'exprs' and 'counts' elements, which hold the
 #' transformed expression data and count data, respectively.
-#' 
+#'
 #' @usage
 #' \S4method{norm_tpm}{SCESet}(object)
 #'
@@ -866,11 +866,11 @@ setReplaceMethod("tpm", signature(object = "SCESet", value = "matrix"),
 #'
 #' @param object a \code{SCESet} object.
 #' @param value a matrix of class \code{"numeric"}
-#' 
+#'
 #' @author Davis McCarthy
 #' @export
 #' @aliases norm_tpm norm_tpm,SCESet-method norm_tpm<-,SCESet,matrix-method
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' data("sc_example_counts")
@@ -906,10 +906,10 @@ setReplaceMethod("norm_tpm", signature(object = "SCESet", value = "matrix"),
 #' Accessors for the 'cpm' (counts per million) element of an SCESet object.
 #'
 #' The \code{cpm} element of the arrayData slot in an SCESet object holds
-#' a matrix containing counts-per-million values. It has the same dimensions 
-#' as the 'exprs' and 'counts' elements, which hold the transformed expression 
+#' a matrix containing counts-per-million values. It has the same dimensions
+#' as the 'exprs' and 'counts' elements, which hold the transformed expression
 #' data and count data, respectively.
-#' 
+#'
 #' @usage
 #' \S4method{cpm}{SCESet}(object)
 #'
@@ -922,11 +922,11 @@ setReplaceMethod("norm_tpm", signature(object = "SCESet", value = "matrix"),
 #'
 #' @param object a \code{SCESet} object.
 #' @param value a matrix of class \code{"numeric"}
-#' 
+#'
 #' @author Davis McCarthy
 #' @export
 #' @aliases cpm cpm,SCESet-method cpm<-,SCESet,matrix-method
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' data("sc_example_counts")
@@ -962,10 +962,10 @@ setReplaceMethod("cpm", signature(object = "SCESet", value = "matrix"),
 #' Accessors for the 'norm_cpm' (normalised counts per million) element of an SCESet object.
 #'
 #' The \code{norm_cpm} element of the arrayData slot in an SCESet object holds
-#' a matrix containing normalised counts-per-million values. It has the same dimensions 
-#' as the 'exprs' and 'counts' elements, which hold the transformed expression 
+#' a matrix containing normalised counts-per-million values. It has the same dimensions
+#' as the 'exprs' and 'counts' elements, which hold the transformed expression
 #' data and count data, respectively.
-#' 
+#'
 #' @usage
 #' \S4method{norm_cpm}{SCESet}(object)
 #'
@@ -978,11 +978,11 @@ setReplaceMethod("cpm", signature(object = "SCESet", value = "matrix"),
 #'
 #' @param object a \code{SCESet} object.
 #' @param value a matrix of class \code{"numeric"}
-#' 
+#'
 #' @author Davis McCarthy
 #' @export
 #' @aliases norm_cpm norm_cpm,SCESet-method norm_cpm<-,SCESet,matrix-method
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' data("sc_example_counts")
@@ -1018,11 +1018,11 @@ setReplaceMethod("norm_cpm", signature(object = "SCESet", value = "matrix"),
 #' Accessors for the 'fpkm' (fragments per kilobase of exon per million reads mapped) element of an SCESet object.
 #'
 #' The \code{fpkm} element of the arrayData slot in an SCESet object holds
-#' a matrix containing fragments per kilobase of exon per million reads mapped 
-#' (FPKM) values. It has the same dimensions as the 'exprs' and 'counts' 
-#' elements, which hold the transformed expression data and count data, 
+#' a matrix containing fragments per kilobase of exon per million reads mapped
+#' (FPKM) values. It has the same dimensions as the 'exprs' and 'counts'
+#' elements, which hold the transformed expression data and count data,
 #' respectively.
-#' 
+#'
 #' @usage
 #' \S4method{fpkm}{SCESet}(object)
 #'
@@ -1035,10 +1035,10 @@ setReplaceMethod("norm_cpm", signature(object = "SCESet", value = "matrix"),
 #'
 #' @param object a \code{SCESet} object.
 #' @param value a matrix of class \code{"numeric"}
-#' 
+#'
 #' @author Davis McCarthy
 #' @export
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' data("sc_example_counts")
@@ -1074,11 +1074,11 @@ setReplaceMethod("fpkm", signature(object = "SCESet", value = "matrix"),
 #' Accessors for the 'norm_fpkm' (normalised fragments per kilobase of exon per million reads mapped) element of an SCESet object.
 #'
 #' The \code{norm_fpkm} element of the arrayData slot in an SCESet object holds
-#' a matrix containing normalised fragments per kilobase of exon per million 
-#' reads mapped (FPKM) values. It has the same dimensions as the 'exprs' and 
-#' 'counts' elements, which hold the transformed expression data and count data, 
+#' a matrix containing normalised fragments per kilobase of exon per million
+#' reads mapped (FPKM) values. It has the same dimensions as the 'exprs' and
+#' 'counts' elements, which hold the transformed expression data and count data,
 #' respectively.
-#' 
+#'
 #' @usage
 #' \S4method{norm_fpkm}{SCESet}(object)
 #'
@@ -1091,10 +1091,10 @@ setReplaceMethod("fpkm", signature(object = "SCESet", value = "matrix"),
 #'
 #' @param object a \code{SCESet} object.
 #' @param value a matrix of class \code{"numeric"}
-#' 
+#'
 #' @author Davis McCarthy
 #' @export
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' data("sc_example_counts")
@@ -1129,35 +1129,35 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 
 #' Accessor and replacement for bootstrap results in an SCESet object
 #'
-#' SCESet objects can contain an of bootstrap expression values (for example, as 
+#' SCESet objects can contain an of bootstrap expression values (for example, as
 #' generated by the kallisto software for quantifying feature abundance). These
-#'  functions conveniently access and replace the 'bootstrap' slot with the value 
-#'  supplied, which must be an matrix of the correct size, namely the same 
-#'  number of rows and columns as the \code{SCEset} object as a whole. 
-#' 
+#'  functions conveniently access and replace the 'bootstrap' slot with the value
+#'  supplied, which must be an matrix of the correct size, namely the same
+#'  number of rows and columns as the \code{SCEset} object as a whole.
+#'
 #' @docType methods
 #' @name bootstraps
 #' @rdname bootstraps
 #' @aliases bootstraps bootstraps,SCESet-method bootstraps<-,SCESet,array-method
 #'
 #' @param object a \code{SCESet} object.
-#' @param value an array of class \code{"numeric"} containing bootstrap 
+#' @param value an array of class \code{"numeric"} containing bootstrap
 #' expression values
 #' @author Davis McCarthy
-#' 
-#' @return If accessing bootstraps slot of an \code{SCESet}, then an array with 
-#' the bootstrap values, otherwise an \code{SCESet} object containing new 
+#'
+#' @return If accessing bootstraps slot of an \code{SCESet}, then an array with
+#' the bootstrap values, otherwise an \code{SCESet} object containing new
 #' bootstrap values.
-#' 
+#'
 #' @export
 #' @aliases bootstraps bootstraps,SCESet-method bootstraps<-,SCE-Set,array-method
-#' 
+#'
 #' @examples
 #' \dontrun{
 #' ## If 'object' is an SCESet:
 #' bootstraps(object)
 #' }
-#' 
+#'
 bootstraps.SCESet <- function(object) {
     object@bootstraps
 }
@@ -1172,7 +1172,7 @@ setMethod("bootstraps", signature(object="SCESet"), bootstraps.SCESet)
 #' @aliases bootstraps
 #' @rdname bootstraps
 #' @export "bootstraps<-"
-setReplaceMethod("bootstraps", signature(object="SCESet", value="array"), 
+setReplaceMethod("bootstraps", signature(object="SCESet", value="array"),
                  function(object, value) {
                      if( (nrow(value) == nrow(object)) & (ncol(value) == ncol(object)) ) {
                          object@bootstraps <- value
@@ -1187,12 +1187,12 @@ setReplaceMethod("bootstraps", signature(object="SCESet", value="array"),
 
 #' Reduced dimension representation for cells in an SCESet object
 #'
-#' SCESet objects can contain a matrix of reduced dimension coordinates for 
-#' cells. These functions conveniently access and replace the reduced dimension 
-#' coordinates with the value supplied, which must be a matrix of the correct 
-#' size. The function \code{redDim} is simply shorthand for 
+#' SCESet objects can contain a matrix of reduced dimension coordinates for
+#' cells. These functions conveniently access and replace the reduced dimension
+#' coordinates with the value supplied, which must be a matrix of the correct
+#' size. The function \code{redDim} is simply shorthand for
 #' \code{reducedDimension}.
-#' 
+#'
 #' @docType methods
 #' @name reducedDimension
 #' @rdname reducedDimension
@@ -1202,11 +1202,11 @@ setReplaceMethod("bootstraps", signature(object="SCESet", value="array"),
 #' @param value a matrix of class \code{"numeric"} containing reduced dimension
 #' coordinates for cells.
 #' @author Davis McCarthy
-#' 
-#' @return If accessing the \code{reducedDimension} slot, then the matrix of 
+#'
+#' @return If accessing the \code{reducedDimension} slot, then the matrix of
 #' reduced dimension coordinates. If replacing the \code{reducedDimension} slot
 #' then the new matrix is added to the \code{SCESet} object.
-#' 
+#'
 #' @export
 #' @examples
 #' \dontrun{
@@ -1216,7 +1216,7 @@ setReplaceMethod("bootstraps", signature(object="SCESet", value="array"),
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' reducedDimension(example_sceset)
 #' }
-#' 
+#'
 reducedDimension.SCESet <- function(object) {
     object@reducedDimension
 }
@@ -1224,7 +1224,7 @@ reducedDimension.SCESet <- function(object) {
 #' @rdname reducedDimension
 #' @aliases reducedDimension
 #' @export
-setMethod("reducedDimension", signature(object="SCESet"), 
+setMethod("reducedDimension", signature(object="SCESet"),
           reducedDimension.SCESet)
 
 #' @rdname reducedDimension
@@ -1243,20 +1243,20 @@ setMethod("redDim", signature(object="SCESet"), redDim.SCESet)
 #' @aliases reducedDimension
 #' @rdname reducedDimension
 #' @exportMethod "reducedDimension<-"
-setReplaceMethod("reducedDimension", signature(object="SCESet", value="matrix"), 
+setReplaceMethod("reducedDimension", signature(object="SCESet", value="matrix"),
                  function(object, value) {
                      if( nrow(value) == ncol(object) ) {
                         if(is.null(rownames(value))) {
                           rownames(value) <- sampleNames(object)
                         } else {
                           if(!identical(rownames(value), sampleNames(object)))
-                            stop("Rownames of reduced dimension must be NULL or equal to sampleNames(SCESet)")  
+                            stop("Rownames of reduced dimension must be NULL or equal to sampleNames(SCESet)")
                         }
                          object@reducedDimension <- value
                          return(object)
                      }
                      else
-                         stop("Reduced dimension matrix supplied is of incorrect size. 
+                         stop("Reduced dimension matrix supplied is of incorrect size.
                               Rows of reduced dimension matrix should correspond to cells, i.e. columns of SCESet object.")
                  } )
 
@@ -1264,20 +1264,20 @@ setReplaceMethod("reducedDimension", signature(object="SCESet", value="matrix"),
 #' @aliases reducedDimension
 #' @rdname reducedDimension
 #' @exportMethod "redDim<-"
-setReplaceMethod("redDim", signature(object="SCESet", value="matrix"), 
+setReplaceMethod("redDim", signature(object="SCESet", value="matrix"),
                  function(object, value) {
                    if( nrow(value) == ncol(object) ) {
                      if(is.null(rownames(value))) {
                        rownames(value) <- sampleNames(object)
                      } else {
                        if(!identical(rownames(value), sampleNames(object)))
-                         stop("Rownames of reduced dimension must be NULL or equal to sampleNames(SCESet)")  
+                         stop("Rownames of reduced dimension must be NULL or equal to sampleNames(SCESet)")
                      }
                      object@reducedDimension <- value
                      return(object)
                    }
                    else
-                     stop("Reduced dimension matrix supplied is of incorrect size. 
+                     stop("Reduced dimension matrix supplied is of incorrect size.
                               Rows of reduced dimension matrix should correspond to cells, i.e. columns of SCESet object.")
                  } )
 
@@ -1289,22 +1289,22 @@ setReplaceMethod("redDim", signature(object="SCESet", value="matrix"),
 #' cellPairwiseDistances in an SCESet object
 #'
 #' SCESet objects can contain a matrix of pairwise distances between cells. These
-#'  functions conveniently access and replace the cell pairwise distances with the value 
+#'  functions conveniently access and replace the cell pairwise distances with the value
 #'  supplied, which must be a matrix of the correct size. The function \code{cellDist}
 #'  is simply shorthand for \code{cellPairwiseDistances}.
-#' 
+#'
 #' @docType methods
 #' @name cellPairwiseDistances
 #' @rdname cellPairwiseDistances
 #' @aliases cellPairwiseDistances cellPairwiseDistances,SCESet-method cellPairwiseDistances<-,SCESet,matrix-method cellDist,SCESet-method cellDist<-,SCESet,matrix-method
 #'
 #' @param object a \code{SCESet} object.
-#' @param value a matrix of class \code{"numeric"} containing cell pairwise 
+#' @param value a matrix of class \code{"numeric"} containing cell pairwise
 #' distances
 #' @author Davis McCarthy
-#' 
+#'
 #' @return An SCESet object containing new cell pairwise distances matrix.
-#' 
+#'
 #' @export
 #' @examples
 #' \dontrun{
@@ -1314,7 +1314,7 @@ setReplaceMethod("redDim", signature(object="SCESet", value="matrix"),
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' cellPairwiseDistances(example_sceset)
 #' }
-#' 
+#'
 cellPairwiseDistances.SCESet <- function(object) {
     object@cellPairwiseDistances
 }
@@ -1322,7 +1322,7 @@ cellPairwiseDistances.SCESet <- function(object) {
 #' @rdname cellPairwiseDistances
 #' @aliases cellPairwiseDistances
 #' @export
-setMethod("cellPairwiseDistances", signature(object="SCESet"), 
+setMethod("cellPairwiseDistances", signature(object="SCESet"),
           cellPairwiseDistances.SCESet)
 
 #' @rdname cellPairwiseDistances
@@ -1341,7 +1341,7 @@ setMethod("cellDist", signature(object="SCESet"), cellDistSCESet)
 #' @aliases cellPairwiseDistances
 #' @rdname cellPairwiseDistances
 #' @exportMethod "cellPairwiseDistances<-"
-setReplaceMethod("cellPairwiseDistances", signature(object="SCESet", value="matrix"), 
+setReplaceMethod("cellPairwiseDistances", signature(object="SCESet", value="matrix"),
                  function(object, value) {
                      if( nrow(value) == ncol(object) ) {
                          object@cellPairwiseDistances <- value
@@ -1355,7 +1355,7 @@ setReplaceMethod("cellPairwiseDistances", signature(object="SCESet", value="matr
 #' @aliases cellPairwiseDistances
 #' @rdname cellPairwiseDistances
 #' @exportMethod "cellDist<-"
-setReplaceMethod("cellDist", signature(object="SCESet", value="matrix"), 
+setReplaceMethod("cellDist", signature(object="SCESet", value="matrix"),
                  function(object, value) {
                      if( nrow(value) == ncol(object) ) {
                          object@cellPairwiseDistances <- value
@@ -1371,14 +1371,14 @@ setReplaceMethod("cellDist", signature(object="SCESet", value="matrix"),
 
 #' featurePairwiseDistances in an SCESet object
 #'
-#' SCESet objects can contain a matrix of pairwise distances between features 
-#' (e.g. genes, transcripts). These functions conveniently access and replace 
-#' the gene pairwise distances with the value supplied, which must be a matrix 
-#' of the correct size. The function \code{featDist} is simply shorthand for 
+#' SCESet objects can contain a matrix of pairwise distances between features
+#' (e.g. genes, transcripts). These functions conveniently access and replace
+#' the gene pairwise distances with the value supplied, which must be a matrix
+#' of the correct size. The function \code{featDist} is simply shorthand for
 #' \code{featurePairwiseDistances}.
 #'
 #' @param object a \code{SCESet} object.
-#' @param value a matrix of class \code{"numeric"} containing feature pairwise 
+#' @param value a matrix of class \code{"numeric"} containing feature pairwise
 #' distances
 #'
 #' @docType methods
@@ -1387,7 +1387,7 @@ setReplaceMethod("cellDist", signature(object="SCESet", value="matrix"),
 #' @aliases featurePairwiseDistances featurePairwiseDistances,SCESet-method featurePairwiseDistances<-,SCESet,matrix-method featDist featDist,SCESet-method featDist<-,SCESet,matrix-method
 #'
 #' @author Davis McCarthy
-#' 
+#'
 #' @return An SCESet object containing new feature pairwise distances matrix.
 #' @export
 #' @examples
@@ -1398,15 +1398,15 @@ setReplaceMethod("cellDist", signature(object="SCESet", value="matrix"),
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' featurePairwiseDistances(example_sceset)
 #' }
-#' 
+#'
 featurePairwiseDistancesSCESet <- function(object) {
     object@featurePairwiseDistances
 }
 
 #' @rdname featurePairwiseDistances
-#' @aliases featurePairwiseDistances 
+#' @aliases featurePairwiseDistances
 #' @export
-setMethod("featurePairwiseDistances", signature(object="SCESet"), 
+setMethod("featurePairwiseDistances", signature(object="SCESet"),
           featurePairwiseDistancesSCESet)
 
 #' @aliases featurePairwiseDistances
@@ -1425,7 +1425,7 @@ setMethod("featDist", signature(object="SCESet"), featDistSCESet)
 #' @aliases featurePairwiseDistances
 #' @rdname featurePairwiseDistances
 #' @export "featurePairwiseDistances<-"
-setReplaceMethod("featurePairwiseDistances", signature(object="SCESet", value="matrix"), 
+setReplaceMethod("featurePairwiseDistances", signature(object="SCESet", value="matrix"),
                  function(object, value) {
                      if( nrow(value) == nrow(object) ) {
                          object@featurePairwiseDistances <- value
@@ -1439,7 +1439,7 @@ setReplaceMethod("featurePairwiseDistances", signature(object="SCESet", value="m
 #' @rdname featurePairwiseDistances
 #' @aliases featurePairwiseDistances
 #' @export "featDist<-"
-setReplaceMethod("featDist", signature(object="SCESet", value="matrix"), 
+setReplaceMethod("featDist", signature(object="SCESet", value="matrix"),
                  function(object, value) {
                      if( nrow(value) == nrow(object) ) {
                          object@featurePairwiseDistances <- value
@@ -1454,9 +1454,9 @@ setReplaceMethod("featDist", signature(object="SCESet", value="matrix"),
 ### Convert to and from Monocle CellDataSet objects
 
 #' Convert an \code{SCESet} to a \code{CellDataSet}
-#' 
-#' @param sce An \code{SCESet} object 
-#' @param use_as_exprs What should \code{exprs(cds)} be mapped from in the \code{SCESet}? Should be 
+#'
+#' @param sce An \code{SCESet} object
+#' @param use_as_exprs What should \code{exprs(cds)} be mapped from in the \code{SCESet}? Should be
 #' one of "exprs", "tpm", "fpkm", "counts"
 #'
 #' @export
@@ -1465,7 +1465,7 @@ setReplaceMethod("featDist", signature(object="SCESet", value="matrix"),
 #' @name toCellDataSet
 #' @return An object of class \code{SCESet}
 toCellDataSet <- function(sce, use_as_exprs = "exprs") {
-    pkgAvail <- requireNamespace("monocle", character.only=TRUE) 
+    pkgAvail <- requireNamespace("monocle", character.only=TRUE)
     if(pkgAvail) {
         if(!is(sce,'SCESet')) stop('sce must be of type SCESet')
         exprsData <- NULL
@@ -1478,20 +1478,21 @@ toCellDataSet <- function(sce, use_as_exprs = "exprs") {
         cds <- monocle::newCellDataSet(exprsData, phenoData=phenoData(sce),
                                        featureData=featureData(sce),
                                        lowerDetectionLimit=sce@lowerDetectionLimit)
+        cds@reducedDimS <- t(redDim(sce))
         return( cds )
-    } 
-    else 
+    }
+    else
         stop("Require package monocle to be installed to use this function.")
 }
 
 #' Convert a \code{CellDataSet} to an \code{SCESet}
-#' 
+#'
 #' @param cds A \code{CellDataSet} from the \code{monocle} package
-#' @param use_exprs_as What should \code{exprs(cds)} be mapped to in the \code{SCESet}? Should be 
+#' @param use_exprs_as What should \code{exprs(cds)} be mapped to in the \code{SCESet}? Should be
 #' one of "exprs", "tpm", "fpkm", "counts"
 #' @param logged logical, if a value is supplied for the exprsData argument, are
 #'  the expression values already on the log2 scale, or not?
-#' 
+#'
 #' @export
 #' @importFrom Biobase featureData
 #' @importFrom Biobase phenoData
@@ -1500,7 +1501,7 @@ toCellDataSet <- function(sce, use_as_exprs = "exprs") {
 #' @name fromCellDataSet
 #' @return An object of class \code{SCESet}
 fromCellDataSet <- function(cds, use_exprs_as = "tpm", logged=FALSE) {
-    pkgAvail <- requireNamespace("monocle", character.only=TRUE) 
+    pkgAvail <- requireNamespace("monocle", character.only=TRUE)
     if(pkgAvail) {
         if(!is(cds,'CellDataSet')) stop('cds must be of type CellDataSet from package monocle')
         exprsData <- countData <- NULL
@@ -1522,14 +1523,15 @@ fromCellDataSet <- function(cds, use_exprs_as = "tpm", logged=FALSE) {
                          featureData = featureData(cds),
                          lowerDetectionLimit = cds@lowerDetectionLimit,
                          logged = logged)
-        return( sce )    
+        redDim(sce) <- t(cds@reducedDimS)
+        return( sce )
     }
-    else 
+    else
         stop("Require package monocle to be installed to use this function.")
 }
 
 #' Retrieve a representation of gene expression
-#' 
+#'
 #' Gene expression can be summarised in a variety of ways, e.g. as TPM, FPKM or
 #' as raw counts. Many internal methods and external packages rely on accessing
 #' a generic representation of expression without worrying about the particulars.
@@ -1537,10 +1539,10 @@ fromCellDataSet <- function(cds, use_exprs_as = "tpm", logged=FALSE) {
 #' type (either "exprs", "TPM", "fpkm" or "counts") and that particular representation
 #' will be returned by calls to \code{getExprs}. Note if such representation is
 #' not defined, this method returns \code{NULL}.
-#' 
+#'
 #' @param object An object of type \code{SCESet}
 #' @return A matrix representation of expression corresponding to \code{object@@useForExprs}.
-#' 
+#'
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -1553,14 +1555,14 @@ fromCellDataSet <- function(cds, use_exprs_as = "tpm", logged=FALSE) {
 #' all(counts(example_sceset) == getExprs(example_sceset)) # TRUE
 getExprs <- function(object) {
   if(!is(object,'SCESet')) stop('object must be of type SCESet')
-  
+
   x <- switch(object@useForExprs,
               exprs = exprs(object),
               tpm = tpm(object),
               fpkm = fpkm(object),
               counts = counts(object))
-  
+
   if(is.null(x)) warning(paste("Slot for", object@useForExprs, "is empty; returning NULL"))
-  
+
   return( x )
 }
