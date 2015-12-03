@@ -4,7 +4,7 @@
 \alias{plotHighestExprs}
 \title{Plot the features with the highest expression values}
 \usage{
-plotHighestExprs(object, col_by_variable = "coverage", n = 50,
+plotHighestExprs(object, col_by_variable = "total_features", n = 50,
   drop_features = NULL, use_as_exprs = "counts")
 }
 \arguments{
@@ -40,7 +40,7 @@ pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 rownames(pd) <- pd$Cell
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 example_sceset <- calculateQCMetrics(example_sceset, feature_controls = 1:500)
-plotHighestExprs(example_sceset, col_by_variable="coverage")
+plotHighestExprs(example_sceset, col_by_variable="total_features")
 plotHighestExprs(example_sceset, col_by_variable="Mutation_Status")
 
 }

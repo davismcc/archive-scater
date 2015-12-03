@@ -743,8 +743,21 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
 #                 scale_fill_gradient(name = colour_by, low = "gold", 
 #                                       high = "darkred", space = "Lab")
         } else {
-            plot_out <- plot_out + 
-                ggthemes::scale_color_tableau(name = colour_by)
+            nlevs_colour_by <- nlevels(as.factor(df_to_plot$colour_by))
+            if (nlevs_colour_by <= 10) {
+                plot_out <- plot_out + 
+                    ggthemes::scale_colour_tableau(name = colour_by)
+            } else {
+                if (nlevs_colour_by > 10 && nlevs_colour_by <= 20) {
+                    plot_out <- plot_out + 
+                        ggthemes::scale_colour_tableau(
+                            name = colour_by, palette = "tableau20")
+                } else {
+                    plot_out <- plot_out + 
+                        viridis::scale_color_viridis(
+                            name = colour_by, discrete = TRUE)
+                }
+            }
         }
     } else {
         if  ( sum(is.null(colour_by) + is.null(shape_by) + is.null(size_by)) == 1 ) {
@@ -760,8 +773,21 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
 #                         scale_colour_gradient(name = colour_by, low = "gold", 
 #                                               high = "darkred", space = "Lab")
                 } else {
-                    plot_out <- plot_out + 
-                        ggthemes::scale_colour_tableau(name = colour_by)
+                    nlevs_colour_by <- nlevels(as.factor(df_to_plot$colour_by))
+                    if (nlevs_colour_by <= 10) {
+                        plot_out <- plot_out + 
+                            ggthemes::scale_colour_tableau(name = colour_by)
+                    } else {
+                        if (nlevs_colour_by > 10 && nlevs_colour_by <= 20) {
+                            plot_out <- plot_out + 
+                                ggthemes::scale_colour_tableau(
+                                    name = colour_by, palette = "tableau20")
+                        } else {
+                            plot_out <- plot_out + 
+                                viridis::scale_color_viridis(
+                                    name = colour_by, discrete = TRUE)
+                        }
+                    }
                 }
             }
             if ( !is.null(colour_by) & !is.null(size_by) ) {
@@ -775,8 +801,21 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
 #                         scale_colour_gradient(name = colour_by, low = "gold", 
 #                                               high = "darkred", space = "Lab")
                 } else {
-                    plot_out <- plot_out + 
-                        ggthemes::scale_fill_tableau(name = colour_by)
+                    nlevs_colour_by <- nlevels(as.factor(df_to_plot$colour_by))
+                    if (nlevs_colour_by <= 10) {
+                        plot_out <- plot_out + 
+                            ggthemes::scale_fill_tableau(name = colour_by)
+                    } else {
+                        if (nlevs_colour_by > 10 && nlevs_colour_by <= 20) {
+                            plot_out <- plot_out + 
+                                ggthemes::scale_fill_tableau(
+                                    name = colour_by, palette = "tableau20")
+                        } else {
+                            plot_out <- plot_out + 
+                                viridis::scale_fill_viridis(
+                                    name = colour_by, discrete = TRUE)
+                        }
+                    }
                 }
             }
             if ( !is.null(shape_by) & !is.null(size_by) ) {
@@ -800,8 +839,22 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
 #                                                   high = "darkred", 
 #                                                   space = "Lab")
                     } else {
-                        plot_out <- plot_out + 
-                            ggthemes::scale_fill_tableau(name = colour_by)
+                        nlevs_colour_by <- nlevels(as.factor(
+                            df_to_plot$colour_by))
+                        if (nlevs_colour_by <= 10) {
+                            plot_out <- plot_out + 
+                                ggthemes::scale_fill_tableau(name = colour_by)
+                        } else {
+                            if (nlevs_colour_by > 10 && nlevs_colour_by <= 20) {
+                                plot_out <- plot_out + 
+                                    ggthemes::scale_fill_tableau(
+                                        name = colour_by, palette = "tableau20")
+                            } else {
+                                plot_out <- plot_out + 
+                                    viridis::scale_fill_viridis(
+                                        name = colour_by, discrete = TRUE)
+                            }
+                        }
                     }
                 }
                 if ( !is.null(shape_by) ) {
@@ -1241,7 +1294,7 @@ setMethod("plotExpression", signature("data.frame"),
 #' containing metadata in columns to plot.
 #' @param aesth aesthetics function call to pass to ggplot. This function 
 #' expects at least x and y variables to be supplied. The default is to plot 
-#' coverage against log10(depth).
+#' total_features against log10(total_counts).
 #' @param shape numeric scalar to define the plotting shape. Ignored if shape is
 #' included in the \code{aesth} argument.
 #' @param alpha numeric scalar (in the interval 0 to 1) to define the alpha 
@@ -1273,7 +1326,7 @@ setMethod("plotExpression", signature("data.frame"),
 #' plotMetadata(pData(example_sceset))
 #'
 plotMetadata <- function(object, 
-                         aesth=aes_string(x = "log10(depth)", y = "coverage"), 
+                         aesth=aes_string(x = "log10(total_counts)", y = "total_features"), 
                          shape = NULL, alpha = NULL, size = NULL, 
                          theme_size = 10) {
     ## Must have at least an x variable in the aesthetics
@@ -1424,7 +1477,7 @@ plotMetadata <- function(object,
 #' experimental information. Must have been appropriately prepared.
 #' @param aesth aesthetics function call to pass to ggplot. This function 
 #' expects at least x and y variables to be supplied. The default is to plot 
-#' coverage against log10(depth).
+#' total_features against log10(total_counts).
 #' @param theme_size numeric scalar giving default font size for plotting theme 
 #' (default is 10).
 #' @param ... arguments passed to \code{\link{plotMetadata}}.
@@ -1447,10 +1500,11 @@ plotMetadata <- function(object,
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' plotPhenoData(example_sceset, 
-#' aesth = aes_string(x = "log10(depth)", y = "coverage", colour = "Mutation_Status"))
+#' aesth = aes_string(x = "log10(total_counts)", y = "total_features", 
+#' colour = "Mutation_Status"))
 #' 
-plotPhenoData <- function(object, aesth=aes_string(x = "log10(depth)", 
-                                                   y = "coverage"), 
+plotPhenoData <- function(object, aesth=aes_string(x = "log10(total_counts)", 
+                                                   y = "total_features"), 
                           theme_size = 10, ...) {
     ## We must have an SCESet object
     if (!is(object, "SCESet"))

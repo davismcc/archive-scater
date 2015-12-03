@@ -39,7 +39,7 @@ drop_genes <- apply(exprs(example_sceset), 1, function(x) {var(x) == 0})
 example_sceset <- example_sceset[!drop_genes, ]
 example_sceset <- calculateQCMetrics(example_sceset)
 plotQC(example_sceset, type="high", col_by_variable="Mutation_Status")
-plotQC(example_sceset, type="find", variable="coverage")
+plotQC(example_sceset, type="find", variable="total_features")
 vars <- names(pData(example_sceset))[c(2:3, 5:14)]
 plotQC(example_sceset, type="expl", variables=vars)
 

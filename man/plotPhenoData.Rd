@@ -4,8 +4,8 @@
 \alias{plotPhenoData}
 \title{Plot phenotype data from an SCESet object}
 \usage{
-plotPhenoData(object, aesth = aes_string(x = "log10(depth)", y = "coverage"),
-  theme_size = 10, ...)
+plotPhenoData(object, aesth = aes_string(x = "log10(total_counts)", y =
+  "total_features"), theme_size = 10, ...)
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and
@@ -13,7 +13,7 @@ experimental information. Must have been appropriately prepared.}
 
 \item{aesth}{aesthetics function call to pass to ggplot. This function 
 expects at least x and y variables to be supplied. The default is to plot 
-coverage against log10(depth).}
+total_features against log10(total_counts).}
 
 \item{theme_size}{numeric scalar giving default font size for plotting theme 
 (default is 10).}
@@ -42,7 +42,8 @@ pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 example_sceset <- calculateQCMetrics(example_sceset)
 plotPhenoData(example_sceset, 
-aesth = aes_string(x = "log10(depth)", y = "coverage", colour = "Mutation_Status"))
+aesth = aes_string(x = "log10(total_counts)", y = "total_features", 
+colour = "Mutation_Status"))
 
 }
 

@@ -4,8 +4,8 @@
 \alias{findImportantPCs}
 \title{Find most important principal components for a given variable}
 \usage{
-findImportantPCs(object, variable = "coverage", plot_type = "pcs-vs-vars",
-  theme_size = 10)
+findImportantPCs(object, variable = "total_features",
+  plot_type = "pcs-vs-vars", theme_size = 10)
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and
@@ -43,7 +43,7 @@ example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 drop_genes <- apply(exprs(example_sceset), 1, function(x) {var(x) == 0})
 example_sceset <- example_sceset[!drop_genes, ]
 example_sceset <- calculateQCMetrics(example_sceset)
-findImportantPCs(example_sceset, variable="coverage")
+findImportantPCs(example_sceset, variable="total_features")
 
 }
 

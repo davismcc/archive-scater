@@ -347,31 +347,31 @@ varLabels(example_sceset)
 
 This function adds the following columns to `pData(object)`:
 
-* `depth`: total number of counts for the cell (aka 'library size')
-* `log10_depth`: depth on the log10-scale
-* `coverage`: the number of features for the cell that have expression above the
+* `total_counts`: total number of counts for the cell (aka 'library size')
+* `log10_total_counts`: total_counts on the log10-scale
+* `total_features`: the number of features for the cell that have expression above the
 detection limit (default detection limit is zero)
-* `filter_on_depth`: would this cell be filtered out based on its log10-depth
+* `filter_on_total_counts`: would this cell be filtered out based on its log10-total_counts
 being (by default) more than 5 median absolute deviations from the median
-log10-depth for the dataset?
-* `filter_on_coverage`: would this cell be filtered out based on its coverage
+log10-total_counts for the dataset?
+* `filter_on_total_features`: would this cell be filtered out based on its total_features
 being (by default) more than 5 median absolute deviations from the median
-coverage for the dataset?
-* `counts_from_feature_controls`: total number of counts for the cell that come from
+total_features for the dataset?
+* `counts_feature_controls`: total number of counts for the cell that come from
 (a set of user-defined) control features. Defaults to zero if no control features are
 indicated.
-* `counts_from_endogenous_features`: total number of counts for the cell that come from
-endogenous features (i.e. not control features). Defaults to `depth` if no control features are
+* `counts_endogenous_features`: total number of counts for the cell that come from
+endogenous features (i.e. not control features). Defaults to `total_counts` if no control features are
 indicated.
-* `log10_counts_from_feature_controls`: total number of counts from control features on
+* `log10_counts_feature_controls`: total number of counts from control features on
 the log10-scale. Defaults to zero (i.e. log10(0 + 1), offset to avoid infinite
 values) if no control features are indicated.
-* `log10_counts_from_endogenous_features`: total number of counts from endogenous
+* `log10_counts_endogenous_features`: total number of counts from endogenous
 features on the log10-scale. Defaults to zero (i.e. log10(0 + 1), offset to avoid
 infinite values) if no control features are indicated.
 * `n_detected_feature_controls`: number of defined feature controls that have
 expression greater than the threshold defined in the object.
-*`pct_counts_from_feature_controls`: percentage of all counts that come from the
+*`pct_counts_feature_controls`: percentage of all counts that come from the
 defined control features. Defaults to zero if no control features are defined.
 
 If we define multiple sets of feature controls, then the above will be supplied for
@@ -518,13 +518,13 @@ correspond to cells) of `SCESet` objects makes it easy to drop unwanted cells.
 We also have neat functions to plot two cell metadata variables:
 
 ```{r plot-pdata}
-plotPhenoData(example_sceset, aes(x = depth, y = coverage,
+plotPhenoData(example_sceset, aes(x = total_counts, y = total_features,
                                   colour = Mutation_Status))
 ```
 
 ```{r plot-pdata-cont-col}
-plotPhenoData(example_sceset, aes(x = Mutation_Status, y = coverage,
-                                  colour = log10_depth))
+plotPhenoData(example_sceset, aes(x = Mutation_Status, y = total_features,
+                                  colour = log10_total_counts))
 ```
 
 Note that ggplot aesthetics will work correctly (in general) for everything 
@@ -535,29 +535,29 @@ These sorts of plots can be very useful for finding potentially problematic
 cells.
 
 ```{r plot-pdata-col-gene-exprs}
-plotPhenoData(example_sceset, aes(x = depth, y = coverage,
+plotPhenoData(example_sceset, aes(x = total_counts, y = total_features,
                                   colour = Gene_1000))
 ```
 
 ```{r plot-pdatacol-gene-exprs-2}
-plotPhenoData(example_sceset, aes(x = pct_exprs_from_feature_controls, 
-                                  y = coverage, colour = Gene_0500))
+plotPhenoData(example_sceset, aes(x = pct_exprs_feature_controls, 
+                                  y = total_features, colour = Gene_0500))
 ```
 
 
 ```{r plot-pdatacol-gene-exprs-3}
-plotPhenoData(example_sceset, aes(x = pct_exprs_from_feature_controls, 
-                                  y = pct_exprs_from_top_50_features, 
+plotPhenoData(example_sceset, aes(x = pct_exprs_feature_controls, 
+                                  y = pct_exprs_top_50_features, 
                                   colour = Gene_0001))
 ```
 
 The output of these functions is a `ggplot` object, which can be added to,
 amended and altered. For example, if we don't like the legend position in the
-Coverage vs Depth plot above, we can change it:
+total_features vs total_counts plot above, we can change it:
 
 
 ```{r plot-pdata-move-legend}
-plotPhenoData(example_sceset, aes(x = depth, y = coverage,
+plotPhenoData(example_sceset, aes(x = total_counts, y = total_features,
                                   colour = Mutation_Status)) +
     theme(legend.position = "top")
 ```
@@ -565,8 +565,8 @@ plotPhenoData(example_sceset, aes(x = depth, y = coverage,
 We could also add a trend line for each group:
 
 ```{r plot-pdata-move-legend-add-trend}
-plotPhenoData(example_sceset, aes(x = log10_exprs_from_feature_controls, 
-                                  y = coverage, colour = Mutation_Status)) +
+plotPhenoData(example_sceset, aes(x = log10_exprs_feature_controls, 
+                                  y = total_features, colour = Mutation_Status)) +
     theme(legend.position = "top") +
     stat_smooth(method = "lm", se = FALSE, size = 2, fullrange = TRUE)
 ```
@@ -574,20 +574,20 @@ plotPhenoData(example_sceset, aes(x = log10_exprs_from_feature_controls,
 Tapping into the powerful capabilities of `ggplot2`, the possibilities are many.
 
 A particularly useful plot for cell QC is plotting the percentage of expression
-accounted for by feature controls against coverage.
+accounted for by feature controls against total_features.
 
 ```{r plot-pdata-pct-exprs-controls}
-plotPhenoData(example_sceset, aes(x = coverage, 
-                                  y = pct_exprs_from_feature_controls,
+plotPhenoData(example_sceset, aes(x = total_features, 
+                                  y = pct_exprs_feature_controls,
                                   colour = Mutation_Status)) +
     theme(legend.position = "top") +
     stat_smooth(method = "lm", se = FALSE, size = 2, fullrange = TRUE)
 ```
 
-On real data, we expect to see well-behaved cells with relatively high coverage
+On real data, we expect to see well-behaved cells with relatively high total_features
 (number of features with detectable expression) and low percentage of expression
 from feature controls. High percentage expression from feature controls and low
-coverage are indicative of blank and failed cells.
+total_features are indicative of blank and failed cells.
 
 The `plotPhenoData` function is useful for exploring the relationships between
 the many QC metrics computed by `calculateQCMetrics` above. Often, problematic
@@ -742,7 +742,7 @@ Alternatively, we can choose a subset of variables to plot in this manner.
 
 ```{r plot-qc-expl-variables-select-variables}
 plotQC(example_sceset, type = "expl",
-       variables = c("coverage", "depth", "Mutation_Status", "Treatment",
+       variables = c("total_features", "total_counts", "Mutation_Status", "Treatment",
                      "Cell_Cycle"))
 ```
 
@@ -759,7 +759,7 @@ one explanatory variable) linear model.
 plotQC(example_sceset, type = "expl", method = "pairs", theme_size = 6)
 ```
 
-In this small dataset depth and coverage explain a very large proportion of the
+In this small dataset total_counts and total_features explain a very large proportion of the
 variance in feature expression. The proportion of variance that they explain for a
 real dataset should be much smaller (say 1-5%).
 
@@ -767,7 +767,7 @@ The default is to plot six most-associated principal components against the
 variable of interest.
 
 ```{r plot-qc-find-pcs-pcs-vs-vars, fig.width=8, fig.height=7}
-p1 <- plotQC(example_sceset, type = "find-pcs", variable = "coverage",
+p1 <- plotQC(example_sceset, type = "find-pcs", variable = "total_features",
         plot_type = "pcs-vs-vars")
 p2 <- plotQC(example_sceset, type = "find-pcs", variable = "Cell_Cycle",
        plot_type = "pcs-vs-vars")
@@ -779,7 +779,7 @@ plotQC(example_sceset, type = "find-pcs", variable = "Treatment",
 An alternative is to produce a pairs plot of the top five PCs.
 
 ```{r plot-qc-find-pcs-pairs}
-plotQC(example_sceset, type = "find-pcs", variable = "coverage",
+plotQC(example_sceset, type = "find-pcs", variable = "total_features",
        plot_type = "pairs-pcs")
 plotQC(example_sceset, type = "find-pcs", variable = "Cell_Cycle",
        plot_type = "pairs-pcs")

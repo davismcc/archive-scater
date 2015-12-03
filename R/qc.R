@@ -37,8 +37,8 @@
 #' vector, or a numeric vector of indices used to identify cell controls (for 
 #' example, blank wells or bulk controls).
 #' @param nmads numeric scalar giving the number of median absolute deviations to be 
-#' used to flag potentially problematic cells based on depth (total number of 
-#' counts for the cell, or library size) and coverage (number of features with 
+#' used to flag potentially problematic cells based on total_counts (total number of 
+#' counts for the cell, or library size) and total_features (number of features with 
 #' non-zero expression). Default value is 5.
 #' @param pct_feature_controls_threshold numeric scalar giving a threshold for 
 #' percentage of expression values accounted for by feature controls. Used as to 
@@ -46,7 +46,101 @@
 #' feature controls.
 #'
 #' @details Calculate useful quality control metrics to help with pre-processing
-#' of data and identification of potentially problematic features and cells.
+#' of data and identification of potentially problematic features and cells. The
+#'  following QC metrics are computed:
+#' \describe{
+#'  \item{total_counts}{Total number of counts for the cell (aka ``library size'')}
+#'  \item{log10_total_counts}{Total counts on the log10-scale}
+#'  \item{coverage}{The number of features for the cell that have expression 
+#'  above the detection limit (default detection limit is zero)}
+#'  \item{filter_on_depth}{Would this cell be filtered out based on its 
+#'  log10-depth being (by default) more than 5 median absolute deviations from 
+#'  the median log10-depth for the dataset?} 
+#'  \item{filter_on_coverage}{Would this cell be filtered out based on its 
+#'  coverage being (by default) more than 5 median absolute deviations from the 
+#'  median coverage for the dataset?}
+#'  \item{counts_from_feature_controls}{Total number of counts for the cell 
+#'  that come from (one or more sets of user-defined) control features. Defaults
+#'   to zero if no control features are indicated. If more than one set of 
+#'   feature controls are defined (for example, ERCC and MT genes are defined 
+#'   as controls), then this metric is produced for all sets, plus the union of 
+#'   all sets (so here, we get columns 
+#'   \code{counts_feature_controls_ERCC}, 
+#'   \code{counts_feature_controls_MT} and 
+#'   \code{counts_feature_controls}).}
+#'  \item{log10_counts_from_feature_controls}{Just as above, the total 
+#'   number of counts from feature controls, but on the log10-scale. Defaults 
+#'   to zero (i.e.~log10(0 + 1), offset to avoid negative infinite values) if 
+#'   no feature control are indicated.}
+#'  \item{pct_counts_feature_controls}{Just as for the counts 
+#'   described above, but expressed as a percentage of the total counts. 
+#'   Defined for all control sets and their union, just like the raw counts. 
+#'   Defaults to zero if no feature controls are defined.}
+#'  \item{filter_on_pct_counts_feature_controls}{Would this cell be 
+#'   filtered out on the basis that the percentage of counts from feature 
+#'   controls is higher than a defined threhold (default is 80\%)? Just as with 
+#'   \code{counts_feature_controls}, this is defined for all control sets 
+#'   and their union.}
+#'  \item{pct_counts_top_50_features}{What percentage of the total counts is accounted for by the 50 highest-count features? Also computed for the top 100 and top 200 features, with the obvious changes to the column names.}
+#'  \item{counts_endogenous_features}{Total number of counts for the cell 
+#'   that come from endogenous features (i.e. not control features). Defaults 
+#'   to `depth` if no control features are indicated.}
+#'  \item{log10_counts_endogenous_features}{Total number of counts from 
+#'   endogenous features on the log10-scale. Defaults to zero 
+#'   (i.e.~log10(0 + 1), offset to avoid infinite values) if no control features
+#'    are indicated.}
+#'  \item{n_detected_feature_controls}{Number of defined feature controls 
+#'    that have expression greater than the threshold defined in the object 
+#'    (that is, they are ``detectably expressed''; see 
+#'    \code{object@lowerDetectionLimit} to check the threshold). As with other 
+#'    metrics for feature controls, defined for all sets of feature controls 
+#'    (set names appended as above) and their union. So we might commonly get 
+#'    columns \code{n_detected_feature_controls_ERCC}, 
+#'    \code{n_detected_feature_controls_MT} and 
+#'    \code{n_detected_feature_controls} (ERCC and MT genes detected).}
+#'  \item{is_cell_control}{Has the cell been defined as a cell control? If 
+#'    more than one set of cell controls are defined (for example, blanks and 
+#'    bulk libraries are defined as cell controls), then this metric is produced
+#'     for all sets, plus the union of all sets (so we could typically get 
+#'     columns \code{is_cell_control_Blank}, 
+#'     \code{is_cell_control_Bulk}, and \code{is_cell_control}, the latter 
+#'     including both blanks and bulks as cell controls).}
+#'     }
+#' These cell-level QC metrics are added as columns to the ``phenotypeData'' 
+#' slot of the \code{SCESet} object so that they can be inspected and are 
+#' readily available for other functions to use. Furthermore, wherever 
+#' ``counts'' appear in the above metrics, the same metrics will also be 
+#' computed for ``exprs'', ``tpm'' and ``fpkm'' values (if TPM and FPKM values 
+#' are present in the \code{SCESet} object), with the appropriate term 
+#' replacing ``counts'' in the name. The following feature-level QC metrics are
+#' also computed:
+#' \describe{
+#' \item{mean_exprs}{The mean expression level of the  gene/feature.}
+#' \item{exprs_rank}{The rank of the feature's mean expression level in the 
+#' cell.}
+#' \item{n_cells_exprs}{The number of cells for which the expression level of 
+#' the feature is above the detection limit (default detection limit is zero).}
+#' \item{total_feature_counts}{The total number of counts assigned to that 
+#' feature across all cells.}
+#' \item{log10_total_feature_counts}{Total feature counts on the log10-scale.}
+#' \item{pct_total_counts}{The percentage of all counts that are accounted for 
+#' by the counts assigned to the feature.}
+#' \item{is_feature_control}{Is the feature a control feature? Default is 
+#' `FALSE` unless control features are defined by the user. If more than one 
+#' feature control set is defined (as above), then a column of this type is 
+#' produced for each control set (e.g. here, \code{is_feature_control_ERCC} and 
+#' \code{is_feature_control_MT}) as well as the column named 
+#' \code{is_feature_control}, which indicates if the feature belongs to any of 
+#' the control sets.}
+#' }
+#' These feature-level QC metrics are added as columns to the ``featureData'' 
+#' slot of the \code{SCESet} object so that they can be inspected and are 
+#' readily available for other functions to use. As with the cell-level metrics,
+#'  wherever ``counts'' appear in the above, the same metrics will also be 
+#'  computed for ``exprs'', ``tpm'' and ``fpkm'' values (if TPM and FPKM values 
+#'  are present in the \code{SCESet} object), with the appropriate term 
+#'  replacing ``counts'' in the name.
+#' 
 #' @importFrom Biobase pData
 #' @importFrom Biobase fData
 #' @importFrom Biobase exprs
@@ -69,9 +163,11 @@ calculateQCMetrics <- function(object, feature_controls=NULL, cell_controls=NULL
     ## Compute cell-level metrics
     if ( is.null(is_exprs(object)) ) {
         if (is.null(counts(object))) {
-            stop("Please define is_exprs(object). E.g. use is_exprs(object) <- exprs(object) > 0.1")
+            stop("Please define is_exprs(object). 
+                 E.g. use is_exprs(object) <- exprs(object) > 0.1")
         } else {            
-            warning("is_exprs(object) is null. Defining 'is_exprs' using count data and 
+            warning("is_exprs(object) is null. 
+Defining 'is_exprs' using count data and 
 a lower count threshold of 0.")   
             isexprs <- calcIsExprs(object, lowerDetectionLimit = 0)
             rownames(isexprs) <- rownames(counts(object))
@@ -88,50 +184,51 @@ a lower count threshold of 0.")
     tpm_mat <- tpm(object)
     fpkm_mat <- fpkm(object)
     
-    ## Compute coverage and find outliers
-    coverage <- colSums(is_exprs(object))
-    mad_coverage <- mad(coverage)
-    med_coverage <- median(coverage)
-    keep_coverage <- c(med_coverage - 5*mad_coverage, 
-                       med_coverage + 5*mad_coverage)
-    filter_on_coverage <- (findInterval(coverage, keep_coverage) != 1)
-    ## Compute depth if counts are present
+    ## Compute total_features and find outliers
+    total_features <- colSums(is_exprs(object))
+    mad_total_features <- mad(total_features)
+    med_total_features <- median(total_features)
+    keep_total_features <- c(med_total_features - 5*mad_total_features, 
+                       med_total_features + 5*mad_total_features)
+    filter_on_total_features <- (findInterval(total_features, 
+                                              keep_total_features) != 1)
+    ## Compute total_counts if counts are present
     if ( !is.null(counts_mat) )
-        depth <- colSums(counts_mat)
+        total_counts <- colSums(counts_mat)
     else 
-        depth <- colSums(exprs_mat)
-    mad_depth <- mad(log10(depth))
-    med_depth <- median(log10(depth))
-    keep_depth <- c(med_depth - 5*mad_depth, med_depth + 5*mad_depth)
-    filter_on_depth <- (findInterval(log10(depth), keep_depth) != 1)
+        total_counts <- colSums(exprs_mat)
+    mad_total_counts <- mad(log10(total_counts))
+    med_total_counts <- median(log10(total_counts))
+    keep_total_counts <- c(med_total_counts - 5*mad_total_counts, med_total_counts + 5*mad_total_counts)
+    filter_on_total_counts <- (findInterval(log10(total_counts), keep_total_counts) != 1)
     
     ## Contributions from control features
     ### Determine if vector or list
     if ( is.null(feature_controls) | length(feature_controls) == 0 ) {
-        exprs_from_feature_controls <- pct_exprs_from_feature_controls <- 
+        exprs_feature_controls <- pct_exprs_feature_controls <- 
             rep(0, ncol(object))
-        feature_controls_pdata <- data.frame(exprs_from_feature_controls,
-                                          pct_exprs_from_feature_controls) 
+        feature_controls_pdata <- data.frame(exprs_feature_controls,
+                                          pct_exprs_feature_controls) 
         if ( !is.null(counts_mat) ) {
-            counts_from_feature_controls <- pct_counts_from_feature_controls <- 
+            counts_feature_controls <- pct_counts_feature_controls <- 
                 rep(0, ncol(object))
             feature_controls_pdata <- cbind(feature_controls_pdata, 
-                                         data.frame(counts_from_feature_controls,
-                                              pct_counts_from_feature_controls))
+                                         data.frame(counts_feature_controls,
+                                              pct_counts_feature_controls))
         }
         if ( !is.null(tpm_mat) ) {
-            tpm_from_feature_controls <- pct_tpm_from_feature_controls <- 
+            tpm_feature_controls <- pct_tpm_feature_controls <- 
                 rep(0, ncol(object))
             feature_controls_pdata <- cbind(feature_controls_pdata,
-                                         data.frame(tpm_from_feature_controls,
-                                                    pct_tpm_from_feature_controls))
+                                         data.frame(tpm_feature_controls,
+                                                    pct_tpm_feature_controls))
         }
         if ( !is.null(fpkm_mat) ) {
-            fpkm_from_feature_controls <- pct_fpkm_from_feature_controls <- 
+            fpkm_feature_controls <- pct_fpkm_feature_controls <- 
                 rep(0, ncol(object))
             feature_controls_pdata <- cbind(feature_controls_pdata,
-                                         data.frame(fpkm_from_feature_controls,
-                                                    pct_fpkm_from_feature_controls))
+                                         data.frame(fpkm_feature_controls,
+                                                    pct_fpkm_feature_controls))
         }
         is_feature_control <- rep(FALSE, nrow(object))    
         feature_controls_fdata <- data.frame(is_feature_control)
@@ -158,34 +255,34 @@ a lower count threshold of 0.")
             if (is.character(gc_set))
                 gc_set <- which(rownames(object) %in% gc_set)
             ## Get summaries from exprs for feature control set and construct df
-#             exprs_from_feature_controls <- colSums(exprs_mat[gc_set,])
-#             pct_exprs_from_feature_controls <- (100 * exprs_from_feature_controls / 
+#             exprs_feature_controls <- colSums(exprs_mat[gc_set,])
+#             pct_exprs_feature_controls <- (100 * exprs_feature_controls / 
 #                 colSums(exprs_mat))
-#             filter_on_pct_exprs_from_feature_controls <- 
-#                 (pct_exprs_from_feature_controls > pct_feature_controls_threshold)
-#             df_pdata_this <- data.frame(exprs_from_feature_controls,
-#                                         pct_exprs_from_feature_controls,
-#                                         filter_on_pct_exprs_from_feature_controls)
-            df_pdata_this <- .get_qc_metrics_from_exprs_mat(
+#             filter_on_pct_exprs_feature_controls <- 
+#                 (pct_exprs_feature_controls > pct_feature_controls_threshold)
+#             df_pdata_this <- data.frame(exprs_feature_controls,
+#                                         pct_exprs_feature_controls,
+#                                         filter_on_pct_exprs_feature_controls)
+            df_pdata_this <- .get_qc_metrics_exprs_mat(
                 exprs_mat, gc_set, pct_feature_controls_threshold, 
                 calc_top_features = (n_sets_feature_controls == 1), 
                 exprs_type = "exprs")
             if ( !is.null(counts_mat) ) {
-                df_pdata_counts <- .get_qc_metrics_from_exprs_mat(
+                df_pdata_counts <- .get_qc_metrics_exprs_mat(
                     counts_mat, gc_set, pct_feature_controls_threshold,
                     calc_top_features = (n_sets_feature_controls == 1), 
                     exprs_type = "counts")
                 df_pdata_this <- cbind(df_pdata_this, df_pdata_counts)
             }            
             if ( !is.null(tpm_mat) ) {
-                df_pdata_tpm <- .get_qc_metrics_from_exprs_mat(
+                df_pdata_tpm <- .get_qc_metrics_exprs_mat(
                     tpm_mat, gc_set, pct_feature_controls_threshold,
                     calc_top_features = (n_sets_feature_controls == 1), 
                     exprs_type = "tpm")
                 df_pdata_this <- cbind(df_pdata_this, df_pdata_tpm)
             }  
             if ( !is.null(fpkm_mat) ) {
-                df_pdata_fpkm <- .get_qc_metrics_from_exprs_mat(
+                df_pdata_fpkm <- .get_qc_metrics_exprs_mat(
                     fpkm_mat, gc_set, pct_feature_controls_threshold,
                     calc_top_features = (n_sets_feature_controls == 1), exprs_type = "fpkm")
                 df_pdata_this <- cbind(df_pdata_this, df_pdata_fpkm)
@@ -222,31 +319,31 @@ a lower count threshold of 0.")
         is_feature_control <- apply(feature_controls_fdata, 1, any)
         feature_controls_fdata <- cbind(feature_controls_fdata, is_feature_control)
         ## Compute metrics using all feature controls
-        df_pdata_this <- .get_qc_metrics_from_exprs_mat(
+        df_pdata_this <- .get_qc_metrics_exprs_mat(
             exprs_mat, is_feature_control, pct_feature_controls_threshold,
             calc_top_features = TRUE, exprs_type = "exprs")
-#         exprs_from_feature_controls <- colSums(exprs_mat[is_feature_control,])
-#         pct_exprs_from_feature_controls <- (100 * exprs_from_feature_controls / 
+#         exprs_feature_controls <- colSums(exprs_mat[is_feature_control,])
+#         pct_exprs_feature_controls <- (100 * exprs_feature_controls / 
 #                                              colSums(exprs_mat))
-#         filter_on_pct_exprs_from_feature_controls <- 
-#             (pct_exprs_from_feature_controls > pct_feature_controls_threshold)
-#         df_pdata_this <- data.frame(exprs_from_feature_controls,
-#                                     pct_exprs_from_feature_controls,
-#                                     filter_on_pct_exprs_from_feature_controls)
+#         filter_on_pct_exprs_feature_controls <- 
+#             (pct_exprs_feature_controls > pct_feature_controls_threshold)
+#         df_pdata_this <- data.frame(exprs_feature_controls,
+#                                     pct_exprs_feature_controls,
+#                                     filter_on_pct_exprs_feature_controls)
         if ( !is.null(counts_mat) ) {
-            df_pdata_counts <- .get_qc_metrics_from_exprs_mat(
+            df_pdata_counts <- .get_qc_metrics_exprs_mat(
                 counts_mat, is_feature_control, pct_feature_controls_threshold,
                 calc_top_features = TRUE, exprs_type = "counts")
             df_pdata_this <- cbind(df_pdata_this, df_pdata_counts)
         }            
         if ( !is.null(tpm_mat) ) {
-            df_pdata_tpm <- .get_qc_metrics_from_exprs_mat(
+            df_pdata_tpm <- .get_qc_metrics_exprs_mat(
                 tpm_mat, is_feature_control, pct_feature_controls_threshold,
                 calc_top_features = TRUE, exprs_type = "tpm")
             df_pdata_this <- cbind(df_pdata_this, df_pdata_tpm)
         }  
         if ( !is.null(fpkm_mat) ) {
-            df_pdata_fpkm <- .get_qc_metrics_from_exprs_mat(
+            df_pdata_fpkm <- .get_qc_metrics_exprs_mat(
                 fpkm_mat, is_feature_control, pct_feature_controls_threshold,
                 calc_top_features = TRUE, exprs_type = "fpkm")
             df_pdata_this <- cbind(df_pdata_this, df_pdata_fpkm)
@@ -259,22 +356,22 @@ a lower count threshold of 0.")
     
     ## Define counts from endogenous features
     qc_pdata <- feature_controls_pdata
-    qc_pdata$exprs_from_endogenous_features <- colSums(exprs_mat) - 
-        feature_controls_pdata$exprs_from_feature_controls
+    qc_pdata$exprs_endogenous_features <- colSums(exprs_mat) - 
+        feature_controls_pdata$exprs_feature_controls
     if ( !is.null(counts_mat) ) {
-        qc_pdata$counts_from_endogenous_features <- depth - 
-            feature_controls_pdata$counts_from_feature_controls
+        qc_pdata$counts_endogenous_features <- total_counts - 
+            feature_controls_pdata$counts_feature_controls
     }
     if ( !is.null(tpm_mat) ) {
-        qc_pdata$tpm_from_endogenous_features <- colSums(tpm_mat) - 
-            feature_controls_pdata$tpm_from_feature_controls
+        qc_pdata$tpm_endogenous_features <- colSums(tpm_mat) - 
+            feature_controls_pdata$tpm_feature_controls
     }
     if ( !is.null(fpkm_mat) ) {
-        qc_pdata$fpkm_from_endogenous_features <- colSums(fpkm_mat) - 
-            feature_controls_pdata$fpkm_from_feature_controls
+        qc_pdata$fpkm_endogenous_features <- colSums(fpkm_mat) - 
+            feature_controls_pdata$fpkm_feature_controls
     }
     ## Define log10 read counts from feature controls
-    cols_to_log <- grep("^counts_from_|^exprs_from_|^tpm_from_|^fpkm_from_", 
+    cols_to_log <- grep("^counts_|^exprs_|^tpm_|^fpkm_", 
                         colnames(qc_pdata))
     log10_cols <- log10(qc_pdata[, cols_to_log, drop = FALSE] + 1)
     colnames(log10_cols) <- paste0("log10_", colnames(qc_pdata)[cols_to_log])
@@ -335,11 +432,12 @@ a lower count threshold of 0.")
         c(colnames(qc_pdata), colnames(cell_controls_pdata))
     new_pdata <- new_pdata[, !to_replace, drop = FALSE]
     ### Add new QC metrics
-    new_pdata$depth <- depth
-    new_pdata$log10_depth <- log10(depth)
-    new_pdata$filter_on_depth <- filter_on_depth
-    new_pdata$coverage <- coverage
-    new_pdata$filter_on_coverage <- filter_on_coverage
+    new_pdata$total_counts <- total_counts
+    new_pdata$log10_total_counts <- log10(total_counts)
+    new_pdata$filter_on_total_counts <- filter_on_total_counts
+    new_pdata$total_features <- total_features
+    new_pdata$log10_total_features <- log10(total_features)
+    new_pdata$filter_on_total_features <- filter_on_total_features
     new_pdata$pct_dropout <- 100 * colSums(!is_exprs(object)) / nrow(object)
     new_pdata <- cbind(new_pdata, qc_pdata, cell_controls_pdata)
     pData(object) <-  new("AnnotatedDataFrame", new_pdata)
@@ -386,23 +484,23 @@ a lower count threshold of 0.")
     object
 }
 
-.get_qc_metrics_from_exprs_mat <- function(exprs_mat, is_feature_control, 
+.get_qc_metrics_exprs_mat <- function(exprs_mat, is_feature_control, 
                                            pct_feature_controls_threshold,
                                            calc_top_features = FALSE,
                                            exprs_type = "exprs") {
     ## Get total expression from feature controls
-    exprs_from_feature_controls <- colSums(exprs_mat[is_feature_control,])
+    exprs_feature_controls <- colSums(exprs_mat[is_feature_control,])
     ## Get % expression from feature controls
-    pct_exprs_from_feature_controls <- (100 * exprs_from_feature_controls / 
+    pct_exprs_feature_controls <- (100 * exprs_feature_controls / 
                                          colSums(exprs_mat))
     ## Indicate whether or not to filter on percentage from controls
-    filter_on_pct_exprs_from_feature_controls <- 
-        (pct_exprs_from_feature_controls > pct_feature_controls_threshold)
+    filter_on_pct_exprs_feature_controls <- 
+        (pct_exprs_feature_controls > pct_feature_controls_threshold)
     ## Make a data frame
-    df_pdata_this <- data.frame(exprs_from_feature_controls,
-                                pct_exprs_from_feature_controls,
-                                filter_on_pct_exprs_from_feature_controls)
-    if (calc_top_features) { ## Do we wnat to calculate exprs accounted for by 
+    df_pdata_this <- data.frame(exprs_feature_controls,
+                                pct_exprs_feature_controls,
+                                filter_on_pct_exprs_feature_controls)
+    if (calc_top_features) { ## Do we want to calculate exprs accounted for by 
         ## top features?
         ## Determine percentage of counts for top features by cell
         pct_exprs_by_cell <- (100 * t(t(exprs_mat) / colSums(exprs_mat)))
@@ -410,7 +508,7 @@ a lower count threshold of 0.")
                                           decreasing = TRUE)
         pct_exprs_top <- matrixStats::colCumsums(pct_exprs_by_cell_sorted[1:500,])
         pct_exprs_top_out <- t(pct_exprs_top[c(50, 100, 200),])
-        colnames(pct_exprs_top_out) <- paste0("pct_exprs_from_top_", 
+        colnames(pct_exprs_top_out) <- paste0("pct_exprs_top_", 
                                               c(50, 100, 200), "_features")
         df_pdata_this <- cbind(df_pdata_this, pct_exprs_top_out)
     }
@@ -454,9 +552,9 @@ a lower count threshold of 0.")
 #' drop_genes <- apply(exprs(example_sceset), 1, function(x) {var(x) == 0})
 #' example_sceset <- example_sceset[!drop_genes, ]
 #' example_sceset <- calculateQCMetrics(example_sceset)
-#' findImportantPCs(example_sceset, variable="coverage")
+#' findImportantPCs(example_sceset, variable="total_features")
 #' 
-findImportantPCs <- function(object, variable="coverage", 
+findImportantPCs <- function(object, variable="total_features", 
                              plot_type = "pcs-vs-vars", theme_size = 10) {
     pca <- prcomp(t(exprs(object)), retx = TRUE, center = TRUE, scale. = TRUE)
     colnames(pca$x) <- paste("component", 1:ncol(pca$x))
@@ -618,10 +716,10 @@ findImportantPCs <- function(object, variable="coverage",
 #' rownames(pd) <- pd$Cell
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset <- calculateQCMetrics(example_sceset, feature_controls = 1:500)
-#' plotHighestExprs(example_sceset, col_by_variable="coverage")
+#' plotHighestExprs(example_sceset, col_by_variable="total_features")
 #' plotHighestExprs(example_sceset, col_by_variable="Mutation_Status")
 #' 
-plotHighestExprs <- function(object, col_by_variable = "coverage", n = 50,
+plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
                               drop_features = NULL, use_as_exprs = "counts") {
     ## Check that variable to colour points exists
     if (!(col_by_variable %in% colnames(pData(object)))) {
@@ -1110,7 +1208,7 @@ plotExprsFreqVsMean <- function(object, feature_set = NULL, shape = 1,
 #' example_sceset <- example_sceset[!drop_genes, ]
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #' plotQC(example_sceset, type="high", col_by_variable="Mutation_Status")
-#' plotQC(example_sceset, type="find", variable="coverage")
+#' plotQC(example_sceset, type="find", variable="total_features")
 #' vars <- names(pData(example_sceset))[c(2:3, 5:14)]
 #' plotQC(example_sceset, type="expl", variables=vars)
 #' 
