@@ -740,11 +740,11 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
         if ( is.numeric(df_to_plot$colour_by) ) {
             plot_out <- plot_out + 
                 viridis::scale_color_viridis(name = colour_by)
-#                 scale_colour_gradient(name = colour_by, low = "gold", 
+#                 scale_fill_gradient(name = colour_by, low = "gold", 
 #                                       high = "darkred", space = "Lab")
         } else {
             plot_out <- plot_out + 
-                ggthemes::scale_colour_tableau(name = colour_by)
+                ggthemes::scale_color_tableau(name = colour_by)
         }
     } else {
         if  ( sum(is.null(colour_by) + is.null(shape_by) + is.null(size_by)) == 1 ) {
@@ -771,12 +771,12 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                     guides(size = guide_legend(title = size_by))
                 if ( is.numeric(df_to_plot$colour_by) ) {
                     plot_out <- plot_out + 
-                        viridis::scale_color_viridis(name = colour_by)
+                        viridis::scale_fill_viridis(name = colour_by)
 #                         scale_colour_gradient(name = colour_by, low = "gold", 
 #                                               high = "darkred", space = "Lab")
                 } else {
                     plot_out <- plot_out + 
-                        ggthemes::scale_colour_tableau(name = colour_by)
+                        ggthemes::scale_fill_tableau(name = colour_by)
                 }
             }
             if ( !is.null(shape_by) & !is.null(size_by) ) {
@@ -794,14 +794,14 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                                    shape = 21, colour = "gray70", alpha = 0.65)
                     if ( is.numeric(df_to_plot$colour_by) ) {
                         plot_out <- plot_out + 
-                            viridis::scale_color_viridis(name = colour_by)
+                            viridis::scale_fill_viridis(name = colour_by)
 #                             scale_colour_gradient(name = colour_by, 
 #                                                   low = "gold", 
 #                                                   high = "darkred", 
 #                                                   space = "Lab")
                     } else {
                         plot_out <- plot_out + 
-                            ggthemes::scale_colour_tableau(name = colour_by)
+                            ggthemes::scale_fill_tableau(name = colour_by)
                     }
                 }
                 if ( !is.null(shape_by) ) {
