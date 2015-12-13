@@ -1523,7 +1523,21 @@ fromCellDataSet <- function(cds, use_exprs_as = "tpm", logged=FALSE) {
                          featureData = featureData(cds),
                          lowerDetectionLimit = cds@lowerDetectionLimit,
                          logged = logged)
-        redDim(sce) <- t(cds@reducedDimS)
+        
+        ## now try and preserve a reduced dimension representation
+        ## this is really not elegant - KC
+        rds <- cds@reducedDimS
+        if(length(rds) == 0) {
+          rds <- cds@reducedDimA
+        } 
+        if(length(rds) == 2 * ncol(sce)) { # something is there and of the right dimension
+          if(nrow(rds) == 2) {
+            redDim(sce) <- t(rds)
+          } else if(ncol(rds) == 2) {
+            redDim(sce) <- rds
+          } # else do nothing
+        }
+        
         return( sce )
     }
     else
