@@ -299,7 +299,7 @@ plotExpression(example_sceset, rownames(example_sceset)[1:6],
                x = "Mutation_Status", exprs_values = "exprs")
 ```
 
-```{r plot-expression}
+```{r plot-expression-2}
 plotExpression(example_sceset, rownames(example_sceset)[1:6],
                x = "Mutation_Status", exprs_values = "counts", log = TRUE)
 ```
