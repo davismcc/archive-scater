@@ -28,16 +28,16 @@ stand_exprs(object) <- value
 }
 \description{
 The \code{stand_exprs} element of the arrayData slot in an SCESet object holds
-a matrix containing standardised (mean-centred, variance standardised, by 
-feature) expression values. It has the same dimensions as the 'exprs' and 
+a matrix containing standardised (mean-centred, variance standardised, by
+feature) expression values. It has the same dimensions as the 'exprs' and
 'counts' elements, which hold the transformed expression data and count data,
  respectively.
 }
 \details{
-The default for normalised expression values is mean-centred and 
-variance-standardised expression data from the \code{exprs} slot of the 
-\code{SCESet} object. The function \code{normaliseExprs} (or 
-\code{normalizeExprs}) provides more options and functionality for 
+The default for normalised expression values is mean-centred and
+variance-standardised expression data from the \code{exprs} slot of the
+\code{SCESet} object. The function \code{normaliseExprs} (or
+\code{normalizeExprs}) provides more options and functionality for
 normalising expression data.
 }
 \examples{

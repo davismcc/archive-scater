@@ -5,7 +5,7 @@
 \title{Plot the features with the highest expression values}
 \usage{
 plotHighestExprs(object, col_by_variable = "total_features", n = 50,
-  drop_features = NULL, use_as_exprs = "counts")
+  drop_features = NULL, exprs_values = "counts")
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and
@@ -22,7 +22,7 @@ features (e.g. genes, transcripts) to drop when producing the plot. For
 example, control genes might be dropped to focus attention on contribution 
 from endogenous rather than synthetic genes.}
 
-\item{use_as_exprs}{which slot of the \code{assayData} in the \code{object} 
+\item{exprs_values}{which slot of the \code{assayData} in the \code{object} 
 should be used to define expression? Valid options are "counts" (default), 
 "tpm", "fpkm" and "exprs".}
 }

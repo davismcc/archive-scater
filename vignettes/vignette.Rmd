@@ -199,6 +199,7 @@ We have accessor functions to access elements of the `SCESet` object:
 * `counts(object)`: returns the matrix of read counts. As you can see above, if
 no counts are defined for the object, then the counts matrix slot is simpy
 `NULL`.
+
 ```{r counts-accessor}
 counts(example2)[1:3, 1:6]
 ```
@@ -206,6 +207,7 @@ counts(example2)[1:3, 1:6]
 should be log2(counts-per-million) values or log2(reads-per-kilobase-per-million-mapped),
 appropriately normalised of course. The package will generally assume that
 these are the values to use for expression.
+
 ```{r exprs-accessor}
 exprs(example2)[1:3, 1:6]
 ```
@@ -272,12 +274,12 @@ With this function, we can split up the cells based on phenoData variables to
 get a finer-grained look at differences between cells. By default, the plot
 method will try to use transcripts-per-million values for the plot, but if these
 are not present in the `SCESet` object, then the values in `exprs(object)` will
-be used. Other expression values can be used, specified with the `use_as_exprs`
+be used. Other expression values can be used, specified with the `exprs_values`
 argument
 
 ```{r plot-sceset-blocking}
 plot(example_sceset, block1 = "Mutation_Status", block2 = "Treatment",
-     colour_by = "Cell_Cycle", nfeatures = 300, use_as_exprs = "counts")
+     colour_by = "Cell_Cycle", nfeatures = 300, exprs_values = "counts")
 ```
 
 This sort of approach can help to pick up large differences in expression
@@ -294,7 +296,12 @@ expression testing or other means.
 
 ```{r plot-expression}
 plotExpression(example_sceset, rownames(example_sceset)[1:6],
-               x = "Mutation_Status", use_as_expr = "exprs")
+               x = "Mutation_Status", exprs_values = "exprs")
+```
+
+```{r plot-expression}
+plotExpression(example_sceset, rownames(example_sceset)[1:6],
+               x = "Mutation_Status", exprs_values = "counts", log = TRUE)
 ```
 
 This function uses `ggplot2`, making it easy to change the theme to whatever you
@@ -303,7 +310,7 @@ show a violin plot to summarise the distribution of expression values:
 
 ```{r plot-expression-theme-bw}
 plotExpression(example_sceset, rownames(example_sceset)[7:12],
-               x = "Mutation_Status", use_as_expr = "exprs", colour = "Cell_Cycle",
+               x = "Mutation_Status", exprs_values = "exprs", colour = "Cell_Cycle",
                show_median = FALSE, show_violin = TRUE,  xlab = "Mutation Status")
 ```
 
@@ -428,17 +435,18 @@ The first step in the QC process is filtering out unwanted features. We will
 typically filter out features with very low overall expression, and any others
 that plots or other metrics indicate may be problematic.
 
-First we look at a plot that shows the top 50 (by default) most-expressed features.
-By default, "expression" is defined using the feature counts (if available), but $tpm$,
-$cpm$, $fpkm$ or the `exprs` values can be used instead, if desired.
+First we look at a plot that shows the top 50 (by default) most-expressed 
+features. By default, "expression" is defined using the feature counts (if 
+available), but $tpm$, $cpm$, $fpkm$ or the `exprs` values can be used instead, 
+if desired.
 
 ```{r plot-qc-expression, fig.height=7.5, fig.width=8.5}
 keep_feature <- rowSums(is_exprs(example_sceset)) > 4
 example_sceset <- example_sceset[keep_feature,]
 ## Plot QC
 plotQC(example_sceset, type = "highest-expression")
-p1 <- plotQC(example_sceset, type = "highest-expression", use_as_exprs = "exprs")
-p2 <- plotQC(example_sceset, type = "highest-expression", use_as_exprs = "tpm")
+p1 <- plotQC(example_sceset, type = "highest-expression", exprs_values = "exprs")
+p2 <- plotQC(example_sceset, type = "highest-expression", exprs_values = "tpm")
 multiplot(p1, p2, cols = 2)
 ```
 
@@ -613,6 +621,14 @@ argument. Alternatively, a specific set of features to use for the PCA can be
 defined with the `feature_set` argument. This allows, for example, using only
 housekeeping features or control features to produce a PCA plot.
 
+By default the PCA plot uses the expression values in the `exprs` slot of the 
+`SCESet` object, but other expression values can be used by specifying the 
+`exprs_values` argument:
+
+```{r plot-pca-cpm}
+plotPCA(example_sceset, exprs_values = "cpm")
+```
+
 In the plot below, only the features defined as "feature controls" are used for the
 PCA.
 
@@ -652,8 +668,9 @@ Thus, expression levels of two marker genes or transcripts can be shown overlaid
 onto reduced-dimension representations of cells. This also works for `plotTSNE`
 plots.
 
-When more than two components are plotted, the diagonal boxes in the scatter
-plot matrix show the density for each component.
+```{r plot-tsne-1comp-colby-sizeby-exprs, fig.height=5.5}
+plotTSNE(example_sceset, colour_by = "Gene_0001", size_by = "Gene_1000")
+```
 
 The `SCESet` matrix has a `reducedDimension` slot, where coordinates for a
 reduced dimension representation of the cells can be stored. If we so wish, the
@@ -699,7 +716,7 @@ We can also use t-SNE to visualise cells in a reduced-dimension space:
 plotTSNE(example_sceset, colour_by = "Treatment", shape_by = "Mutation_Status")
 ```
 
-```{r plot-tsne-4comp-colby-sizeby-exprs, fig.height=5.5}
+```{r plot-tsne-colby-sizeby-exprs, fig.height=5.5}
 plotTSNE(example_sceset, colour_by = "Gene_0001", size_by = "Gene_1000")
 ```
 
@@ -791,7 +808,6 @@ plotQC(example_sceset, type = "find-pcs", variable = "Treatment",
 Combined with the excellent subsetting capabilities of the `SCESet` class, we
 have convenient tools for conducting QC and pre-processing (e.g. filtering) data
 for downstream analysis.
-
 
 
 ## Data normalisation
@@ -915,7 +931,7 @@ counts(sce_kall_mmus)[sample(nrow(sce_kall_mmus), size=15), 1:6]
 
 ## Summarise expression at the gene level
 sce_kall_mmus_gene <- summariseExprsAcrossFeatures(
-    sce_kall_mmus, use_as_exprs="tpm", summarise_by="feature_id")
+    sce_kall_mmus, exprs_values="tpm", summarise_by="feature_id")
 
 datatable(fData(sce_kall_mmus_gene))
 

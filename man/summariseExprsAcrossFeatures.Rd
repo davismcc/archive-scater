@@ -4,13 +4,13 @@
 \alias{summariseExprsAcrossFeatures}
 \title{Summarise expression values across feature}
 \usage{
-summariseExprsAcrossFeatures(object, use_as_exprs = "tpm",
+summariseExprsAcrossFeatures(object, exprs_values = "tpm",
   summarise_by = "feature_id")
 }
 \arguments{
 \item{object}{an \code{SCESet} object.}
 
-\item{use_as_exprs}{character string indicating which slot of the 
+\item{exprs_values}{character string indicating which slot of the 
 assayData from the \code{SCESet} object should be used as expression values. 
 Valid options are \code{'exprs'} the expression slot, \code{'tpm'} the 
 transcripts-per-million slot or \code{'fpkm'} the FPKM slot.}
@@ -46,9 +46,9 @@ data.frame(gene_id = featureNames(example_sceset),
 feature_id = paste("feature", rep(1:500, each = 4), sep = "_")))
 fData(example_sceset) <- fd
 example_sceset_summarised <- 
-summariseExprsAcrossFeatures(example_sceset, use_as_exprs = "counts")
+summariseExprsAcrossFeatures(example_sceset, exprs_values = "counts")
 example_sceset_summarised <- 
-summariseExprsAcrossFeatures(example_sceset, use_as_exprs = "exprs")
+summariseExprsAcrossFeatures(example_sceset, exprs_values = "exprs")
 
 }
 

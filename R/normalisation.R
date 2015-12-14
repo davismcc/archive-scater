@@ -16,7 +16,7 @@
 #' \code{featureNames(object)}. If numeric, values are taken to be indices for 
 #' features. If logical, vector is used to index features and should have length
 #' equal to \code{nrow(object)}.
-#' @param use_as_exprs character string indicating which slot of the 
+#' @param exprs_values character string indicating which slot of the 
 #' assayData from the \code{SCESet} object should be used as expression values. 
 #' Valid options are \code{'counts'}, the count values, \code{'exprs'} the 
 #' expression slot, \code{'tpm'} the transcripts-per-million slot or 
@@ -30,11 +30,11 @@
 #' of the SCESet. Normalised expression values are added to the 
 #' \code{'norm_exprs'} slot of the object. Normalised expression values are on 
 #' the log2-scale, with an offset defined by the \code{logExprsOffset}
-#' slot of the SCESet object. If the \code{'use_as_exprs'} argument is one of 
+#' slot of the SCESet object. If the \code{'exprs_values'} argument is one of 
 #' \code{'counts'}, \code{'tpm'} or \code{'fpkm'}, then a corresponding slot
 #' with normalised values is added: \code{'norm_counts'}, 
 #' \code{'norm_tpm'} or \code{'norm_fpkm'}, as appropriate. If 
-#' \code{'use_as_exprs'} argument is \code{'counts'} a \code{'norm_cpm'} slot is 
+#' \code{'exprs_values'} argument is \code{'counts'} a \code{'norm_cpm'} slot is 
 #' also added, containing normalised counts-per-million values.
 #'  
 #' Normalisation is done relative to a defined feature set, if desired, which 
@@ -78,18 +78,18 @@
 #' feature_set = 1:100)
 #' 
 normaliseExprs <- function(object, method = "none", design = NULL, feature_set = NULL,
-                           use_as_exprs = "counts", ...) {
+                           exprs_values = "counts", ...) {
     if ( !is(object, "SCESet") )
         stop("object must be an SCESet.")
     ## Define expression values to be used
-    use_as_exprs <- match.arg(use_as_exprs, c("exprs", "tpm", "fpkm", "counts"))
-    exprs_mat <- switch(use_as_exprs,
+    exprs_values <- match.arg(exprs_values, c("exprs", "tpm", "fpkm", "counts"))
+    exprs_mat <- switch(exprs_values,
                         exprs = exprs(object),
                         tpm = tpm(object),
                         cpm = cpm(object),
                         fpkm = fpkm(object),
                         counts = counts(object))
-    if ( use_as_exprs == "exprs" && object@logged ) {
+    if ( exprs_values == "exprs" && object@logged ) {
         exprs_mat <- 2 ^ exprs_mat - object@logExprsOffset
     }
     ## Check feature_set
@@ -115,7 +115,7 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
         norm_exprs_mat <- t(t(exprs_mat) / norm_factors)
     }
     ## Assign normalised expression values
-    if ( use_as_exprs == "counts" ) {
+    if ( exprs_values == "counts" ) {
         ## Divide expression values by the normalisation factors
         norm_exprs_mat <- t(t(exprs_mat) / norm_factors)
         norm_counts(object) <- norm_exprs_mat
@@ -131,21 +131,21 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
                        prior.count = object@logExprsOffset, log = object@logged)
     } else {
         ## Add tpm if relevant
-        if ( use_as_exprs == "tpm" ) {
+        if ( exprs_values == "tpm" ) {
             object$norm_factors_tpm <- norm_factors
             if ( !is.null(feature_set) )
                 norm_exprs_mat <- norm_exprs_mat * (10 ^ 6) 
             norm_tpm(object) <- norm_exprs_mat
         }
         ## Add fpkm if relevant
-        if ( use_as_exprs == "fpkm" ) {
+        if ( exprs_values == "fpkm" ) {
             object$norm_factors_fpkm <- norm_factors
             if ( !is.null(feature_set) )
                 norm_exprs_mat <- norm_exprs_mat * (10 ^ 6)
             norm_fpkm(object) <- norm_exprs_mat
         }
         ## Add exprs norm factors if relevant
-        if ( use_as_exprs == "exprs" ) {
+        if ( exprs_values == "exprs" ) {
             object$norm_factors_exprs <- norm_factors
         }
         ## Add norm_exprs values, logged if appropriate

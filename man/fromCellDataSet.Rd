@@ -4,12 +4,12 @@
 \alias{fromCellDataSet}
 \title{Convert a \code{CellDataSet} to an \code{SCESet}}
 \usage{
-fromCellDataSet(cds, use_exprs_as = "tpm", logged = FALSE)
+fromCellDataSet(cds, exprs_values = "tpm", logged = FALSE)
 }
 \arguments{
 \item{cds}{A \code{CellDataSet} from the \code{monocle} package}
 
-\item{use_exprs_as}{What should \code{exprs(cds)} be mapped to in the \code{SCESet}? Should be 
+\item{exprs_values}{What should \code{exprs(cds)} be mapped to in the \code{SCESet}? Should be
 one of "exprs", "tpm", "fpkm", "counts"}
 
 \item{logged}{logical, if a value is supplied for the exprsData argument, are

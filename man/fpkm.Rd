@@ -28,9 +28,9 @@ fpkm(object) <- value
 }
 \description{
 The \code{fpkm} element of the arrayData slot in an SCESet object holds
-a matrix containing fragments per kilobase of exon per million reads mapped 
-(FPKM) values. It has the same dimensions as the 'exprs' and 'counts' 
-elements, which hold the transformed expression data and count data, 
+a matrix containing fragments per kilobase of exon per million reads mapped
+(FPKM) values. It has the same dimensions as the 'exprs' and 'counts'
+elements, which hold the transformed expression data and count data,
 respectively.
 }
 \examples{

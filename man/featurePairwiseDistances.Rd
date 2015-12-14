@@ -37,17 +37,17 @@ featDistSCESet(object)
 \arguments{
 \item{object}{a \code{SCESet} object.}
 
-\item{value}{a matrix of class \code{"numeric"} containing feature pairwise 
+\item{value}{a matrix of class \code{"numeric"} containing feature pairwise
 distances}
 }
 \value{
 An SCESet object containing new feature pairwise distances matrix.
 }
 \description{
-SCESet objects can contain a matrix of pairwise distances between features 
-(e.g. genes, transcripts). These functions conveniently access and replace 
-the gene pairwise distances with the value supplied, which must be a matrix 
-of the correct size. The function \code{featDist} is simply shorthand for 
+SCESet objects can contain a matrix of pairwise distances between features
+(e.g. genes, transcripts). These functions conveniently access and replace
+the gene pairwise distances with the value supplied, which must be a matrix
+of the correct size. The function \code{featDist} is simply shorthand for
 \code{featurePairwiseDistances}.
 }
 \examples{

@@ -114,7 +114,7 @@ getBMFeatureAnnos <- function(object, filters="ensembl_transcript_id",
 #' level.
 #' 
 #' @param object an \code{SCESet} object.
-#' @param use_as_exprs character string indicating which slot of the 
+#' @param exprs_values character string indicating which slot of the 
 #' assayData from the \code{SCESet} object should be used as expression values. 
 #' Valid options are \code{'exprs'} the expression slot, \code{'tpm'} the 
 #' transcripts-per-million slot or \code{'fpkm'} the FPKM slot.
@@ -145,24 +145,24 @@ getBMFeatureAnnos <- function(object, filters="ensembl_transcript_id",
 #' feature_id = paste("feature", rep(1:500, each = 4), sep = "_")))
 #' fData(example_sceset) <- fd
 #' example_sceset_summarised <- 
-#' summariseExprsAcrossFeatures(example_sceset, use_as_exprs = "counts")
+#' summariseExprsAcrossFeatures(example_sceset, exprs_values = "counts")
 #' example_sceset_summarised <- 
-#' summariseExprsAcrossFeatures(example_sceset, use_as_exprs = "exprs")
+#' summariseExprsAcrossFeatures(example_sceset, exprs_values = "exprs")
 #' 
-summariseExprsAcrossFeatures <- function(object, use_as_exprs = "tpm", 
+summariseExprsAcrossFeatures <- function(object, exprs_values = "tpm", 
                                          summarise_by = "feature_id") {
     if ( !is(object, "SCESet") )
         stop("Object must be an SCESet")
     if ( !(summarise_by %in% colnames(fData(object))) )
         stop("The summarise_by argument is not a column of fData(object).")
     ## Define an expression matrix depending on which values we're using
-    use_as_exprs <- match.arg(use_as_exprs, c("exprs", "tpm", "fpkm", "counts"))
-    exprs_mat <- switch(use_as_exprs,
+    exprs_values <- match.arg(exprs_values, c("exprs", "tpm", "fpkm", "counts"))
+    exprs_mat <- switch(exprs_values,
                         exprs = exprs(object),
                         tpm = tpm(object),
                         fpkm = fpkm(object),
                         counts = counts(object))
-    if ( use_as_exprs == "exprs" && object@logged ) {
+    if ( exprs_values == "exprs" && object@logged ) {
         exprs_mat <- 2 ^ exprs_mat - object@logExprsOffset
     }
     ## Use reshape2 to make a long version of the expression matrix
@@ -177,10 +177,10 @@ summariseExprsAcrossFeatures <- function(object, use_as_exprs = "tpm",
     fd <- new("AnnotatedDataFrame",
               data.frame(exprs_collapsed_to = rownames(exprs_new)))
     rownames(fd) <- rownames(exprs_new)
-    if ( use_as_exprs == "exprs" && object@logged ) {
+    if ( exprs_values == "exprs" && object@logged ) {
         exprs_new <- log2(exprs_new + object@logExprsOffset)
     }
-    sce_out <- switch(use_as_exprs,
+    sce_out <- switch(exprs_values,
                       exprs = newSCESet(exprsData = exprs_new, phenoData = pd, 
                                         featureData = fd, logged = TRUE),
                       tpm = newSCESet(tpmData = exprs_new, phenoData = pd, 
@@ -190,7 +190,7 @@ summariseExprsAcrossFeatures <- function(object, use_as_exprs = "tpm",
                       counts = newSCESet(countData = exprs_new, phenoData = pd, 
                                          featureData = fd))
     ## Summarise other data in the object if present
-    if ( use_as_exprs != "counts" && !is.null(counts(object)) ) {
+    if ( exprs_values != "counts" && !is.null(counts(object)) ) {
         tmp_exprs <- data.frame(feature = fData(object)[[summarise_by]], 
                                 counts(object))
         tmp_exprs_long <- reshape2::melt(tmp_exprs)
@@ -199,7 +199,7 @@ summariseExprsAcrossFeatures <- function(object, use_as_exprs = "tpm",
         counts(sce_out) <- counts_new
         rm(counts_new)
     }
-    if ( use_as_exprs != "tpm" && !is.null(tpm(object)) ) {
+    if ( exprs_values != "tpm" && !is.null(tpm(object)) ) {
         tmp_exprs <- data.frame(feature = fData(object)[[summarise_by]], 
                                 tpm(object))
         tmp_exprs_long <- reshape2::melt(tmp_exprs)
@@ -208,7 +208,7 @@ summariseExprsAcrossFeatures <- function(object, use_as_exprs = "tpm",
         tpm(sce_out) <- tpm_new
         rm(tpm_new)
     }
-    if ( use_as_exprs != "fpkm" && !is.null(fpkm(object)) ) {
+    if ( exprs_values != "fpkm" && !is.null(fpkm(object)) ) {
         tmp_exprs <- data.frame(feature = fData(object)[[summarise_by]], 
                                 fpkm(object))
         tmp_exprs_long <- reshape2::melt(tmp_exprs)

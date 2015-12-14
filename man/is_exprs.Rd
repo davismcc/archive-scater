@@ -27,9 +27,9 @@ is_exprs(object) <- value
 \item{value}{an integer matrix}
 }
 \description{
-The is_exprs element holds a logical matrix indicating whether or not each 
+The is_exprs element holds a logical matrix indicating whether or not each
 observation is above the defined lowerDetectionLimit in the SCESet object. It
-has the same dimensions as the 'exprs' and 'counts' elements, which hold the 
+has the same dimensions as the 'exprs' and 'counts' elements, which hold the
 transformed expression data and count data, respectively.
 }
 \examples{

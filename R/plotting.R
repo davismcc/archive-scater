@@ -21,7 +21,7 @@
 #' be used as a factor by which to colour the points in the plot.
 #' @param nfeatures numeric scalar indicating the number of features to include 
 #' in the plot. 
-#' @param use_as_exprs character string indicating which values should be used
+#' @param exprs_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"} 
 #' (default; transcripts per million), \code{"fpkm"} (FPKM values), 
 #' \code{"counts"} (counts for each feature) or \code{"exprs"} (whatever is in 
@@ -61,11 +61,11 @@
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' 
-#' plot(example_sceset, use_as_exprs = "exprs")
-#' plot(example_sceset, use_as_exprs = "exprs", colour_by = "Cell_Cycle")
-#' plot(example_sceset, use_as_exprs = "exprs", block1 = "Treatment", 
+#' plot(example_sceset, exprs_values = "exprs")
+#' plot(example_sceset, exprs_values = "exprs", colour_by = "Cell_Cycle")
+#' plot(example_sceset, exprs_values = "exprs", block1 = "Treatment", 
 #' colour_by = "Cell_Cycle")
-#' plot(example_sceset, use_as_exprs = "exprs", block1 = "Treatment", 
+#' plot(example_sceset, exprs_values = "exprs", block1 = "Treatment", 
 #' block2 = "Mutation_Status", colour_by = "Cell_Cycle")
 #' # What happens if chosen expression values are not available?
 #' plot(example_sceset, block1 = "Treatment", colour_by = "Cell_Cycle") 
@@ -79,7 +79,7 @@ setMethod("plot", signature("SCESet"),
 #' @aliases plot
 #' @export
 plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL, 
-                        nfeatures = 500, use_as_exprs = "tpm", ncol = 3, 
+                        nfeatures = 500, exprs_values = "tpm", ncol = 3, 
                        linewidth = 1.5, theme_size = 10) {
     object <- x
     if ( !is(object, "SCESet") )
@@ -98,18 +98,18 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
     }  
     
     ## Define an expression matrix depending on which values we're using
-    use_as_exprs <- match.arg(use_as_exprs, c("exprs", "tpm", "fpkm", "counts"))
-    exprs_mat <- switch(use_as_exprs,
+    exprs_values <- match.arg(exprs_values, c("exprs", "tpm", "fpkm", "counts"))
+    exprs_mat <- switch(exprs_values,
                         exprs = exprs(object),
                         tpm = tpm(object),
                         fpkm = fpkm(object),
                         counts = counts(object))
     if ( is.null(exprs_mat) ) {
-        warning(paste0("The object does not contain ", use_as_exprs, " expression values. Using exprs(object) values instead."))
+        warning(paste0("The object does not contain ", exprs_values, " expression values. Using exprs(object) values instead."))
         exprs_mat <- exprs(object)
-        use_as_exprs <- "exprs"
+        exprs_values <- "exprs"
     }
-    if ( use_as_exprs == "exprs" && object@logged )
+    if ( exprs_values == "exprs" && object@logged )
         exprs_mat <- 2 ^ (exprs_mat) - object@logExprsOffset
     
     ## Use plyr to get the sequencing real estate accounted for by features
@@ -168,10 +168,19 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
         }
     }
     ## Add extra plot theme and details
-    plot_out <- plot_out + ggthemes::scale_colour_tableau(name = colour_by) + 
+    if ( !is.null(seq_real_estate_long$colour_by) ) {
+        if ( is.character(seq_real_estate_long$colour_by) | 
+             is.factor(seq_real_estate_long$colour_by) )
+            plot_out <- plot_out + 
+                ggthemes::scale_colour_tableau(name = colour_by) 
+        else
+            plot_out <- plot_out + 
+                viridis::scale_color_viridis(name = colour_by) 
+    }
+    plot_out <- plot_out + 
         xlab("Number of features") + ylab("Cumulative proportion of library")
     
-    if ( library(cowplot, logical.return = TRUE) )
+    if ( requireNamespace("cowplot", quietly = TRUE) )
         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
     else
         plot_out <- plot_out + theme_bw(theme_size)
@@ -196,6 +205,15 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' 2. If \code{ncomponents} is 2, then a scatterplot of PC2 vs PC1 is produced.
 #' If \code{ncomponents} is greater than 2, a pairs plots for the top components
 #' is produced.
+#' @param exprs_values character string indicating which values should be used
+#' as the expression values for this plot. Valid arguments are \code{"tpm"} 
+#' (default; transcripts per million), \code{"norm_tpm"} (normalised TPM 
+#' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM 
+#' values), \code{"counts"} (counts for each feature), \code{"norm_counts"}, 
+#' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised 
+#' counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot 
+#' of the \code{SCESet} object; default), \code{"norm_exprs"} (normalised 
+#' expression values) or \code{"stand_exprs"} (standardised expression values).
 #' @param colour_by character string defining the column of \code{pData(object)} to
 #' be used as a factor by which to colour the points in the plot.
 #' @param shape_by character string defining the column of \code{pData(object)} to
@@ -258,9 +276,10 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' plotPCA(example_sceset, ncomponents = 4, colour_by = "Treatment", 
 #' shape_by = "Mutation_Status")
 #' 
-plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL, 
-                          shape_by=NULL, size_by=NULL, feature_set=NULL, 
-                          return_SCESet=FALSE, scale_features=TRUE, 
+plotPCASCESet <- function(object, ntop=500, ncomponents=2, 
+                          exprs_values = "exprs", colour_by = NULL, 
+                          shape_by = NULL, size_by = NULL, feature_set = NULL, 
+                          return_SCESet = FALSE, scale_features = TRUE, 
                           draw_plot = TRUE, theme_size = 10) {
     ## Set up indicator for whether to use pData or features for size_by and
     ## colour_by
@@ -299,21 +318,28 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL,
         if ( !(all(feature_set %in% featureNames(object))) )
             stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
     }
-    
-    ## Define features to use: either ntop, or if a set of features is defined, then those
-    if ( is.null(feature_set) ) {
-        rv <- matrixStats::rowVars(exprs(object))
-        feature_set <- order(rv, decreasing = TRUE)[seq_len(min(ntop, length(rv)))]
-    }
-#     ## Standardise expression if stand_exprs(object) is null
-#     if ( is.null(stand_exprs(object)) ) {
-#         stand_exprs(object) <- t(scale(t(exprs(object)), scale = scale_features)) 
-#         message("stand_exprs(object) was null, so standardising exprs values for PCA.")
-#     } else
-#         message("stand_exprs(object) was not null, so using these values for PCA.")
 
+    ## Define an expression matrix depending on which values we're using
+    exprs_values <- match.arg(
+        exprs_values, c("exprs", "tpm", "fpkm", "counts", "cpm", "norm_exprs",
+                        "stand_exprs"))
+    exprs_mat <- get_exprs(object, exprs_values)
+    if ( is.null(exprs_mat) ) {
+        warning(paste0("The object does not contain ", exprs_values, " expression values. Using exprs(object) values instead."))
+        exprs_mat <- exprs(object)
+        exprs_values <- "exprs"
+    }
+    
+    ## Define features to use: either ntop, or if a set of features is defined, 
+    ## then those
+    if ( is.null(feature_set) ) {
+        rv <- matrixStats::rowVars(exprs_mat)
+        feature_set <- 
+            order(rv, decreasing = TRUE)[seq_len(min(ntop, length(rv)))]
+    }
+    
     ## Standardise expression if stand_exprs(object) is null
-    exprs_to_plot <- t(scale(t(exprs(object)), scale = scale_features)) 
+    exprs_to_plot <- t(scale(t(exprs_mat), scale = scale_features)) 
     
     ## Drop any features with zero variance
     exprs_to_plot <- exprs_to_plot[feature_set,]
@@ -356,7 +382,7 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL,
                                        shape_by, size_by, percentVar)
     
     ## Define plotting theme
-    if ( library(cowplot, logical.return = TRUE) )
+    if ( requireNamespace("cowplot", quietly = TRUE) )
         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
     else
         plot_out <- plot_out + theme_bw(theme_size)
@@ -381,11 +407,13 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2, colour_by=NULL,
 #' @aliases plotPCA
 #' @export
 setMethod("plotPCA", signature("SCESet"),
-          function(object, ntop=500, ncomponents=2, colour_by=NULL, shape_by=NULL, 
-                   size_by=NULL, feature_set=NULL, return_SCESet=FALSE, 
-                   scale_features=TRUE, draw_plot = TRUE, theme_size = 10) {
-              plotPCASCESet(object, ntop, ncomponents, colour_by, shape_by, size_by, 
-                             feature_set, return_SCESet, scale_features, draw_plot, theme_size)
+          function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
+                   colour_by = NULL, shape_by = NULL, size_by = NULL, 
+                   feature_set = NULL, return_SCESet = FALSE, 
+                   scale_features = TRUE, draw_plot = TRUE, theme_size = 10) {
+              plotPCASCESet(object, ntop, ncomponents, exprs_values, colour_by,
+                            shape_by, size_by, feature_set, return_SCESet, 
+                            scale_features, draw_plot, theme_size)
           })
 
 
@@ -430,6 +458,15 @@ setMethod("plotPCA", signature("SCESet"),
 #' If \code{ncomponents} is greater than 2, a pairs plots for the top components
 #' is produced. NB: computing more than two components for t-SNE can become very
 #' time consuming.
+#' @param exprs_values character string indicating which values should be used
+#' as the expression values for this plot. Valid arguments are \code{"tpm"} 
+#' (default; transcripts per million), \code{"norm_tpm"} (normalised TPM 
+#' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM 
+#' values), \code{"counts"} (counts for each feature), \code{"norm_counts"}, 
+#' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised 
+#' counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot 
+#' of the \code{SCESet} object; default), \code{"norm_exprs"} (normalised 
+#' expression values) or \code{"stand_exprs"} (standardised expression values).
 #' @param colour_by character string defining the column of \code{pData(object)} to
 #' be used as a factor by which to colour the points in the plot.
 #' @param shape_by character string defining the column of \code{pData(object)} to
@@ -506,11 +543,11 @@ setMethod("plotPCA", signature("SCESet"),
 #' 
 #' 
 setMethod("plotTSNE", signature("SCESet"),
-          function(object, ntop = 500, ncomponents = 2, colour_by = NULL, 
-                   shape_by = NULL, size_by = NULL, feature_set = NULL, 
-                   return_SCESet = FALSE, scale_features = TRUE, 
-                   draw_plot = TRUE, theme_size = 10, rand_seed = NULL, 
-                   perplexity = floor(ncol(object) / 5), ...) {
+          function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
+                   colour_by = NULL, shape_by = NULL, size_by = NULL, 
+                   feature_set = NULL, return_SCESet = FALSE, 
+                   scale_features = TRUE, draw_plot = TRUE, theme_size = 10,
+                   rand_seed = NULL, perplexity = floor(ncol(object) / 5), ...) {
               ##
               if ( !library(Rtsne, logical.return = TRUE) )
                   stop("This function requires the 'Rtsne' package. 
@@ -553,16 +590,32 @@ setMethod("plotTSNE", signature("SCESet"),
                       stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
               }
               
+              ## Define an expression matrix depending on which values we're 
+              ## using
+              exprs_values <- match.arg(
+                  exprs_values, 
+                  choices = c("exprs", "norm_exprs", "stand_exprs", "counts", 
+                              "norm_counts", "tpm", "norm_tpm", "fpkm", 
+                              "norm_fpkm", "cpm", "norm_cpm"))
+              
+              exprs_mat <- get_exprs(object, exprs_values)
+              if ( is.null(exprs_mat) ) {
+                  warning(paste0("The object does not contain ", exprs_values, " expression values. Using exprs(object) values instead."))
+                  exprs_mat <- exprs(object)
+                  exprs_values <- "exprs"
+              }
+              
               ## Define features to use: either ntop, or if a set of features is
               ## defined, then those
               if ( is.null(feature_set) ) {
-                  rv <- matrixStats::rowVars(exprs(object))
+                  rv <- matrixStats::rowVars(exprs_mat)
                   feature_set <- 
                       order(rv, decreasing = TRUE)[seq_len(min(ntop, 
                                                                length(rv)))]
               }
+              
               ## Standardise expression if stand_exprs(object) is null
-              exprs_to_plot <- t(scale(t(exprs(object)), scale = scale_features)) 
+              exprs_to_plot <- t(scale(t(exprs_mat), scale = scale_features)) 
               
               ## Drop any features with zero variance
               exprs_to_plot <- exprs_to_plot[feature_set,]
@@ -609,7 +662,7 @@ setMethod("plotTSNE", signature("SCESet"),
                                                  colour_by, shape_by, size_by)
               
               ## Define plotting theme
-              if ( library(cowplot, logical.return = TRUE) )
+              if ( requireNamespace("cowplot", quietly = TRUE) )
                   plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
               else
                   plot_out <- plot_out + theme_bw(theme_size)
@@ -958,7 +1011,7 @@ plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
                                        theme_size)
     
     ## Define plotting theme
-    if ( library(cowplot, logical.return = TRUE) )
+    if ( requireNamespace("cowplot", quietly = TRUE) )
         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
     else
         plot_out <- plot_out + theme_bw(theme_size)
@@ -1001,10 +1054,17 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' their expression values plotted
 #' @param x character string providing a column name of \code{pData(object)} to 
 #' plot on the x-axis in the expression plot(s)
-#' @param use_as_exprs character string indicating which expression values to plot:
-#' either "exprs" for the expression value defined in the \code{exprs} slot or
-#' "counts" to plot log2(counts-per-million + 1) using counts from the 
-#' \code{counts} slot of \code{object}
+#' @param exprs_values character string indicating which values should be used
+#' as the expression values for this plot. Valid arguments are \code{"tpm"} 
+#' (default; transcripts per million), \code{"norm_tpm"} (normalised TPM 
+#' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM 
+#' values), \code{"counts"} (counts for each feature), \code{"norm_counts"}, 
+#' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised 
+#' counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot 
+#' of the \code{SCESet} object; default), \code{"norm_exprs"} (normalised 
+#' expression values) or \code{"stand_exprs"} (standardised expression values)
+#' or any other slots that have been added to the \code{"assayData"} slot by 
+#' the user.
 #' @param colour_by optional character string supplying name of a column of 
 #' \code{pData(object)} which will be used as a variable by which to colour 
 #' expression values on the plot.
@@ -1022,6 +1082,8 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' for each group on the plot
 #' @param theme_size numeric scalar giving default font size for plotting theme 
 #' (default is 10)
+#' @param log2_values should the expression values be transformed to the 
+#' log2-scale for plotting (with an offset of 1 to avoid logging zeroes)?
 #' @param ... optional arguments (from those listed above) passed to 
 #' \code{plotExpressionSCESet} or \code{plotExpressionDefault}
 #'
@@ -1042,16 +1104,16 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset <- calculateQCMetrics(example_sceset)
-#' plotExpression(example_sceset, 1:6, x="Mutation_Status", use_as_exprs="exprs", 
+#' plotExpression(example_sceset, 1:6, x="Mutation_Status", exprs_values="exprs", 
 #' colour_by="Cell_Cycle", show_violin=TRUE, show_median=TRUE)
-#' plotExpression(example_sceset, 1:6, x="Mutation_Status", use_as_exprs="counts", 
+#' plotExpression(example_sceset, 1:6, x="Mutation_Status", exprs_values="counts", 
 #' colour_by="Cell_Cycle", show_violin=TRUE, show_median=TRUE)
 #' 
-plotExpressionSCESet <- function(object, features, x, use_as_exprs = "exprs", 
+plotExpressionSCESet <- function(object, features, x, exprs_values = "exprs", 
                                  colour_by = NULL, shape_by = NULL, 
                                  size_by = NULL, ncol = 2, xlab = NULL, 
-                                 show_median = TRUE, show_violin = TRUE, 
-                                 theme_size = 10) {
+                                 show_median = FALSE, show_violin = TRUE, 
+                                 theme_size = 10, log2_values = FALSE) {
     ## Check object is an SCESet object
     if ( !is(object, "SCESet") )
         stop("object must be an SCESet")
@@ -1063,38 +1125,38 @@ plotExpressionSCESet <- function(object, features, x, use_as_exprs = "exprs",
         nfeatures <- length(features)
     
     ## Checking arguments for expression values
-    use_as_exprs <- match.arg(use_as_exprs, 
-                              choices = c("exprs", "norm_exprs", "counts", 
-                                          "norm_counts", "tpm", "norm_tpm", 
-                                          "fpkm", "norm_fpkm", "cpm", "norm_cpm"))
-    if ( use_as_exprs == "counts" && is.null(counts(object)) ) {
-        warning("'use_as_exprs' argument is 'counts', but counts(object) is NULL. Plotting 'exprs' values instead.")
-        use_as_exprs <- "exprs"
-    }
-    if ( use_as_exprs == "tpm" && is.null(tpm(object)) ) {
-        warning("'use_as_exprs' argument is 'tpm', but tpm(object) is NULL. Plotting 'exprs' values instead.")
-        use_as_exprs <- "exprs"
-    } 
-    if ( use_as_exprs == "norm_tpm" && is.null(norm_tpm(object)) ) {
-        warning("'use_as_exprs' argument is 'norm_tpm', but norm_tpm(object) is NULL. Plotting 'exprs' values instead.")
-        use_as_exprs <- "exprs"
-    } 
-    if ( use_as_exprs == "fpkm" && is.null(fpkm(object)) ) {
-        warning("'use_as_exprs' argument is 'fpkm', but fpkm(object) is NULL. Plotting 'exprs' values instead.")
-        use_as_exprs <- "exprs"
-    }
-    if ( use_as_exprs == "norm_fpkm" && is.null(norm_fpkm(object)) ) {
-        warning("'use_as_exprs' argument is 'norm_fpkm', but norm_fpkm(object) is NULL. Plotting 'exprs' values instead.")
-        use_as_exprs <- "exprs"
-    }
-    if ( use_as_exprs == "cpm" && is.null(cpm(object)) ) {
-        warning("'use_as_exprs' argument is 'cpm', but cpm(object) is NULL. Plotting 'exprs' values instead.")
-        use_as_exprs <- "exprs"
-    } 
-    if ( use_as_exprs == "norm_cpm" && is.null(norm_cpm(object)) ) {
-        warning("'use_as_exprs' argument is 'norm_cpm', but norm_cpm(object) is NULL. Plotting 'exprs' values instead.")
-        use_as_exprs <- "exprs"
-    } 
+#     exprs_values <- match.arg(
+#         exprs_values, choices = c("exprs", "norm_exprs", "counts", 
+#                                   "norm_counts", "tpm", "norm_tpm", 
+#                                   "fpkm", "norm_fpkm", "cpm", "norm_cpm"))
+#     if ( exprs_values == "counts" && is.null(counts(object)) ) {
+#         warning("'exprs_values' argument is 'counts', but counts(object) is NULL. Plotting 'exprs' values instead.")
+#         exprs_values <- "exprs"
+#     }
+#     if ( exprs_values == "tpm" && is.null(tpm(object)) ) {
+#         warning("'exprs_values' argument is 'tpm', but tpm(object) is NULL. Plotting 'exprs' values instead.")
+#         exprs_values <- "exprs"
+#     } 
+#     if ( exprs_values == "norm_tpm" && is.null(norm_tpm(object)) ) {
+#         warning("'exprs_values' argument is 'norm_tpm', but norm_tpm(object) is NULL. Plotting 'exprs' values instead.")
+#         exprs_values <- "exprs"
+#     } 
+#     if ( exprs_values == "fpkm" && is.null(fpkm(object)) ) {
+#         warning("'exprs_values' argument is 'fpkm', but fpkm(object) is NULL. Plotting 'exprs' values instead.")
+#         exprs_values <- "exprs"
+#     }
+#     if ( exprs_values == "norm_fpkm" && is.null(norm_fpkm(object)) ) {
+#         warning("'exprs_values' argument is 'norm_fpkm', but norm_fpkm(object) is NULL. Plotting 'exprs' values instead.")
+#         exprs_values <- "exprs"
+#     }
+#     if ( exprs_values == "cpm" && is.null(cpm(object)) ) {
+#         warning("'exprs_values' argument is 'cpm', but cpm(object) is NULL. Plotting 'exprs' values instead.")
+#         exprs_values <- "exprs"
+#     } 
+#     if ( exprs_values == "norm_cpm" && is.null(norm_cpm(object)) ) {
+#         warning("'exprs_values' argument is 'norm_cpm', but norm_cpm(object) is NULL. Plotting 'exprs' values instead.")
+#         exprs_values <- "exprs"
+#     } 
     
     ## Check arguments are valid
     if ( !(x %in% varLabels(object)) )
@@ -1120,72 +1182,80 @@ plotExpressionSCESet <- function(object, features, x, use_as_exprs = "exprs",
             stop("when the argument 'features' is of type character, all features must be in featureNames(object)")
     }
     
-    ## Define expression values to use
-    if ( use_as_exprs == "exprs" || use_as_exprs == "norm_exprs" ) {
-        to_melt <- switch(use_as_exprs,
-                          exprs = as.matrix(exprs(object)[features, , 
-                                                          drop = FALSE]),
-                          norm_exprs = as.matrix(norm_exprs(object)[features, , 
-                                                               drop = FALSE]))
-        if ( !object@logged ) {
-            to_melt <- log2(to_melt + 1)
-            message("Expression values have been transformed to a log2 scale")
-        }
-        ylab <- switch(use_as_exprs,
-                       exprs = "Expression (log2 scale)",
-                       norm_exprs = "Normalised expression (log2 scale)")
-    } else {
-        if ( use_as_exprs == "counts" ) {
-            count_mtrx <- as.matrix(counts(object))
-            lib_size <- colSums(count_mtrx)
-            cpm_to_plot <- log2(t(t(count_mtrx) / lib_size) + 1)
-            to_melt <- as.matrix(cpm_to_plot[features, , drop = FALSE])
-            ylab <- "log2(counts-per-million + 1)"
-        }
-        if ( use_as_exprs == "norm_counts" ) {
-            count_mtrx <- as.matrix(norm_counts(object))
-            lib_size <- colSums(count_mtrx)
-            cpm_to_plot <- log2(t(t(count_mtrx) / lib_size) + 1)
-            to_melt <- as.matrix(cpm_to_plot[features, , drop = FALSE])
-            ylab <- "normalised log2(counts-per-million + 1)"
-        }
-        if ( use_as_exprs == "tpm" ) {
-            tpm_mtrx <- as.matrix(tpm(object)[features, , drop = FALSE])
-            to_melt <- log2(tpm_mtrx + 1)
-            ylab <- "log2(transcripts-per-million + 1)"
-        }
-        if ( use_as_exprs == "norm_tpm" ) {
-            tpm_mtrx <- as.matrix(norm_tpm(object)[features, , drop = FALSE])
-            to_melt <- log2(tpm_mtrx + 1)
-            ylab <- "normalised log2(transcripts-per-million + 1)"
-        }
-        if ( use_as_exprs == "fpkm" ) {
-            fpkm_mtrx <- as.matrix(fpkm(object)[features, , drop = FALSE])
-            to_melt <- log2(fpkm_mtrx + 1)
-            ylab <- "log2(FPKM + 1)"
-        }
-        if ( use_as_exprs == "norm_fpkm" ) {
-            fpkm_mtrx <- as.matrix(norm_fpkm(object)[features, , drop = FALSE])
-            to_melt <- log2(fpkm_mtrx + 1)
-            ylab <- "normalised log2(FPKM + 1)"
-        }
-        if ( use_as_exprs == "cpm" ) {
-            cpm_mtrx <- as.matrix(cpm(object)[features, , drop = FALSE])
-            to_melt <- log2(cpm_mtrx + 1)
-            ylab <- "log2(counts-per-million + 1)"
-        }
-        if ( use_as_exprs == "norm_cpm" ) {
-            cpm_mtrx <- as.matrix(norm_cpm(object)[features, , drop = FALSE])
-            to_melt <- log2(cpm_mtrx + 1)
-            ylab <- "normalised log2(counts-per-million + 1)"
-        }
-    }
+    exprs_mat <- get_exprs(object, exprs_values)
+    if ( log2_values ) {
+        exprs_mat <- log2(exprs_mat + 1) 
+        ylab <- paste0("Expression (", exprs_values, "; log2-scale)")
+    } else
+        ylab <- paste0("Expression (", exprs_values, ")")
+    to_melt <- as.matrix(exprs_mat[features, , drop = FALSE])
+    
+#     ## Define expression values to use
+#     if ( exprs_values == "exprs" || exprs_values == "norm_exprs" ) {
+#         to_melt <- switch(exprs_values,
+#                           exprs = as.matrix(exprs(object)[features, , 
+#                                                           drop = FALSE]),
+#                           norm_exprs = as.matrix(norm_exprs(object)[features, , 
+#                                                                drop = FALSE]))
+#         if ( !object@logged ) {
+#             to_melt <- log2(to_melt + 1)
+#             message("Expression values have been transformed to a log2 scale")
+#         }
+#         ylab <- switch(exprs_values,
+#                        exprs = "Expression (log2 scale)",
+#                        norm_exprs = "Normalised expression (log2 scale)")
+#     } else {
+#         if ( exprs_values == "counts" ) {
+#             count_mtrx <- as.matrix(counts(object))
+#             lib_size <- colSums(count_mtrx)
+#             cpm_to_plot <- log2(t(t(count_mtrx) / lib_size) + 1)
+#             to_melt <- as.matrix(cpm_to_plot[features, , drop = FALSE])
+#             ylab <- "log2(counts-per-million + 1)"
+#         }
+#         if ( exprs_values == "norm_counts" ) {
+#             count_mtrx <- as.matrix(norm_counts(object))
+#             lib_size <- colSums(count_mtrx)
+#             cpm_to_plot <- log2(t(t(count_mtrx) / lib_size) + 1)
+#             to_melt <- as.matrix(cpm_to_plot[features, , drop = FALSE])
+#             ylab <- "normalised log2(counts-per-million + 1)"
+#         }
+#         if ( exprs_values == "tpm" ) {
+#             tpm_mtrx <- as.matrix(tpm(object)[features, , drop = FALSE])
+#             to_melt <- log2(tpm_mtrx + 1)
+#             ylab <- "log2(transcripts-per-million + 1)"
+#         }
+#         if ( exprs_values == "norm_tpm" ) {
+#             tpm_mtrx <- as.matrix(norm_tpm(object)[features, , drop = FALSE])
+#             to_melt <- log2(tpm_mtrx + 1)
+#             ylab <- "normalised log2(transcripts-per-million + 1)"
+#         }
+#         if ( exprs_values == "fpkm" ) {
+#             fpkm_mtrx <- as.matrix(fpkm(object)[features, , drop = FALSE])
+#             to_melt <- log2(fpkm_mtrx + 1)
+#             ylab <- "log2(FPKM + 1)"
+#         }
+#         if ( exprs_values == "norm_fpkm" ) {
+#             fpkm_mtrx <- as.matrix(norm_fpkm(object)[features, , drop = FALSE])
+#             to_melt <- log2(fpkm_mtrx + 1)
+#             ylab <- "normalised log2(FPKM + 1)"
+#         }
+#         if ( exprs_values == "cpm" ) {
+#             cpm_mtrx <- as.matrix(cpm(object)[features, , drop = FALSE])
+#             to_melt <- log2(cpm_mtrx + 1)
+#             ylab <- "log2(counts-per-million + 1)"
+#         }
+#         if ( exprs_values == "norm_cpm" ) {
+#             cpm_mtrx <- as.matrix(norm_cpm(object)[features, , drop = FALSE])
+#             to_melt <- log2(cpm_mtrx + 1)
+#             ylab <- "normalised log2(counts-per-million + 1)"
+#         }
+#     }
     
     ## Melt the expression data and metadata into a convenient form
     evals_long <- reshape2::melt(to_melt, value.name = "evals")
     colnames(evals_long) <- c("Feature", "Cell", "evals")
     ## Extend the samples information
-    samples_long <- pData(object)[rep(seq_len(ncol(object)), each = nfeatures), ]
+    samples_long <- pData(object)[rep(seq_len(ncol(object)), each = nfeatures),]
     
     ## Construct a ggplot2 aesthetic for the plot
     aesth <- aes()
@@ -1198,8 +1268,8 @@ plotExpressionSCESet <- function(object, features, x, use_as_exprs = "exprs",
             ## Colour by is_exprs if we can (i.e. is_exprs is not NULL)
             isexpr_long <- reshape2::melt(is_exprs(object)[features,], 
                                           value.name = "is_exprs")
-            evals_long <- dplyr::mutate(evals_long, 
-                                        Is_Expressed = as.vector(isexpr_long$is_exprs))
+            evals_long <- dplyr::mutate(
+                evals_long, Is_Expressed = as.vector(isexpr_long$is_exprs))
             aesth$colour <- as.symbol("Is_Expressed")
         }
     }
@@ -1217,7 +1287,7 @@ plotExpressionSCESet <- function(object, features, x, use_as_exprs = "exprs",
                                       show_median, show_violin)
     
     ## Define plotting theme
-    if ( library(cowplot, logical.return = TRUE) )
+    if ( requireNamespace("cowplot", quietly = TRUE) )
         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
     else
         plot_out <- plot_out + theme_bw(theme_size)
@@ -1232,7 +1302,8 @@ plotExpressionSCESet <- function(object, features, x, use_as_exprs = "exprs",
 #' @aliases plotExpression
 #' @export
 plotExpressionDefault <- function(object, aesth, ncol=2, xlab=NULL, 
-                                   ylab=NULL, show_median=TRUE, show_violin=TRUE) {
+                                  ylab=NULL, show_median=FALSE, 
+                                  show_violin=TRUE) {
     if ( !("Feature" %in% names(object)) )
         stop("object needs a column named 'Feature' to define the feature(s) by which to plot expression.")
  
@@ -1261,10 +1332,10 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab=NULL,
 #' @aliases plotExpression
 #' @export
 setMethod("plotExpression", signature(object = "SCESet"),
-          function(object, features, x, use_as_exprs = "exprs", colour_by = NULL, 
+          function(object, features, x, exprs_values = "exprs", colour_by = NULL, 
                    shape_by = NULL, size_by = NULL, ncol = 2, xlab = NULL, 
                    show_median=TRUE, show_violin=TRUE) {
-              plotExpressionSCESet(object, features, x, use_as_exprs, 
+              plotExpressionSCESet(object, features, x, exprs_values, 
                                         colour_by, shape_by, size_by, ncol, 
                                         xlab, show_median, show_violin)
           })
@@ -1427,7 +1498,7 @@ plotMetadata <- function(object,
     }
     
     ## Define plotting theme
-    if ( library(cowplot, logical.return = TRUE) )
+    if ( requireNamespace("cowplot", quietly = TRUE) )
         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
     else
         plot_out <- plot_out + theme_bw(theme_size)
@@ -1451,9 +1522,7 @@ plotMetadata <- function(object,
     
     ## Define legend on plot
     plot_out <- plot_out + 
-        theme(legend.justification = c(1, 1), 
-              legend.position = c(1, 1), 
-              legend.title = element_text(size = theme_size - 3),
+        theme(legend.title = element_text(size = theme_size - 3),
               legend.text = element_text(size = theme_size - 4))
     
     ## Tweak plot guides
@@ -1499,9 +1568,8 @@ plotMetadata <- function(object,
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset <- calculateQCMetrics(example_sceset)
-#' plotPhenoData(example_sceset, 
-#' aesth = aes_string(x = "log10(total_counts)", y = "total_features", 
-#' colour = "Mutation_Status"))
+#' plotPhenoData(example_sceset, aesth = aes_string(x = "log10(total_counts)", 
+#' y = "total_features", colour = "Mutation_Status"))
 #' 
 plotPhenoData <- function(object, aesth=aes_string(x = "log10(total_counts)", 
                                                    y = "total_features"), 
@@ -1527,7 +1595,7 @@ plotPhenoData <- function(object, aesth=aes_string(x = "log10(total_counts)",
     plot_out <- plotMetadata(df_to_plot, aesth, ...)   
     
     ## Define plotting theme
-#     if ( library(cowplot, logical.return = TRUE) )
+#     if ( requireNamespace("cowplot", quietly = TRUE) )
 #         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
 #     else
 #         plot_out <- plot_out + theme_bw(theme_size)
@@ -1581,7 +1649,7 @@ plotFeatureData <- function(object,
     plot_out <- plotMetadata(fData(object), aesth, ...)   
 
     ## Define plotting theme
-#     if ( library(cowplot, logical.return = TRUE) )
+#     if ( requireNamespace("cowplot", quietly = TRUE) )
 #         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
 #     else
 #         plot_out <- plot_out + theme_bw(theme_size)

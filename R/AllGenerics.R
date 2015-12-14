@@ -24,6 +24,12 @@ setGeneric("pData<-", signature = signature("x", "value"),
 setGeneric("fData<-", signature = signature("x", "value"),
            function(x, value) {standardGeneric("fData<-")})
 
+#' @name get_exprs
+#' @export
+#' @docType methods
+#' @rdname get_exprs
+setGeneric("get_exprs", function(object, exprs_values) {
+    standardGeneric("get_exprs")})
 
 #' @name is_exprs
 #' @export

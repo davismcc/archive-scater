@@ -7,7 +7,7 @@
 \title{Normalise expression expression levels for an SCESet object}
 \usage{
 normaliseExprs(object, method = "none", design = NULL, feature_set = NULL,
-  use_as_exprs = "counts", ...)
+  exprs_values = "counts", ...)
 
 normalizeExprs(...)
 }
@@ -27,7 +27,7 @@ features to use for the PCA. If character, entries must all be in
 features. If logical, vector is used to index features and should have length
 equal to \code{nrow(object)}.}
 
-\item{use_as_exprs}{character string indicating which slot of the 
+\item{exprs_values}{character string indicating which slot of the 
 assayData from the \code{SCESet} object should be used as expression values. 
 Valid options are \code{'counts'}, the count values, \code{'exprs'} the 
 expression slot, \code{'tpm'} the transcripts-per-million slot or 
@@ -47,11 +47,11 @@ values from an SCESet object. The 'raw' values used can be the values in the
 of the SCESet. Normalised expression values are added to the 
 \code{'norm_exprs'} slot of the object. Normalised expression values are on 
 the log2-scale, with an offset defined by the \code{logExprsOffset}
-slot of the SCESet object. If the \code{'use_as_exprs'} argument is one of 
+slot of the SCESet object. If the \code{'exprs_values'} argument is one of 
 \code{'counts'}, \code{'tpm'} or \code{'fpkm'}, then a corresponding slot
 with normalised values is added: \code{'norm_counts'}, 
 \code{'norm_tpm'} or \code{'norm_fpkm'}, as appropriate. If 
-\code{'use_as_exprs'} argument is \code{'counts'} a \code{'norm_cpm'} slot is 
+\code{'exprs_values'} argument is \code{'counts'} a \code{'norm_cpm'} slot is 
 also added, containing normalised counts-per-million values.
  
 Normalisation is done relative to a defined feature set, if desired, which 

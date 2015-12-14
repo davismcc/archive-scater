@@ -525,6 +525,58 @@ setReplaceMethod("pData", signature(x = "SCESet", value = "data.frame"),
 
 
 ################################################################################
+### get_exprs
+
+#' Generic accessor for expression data from an SCESet object.
+#'
+#' Access by name a matrix of expression values, one row for each feature (gene, 
+#' exon, region, etc), and one column for each cell stored an element of the
+#' assayData slot of the SCESet object.
+#'
+#' @usage
+#' \S4method{get_exprs}{SCESet}(object, exprs_values)
+#'
+#' @docType methods
+#' @name get_exprs
+#' @rdname get_exprs
+#' @aliases get_exprs get_exprs,SCESet-method 
+#'
+#' @param object a \code{SCESet} object.
+#' @param exprs_values character string indicating which values should be used
+#' as the expression values for this plot. Valid arguments are \code{"tpm"} 
+#' (default; transcripts per million), \code{"norm_tpm"} (normalised TPM 
+#' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM 
+#' values), \code{"counts"} (counts for each feature), \code{"norm_counts"}, 
+#' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised 
+#' counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot 
+#' of the \code{SCESet} object; default), \code{"norm_exprs"} (normalised 
+#' expression values) or \code{"stand_exprs"} (standardised expression values)
+#' or any other slots that have been added to the \code{"assayData"} slot by 
+#' the user.
+#' @author Davis McCarthy
+#' @export
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' example_sceset <- newSCESet(countData = sc_example_counts)
+#' get_exprs(example_sceset, "counts")
+#'
+get_exprs.SCESet <- function(object, exprs_values = "exprs") {
+    exprs_mat <- object@assayData[[exprs_values]]
+    if ( is.null(exprs_mat) )
+        warning(paste0("The object does not contain ", exprs_values, " expression values. Returning NULL."))
+    exprs_mat
+}
+
+#' @rdname get_exprs
+#' @export
+setMethod("get_exprs", signature(object = "SCESet"),
+          function(object, exprs_values = "exprs") {
+              get_exprs.SCESet(object, exprs_values)
+          })
+
+
+################################################################################
 ### counts
 
 #' Accessors for the 'counts' element of an SCESet object.
@@ -1456,28 +1508,28 @@ setReplaceMethod("featDist", signature(object="SCESet", value="matrix"),
 #' Convert an \code{SCESet} to a \code{CellDataSet}
 #'
 #' @param sce An \code{SCESet} object
-#' @param use_as_exprs What should \code{exprs(cds)} be mapped from in the \code{SCESet}? Should be
+#' @param exprs_values What should \code{exprs(cds)} be mapped from in the \code{SCESet}? Should be
 #' one of "exprs", "tpm", "fpkm", "counts"
 #'
 #' @export
-#' @importClassesFrom monocle CellDataSet
 #' @rdname toCellDataSet
 #' @name toCellDataSet
 #' @return An object of class \code{SCESet}
-toCellDataSet <- function(sce, use_as_exprs = "exprs") {
-    pkgAvail <- requireNamespace("monocle", character.only=TRUE)
-    if(pkgAvail) {
-        if(!is(sce,'SCESet')) stop('sce must be of type SCESet')
+toCellDataSet <- function(sce, exprs_values = "exprs") {
+    pkgAvail <- requireNamespace("monocle")
+    if (pkgAvail) {
+        if (!is(sce,'SCESet')) stop('sce must be of type SCESet')
         exprsData <- NULL
-        use_as_exprs <- match.arg(use_as_exprs, c("exprs", "tpm", "fpkm", "counts"))
-        exprsData <- switch(use_as_exprs,
+        exprs_values <- match.arg(exprs_values, c("exprs", "tpm", "fpkm", "counts"))
+        exprsData <- switch(exprs_values,
                             exprs = exprs(sce),
                             tpm = tpm(sce),
                             fpkm = fpkm(sce),
                             counts = counts(sce))
-        cds <- monocle::newCellDataSet(exprsData, phenoData=phenoData(sce),
-                                       featureData=featureData(sce),
-                                       lowerDetectionLimit=sce@lowerDetectionLimit)
+        cds <- monocle::newCellDataSet(
+            exprsData, phenoData = phenoData(sce), 
+            featureData = featureData(sce),
+            lowerDetectionLimit = sce@lowerDetectionLimit)
         cds@reducedDimS <- t(redDim(sce))
         return( cds )
     }
@@ -1488,7 +1540,7 @@ toCellDataSet <- function(sce, use_as_exprs = "exprs") {
 #' Convert a \code{CellDataSet} to an \code{SCESet}
 #'
 #' @param cds A \code{CellDataSet} from the \code{monocle} package
-#' @param use_exprs_as What should \code{exprs(cds)} be mapped to in the \code{SCESet}? Should be
+#' @param exprs_values What should \code{exprs(cds)} be mapped to in the \code{SCESet}? Should be
 #' one of "exprs", "tpm", "fpkm", "counts"
 #' @param logged logical, if a value is supplied for the exprsData argument, are
 #'  the expression values already on the log2 scale, or not?
@@ -1496,22 +1548,22 @@ toCellDataSet <- function(sce, use_as_exprs = "exprs") {
 #' @export
 #' @importFrom Biobase featureData
 #' @importFrom Biobase phenoData
-#' @importClassesFrom monocle CellDataSet
 #' @rdname fromCellDataSet
 #' @name fromCellDataSet
 #' @return An object of class \code{SCESet}
-fromCellDataSet <- function(cds, use_exprs_as = "tpm", logged=FALSE) {
-    pkgAvail <- requireNamespace("monocle", character.only=TRUE)
-    if(pkgAvail) {
-        if(!is(cds,'CellDataSet')) stop('cds must be of type CellDataSet from package monocle')
+fromCellDataSet <- function(cds, exprs_values = "tpm", logged=FALSE) {
+    pkgAvail <- requireNamespace("monocle")
+    if (pkgAvail) {
+        if (!is(cds,'CellDataSet')) stop('cds must be of type CellDataSet from package monocle')
         exprsData <- countData <- NULL
-        use_exprs_as <- match.arg(use_exprs_as, c("exprs", "tpm", "fpkm", "counts"))
+        exprs_values <- match.arg(exprs_values, 
+                                  c("exprs", "tpm", "fpkm", "counts"))
         exprsData <- countData <- tpmData <- fpkmData <- NULL
-        if(use_exprs_as == "exprs") {
+        if (exprs_values == "exprs") {
           exprsData <- exprs(cds)
-        } else if(use_exprs_as == "tpm") {
+        } else if (exprs_values == "tpm") {
           tpmData <- exprs(cds)
-        } else if(use_exprs_as == "fpkm") {
+        } else if (exprs_values == "fpkm") {
           fpkmData <- exprs(cds)
         } else {
           countData <- exprs(cds)
@@ -1519,7 +1571,7 @@ fromCellDataSet <- function(cds, use_exprs_as = "tpm", logged=FALSE) {
 
         sce <- newSCESet(exprsData = exprsData, tpmData = tpmData,
                          fpkmData = fpkmData, countData = countData,
-                         phenoData=phenoData(cds),
+                         phenoData = phenoData(cds),
                          featureData = featureData(cds),
                          lowerDetectionLimit = cds@lowerDetectionLimit,
                          logged = logged)
@@ -1529,6 +1581,8 @@ fromCellDataSet <- function(cds, use_exprs_as = "tpm", logged=FALSE) {
     else
         stop("Require package monocle to be installed to use this function.")
 }
+
+################################################################################
 
 #' Retrieve a representation of gene expression
 #'

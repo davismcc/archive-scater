@@ -41,9 +41,8 @@ data("sc_example_cell_info")
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 example_sceset <- calculateQCMetrics(example_sceset)
-plotPhenoData(example_sceset, 
-aesth = aes_string(x = "log10(total_counts)", y = "total_features", 
-colour = "Mutation_Status"))
+plotPhenoData(example_sceset, aesth = aes_string(x = "log10(total_counts)", 
+y = "total_features", colour = "Mutation_Status"))
 
 }
 

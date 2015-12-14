@@ -15,7 +15,7 @@
 \arguments{
 \item{x}{An SCESet object.}
 
-\item{value}{an AnnotatedDataFrame with updated featureData to replace 
+\item{value}{an AnnotatedDataFrame with updated featureData to replace
 existing}
 }
 \value{
@@ -24,7 +24,7 @@ A matrix of expression count data, where rows correspond to features
 }
 \description{
 SCESet objects contain feature information (inherited from the ExpressionSet
-class). This function conveniently replaces the feature data with the 
+class). This function conveniently replaces the feature data with the
 value supplied, which must be an AnnotatedDataFrame.
 }
 \examples{

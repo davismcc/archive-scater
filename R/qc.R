@@ -556,7 +556,10 @@ a lower count threshold of 0.")
 #' 
 findImportantPCs <- function(object, variable="total_features", 
                              plot_type = "pcs-vs-vars", theme_size = 10) {
-    pca <- prcomp(t(exprs(object)), retx = TRUE, center = TRUE, scale. = TRUE)
+    df_for_pca <- t(exprs(object))
+    col_zero_var <- (apply(df_for_pca, 2, var) == 0)
+    pca <- prcomp(df_for_pca[, !col_zero_var], retx = TRUE, center = TRUE, 
+                  scale. = TRUE)
     colnames(pca$x) <- paste("component", 1:ncol(pca$x))
     if (!(variable %in% colnames(pData(object))))
         stop("variable not found in pData(object). 
@@ -702,7 +705,7 @@ findImportantPCs <- function(object, variable="total_features",
 #' features (e.g. genes, transcripts) to drop when producing the plot. For 
 #' example, control genes might be dropped to focus attention on contribution 
 #' from endogenous rather than synthetic genes.
-#' @param use_as_exprs which slot of the \code{assayData} in the \code{object} 
+#' @param exprs_values which slot of the \code{assayData} in the \code{object} 
 #' should be used to define expression? Valid options are "counts" (default), 
 #' "tpm", "fpkm" and "exprs".
 #'
@@ -720,7 +723,7 @@ findImportantPCs <- function(object, variable="total_features",
 #' plotHighestExprs(example_sceset, col_by_variable="Mutation_Status")
 #' 
 plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
-                              drop_features = NULL, use_as_exprs = "counts") {
+                              drop_features = NULL, exprs_values = "counts") {
     ## Check that variable to colour points exists
     if (!(col_by_variable %in% colnames(pData(object)))) {
         warning("col_by_variable not found in pData(object). 
@@ -751,44 +754,59 @@ plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
         object <- calculateQCMetrics(object)
    
     ## Define expression values to be used
-    use_as_exprs <- match.arg(use_as_exprs, c("exprs", "tpm", "cpm", "fpkm", "counts"))
-    exprs_mat <- switch(use_as_exprs,
-                        exprs = exprs(object),
-                        tpm = tpm(object),
-                        cpm = cpm(object),
-                        fpkm = fpkm(object),
-                        counts = counts(object))
-    if ( is.null(exprs_mat) ) {
-        warning(paste0("The object does not contain ", use_as_exprs, " expression values. Using exprs(object) values instead."))
+    exprs_values <- match.arg(exprs_values, 
+                              c("exprs", "tpm", "cpm", "fpkm", "counts"))
+    exprs_mat <- get_exprs(object, exprs_values)
+    if ( is.null(exprs_mat) && !is.null(counts(object)) ) {
+        exprs_mat <- counts(object)
+        message("Using counts as expression values.")
+        exprs_values <- "counts"
+    } else if ( is.null(exprs_mat) ) {
         exprs_mat <- exprs(object)
-        use_as_exprs <- "exprs"
+        message("Using exprs(object) values as expression values.")
+        exprs_values <- "exprs"
     }
-    if ( use_as_exprs == "exprs" && object@logged )
+    if ( exprs_values == "exprs" && object@logged )
         exprs_mat <- 2 ^ (exprs_mat) - object@logExprsOffset
     
     ## Find the most highly expressed features in this dataset
     ### Order by total feature counts across whole dataset
     fdata <- fData(object)
-    oo <- order(fdata[[paste0("total_feature_", use_as_exprs)]], 
-                decreasing = TRUE)
-    fdata$feature <- factor(featureNames(object), levels = rownames(object)[rev(oo)])
+    if ( paste0("total_feature_", exprs_values) %in% colnames(fdata) )
+        oo <- order(fdata[[paste0("total_feature_", exprs_values)]], 
+                    decreasing = TRUE)
+    else {
+        if ( "total_feature_counts" %in% colnames(fdata) ) {
+            oo <- order(fdata[["total_feature_counts"]], decreasing = TRUE)
+            exprs_values <- "counts"   
+            message("Using counts to order total expression of features.")
+        }
+        else {
+            exprs_values <- "exprs"   
+            oo <- order(fdata[["total_feature_exprs"]], decreasing = TRUE)
+            message("Using 'exprs' to order total expression of features.")
+        }
+    }
+    fdata$feature <- factor(featureNames(object), 
+                            levels = rownames(object)[rev(oo)])
     ## Check if is_feature_control is defined
     if ( is.null(fdata$is_feature_control) )
         fdata$is_feature_control <- rep(FALSE, nrow(fdata))
     if ( is.null(fdata$Feature) )
         fdata$Feature <- featureNames(object)
     
-    ## Determine percentage expression accounted for by top features across all cells
+    ## Determine percentage expression accounted for by top features across all 
+    ## cells
     total_exprs <- sum(exprs_mat)
-    total_feature_exprs <- fdata[[paste0("total_feature_", use_as_exprs)]]
+    total_feature_exprs <- fdata[[paste0("total_feature_", exprs_values)]]
     top50_pctage <- 100 * sum(total_feature_exprs[oo[1:n]]) / total_exprs
     ## Determine percentage of counts for top features by cell
     df_pct_exprs_by_cell <- (100 * t(exprs_mat[oo[1:n],]) / colSums(exprs_mat))
    
     ## Melt dataframe so it is conducive to ggplot
     df_pct_exprs_by_cell_long <- reshape2::melt(df_pct_exprs_by_cell)
-    df_pct_exprs_by_cell_long$Var2 <- factor(df_pct_exprs_by_cell_long$Var2, 
-                                             levels = rownames(object)[rev(oo[1:n])])
+    df_pct_exprs_by_cell_long$Var2 <- factor(
+        df_pct_exprs_by_cell_long$Var2, levels = rownames(object)[rev(oo[1:n])])
     ## Add colour variable information
     if (typeof_x == "discrete")
         df_pct_exprs_by_cell_long$colour_by <- factor(x)
@@ -802,7 +820,7 @@ plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
         ggtitle(paste0("Top ", n, " account for ", 
                        format(top50_pctage, digits = 3), "% of total")) +
         ylab("Feature") +
-        xlab(paste0("% of total ", use_as_exprs)) +
+        xlab(paste0("% of total ", exprs_values)) +
         theme_bw(8) +
         theme(legend.position = c(1, 0), legend.justification = c(1, 0),
               axis.text.x = element_text(colour = "gray35"), 
@@ -820,7 +838,7 @@ plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
                                   high = "firebrick4", space = "Lab")
     }
     plot_most_expressed + geom_point(
-        aes_string(x = paste0("as.numeric(pct_total_", use_as_exprs, ")"), 
+        aes_string(x = paste0("as.numeric(pct_total_", exprs_values, ")"), 
                    y = "Feature", fill = "is_feature_control"), 
         data = fdata[oo[1:n],], colour = "gray30", shape = 21) +
         scale_fill_manual(values = c("aliceblue", "wheat")) +
@@ -867,7 +885,7 @@ plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
 #' "pairs", then the function produces a pairs plot of the explanatory variables
 #' ordered by the percentage of feature expression variance (as measured by 
 #' R-squared in a marginal linear model) explained.
-#' @param use_as_exprs which slot of the \code{assayData} in the \code{object} 
+#' @param exprs_values which slot of the \code{assayData} in the \code{object} 
 #' should be used to define expression? Valid options are "exprs" (default), 
 #' "tpm", "fpkm", "cpm", and "counts".
 #' @param nvars_to_plot integer, the number of variables to plot in the pairs 
@@ -909,32 +927,19 @@ plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
 #' plotExplanatoryVariables(example_sceset, variables=vars)
 #' 
 plotExplanatoryVariables <- function(object, method = "density", 
-                                     use_as_exprs = "exprs", nvars_to_plot = 10,
+                                     exprs_values = "exprs", nvars_to_plot = 10,
                                      min_marginal_r2 = 0, variables = NULL, 
                                      return_object = FALSE, theme_size = 10, 
                                      ...) {
     ## Check method argument
     method <- match.arg(method, c("density", "pairs"))
     ## Checking arguments for expression values
-    use_as_exprs <- match.arg(use_as_exprs, 
-                              choices = c("exprs", "norm_exprs", "counts", 
-                                          "norm_counts", "tpm", "norm_tpm", 
-                                          "fpkm", "norm_fpkm", "cpm", "norm_cpm"))
-    exprs_mat <- switch(use_as_exprs,
-                        exprs = exprs(object),
-                        norm_exprs = norm_exprs(object),
-                        tpm = tpm(object),
-                        norm_tpm = norm_tpm(object),
-                        cpm = cpm(object),
-                        norm_cpm = norm_cpm(object),
-                        fpkm = fpkm(object),
-                        norm_fpkm = norm_fpkm(object),
-                        norm_counts = norm_counts(object))
-    if ( is.null(exprs_mat) ) {
-        message(paste0("The object does not contain ", use_as_exprs, " expression values. Using exprs(object) values instead."))
-        exprs_mat <- exprs(object)
-        use_as_exprs <- "exprs"
-    }
+    exprs_values <- match.arg(
+        exprs_values, 
+        choices = c("exprs", "norm_exprs", "stand_exprs", "norm_exprs", 
+                    "counts", "norm_counts", "tpm", "norm_tpm", "fpkm", 
+                    "norm_fpkm", "cpm", "norm_cpm"))
+    exprs_mat <- get_exprs(object, exprs_values)
     
     ## Check that variables are defined
     if ( is.null(variables) ) {
@@ -1045,7 +1050,7 @@ This variable will not be plotted."))
             ylab("") +
             coord_cartesian(xlim = c(10 ^ (-3), 100)) +
             ggthemes::scale_color_tableau(name = "", palette = "tableau20")            
-        if ( library(cowplot, logical.return = TRUE) )
+        if ( requireNamespace("cowplot", quietly = TRUE) )
             plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
         else
             plot_out <- plot_out + theme_bw(theme_size)
@@ -1077,7 +1082,7 @@ This variable will not be plotted."))
 # rsq[rsq$Rsq_batch > 0.99,]
 # 
 # plotExpression(sce_simmons_filt_strict, rownames(rsq)[rsq$Rsq_batch > 0.99], x = "batch",
-#                ncol = 6, colour_by = "tissue_type", use_as_exprs = "norm_exprs")
+#                ncol = 6, colour_by = "tissue_type", exprs_values = "norm_exprs")
 # 
 # design <- model.matrix(~sce_simmons_filt_strict$batch)
 # lm.first <- lm(norm_exprs(sce_simmons_filt_strict)["ERCC-00002",] ~ -1 + design)

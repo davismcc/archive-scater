@@ -11,12 +11,13 @@
 \usage{
 plotExpression(object, ...)
 
-plotExpressionSCESet(object, features, x, use_as_exprs = "exprs",
+plotExpressionSCESet(object, features, x, exprs_values = "exprs",
   colour_by = NULL, shape_by = NULL, size_by = NULL, ncol = 2,
-  xlab = NULL, show_median = TRUE, show_violin = TRUE, theme_size = 10)
+  xlab = NULL, show_median = FALSE, show_violin = TRUE, theme_size = 10,
+  log2_values = FALSE)
 
 plotExpressionDefault(object, aesth, ncol = 2, xlab = NULL, ylab = NULL,
-  show_median = TRUE, show_violin = TRUE)
+  show_median = FALSE, show_violin = TRUE)
 
 \S4method{plotExpression}{SCESet}(object, ...)
 
@@ -42,10 +43,17 @@ their expression values plotted}
 \item{x}{character string providing a column name of \code{pData(object)} to 
 plot on the x-axis in the expression plot(s)}
 
-\item{use_as_exprs}{character string indicating which expression values to plot:
-either "exprs" for the expression value defined in the \code{exprs} slot or
-"counts" to plot log2(counts-per-million + 1) using counts from the 
-\code{counts} slot of \code{object}}
+\item{exprs_values}{character string indicating which values should be used
+as the expression values for this plot. Valid arguments are \code{"tpm"} 
+(default; transcripts per million), \code{"norm_tpm"} (normalised TPM 
+values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM 
+values), \code{"counts"} (counts for each feature), \code{"norm_counts"}, 
+\code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised 
+counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot 
+of the \code{SCESet} object; default), \code{"norm_exprs"} (normalised 
+expression values) or \code{"stand_exprs"} (standardised expression values)
+or any other slots that have been added to the \code{"assayData"} slot by 
+the user.}
 
 \item{colour_by}{optional character string supplying name of a column of 
 \code{pData(object)} which will be used as a variable by which to colour 
@@ -72,6 +80,9 @@ for each group on the plot}
 \item{theme_size}{numeric scalar giving default font size for plotting theme 
 (default is 10)}
 
+\item{log2_values}{should the expression values be transformed to the 
+log2-scale for plotting (with an offset of 1 to avoid logging zeroes)?}
+
 \item{aesth}{an \code{aes} object to use in the call to \code{\link{ggplot}}.}
 
 \item{ylab}{character string defining a label for the y-axis (y-axes) of the 
@@ -93,9 +104,9 @@ data("sc_example_cell_info")
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 example_sceset <- calculateQCMetrics(example_sceset)
-plotExpression(example_sceset, 1:6, x="Mutation_Status", use_as_exprs="exprs", 
+plotExpression(example_sceset, 1:6, x="Mutation_Status", exprs_values="exprs", 
 colour_by="Cell_Cycle", show_violin=TRUE, show_median=TRUE)
-plotExpression(example_sceset, 1:6, x="Mutation_Status", use_as_exprs="counts", 
+plotExpression(example_sceset, 1:6, x="Mutation_Status", exprs_values="counts", 
 colour_by="Cell_Cycle", show_violin=TRUE, show_median=TRUE)
 
 }

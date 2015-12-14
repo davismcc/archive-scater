@@ -7,15 +7,15 @@
 \alias{plotPCASCESet}
 \title{Plot PCA for an SCESet object}
 \usage{
-plotPCASCESet(object, ntop = 500, ncomponents = 2, colour_by = NULL,
-  shape_by = NULL, size_by = NULL, feature_set = NULL,
+plotPCASCESet(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
+  colour_by = NULL, shape_by = NULL, size_by = NULL, feature_set = NULL,
   return_SCESet = FALSE, scale_features = TRUE, draw_plot = TRUE,
   theme_size = 10)
 
 \S4method{plotPCA}{SCESet}(object, ntop = 500, ncomponents = 2,
-  colour_by = NULL, shape_by = NULL, size_by = NULL, feature_set = NULL,
-  return_SCESet = FALSE, scale_features = TRUE, draw_plot = TRUE,
-  theme_size = 10)
+  exprs_values = "exprs", colour_by = NULL, shape_by = NULL,
+  size_by = NULL, feature_set = NULL, return_SCESet = FALSE,
+  scale_features = TRUE, draw_plot = TRUE, theme_size = 10)
 }
 \arguments{
 \item{object}{an \code{SCESet} object}
@@ -29,6 +29,16 @@ components to plot, starting from the first principal component. Default is
 2. If \code{ncomponents} is 2, then a scatterplot of PC2 vs PC1 is produced.
 If \code{ncomponents} is greater than 2, a pairs plots for the top components
 is produced.}
+
+\item{exprs_values}{character string indicating which values should be used
+as the expression values for this plot. Valid arguments are \code{"tpm"} 
+(default; transcripts per million), \code{"norm_tpm"} (normalised TPM 
+values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM 
+values), \code{"counts"} (counts for each feature), \code{"norm_counts"}, 
+\code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised 
+counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot 
+of the \code{SCESet} object; default), \code{"norm_exprs"} (normalised 
+expression values) or \code{"stand_exprs"} (standardised expression values).}
 
 \item{colour_by}{character string defining the column of \code{pData(object)} to
 be used as a factor by which to colour the points in the plot.}

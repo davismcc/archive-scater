@@ -14,13 +14,13 @@ newSCESet(exprsData = NULL, countData = NULL, tpmData = NULL,
 
 \item{countData}{data matrix containing raw count expression values}
 
-\item{tpmData}{matrix of class \code{"numeric"} containing 
+\item{tpmData}{matrix of class \code{"numeric"} containing
 transcripts-per-million (TPM) expression values}
 
-\item{fpkmData}{matrix of class \code{"numeric"} containing fragments per 
+\item{fpkmData}{matrix of class \code{"numeric"} containing fragments per
 kilobase of exon per million reads mapped (FPKM) expression values}
 
-\item{cpmData}{matrix of class \code{"numeric"} containing counts per 
+\item{cpmData}{matrix of class \code{"numeric"} containing counts per
 million (CPM) expression values (optional)}
 
 \item{phenoData}{data frame containing attributes of individual cells}
@@ -34,7 +34,7 @@ about the experiment and dataset.}
 or not each observation is above the \code{lowerDetectionLimit}.}
 
 \item{lowerDetectionLimit}{the minimum expression level that constitutes true
-expression (defaults to zero and uses count data to determine if an 
+expression (defaults to zero and uses count data to determine if an
 observation is expressed or not)}
 
 \item{logExprsOffset}{numeric scalar, providing the offset used when doing
@@ -44,47 +44,47 @@ Default offset value is \code{1}.}
 \item{logged}{logical, if a value is supplied for the exprsData argument, are
 the expression values already on the log2 scale, or not?}
 
-\item{useForExprs}{character string, either 'exprs' (default),'tpm','counts' or 
-'fpkm' indicating which expression representation both internal methods and 
+\item{useForExprs}{character string, either 'exprs' (default),'tpm','counts' or
+'fpkm' indicating which expression representation both internal methods and
 external packages should use when performing analyses.}
 }
 \value{
 a new SCESet object
 }
 \description{
-Scater requires that all data be housed in SCESet objects. SCESet extends 
-Bioconductor's ExpressionSet class, and the same basic interface is 
-supported. newSCESet() expects a matrix of expression values as its first 
-argument, with rows as features (usually genes) and columns as cells. 
-Per-feature and per-cell metadata can be supplied with the featureData and 
-phenoData arguments, respectively. Use of these optional arguments is 
-strongly encouraged. The SCESet also includes a slot 'counts' to store an 
+Scater requires that all data be housed in SCESet objects. SCESet extends
+Bioconductor's ExpressionSet class, and the same basic interface is
+supported. newSCESet() expects a matrix of expression values as its first
+argument, with rows as features (usually genes) and columns as cells.
+Per-feature and per-cell metadata can be supplied with the featureData and
+phenoData arguments, respectively. Use of these optional arguments is
+strongly encouraged. The SCESet also includes a slot 'counts' to store an
 object containing raw count data.
 }
 \details{
-SCESet objects store a matrix of expression values. These values are 
-typically transcripts-per-million (tpm), counts-per-million (cpm), fragments 
-per kilobase per million mapped (FPKM) or some other output from a program 
-that calculates expression values from RNA-Seq reads. We recommend that 
-expression values on the log2 scale are used for the 'exprs' slot in the 
-SCESet. For example, you may wish to store raw tpm values in the 'tpm' slot 
-and \code{log2(tpm + 1)} values in the 'exprs' slot. However, expression 
+SCESet objects store a matrix of expression values. These values are
+typically transcripts-per-million (tpm), counts-per-million (cpm), fragments
+per kilobase per million mapped (FPKM) or some other output from a program
+that calculates expression values from RNA-Seq reads. We recommend that
+expression values on the log2 scale are used for the 'exprs' slot in the
+SCESet. For example, you may wish to store raw tpm values in the 'tpm' slot
+and \code{log2(tpm + 1)} values in the 'exprs' slot. However, expression
 values could also be values from a single cell qPCR run or some other type of
  assay. The newSCESet function can also accept raw count values. In this case
  see \code{\link{calculateTPM}} and \code{\link{calculateFPKM}} for computing
- TPM and FPKM expression values, respectively, from counts. The function 
- \code{\link[edgeR]{cpm}} from the package edgeR to can be used to compute 
+ TPM and FPKM expression values, respectively, from counts. The function
+ \code{\link[edgeR]{cpm}} from the package edgeR to can be used to compute
  log2(counts-per-million), if desired.
- 
+
  An \code{SCESet} object has to have the \code{'exprs'} slot defined, so if
  the \code{exprsData} argument is \code{NULL}, then this function will define
- \code{'exprs'} with the following order of precedence: log2(TPM + 1), if 
- \code{tpmData} is defined; log2(FPKM + 1) if \code{fpkmData} is defined; 
+ \code{'exprs'} with the following order of precedence: log2(TPM + 1), if
+ \code{tpmData} is defined; log2(FPKM + 1) if \code{fpkmData} is defined;
  otherwise log2(counts-per-million + 1) are used. Note that for most analyses
  counts-per-million are not recommended, and if possible transcripts-per-million
  should be used.
- 
- In many downstream functions you will likely find it most convenient if the 
+
+ In many downstream functions you will likely find it most convenient if the
  \code{'exprs'} values are on the log2-scale, so this is recommended.
 }
 \examples{

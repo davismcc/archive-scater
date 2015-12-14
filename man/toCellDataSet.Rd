@@ -4,12 +4,12 @@
 \alias{toCellDataSet}
 \title{Convert an \code{SCESet} to a \code{CellDataSet}}
 \usage{
-toCellDataSet(sce, use_as_exprs = "exprs")
+toCellDataSet(sce, exprs_values = "exprs")
 }
 \arguments{
 \item{sce}{An \code{SCESet} object}
 
-\item{use_as_exprs}{What should \code{exprs(cds)} be mapped from in the \code{SCESet}? Should be 
+\item{exprs_values}{What should \code{exprs(cds)} be mapped from in the \code{SCESet}? Should be
 one of "exprs", "tpm", "fpkm", "counts"}
 }
 \value{

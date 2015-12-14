@@ -11,7 +11,7 @@
 \S4method{plot}{SCESet,ANY}(x, y, ...)
 
 plotSCESet(x, block1 = NULL, block2 = NULL, colour_by = NULL,
-  nfeatures = 500, use_as_exprs = "tpm", ncol = 3, linewidth = 1.5,
+  nfeatures = 500, exprs_values = "tpm", ncol = 3, linewidth = 1.5,
   theme_size = 10)
 }
 \arguments{
@@ -38,7 +38,7 @@ be used as a factor by which to colour the points in the plot.}
 \item{nfeatures}{numeric scalar indicating the number of features to include 
 in the plot.}
 
-\item{use_as_exprs}{character string indicating which values should be used
+\item{exprs_values}{character string indicating which values should be used
 as the expression values for this plot. Valid arguments are \code{"tpm"} 
 (default; transcripts per million), \code{"fpkm"} (FPKM values), 
 \code{"counts"} (counts for each feature) or \code{"exprs"} (whatever is in 
@@ -78,11 +78,11 @@ data("sc_example_cell_info")
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 
-plot(example_sceset, use_as_exprs = "exprs")
-plot(example_sceset, use_as_exprs = "exprs", colour_by = "Cell_Cycle")
-plot(example_sceset, use_as_exprs = "exprs", block1 = "Treatment", 
+plot(example_sceset, exprs_values = "exprs")
+plot(example_sceset, exprs_values = "exprs", colour_by = "Cell_Cycle")
+plot(example_sceset, exprs_values = "exprs", block1 = "Treatment", 
 colour_by = "Cell_Cycle")
-plot(example_sceset, use_as_exprs = "exprs", block1 = "Treatment", 
+plot(example_sceset, exprs_values = "exprs", block1 = "Treatment", 
 block2 = "Mutation_Status", colour_by = "Cell_Cycle")
 # What happens if chosen expression values are not available?
 plot(example_sceset, block1 = "Treatment", colour_by = "Cell_Cycle") 

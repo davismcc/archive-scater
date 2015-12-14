@@ -37,7 +37,7 @@ cellDistSCESet(object)
 \arguments{
 \item{object}{a \code{SCESet} object.}
 
-\item{value}{a matrix of class \code{"numeric"} containing cell pairwise 
+\item{value}{a matrix of class \code{"numeric"} containing cell pairwise
 distances}
 }
 \value{
@@ -45,7 +45,7 @@ An SCESet object containing new cell pairwise distances matrix.
 }
 \description{
 SCESet objects can contain a matrix of pairwise distances between cells. These
- functions conveniently access and replace the cell pairwise distances with the value 
+ functions conveniently access and replace the cell pairwise distances with the value
  supplied, which must be a matrix of the correct size. The function \code{cellDist}
  is simply shorthand for \code{cellPairwiseDistances}.
 }

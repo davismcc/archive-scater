@@ -41,15 +41,15 @@ redDim.SCESet(object)
 coordinates for cells.}
 }
 \value{
-If accessing the \code{reducedDimension} slot, then the matrix of 
+If accessing the \code{reducedDimension} slot, then the matrix of
 reduced dimension coordinates. If replacing the \code{reducedDimension} slot
 then the new matrix is added to the \code{SCESet} object.
 }
 \description{
-SCESet objects can contain a matrix of reduced dimension coordinates for 
-cells. These functions conveniently access and replace the reduced dimension 
-coordinates with the value supplied, which must be a matrix of the correct 
-size. The function \code{redDim} is simply shorthand for 
+SCESet objects can contain a matrix of reduced dimension coordinates for
+cells. These functions conveniently access and replace the reduced dimension
+coordinates with the value supplied, which must be a matrix of the correct
+size. The function \code{redDim} is simply shorthand for
 \code{reducedDimension}.
 }
 \examples{
