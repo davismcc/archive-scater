@@ -560,6 +560,11 @@ setReplaceMethod("pData", signature(x = "SCESet", value = "data.frame"),
 #' data("sc_example_cell_info")
 #' example_sceset <- newSCESet(countData = sc_example_counts)
 #' get_exprs(example_sceset, "counts")
+#' 
+#' ## new slots can be defined and accessed
+#' set_exprs(example_sceset, "scaled_counts") <- t(t(counts(example_sceset)) / 
+#' colSums(counts(example_sceset)))
+#' get_exprs(example_sceset, "scaled_counts")[1:6, 1:6]
 #'
 get_exprs.SCESet <- function(object, exprs_values = "exprs") {
     exprs_mat <- object@assayData[[exprs_values]]
@@ -574,6 +579,45 @@ setMethod("get_exprs", signature(object = "SCESet"),
           function(object, exprs_values = "exprs") {
               get_exprs.SCESet(object, exprs_values)
           })
+
+
+#' Assignment method for the new elements of an SCESet object.
+#'
+#' The assayData slot of an SCESet object holds the expression data matrices. 
+#' This functions makes it convenient to add new transformations of the 
+#' expression data to the assayData slot.
+#'
+#' @usage
+#' \S4method{set_exprs}{SCESet,ANY,matrix}(object,name)<-value
+#'
+#' @docType methods
+#' @name set_exprs
+#' @rdname set_exprs
+#' @aliases set_exprs set_exprs<-,SCESet,ANY,matrix-method
+#'
+#' @param object a \code{SCESet} object.
+#' @param name character string giving the name of the slot to which the data
+#' matrix is to be assigned (can already exist or not).
+#' @param value a numeric or integer matrix matching the dimensions of the other
+#' elements of the \code{assayData} slot of the \code{SCESet} object.
+#' @author Davis McCarthy
+#' @export
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' example_sceset <- newSCESet(countData = sc_example_counts)
+#' set_exprs(example_sceset, "scaled_counts") <- t(t(counts(example_sceset)) / 
+#' colSums(counts(example_sceset)))
+#' get_exprs(example_sceset, "scaled_counts")[1:6, 1:6]
+#' @name set_exprs
+#' @rdname set_exprs
+#' @exportMethod "set_exprs<-"
+setReplaceMethod("set_exprs", signature(object = "SCESet", value = "matrix"),
+                 function(object, name, value) {
+                     object@assayData[[name]] <- value
+                     validObject(object)
+                     object
+                 })
 
 
 ################################################################################

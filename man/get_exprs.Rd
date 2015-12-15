@@ -39,6 +39,11 @@ data("sc_example_cell_info")
 example_sceset <- newSCESet(countData = sc_example_counts)
 get_exprs(example_sceset, "counts")
 
+## new slots can be defined and accessed
+set_exprs(example_sceset, "scaled_counts") <- t(t(counts(example_sceset)) / 
+colSums(counts(example_sceset)))
+get_exprs(example_sceset, "scaled_counts")[1:6, 1:6]
+
 }
 \author{
 Davis McCarthy

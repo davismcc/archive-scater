@@ -31,6 +31,13 @@ setGeneric("fData<-", signature = signature("x", "value"),
 setGeneric("get_exprs", function(object, exprs_values) {
     standardGeneric("get_exprs")})
 
+#' @name set_exprs<-
+#' @export
+#' @docType methods
+#' @rdname set_exprs
+setGeneric("set_exprs<-", function(object, name, value) {
+    standardGeneric("set_exprs<-")})
+
 #' @name is_exprs
 #' @export
 #' @docType methods
@@ -41,7 +48,8 @@ setGeneric("is_exprs", function(object) {standardGeneric("is_exprs")})
 #' @export
 #' @docType methods
 #' @rdname is_exprs
-setGeneric("is_exprs<-", function(object, value) {standardGeneric("is_exprs<-")})
+setGeneric("is_exprs<-", function(object, value) {
+    standardGeneric("is_exprs<-")})
 
 
 #' @name norm_exprs
