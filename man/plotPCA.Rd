@@ -9,13 +9,14 @@
 \usage{
 plotPCASCESet(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
   colour_by = NULL, shape_by = NULL, size_by = NULL, feature_set = NULL,
-  return_SCESet = FALSE, scale_features = TRUE, draw_plot = TRUE,
-  theme_size = 10)
+  return_SCESet = FALSE, scale_features = FALSE, draw_plot = TRUE,
+  pca_data_input = "exprs", detect_outliers = FALSE, theme_size = 10)
 
 \S4method{plotPCA}{SCESet}(object, ntop = 500, ncomponents = 2,
   exprs_values = "exprs", colour_by = NULL, shape_by = NULL,
   size_by = NULL, feature_set = NULL, return_SCESet = FALSE,
-  scale_features = TRUE, draw_plot = TRUE, theme_size = 10)
+  scale_features = FALSE, draw_plot = TRUE, pca_data_input = "exprs",
+  detect_outliers = FALSE, theme_size = 10)
 }
 \arguments{
 \item{object}{an \code{SCESet} object}
@@ -61,11 +62,22 @@ object with principal component values for cells in the
 \code{ggplot} object is returned.}
 
 \item{scale_features}{logical, should the expression values be standardised
-so that each feature has unit variance? Default is \code{TRUE}.}
+so that each feature has unit variance? Default is \code{FALSE}.}
 
 \item{draw_plot}{logical, should the plot be drawn on the current graphics 
 device? Only used if \code{return_SCESet} is \code{TRUE}, otherwise the plot 
 is always produced.}
+
+\item{pca_data_input}{character argument defining which data should be used
+as input for the PCA. Possible options are \code{"exprs"} (default), which 
+uses expression data to produce a PCA at the cell level; \code{"pdata"} which
+uses numeric variables from \code{pData(object)} to do PCA at the cell level;
+and \code{"fdata"} which uses numeric variables from \code{fData(object)} to
+do PCA at the feature level.}
+
+\item{detect_outliers}{logical, should outliers be detected in the PC plot?
+Only an option when \code{pca_data_input} argument is \code{"pdata"}. Default
+is \code{FALSE}.}
 
 \item{theme_size}{numeric scalar giving default font size for plotting theme 
 (default is 10).}

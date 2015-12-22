@@ -311,3 +311,11 @@ setGeneric("plotTSNE", function(object, ...) {
     standardGeneric("plotTSNE")
 })
 
+#' @name plotDiffusionMap
+#' @export
+#' @docType methods
+#' @rdname plotDiffusionMap
+setGeneric("plotDiffusionMap", function(object, ...) {
+    standardGeneric("plotDiffusionMap")
+})
+

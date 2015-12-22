@@ -97,6 +97,8 @@ of expression across cells.
 * `plotQC`: various methods are available for producing QC diagnostic plots.
 * `plotPCA`: produce a principal components plot for the cells.
 * `plotTSNE`: produce a t-distributed stochastic neighbour embedding (reduced dimension) plot for the cells.
+* `plotDiffusionMap`: produce a diffusion map (reduced dimension) plot for the
+cells.
 * `plotReducedDim`: plot a reduced-dimension representation of the cells.
 * `plotExpression`: plot expression levels for a defined set of features.
 * `plotPhenoData`: plot cell metadata and QC metrics.
@@ -299,19 +301,15 @@ plotExpression(example_sceset, rownames(example_sceset)[1:6],
                x = "Mutation_Status", exprs_values = "exprs")
 ```
 
-```{r plot-expression-2}
-plotExpression(example_sceset, rownames(example_sceset)[1:6],
-               x = "Mutation_Status", exprs_values = "counts", log = TRUE)
-```
-
 This function uses `ggplot2`, making it easy to change the theme to whatever you
 prefer. We can also show the median expression level per group on the plot and
 show a violin plot to summarise the distribution of expression values:
 
 ```{r plot-expression-theme-bw}
 plotExpression(example_sceset, rownames(example_sceset)[7:12],
-               x = "Mutation_Status", exprs_values = "exprs", colour = "Cell_Cycle",
-               show_median = FALSE, show_violin = TRUE,  xlab = "Mutation Status")
+               x = "Mutation_Status", exprs_values = "counts", colour = "Cell_Cycle",
+               show_median = FALSE, show_violin = TRUE,  xlab = "Mutation Status",
+               log = TRUE)
 ```
 
 
@@ -458,7 +456,9 @@ plot twice.
 The `multiplot` function allows a very simple way to plot multiple `ggplot2`
 plots on the same page. For more sophisticated possibilities for arranging
 multiple `ggplot2` plots, check out the excellent [`cowplot`](http://cran.r-project.org/web/packages/cowplot/vignettes/introduction.html)
-package, available on CRAN.
+package, available on CRAN. If you have `cowplot` installed (highly 
+recommended), then `scater` will automatically use it to create particularly
+attractive plots.
 
 It can also be particularly useful to inspect the most-expressed features in
 just the cell controls (for example blanks or bulk samples). Subsetting
@@ -493,7 +493,10 @@ will be plotted, if not then all features will be plotted.
 plotQC(example_sceset, type = "exprs-freq-vs-mean")
 ```
 
-```{r plot-qc-exprs-mean-vs-freq-defined-feature-set}
+We can also plot just a subset of features with code like that below (plot not
+shown):
+
+```{r plot-qc-exprs-mean-vs-freq-defined-feature-set, results = 'hide', fig.show = FALSE}
 feature_set_1 <- fData(example_sceset)$is_feature_control_controls1
 plotQC(example_sceset, type = "exprs-freq-vs-mean", feature_set = feature_set_1)
 ```
@@ -514,7 +517,6 @@ The subsetting of rows of `SCESet` objects makes it easy to drop unwanted
 features.
 
 
-
 ### QC and filtering of cells
 
 See `plotPhenoData` and other QC plots below. The subsetting of columns (which
@@ -530,7 +532,7 @@ plotPhenoData(example_sceset, aes(x = total_counts, y = total_features,
                                   colour = Mutation_Status))
 ```
 
-```{r plot-pdata-cont-col}
+```{r plot-pdata-cont-col, fig.show = FALSE}
 plotPhenoData(example_sceset, aes(x = Mutation_Status, y = total_features,
                                   colour = log10_total_counts))
 ```
@@ -547,13 +549,13 @@ plotPhenoData(example_sceset, aes(x = total_counts, y = total_features,
                                   colour = Gene_1000))
 ```
 
-```{r plot-pdatacol-gene-exprs-2}
+```{r plot-pdatacol-gene-exprs-2, fig.show = FALSE}
 plotPhenoData(example_sceset, aes(x = pct_exprs_feature_controls, 
                                   y = total_features, colour = Gene_0500))
 ```
 
 
-```{r plot-pdatacol-gene-exprs-3}
+```{r plot-pdatacol-gene-exprs-3, fig.show = FALSE}
 plotPhenoData(example_sceset, aes(x = pct_exprs_feature_controls, 
                                   y = pct_exprs_top_50_features, 
                                   colour = Gene_0001))
@@ -561,16 +563,8 @@ plotPhenoData(example_sceset, aes(x = pct_exprs_feature_controls,
 
 The output of these functions is a `ggplot` object, which can be added to,
 amended and altered. For example, if we don't like the legend position in the
-total_features vs total_counts plot above, we can change it:
-
-
-```{r plot-pdata-move-legend}
-plotPhenoData(example_sceset, aes(x = total_counts, y = total_features,
-                                  colour = Mutation_Status)) +
-    theme(legend.position = "top")
-```
-
-We could also add a trend line for each group:
+`total_features` vs `total_counts` plot above, we can change it, and we could 
+also add a trend line for each group:
 
 ```{r plot-pdata-move-legend-add-trend}
 plotPhenoData(example_sceset, aes(x = log10_exprs_feature_controls, 
@@ -629,10 +623,10 @@ By default the PCA plot uses the expression values in the `exprs` slot of the
 plotPCA(example_sceset, exprs_values = "cpm")
 ```
 
-In the plot below, only the features defined as "feature controls" are used for the
-PCA.
+A subset of features can be used to produce a PCA plot. In the code below only 
+the features defined as "feature controls" are used for the PCA (plot not shown).
 
-```{r plot-pca-feature-controls}
+```{r plot-pca-feature-controls, fig.show = FALSE}
 plotPCA(example_sceset, feature_set = fData(example_sceset)$is_feature_control)
 ```
 
@@ -656,11 +650,11 @@ plotPCA(example_sceset, colour_by = "Gene_0001", size_by = "Gene_1000")
 ```
 
 
-```{r plot-pca-4comp-sizeby-exprs, fig.height=5.5}
+```{r plot-pca-4comp-sizeby-exprs, fig.height=5.5, fig.show = FALSE}
 plotPCA(example_sceset, size_by = "Gene_1000")
 ```
 
-```{r plot-pca-4comp-colby-exprs, fig.height=5.5}
+```{r plot-pca-4comp-colby-exprs, fig.height=5.5, fig.show = FALSE}
 plotPCA(example_sceset, colour_by = "Gene_1000")
 ```
 
@@ -672,11 +666,17 @@ plots.
 plotTSNE(example_sceset, colour_by = "Gene_0001", size_by = "Gene_1000")
 ```
 
+And for diffusion map plots.
+
+```{r plot-difmap-1comp-colby-sizeby-exprs, fig.height=5.5}
+plotDiffusionMap(example_sceset, colour_by = "Gene_0001", size_by = "Gene_1000")
+```
+
 The `SCESet` matrix has a `reducedDimension` slot, where coordinates for a
 reduced dimension representation of the cells can be stored. If we so wish, the
 top principal components can be added to the `reducedDimension` slot:
 
-```{r plot-pca-4comp-colby-shapeby-save-pcs}
+```{r plot-pca-4comp-colby-shapeby-save-pcs, fig.show = FALSE}
 example_sceset <- plotPCA(example_sceset, ncomponents = 4,
                           colour_by = "Treatment", shape_by = "Mutation_Status",
                           return_SCESet = TRUE, theme_size = 12)
@@ -699,7 +699,7 @@ plotReducedDim(example_sceset, ncomponents = 4, colour_by = "Treatment",
 
 As for the PCA plots we can also colour and size points by feature expression.
 
-```{r plot-reduceddim-4comp-colby-sizeby-exprs}
+```{r plot-reduceddim-4comp-colby-sizeby-exprs, fig.show = FALSE}
 plotReducedDim(example_sceset, ncomponents = 4, colour_by = "Gene_1000",
                size_by = "Gene_0500")
 ```
@@ -710,22 +710,23 @@ PCA plot above.)
 Based on PCA or dimensionality reduction plots we may identify outlier cells
 and, if we wish, filter them out of the analysis.
 
-We can also use t-SNE to visualise cells in a reduced-dimension space:
+We can also use t-SNE and diffusion maps to visualise cells in a
+reduced-dimension space:
 
-```{r plot-tsne-colby-shapeby, fig.height=5.5}
+```{r plot-tsne-colby-shapeby, fig.height=5.5, fig.show = FALSE}
 plotTSNE(example_sceset, colour_by = "Treatment", shape_by = "Mutation_Status")
 ```
 
-```{r plot-tsne-colby-sizeby-exprs, fig.height=5.5}
+```{r plot-tsne-colby-sizeby-exprs, fig.height=5.5, fig.show = FALSE}
 plotTSNE(example_sceset, colour_by = "Gene_0001", size_by = "Gene_1000")
 ```
 
-```{r plot-tsne-4comp-sizeby-exprs, fig.height=5.5}
-plotTSNE(example_sceset, size_by = "Gene_1000")
+```{r plot-tsne-4comp-sizeby-exprs, fig.height=5.5, fig.show = FALSE}
+plotDiffusionMap(example_sceset, size_by = "Gene_1000")
 ```
 
-```{r plot-tsne-4comp-colby-exprs, fig.height=5.5}
-plotTSNE(example_sceset, colour_by = "Gene_1000")
+```{r plot-tsne-4comp-colby-exprs, fig.height=5.5, fig.show = FALSE}
+plotDiffusionMap(example_sceset, colour_by = "Gene_1000")
 ```
 
 
@@ -789,19 +790,16 @@ p1 <- plotQC(example_sceset, type = "find-pcs", variable = "total_features",
 p2 <- plotQC(example_sceset, type = "find-pcs", variable = "Cell_Cycle",
        plot_type = "pcs-vs-vars")
 multiplot(p1, p2, cols = 2)
-plotQC(example_sceset, type = "find-pcs", variable = "Treatment",
-       plot_type = "pcs-vs-vars")
 ```
 
 An alternative is to produce a pairs plot of the top five PCs.
 
-```{r plot-qc-find-pcs-pairs}
-plotQC(example_sceset, type = "find-pcs", variable = "total_features",
+```{r plot-qc-find-pcs-pairs, fig.width=10, fig.height=7}
+p1 <- plotQC(example_sceset, type = "find-pcs", variable = "total_features",
        plot_type = "pairs-pcs")
-plotQC(example_sceset, type = "find-pcs", variable = "Cell_Cycle",
+p2 <- plotQC(example_sceset, type = "find-pcs", variable = "Cell_Cycle",
        plot_type = "pairs-pcs")
-plotQC(example_sceset, type = "find-pcs", variable = "Treatment",
-       plot_type = "pairs-pcs", theme_size = 20)
+multiplot(p1, p2, cols = 2)
 ```
 
 
@@ -830,56 +828,31 @@ out, so that normalised data has these effects removed.
 In many single-cell expression analyses we may want to generate and store
 pairwise distance matrices for both cells and features.
 
-We can first look at a multidimensional scaling (MDS) plot using Euclidean distance
-between cells.
+We can first look at a multidimensional scaling (MDS) plot using Euclidean 
+distance between cells.
 
 ```{r cell-pairwise-distance-matrices-euclidean, eval=TRUE}
 cell_dist <- as.matrix(dist(t(exprs(example_sceset))))
 cellPairwiseDistances(example_sceset) <- cell_dist
-
-if(require(MASS)) {
-    fit <- MASS::isoMDS(cellDist(example_sceset), k=2) # k is the number of dim
-    # plot solution
-    Col <- c("firebrick", "dodgerblue")[factor(pData(example_sceset)$Treatment)]
-    plot(fit$points[,1:2], xlab="Coordinate 1", ylab="Coordinate 2", main="Nonmetric MDS",
-         type="n")
-    text(fit$points[,1:2], labels=colnames(example_sceset), col=Col)
-}
+limma::plotMDS(cellDist(example_sceset))
 ```
 
 Second, we could also look at an MDS plot using the count data and the Canberra
-distance metric.
+distance metric (plot not shown).
 
-```{r cell-pairwise-distance-matrices-canberra, eval=TRUE}
-cell_dist <- as.matrix(dist(t(counts(example_sceset)), method="canberra"))
+```{r cell-pairwise-distance-matrices-canberra, eval=TRUE, fig.show = FALSE}
+cell_dist <- as.matrix(dist(t(counts(example_sceset)), method = "canberra"))
 cellPairwiseDistances(example_sceset) <- cell_dist
-
-if(require(MASS)) {
-    fit <- MASS::isoMDS(cellDist(example_sceset), k=2) # k is the number of dim
-    # plot solution
-    Col <- c("firebrick", "dodgerblue")[factor(pData(example_sceset)$Treatment)]
-    plot(fit$points[,1:2], xlab="Coordinate 1", ylab="Coordinate 2", main="Nonmetric MDS",
-         type="n")
-    text(fit$points[,1:2], labels=colnames(example_sceset), col=Col)
-}
+limma::plotMDS(cellDist(example_sceset))
 ```
 
-We can also look at a (nonmetric) MDS plot for the features, here using Euclidean
-distance.
+We could also look at an MDS plot for the features, here using Euclidean
+distance (plot not shown).
 
-```{r feature-pairwise-distance-matrices, eval=TRUE}
+```{r feature-pairwise-distance-matrices, eval=FALSE}
 feature_dist <- as.matrix(dist(exprs(example_sceset)))
 featurePairwiseDistances(example_sceset) <- feature_dist
-
-if(require(MASS)) {
-    fit <- MASS::isoMDS(featDist(example_sceset), k=2) # k is the number of dim
-    # plot solution
-    x <- fit$points[,1]
-    y <- fit$points[,2]
-    plot(x, y, xlab="Coordinate 1", ylab="Coordinate 2", main="Nonmetric MDS",
-         type="n")
-    text(x, y, labels = rownames(example_sceset), cex=.7)
-}
+limma::plotMDS(featDist(example_sceset))
 ```
 
 

@@ -4,19 +4,27 @@
 \alias{plotExprsFreqVsMean}
 \title{Plot frequency of expression against mean expression level}
 \usage{
-plotExprsFreqVsMean(object, feature_set = NULL, shape = 1, alpha = 0.7,
-  ...)
+plotExprsFreqVsMean(object, feature_set = NULL, feature_controls = NULL,
+  shape = 1, alpha = 0.7, ...)
 }
 \arguments{
 \item{object}{an \code{SCESet} object.}
 
 \item{feature_set}{character, numeric or logical vector indicating a set of
-features to use for the PCA. If character, entries must all be in 
+features to plot. If character, entries must all be in 
 \code{featureNames(object)}. If numeric, values are taken to be indices for 
 features. If logical, vector is used to index features and should have length
 equal to \code{nrow(object)}. If \code{NULL}, then the function checks if 
 feature controls are defined. If so, then only feature controls are plotted,
 if not, then all features are plotted.}
+
+\item{feature_controls}{character, numeric or logical vector indicating a set of
+features to be used as feature controls for computing technical dropout 
+effects. If character, entries must all be in \code{featureNames(object)}. If
+numeric, values are taken to be indices for features. If logical, vector is 
+used to index features and should have length equal to \code{nrow(object)}. 
+If \code{NULL}, then the function checks if feature controls are defined. If 
+so, then these feature controls are used.}
 
 \item{shape}{(optional) numeric scalar to define the plotting shape.}
 
@@ -28,6 +36,16 @@ only be \code{size}, if anythin).}
 }
 \description{
 Plot frequency of expression against mean expression level
+}
+\details{
+This function plots gene expression frequency versus mean 
+expression level, which can be useful to assess the effects of technical 
+dropout in the dataset. We fit a non-linear least squares curve for the 
+relationship between expression frequency and mean expression and use this to
+define the number of genes above high technical dropout and the numbers of 
+genes that are expressed in at least 50% and at least 25% of cells. A subset 
+of genes to be treated as feature controls can be specified, otherwise any 
+feature controls previously defined are used.
 }
 \examples{
 data("sc_example_counts")

@@ -100,16 +100,14 @@ The diagram below provised an overview of the pre-processing and QC workflow pos
 ![Diagram outlining the scater workflow](inst/figures/scater_qc_workflow.png)
 
 
-
-
 ## Highlights
 
 The `scater` package allows you to do some neat things relatively quickly. Some highlights are shown below with example code and screenshots.
 
 1. Automated computation of QC metrics
-1. Transcript quantification from read data with pseudo-alignment
+1. Transcript quantification from read data with pseudo-alignment approaches
 2. Data format standardisation
-3. Rich visualisations for exploratory analysis
+3. Rich visualisations for QC and exploratory analysis
 4. Seamless integration into the Bioconductor universe
 5. Simple normalisation methods
 
@@ -123,41 +121,32 @@ Use the `calculateQCMetrics` function to compute many metrics useful for gene/tr
 
 The `runKallisto` function provides a wrapper to the [`kallisto`](http://pachterlab.github.io/kallisto) software for quantifying transcript abundance from FASTQ files using a pseudo-alignment approach. This new approach is extremely fast. With `readKallisto`, transcript quantities can be read into a data object in `R`.
 
-### Default `plot` for an SCESet object
+### Plotting functions
 
-![Default plot using example data](inst/figures/example_default_SCESet_plot.png)
+Default `plot` for an SCESet object gives cumulative expression for the 
+most-expressed features (genes or transcripts)
 
-### `plotTSNE`
+The `plotTSNE` function produces a t-distributed stochastic neighbour embedding
+plot for the cells.
 
-![t-SNE plot using example data](inst/figures/example_plotTSNE.png)
+The `plotPCA` function produces a principal components analysis plot for the 
+cells.
 
-### `plotPCA`
+The `plotDiffusionMap` function produces a diffusion map plot for the cells.
 
-![PCA plot with four components](inst/figures/example_plotPCA_ncomp4.png)
+The `plotExpression` function plots the expression values for a selection of 
+features.
 
-### `plotExpression`
+The `plotQC` function produces a variety of QC plots useful for diagnostics and
+feature and cell filtering. It can be used to plot the most highly-expressed 
+genes (or features) in the data set or create density plots to assess the 
+relative importance of explanatory variables, as well as many other 
+visualisations useful for QC.
 
-Plot the expression values for a selection of features.
-
-![Plot expression values for a set of features](inst/figures/example_plotExpression.png)
-
-### QC plots
-
-### `plotPhenoData`
-
-Plot two phenotype metadata variables (such as QC metrics).
-
-![Plot two phenotype metadata variables](inst/figures/example_plotPhenoData.png)
+The `plotPhenoData` function plots two phenotype metadata variables (such as QC
+metrics).
 
 See also `plotFeatureData` to plot feature (gene) metadata variables, including QC metrics.
-
-#### Plot most highly-expressed genes (or features)
-
-![Plot most-expressed](inst/figures/example_plotQC_most-exprs.png)
-
-#### Density plot to assess the relative importance of explanatory variables
-
-![Density plot showing relative importance of explanatory variables](inst/figures/example_plotQC_expl_vars.png)
 
 Plus many, many more possibilities. Please consult the vignette and documentation for details.
 
@@ -166,7 +155,9 @@ Plus many, many more possibilities. Please consult the vignette and documentatio
 The package leans heavily on previously published work and packages, namely
 [edgeR](http://bioconductor.org/packages/release/bioc/html/edgeR.html) and
 [limma](http://bioconductor.org/packages/release/bioc/html/limma.html). The
-`SCESet` class is inspired by the `CellDataSet` class from [monocle](http://www.bioconductor.org/packages/release/bioc/html/monocle.html).
+`SCESet` class is inspired by the `CellDataSet` class from [monocle](http://www.bioconductor.org/packages/release/bioc/html/monocle.html),
+and `SCESet` objects in `scater` can be easily converted to and from `monocle's`
+`CellDataSet` objects.
 
 
 <!---
@@ -174,9 +165,9 @@ It also uses and extends code for an approximate rank-product test by [Heskes et
 -->
 
 
-The package is currently in an Alpha state, and under heavy development so may
-change without warning. Please do try it, though, and contact me with bug
-reports, feedback, feature requests, questions and suggestions to improve the
-package.
+The package is currently in an Beta state. The major functionality of the 
+package is settled, but it is still under development so may change from time 
+to time. Please do try it and contact me with bug reports, feedback, feature 
+requests, questions and suggestions to improve the package.
 
-Davis McCarthy, September 2015
+Davis McCarthy, December 2015
