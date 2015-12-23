@@ -1,6 +1,90 @@
 ## Suite of plotting functions
 
 ################################################################################
+## define colour palettes
+.get_palette <- function(palette_name) {
+    switch(palette_name,
+           tableau20 = c("#1F77B4", "#AEC7E8", "#FF7F0E", "#FFBB78", "#2CA02C",
+                         "#98DF8A", "#D62728", "#FF9896", "#9467BD", "#C5B0D5",
+                         "#8C564B", "#C49C94", "#E377C2", "#F7B6D2", "#7F7F7F",
+                         "#C7C7C7", "#BCBD22", "#DBDB8D", "#17BECF", "#9EDAE5"),
+           tableau10medium = c("#729ECE", "#FF9E4A", "#67BF5C", "#ED665D", 
+                               "#AD8BC9", "#A8786E", "#ED97CA", "#A2A2A2", 
+                               "#CDCC5D", "#6DCCDA"),
+           colorblind10 = c("#006BA4", "#FF800E", "#ABABAB", "#595959", 
+                            "#5F9ED1", "#C85200", "#898989", "#A2C8EC", 
+                            "#FFBC79", "#CFCFCF"),
+           trafficlight = c("#B10318", "#DBA13A", "#309343", "#D82526", 
+                            "#FFC156", "#69B764", "#F26C64", "#FFDD71", 
+                            "#9FCD99"),
+           purplegray12 = c("#7B66D2", "#A699E8", "#DC5FBD", "#FFC0DA", 
+                            "#5F5A41", "#B4B19B", "#995688", "#D898BA", 
+                            "#AB6AD5", "#D098EE", "#8B7C6E", "#DBD4C5"),
+           bluered12 = c("#2C69B0", "#B5C8E2", "#F02720", "#FFB6B0", "#AC613C",
+                         "#E9C39B", "#6BA3D6", "#B5DFFD", "#AC8763", "#DDC9B4",
+                         "#BD0A36", "#F4737A"),
+           greenorange12 = c("#32A251", "#ACD98D", "#FF7F0F", "#FFB977", 
+                             "#3CB7CC", "#98D9E4", "#B85A0D", "#FFD94A", 
+                             "#39737C", "#86B4A9", "#82853B", "#CCC94D"),
+           cyclic = c("#1F83B4", "#1696AC", "#18A188", "#29A03C", "#54A338",
+                      "#82A93F", "#ADB828", "#D8BD35", "#FFBD4C", "#FFB022",
+                      "#FF9C0E", "#FF810E", "#E75727", "#D23E4E", "#C94D8C",
+                      "#C04AA7", "#B446B3", "#9658B1", "#8061B4", "#6F63BB")
+    )
+}
+
+#' Get nice plotting colour schemes for very general colour variables
+.resolve_plot_colours <- function(plot_out, colour_by, colour_by_name,
+                                  fill = FALSE) {
+    if ( fill ) {
+        if ( is.numeric(colour_by) ) {
+            plot_out <- plot_out + 
+                viridis::scale_fill_viridis(name = colour_by_name)
+        } else {
+            nlevs_colour_by <- nlevels(as.factor(colour_by))
+            if (nlevs_colour_by <= 10) {
+                plot_out <- plot_out + scale_fill_manual(
+                    values = .get_palette("tableau10medium"), 
+                    name = colour_by_name)
+            } else {
+                if (nlevs_colour_by > 10 && nlevs_colour_by <= 20) {
+                    plot_out <- plot_out + scale_fill_manual(
+                        values = .get_palette("tableau20"), 
+                        name = colour_by_name)
+                } else {
+                    plot_out <- plot_out + 
+                        viridis::scale_fill_viridis(
+                            name = colour_by_name, discrete = TRUE)
+                }
+            }
+        }
+    } else {
+        if ( is.numeric(colour_by) ) {
+            plot_out <- plot_out + 
+                viridis::scale_color_viridis(name = colour_by_name)
+        } else {
+            nlevs_colour_by <- nlevels(as.factor(colour_by))
+            if (nlevs_colour_by <= 10) {
+                plot_out <- plot_out + scale_colour_manual(
+                    values = .get_palette("tableau10medium"), 
+                    name = colour_by_name)
+            } else {
+                if (nlevs_colour_by > 10 && nlevs_colour_by <= 20) {
+                    plot_out <- plot_out + scale_colour_manual(
+                        values = .get_palette("tableau20"), 
+                        name = colour_by_name)
+                } else {
+                    plot_out <- plot_out + 
+                        viridis::scale_color_viridis(
+                            name = colour_by_name, discrete = TRUE)
+                }
+            }
+        }
+    }
+    plot_out
+}
+
+################################################################################
 ### Generic plot function for SCESet
 
 #' Plot an overview of expression for each cell
@@ -169,15 +253,11 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
     }
     ## Add extra plot theme and details
     if ( !is.null(seq_real_estate_long$colour_by) ) {
-        if ( is.character(seq_real_estate_long$colour_by) | 
-             is.factor(seq_real_estate_long$colour_by) |
-             is.logical(seq_real_estate_long$colour_by) )
-            plot_out <- plot_out + 
-                ggthemes::scale_colour_tableau(name = colour_by) 
-        else
-            plot_out <- plot_out + 
-                viridis::scale_color_viridis(name = colour_by) 
+       plot_out <- .resolve_plot_colours(plot_out, 
+                                         seq_real_estate_long$colour_by,
+                                         colour_by)
     }
+    
     plot_out <- plot_out + 
         xlab("Number of features") + ylab("Cumulative proportion of library")
     
@@ -241,6 +321,9 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' uses numeric variables from \code{pData(object)} to do PCA at the cell level;
 #' and \code{"fdata"} which uses numeric variables from \code{fData(object)} to
 #' do PCA at the feature level.
+#' @param selected_variables character vector indicating which variables in 
+#' \code{pData(object)} to use for the phenotype-data based PCA. Ignored if 
+#' the argument \code{pca_data_input} is anything other than \code{"pdata"}.
 #' @param detect_outliers logical, should outliers be detected in the PC plot?
 #' Only an option when \code{pca_data_input} argument is \code{"pdata"}. Default
 #' is \code{FALSE}.
@@ -291,7 +374,8 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
                           shape_by = NULL, size_by = NULL, feature_set = NULL, 
                           return_SCESet = FALSE, scale_features = FALSE, 
                           draw_plot = TRUE, pca_data_input = "exprs", 
-                          detect_outliers = FALSE, theme_size = 10) {
+                          selected_variables = NULL, detect_outliers = FALSE,
+                          theme_size = 10) {
     ## Set up indicator for whether to use pData or features for size_by and
     ## colour_by
     colour_by_use_pdata <- TRUE
@@ -352,13 +436,16 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
     if ( pca_data_input == "pdata" ) {
         #use_variable <- sapply(pData(object), is.double)
         ## select pData features to use
-        selected_variables <- c("pct_counts_top_100_features",
-                                "total_features", "pct_dropout", 
-                                "pct_counts_feature_controls",
-                                "n_detected_feature_controls", 
-                                "log10_counts_endogenous_features",
-                                "log10_counts_feature_controls")
+        if ( is.null(selected_variables) ) {
+            selected_variables <- c("pct_counts_top_100_features",
+                                    "total_features", 
+                                    "pct_counts_feature_controls",
+                                    "n_detected_feature_controls", 
+                                    "log10_counts_endogenous_features",
+                                    "log10_counts_feature_controls")
+        }
         use_variable <- varLabels(object) %in% selected_variables
+        message(paste("The following selected_variables were not found in pData(object):", selected_variables[!(selected_variables %in% varLabels(object))]))
         ## scale double variables 
         exprs_to_plot <- scale(pData(object)[, use_variable]) 
     } else if ( pca_data_input == "fdata" ) {
@@ -403,8 +490,9 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
                 df_to_plot, colour_by = as.factor(colour_by_vals))
     }
     if ( !is.null(shape_by) && pca_data_input != "fdata" )
-        df_to_plot <- data.frame(df_to_plot, 
-                                 shape_by = as.factor(pData(object)[[shape_by]]))
+        df_to_plot <- data.frame(
+            df_to_plot, 
+            shape_by = as.factor(pData(object)[[shape_by]]))
     if ( !is.null(size_by) && pca_data_input != "fdata" ) {
         if ( size_by_use_pdata )
             size_by_vals <- pData(object)[[size_by]]
@@ -433,7 +521,10 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
                 cat(paste(sampleNames(object)[outlier], collapse = "\n"))
                 cat("\nVariables with highest loadings for PC1 and PC2:")
                 oo <- order(pca$rotation[, 1], decreasing = TRUE)
-                print(knitr::kable(pca$rotation[oo, 1:2]))
+                if ( requireNamespace("knitr", quietly = TRUE))
+                    print(knitr::kable(pca$rotation[oo, 1:2]))
+                else
+                    print(pca$rotation[oo, 1:2])
             }            
         } else {
             warning("The package mvoutlier must be installed to do outlier 
@@ -720,8 +811,9 @@ setMethod("plotTSNE", signature("SCESet"),
                           df_to_plot, colour_by = as.factor(colour_by_vals))
               }
               if ( !is.null(shape_by) )
-                  df_to_plot <- data.frame(df_to_plot, 
-                                           shape_by = as.factor(pData(object)[[shape_by]]))
+                  df_to_plot <- data.frame(
+                      df_to_plot, 
+                      shape_by = as.factor(pData(object)[[shape_by]]))
               if ( !is.null(size_by) ) {
                   if ( size_by_use_pdata )
                       size_by_vals <- pData(object)[[size_by]]
@@ -1101,8 +1193,10 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
             x_lab <- "Dimension 1"
             y_lab <- "Dimension 2"
         } else {
-            x_lab <- paste0("Component 1: ", round(percentVar[1] * 100), "% variance")
-            y_lab <- paste0("Component 2: ", round(percentVar[2] * 100), "% variance")
+            x_lab <- paste0("Component 1: ", round(percentVar[1] * 100), 
+                            "% variance")
+            y_lab <- paste0("Component 2: ", round(percentVar[2] * 100), 
+                            "% variance")
         }
         plot_out <- ggplot(df_to_plot, aes_string(x = comps[1], y = comps[2])) + 
             xlab(x_lab) + 
@@ -1112,34 +1206,14 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
     }
     
     ## Apply colour_by, shape_by and size_by variables if defined
-    if ( !is.null(colour_by) & !is.null(shape_by) & !is.null(size_by) ) {
+    if ( !is.null(colour_by) && !is.null(shape_by) && !is.null(size_by) ) {
         plot_out <- plot_out + 
             geom_point(aes_string(colour = "colour_by", shape = "shape_by", 
                                   size = "size_by"), alpha = 0.65) +
             guides(size = guide_legend(title = size_by), 
                    shape = guide_legend(title = shape_by))
-        if ( is.numeric(df_to_plot$colour_by) ) {
-            plot_out <- plot_out + 
-                viridis::scale_color_viridis(name = colour_by)
-#                 scale_fill_gradient(name = colour_by, low = "gold", 
-#                                       high = "darkred", space = "Lab")
-        } else {
-            nlevs_colour_by <- nlevels(as.factor(df_to_plot$colour_by))
-            if (nlevs_colour_by <= 10) {
-                plot_out <- plot_out + 
-                    ggthemes::scale_colour_tableau(name = colour_by)
-            } else {
-                if (nlevs_colour_by > 10 && nlevs_colour_by <= 20) {
-                    plot_out <- plot_out + 
-                        ggthemes::scale_colour_tableau(
-                            name = colour_by, palette = "tableau20")
-                } else {
-                    plot_out <- plot_out + 
-                        viridis::scale_color_viridis(
-                            name = colour_by, discrete = TRUE)
-                }
-            }
-        }
+        plot_out <- .resolve_plot_colours(plot_out, df_to_plot$colour_by,
+                                          colour_by)
     } else {
         if  ( sum(is.null(colour_by) + is.null(shape_by) + is.null(size_by)) == 1 ) {
             if ( !is.null(colour_by) & !is.null(shape_by) ) {
@@ -1148,95 +1222,37 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                                           shape = "shape_by"), size = 4, 
                                alpha = 0.65) +
                     guides(shape = guide_legend(title = shape_by))
-                if ( is.numeric(df_to_plot$colour_by) ) {
-                    plot_out <- plot_out + 
-                        viridis::scale_color_viridis(name = colour_by)
-#                         scale_colour_gradient(name = colour_by, low = "gold", 
-#                                               high = "darkred", space = "Lab")
-                } else {
-                    nlevs_colour_by <- nlevels(as.factor(df_to_plot$colour_by))
-                    if (nlevs_colour_by <= 10) {
-                        plot_out <- plot_out + 
-                            ggthemes::scale_colour_tableau(name = colour_by)
-                    } else {
-                        if (nlevs_colour_by > 10 && nlevs_colour_by <= 20) {
-                            plot_out <- plot_out + 
-                                ggthemes::scale_colour_tableau(
-                                    name = colour_by, palette = "tableau20")
-                        } else {
-                            plot_out <- plot_out + 
-                                viridis::scale_color_viridis(
-                                    name = colour_by, discrete = TRUE)
-                        }
-                    }
-                }
+                plot_out <- .resolve_plot_colours(plot_out, 
+                                                  df_to_plot$colour_by, 
+                                                  colour_by)
             }
             if ( !is.null(colour_by) & !is.null(size_by) ) {
                 plot_out <- plot_out + 
                     geom_point(aes_string(fill = "colour_by", size = "size_by"), 
                                shape = 21, colour = "gray70", alpha = 0.65) +
                     guides(size = guide_legend(title = size_by))
-                if ( is.numeric(df_to_plot$colour_by) ) {
-                    plot_out <- plot_out + 
-                        viridis::scale_fill_viridis(name = colour_by)
-#                         scale_colour_gradient(name = colour_by, low = "gold", 
-#                                               high = "darkred", space = "Lab")
-                } else {
-                    nlevs_colour_by <- nlevels(as.factor(df_to_plot$colour_by))
-                    if (nlevs_colour_by <= 10) {
-                        plot_out <- plot_out + 
-                            ggthemes::scale_fill_tableau(name = colour_by)
-                    } else {
-                        if (nlevs_colour_by > 10 && nlevs_colour_by <= 20) {
-                            plot_out <- plot_out + 
-                                ggthemes::scale_fill_tableau(
-                                    name = colour_by, palette = "tableau20")
-                        } else {
-                            plot_out <- plot_out + 
-                                viridis::scale_fill_viridis(
-                                    name = colour_by, discrete = TRUE)
-                        }
-                    }
-                }
+                plot_out <- .resolve_plot_colours(plot_out, 
+                                                  df_to_plot$colour_by,
+                                                  colour_by, fill = TRUE)
             }
             if ( !is.null(shape_by) & !is.null(size_by) ) {
                 plot_out <- plot_out + 
                     geom_point(aes_string(shape = "shape_by", size = "size_by"), 
-                               fill = "gray20", colour = "gray20", alpha = 0.65) +
+                               fill = "gray20", colour = "gray20", 
+                               alpha = 0.65) +
                     guides(size = guide_legend(title = size_by), 
                            shape = guide_legend(title = shape_by))
             } 
         } else {
-            if ( sum(is.null(colour_by) + is.null(shape_by) + is.null(size_by)) == 2 ) {
+            if ( sum(is.null(colour_by) + is.null(shape_by) + 
+                     is.null(size_by)) == 2 ) {
                 if ( !is.null(colour_by) ) {
                     plot_out <- plot_out + 
                         geom_point(aes_string(fill = "colour_by"), size = 4, 
                                    shape = 21, colour = "gray70", alpha = 0.65)
-                    if ( is.numeric(df_to_plot$colour_by) ) {
-                        plot_out <- plot_out + 
-                            viridis::scale_fill_viridis(name = colour_by)
-#                             scale_colour_gradient(name = colour_by, 
-#                                                   low = "gold", 
-#                                                   high = "darkred", 
-#                                                   space = "Lab")
-                    } else {
-                        nlevs_colour_by <- nlevels(as.factor(
-                            df_to_plot$colour_by))
-                        if (nlevs_colour_by <= 10) {
-                            plot_out <- plot_out + 
-                                ggthemes::scale_fill_tableau(name = colour_by)
-                        } else {
-                            if (nlevs_colour_by > 10 && nlevs_colour_by <= 20) {
-                                plot_out <- plot_out + 
-                                    ggthemes::scale_fill_tableau(
-                                        name = colour_by, palette = "tableau20")
-                            } else {
-                                plot_out <- plot_out + 
-                                    viridis::scale_fill_viridis(
-                                        name = colour_by, discrete = TRUE)
-                            }
-                        }
-                    }
+                    plot_out <- .resolve_plot_colours(plot_out, 
+                                                      df_to_plot$colour_by,
+                                                      colour_by, fill = TRUE)
                 }
                 if ( !is.null(shape_by) ) {
                     plot_out <- plot_out + 
@@ -1246,8 +1262,9 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                 }
                 if ( !is.null(size_by) ) {
                     plot_out <- plot_out + 
-                        geom_point(aes_string(size = "size_by"), fill = "gray20",
-                                   shape = 21, colour = "gray70", alpha = 0.65) +
+                        geom_point(aes_string(size = "size_by"), 
+                                   fill = "gray20", shape = 21, 
+                                   colour = "gray70", alpha = 0.65) +
                         guides(size = guide_legend(title = size_by))
                 } 
             } else {
@@ -1452,48 +1469,12 @@ plotExpressionSCESet <- function(object, features, x, exprs_values = "exprs",
     else
         nfeatures <- length(features)
     
-    ## Checking arguments for expression values
-#     exprs_values <- match.arg(
-#         exprs_values, choices = c("exprs", "norm_exprs", "counts", 
-#                                   "norm_counts", "tpm", "norm_tpm", 
-#                                   "fpkm", "norm_fpkm", "cpm", "norm_cpm"))
-#     if ( exprs_values == "counts" && is.null(counts(object)) ) {
-#         warning("'exprs_values' argument is 'counts', but counts(object) is NULL. Plotting 'exprs' values instead.")
-#         exprs_values <- "exprs"
-#     }
-#     if ( exprs_values == "tpm" && is.null(tpm(object)) ) {
-#         warning("'exprs_values' argument is 'tpm', but tpm(object) is NULL. Plotting 'exprs' values instead.")
-#         exprs_values <- "exprs"
-#     } 
-#     if ( exprs_values == "norm_tpm" && is.null(norm_tpm(object)) ) {
-#         warning("'exprs_values' argument is 'norm_tpm', but norm_tpm(object) is NULL. Plotting 'exprs' values instead.")
-#         exprs_values <- "exprs"
-#     } 
-#     if ( exprs_values == "fpkm" && is.null(fpkm(object)) ) {
-#         warning("'exprs_values' argument is 'fpkm', but fpkm(object) is NULL. Plotting 'exprs' values instead.")
-#         exprs_values <- "exprs"
-#     }
-#     if ( exprs_values == "norm_fpkm" && is.null(norm_fpkm(object)) ) {
-#         warning("'exprs_values' argument is 'norm_fpkm', but norm_fpkm(object) is NULL. Plotting 'exprs' values instead.")
-#         exprs_values <- "exprs"
-#     }
-#     if ( exprs_values == "cpm" && is.null(cpm(object)) ) {
-#         warning("'exprs_values' argument is 'cpm', but cpm(object) is NULL. Plotting 'exprs' values instead.")
-#         exprs_values <- "exprs"
-#     } 
-#     if ( exprs_values == "norm_cpm" && is.null(norm_cpm(object)) ) {
-#         warning("'exprs_values' argument is 'norm_cpm', but norm_cpm(object) is NULL. Plotting 'exprs' values instead.")
-#         exprs_values <- "exprs"
-#     } 
-    
     ## Check arguments are valid
     if ( !(x %in% varLabels(object)) )
         stop("the argument 'x' should specify a column of pData(object) [see varLabels(object)]")
     if ( !is.null(colour_by) ) {
         if ( !(colour_by %in% varLabels(object)) )
             stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)]")
-        if ( nlevels(as.factor(pData(object)[[colour_by]])) > 10 )
-            stop("when coerced to a factor, 'colour_by' should have fewer than 10 levels")
     }
     if ( !is.null(shape_by) ) {
         if ( !(shape_by %in% varLabels(object)) )
@@ -1517,67 +1498,6 @@ plotExpressionSCESet <- function(object, features, x, exprs_values = "exprs",
     } else
         ylab <- paste0("Expression (", exprs_values, ")")
     to_melt <- as.matrix(exprs_mat[features, , drop = FALSE])
-    
-#     ## Define expression values to use
-#     if ( exprs_values == "exprs" || exprs_values == "norm_exprs" ) {
-#         to_melt <- switch(exprs_values,
-#                           exprs = as.matrix(exprs(object)[features, , 
-#                                                           drop = FALSE]),
-#                           norm_exprs = as.matrix(norm_exprs(object)[features, , 
-#                                                                drop = FALSE]))
-#         if ( !object@logged ) {
-#             to_melt <- log2(to_melt + 1)
-#             message("Expression values have been transformed to a log2 scale")
-#         }
-#         ylab <- switch(exprs_values,
-#                        exprs = "Expression (log2 scale)",
-#                        norm_exprs = "Normalised expression (log2 scale)")
-#     } else {
-#         if ( exprs_values == "counts" ) {
-#             count_mtrx <- as.matrix(counts(object))
-#             lib_size <- colSums(count_mtrx)
-#             cpm_to_plot <- log2(t(t(count_mtrx) / lib_size) + 1)
-#             to_melt <- as.matrix(cpm_to_plot[features, , drop = FALSE])
-#             ylab <- "log2(counts-per-million + 1)"
-#         }
-#         if ( exprs_values == "norm_counts" ) {
-#             count_mtrx <- as.matrix(norm_counts(object))
-#             lib_size <- colSums(count_mtrx)
-#             cpm_to_plot <- log2(t(t(count_mtrx) / lib_size) + 1)
-#             to_melt <- as.matrix(cpm_to_plot[features, , drop = FALSE])
-#             ylab <- "normalised log2(counts-per-million + 1)"
-#         }
-#         if ( exprs_values == "tpm" ) {
-#             tpm_mtrx <- as.matrix(tpm(object)[features, , drop = FALSE])
-#             to_melt <- log2(tpm_mtrx + 1)
-#             ylab <- "log2(transcripts-per-million + 1)"
-#         }
-#         if ( exprs_values == "norm_tpm" ) {
-#             tpm_mtrx <- as.matrix(norm_tpm(object)[features, , drop = FALSE])
-#             to_melt <- log2(tpm_mtrx + 1)
-#             ylab <- "normalised log2(transcripts-per-million + 1)"
-#         }
-#         if ( exprs_values == "fpkm" ) {
-#             fpkm_mtrx <- as.matrix(fpkm(object)[features, , drop = FALSE])
-#             to_melt <- log2(fpkm_mtrx + 1)
-#             ylab <- "log2(FPKM + 1)"
-#         }
-#         if ( exprs_values == "norm_fpkm" ) {
-#             fpkm_mtrx <- as.matrix(norm_fpkm(object)[features, , drop = FALSE])
-#             to_melt <- log2(fpkm_mtrx + 1)
-#             ylab <- "normalised log2(FPKM + 1)"
-#         }
-#         if ( exprs_values == "cpm" ) {
-#             cpm_mtrx <- as.matrix(cpm(object)[features, , drop = FALSE])
-#             to_melt <- log2(cpm_mtrx + 1)
-#             ylab <- "log2(counts-per-million + 1)"
-#         }
-#         if ( exprs_values == "norm_cpm" ) {
-#             cpm_mtrx <- as.matrix(norm_cpm(object)[features, , drop = FALSE])
-#             to_melt <- log2(cpm_mtrx + 1)
-#             ylab <- "normalised log2(counts-per-million + 1)"
-#         }
-#     }
     
     ## Melt the expression data and metadata into a convenient form
     evals_long <- reshape2::melt(to_melt, value.name = "evals")
@@ -1638,9 +1558,11 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab=NULL,
     ## Define the plot
     plot_out <- ggplot(object, aesth) +
         facet_wrap(~Feature, ncol = ncol, scales = 'free_y') +
-        ggthemes::scale_colour_tableau() +
         xlab(xlab) +
         ylab(ylab)
+    plot_out <- .resolve_plot_colours(plot_out, 
+                                      object[[as.character(aesth$colour)]],
+                                      as.character(aesth$colour))
     if (show_violin) {
         plot_out <- plot_out + geom_violin(group = 1, colour = "gray80", 
                                            fill = "gray80", scale = "width")
@@ -1651,8 +1573,9 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab=NULL,
                          geom = "crossbar", width = 0.3, alpha = 0.8)
     }
     plot_out <- plot_out + 
-        geom_jitter(size = 4, alpha = 0.8, position = position_jitter(height = 0))
-    plot_out + theme_bw()
+        geom_jitter(size = 4, alpha = 0.8,
+                    position = position_jitter(height = 0))
+    plot_out
 }
 
 
@@ -1714,7 +1637,6 @@ setMethod("plotExpression", signature("data.frame"),
 #' 
 #' @return a ggplot plot object
 #' 
-#' @import ggthemes
 #' @import viridis
 #' @export
 #' 
@@ -1837,19 +1759,16 @@ plotMetadata <- function(object,
     
     ## Define plot colours
     if ( "colour" %in% names(aesth) || "color" %in% names(aesth) ) {
-        colvar <- ifelse(is.null(aesth$colour), as.character(aesth$color), 
-                         as.character(aesth$colour))
-        
-        if ( is.numeric(object[, colvar]) )
-            plot_out <- plot_out + viridis::scale_color_viridis()
-        else
-            plot_out <- plot_out + ggthemes::scale_colour_tableau()
+        if ( is.null(aesth$colour) )
+            colvar <- as.character(aesth$color)
+        else 
+            colvar <- as.character(aesth$colour)
+        plot_out <- .resolve_plot_colours(plot_out, object[, colvar],
+                                          as.character(colvar))
     }
     if ( !is.null(aesth$fill) ) {
-        if ( is.numeric(object[, aesth$fill]) )
-            plot_out <- plot_out + viridis::scale_fill_viridis()
-        else
-            plot_out <- plot_out + ggthemes::scale_fill_tableau()
+        plot_out <- .resolve_plot_colours(plot_out, object[, aesth$fill],
+                                          as.character(aesth$fill), fill = TRUE)
     }
     
     ## Tweak plot guides

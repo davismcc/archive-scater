@@ -637,13 +637,15 @@ findImportantPCs <- function(object, variable="total_features",
             xlab("") + 
             ylab("") +
             theme_bw(theme_size)
-        if ( typeof_x == "discrete" ) {
-            plot_out <- plot_out + 
-                ggthemes::scale_fill_tableau(name = get("variable"))
-        } else {
-            plot_out <- plot_out +
-                viridis::scale_fill_viridis(name = get("variable"))
-        }
+        plot_out <- .resolve_plot_colours(plot_out, colour_by, get("variable"),
+                                          fill = TRUE)
+#         if ( typeof_x == "discrete" ) {
+#             plot_out <- plot_out + 
+#                 ggthemes::scale_fill_tableau(name = get("variable"))
+#         } else {
+#             plot_out <- plot_out +
+#                 viridis::scale_fill_viridis(name = get("variable"))
+#         }
         return(plot_out)
     } else {
         top6 <- order(pca_r_squared, decreasing = TRUE)[1:6]
@@ -844,8 +846,11 @@ plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
               title = element_text(colour = "gray35"))
     ## Sort of colouring of points
     if (typeof_x == "discrete") {
-        plot_most_expressed <- plot_most_expressed + 
-            ggthemes::scale_colour_tableau(name = col_by_variable)
+        plot_most_expressed <- .resolve_plot_colours(
+            plot_most_expressed, df_pct_exprs_by_cell_long$colour_by,
+            col_by_variable)
+#         plot_most_expressed <- plot_most_expressed + 
+#             ggthemes::scale_colour_tableau(name = col_by_variable)
     } else {
         plot_most_expressed <- plot_most_expressed + 
             scale_colour_gradient(name = col_by_variable, low = "lightgoldenrod", 
@@ -1021,7 +1026,7 @@ This variable will not be plotted."))
         df_to_expand <- val_to_plot_mat[, oo_median[1:nvars_to_plot]]
         names(df_to_expand) <- colnames(df_to_expand)
         gg1 <- .makePairs(df_to_expand)
-        diag_labs <-  paste0("Median\n R-sq = \n", 
+        diag_labs <-  paste0("Median R-sq = \n", 
                              formatC(signif(100*median_rsquared, digits = 3),  
                                      digits = 3, format = "fg", flag = "#"), 
                              "%")[oo_median[1:nvars_to_plot]]
@@ -1041,8 +1046,8 @@ This variable will not be plotted."))
             geom_rect(aes_string(xmin = "xmin", ymin = "xmin", xmax = "xmax",
                                  ymax = "xmax"), colour = "white", 
                       fill = "white", data = gg1$diags) +
-            geom_text(aes_string(x = "x", y = "y", label = "label", 
-                                 size = theme_size), data = gg1$diags) +
+            geom_text(aes_string(x = "x", y = "y", label = "label"), 
+                      size = theme_size / 3, data = gg1$diags) +
             xlab("") + 
             ylab("") +
             theme_bw(theme_size) +
@@ -1062,8 +1067,8 @@ This variable will not be plotted."))
             scale_x_log10(breaks = 10 ^ (-3:2), labels = c(0.001, 0.01, 0.1, 1, 10, 100)) +
             xlab(paste0("% variance explained (log10-scale)")) +
             ylab("") +
-            coord_cartesian(xlim = c(10 ^ (-3), 100)) +
-            ggthemes::scale_color_tableau(name = "", palette = "tableau20")            
+            coord_cartesian(xlim = c(10 ^ (-3), 100))
+        plot_out <- .resolve_plot_colours(plot_out, df_to_plot$Expl_Var, "")
         if ( requireNamespace("cowplot", quietly = TRUE) )
             plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
         else

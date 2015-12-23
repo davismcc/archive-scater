@@ -10,7 +10,8 @@
 plotPCASCESet(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
   colour_by = NULL, shape_by = NULL, size_by = NULL, feature_set = NULL,
   return_SCESet = FALSE, scale_features = FALSE, draw_plot = TRUE,
-  pca_data_input = "exprs", detect_outliers = FALSE, theme_size = 10)
+  pca_data_input = "exprs", selected_variables = NULL,
+  detect_outliers = FALSE, theme_size = 10)
 
 \S4method{plotPCA}{SCESet}(object, ntop = 500, ncomponents = 2,
   exprs_values = "exprs", colour_by = NULL, shape_by = NULL,
@@ -74,6 +75,10 @@ uses expression data to produce a PCA at the cell level; \code{"pdata"} which
 uses numeric variables from \code{pData(object)} to do PCA at the cell level;
 and \code{"fdata"} which uses numeric variables from \code{fData(object)} to
 do PCA at the feature level.}
+
+\item{selected_variables}{character vector indicating which variables in 
+\code{pData(object)} to use for the phenotype-data based PCA. Ignored if 
+the argument \code{pca_data_input} is anything other than \code{"pdata"}.}
 
 \item{detect_outliers}{logical, should outliers be detected in the PC plot?
 Only an option when \code{pca_data_input} argument is \code{"pdata"}. Default
