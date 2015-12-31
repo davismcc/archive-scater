@@ -17,7 +17,7 @@ plotPCASCESet(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
   exprs_values = "exprs", colour_by = NULL, shape_by = NULL,
   size_by = NULL, feature_set = NULL, return_SCESet = FALSE,
   scale_features = FALSE, draw_plot = TRUE, pca_data_input = "exprs",
-  detect_outliers = FALSE, theme_size = 10)
+  selected_variables = NULL, detect_outliers = FALSE, theme_size = 10)
 }
 \arguments{
 \item{object}{an \code{SCESet} object}

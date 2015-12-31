@@ -415,9 +415,9 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
     }
 
     ## Define an expression matrix depending on which values we're using
-    exprs_values <- match.arg(
-        exprs_values, c("exprs", "tpm", "fpkm", "counts", "cpm", "norm_exprs",
-                        "stand_exprs"))
+#     exprs_values <- match.arg(
+#         exprs_values, c("exprs", "tpm", "fpkm", "counts", "cpm", "norm_exprs",
+#                         "stand_exprs"))
     exprs_mat <- get_exprs(object, exprs_values)
     if ( is.null(exprs_mat) ) {
         warning(paste0("The object does not contain ", exprs_values, " expression values. Using exprs(object) values instead."))
@@ -445,7 +445,9 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
                                     "log10_counts_feature_controls")
         }
         use_variable <- varLabels(object) %in% selected_variables
-        message(paste("The following selected_variables were not found in pData(object):", selected_variables[!(selected_variables %in% varLabels(object))]))
+        vars_not_found <- !(selected_variables %in% varLabels(object))
+        if ( any(vars_not_found) )
+            message(paste("The following selected_variables were not found in pData(object):", selected_variables[vars_not_found]))
         ## scale double variables 
         exprs_to_plot <- scale(pData(object)[, use_variable]) 
     } else if ( pca_data_input == "fdata" ) {
@@ -509,8 +511,8 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
                         argument is 'pdata' (operating on QC metrics)")
             } else {
                 outliers <- mvoutlier::pcout(exprs_to_plot, makeplot = FALSE,
-                                             explvar = 0.5, crit.M1 = 1/3,
-                                             crit.c1 = 2.5, crit.M2 = 1/4,
+                                             explvar = 0.5, crit.M1 = 0.9,
+                                             crit.c1 = 5, crit.M2 = 0.9,
                                              crit.c2 = 0.99, cs = 0.25, 
                                              outbound = 0.05)
                 outlier <- !as.logical(outliers$wfinal01)
@@ -548,9 +550,11 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
     
     ## Plot PCA and return appropriate object
     if (return_SCESet) {
-        df_out <- pca$x[, 1:ncomponents]
+        ncomp_out <- max(ncomponents, 10)
+        ncomp_out <- min(ncomp_out, ncol(pca$x))
+        df_out <- pca$x[, 1:ncomp_out]
         rownames(df_out) <- sampleNames(object)
-        attr(df_out, "percentVar") <- percentVar[1:ncomponents]
+        attr(df_out, "percentVar") <- percentVar[1:ncomp_out]
         reducedDimension(object) <- df_out
         if ( draw_plot )
             print(plot_out)
@@ -570,12 +574,12 @@ setMethod("plotPCA", signature("SCESet"),
                    colour_by = NULL, shape_by = NULL, size_by = NULL, 
                    feature_set = NULL, return_SCESet = FALSE, 
                    scale_features = FALSE, draw_plot = TRUE, 
-                   pca_data_input = "exprs", detect_outliers = FALSE, 
-                   theme_size = 10) {
+                   pca_data_input = "exprs", selected_variables = NULL, 
+                   detect_outliers = FALSE, theme_size = 10) {
               plotPCASCESet(object, ntop, ncomponents, exprs_values, colour_by,
                             shape_by, size_by, feature_set, return_SCESet, 
                             scale_features, draw_plot, pca_data_input,
-                            detect_outliers, theme_size)
+                            selected_variables, detect_outliers, theme_size)
           })
 
 
