@@ -6,8 +6,6 @@
 #' 
 #' @param directory character string giving the path to the directory containing
 #' the Salmon results for the sample. 
-#' @param nlines_header integer giving the number of header lines in the 
-#' `quant.sf` file produced by Salmon. Defaults to 11.
 #' 
 #' @details The directory is expected to contain results for just a single 
 #' sample. Putting more than one sample's results in the directory will result
@@ -31,50 +29,24 @@
 #' # If Salmon results are in the directory "output", then call:
 #' readSalmonResultsOneSample("output")
 #' }
-readSalmonResultsOneSample <- function(directory, nlines_header = 11) {
+readSalmonResultsOneSample <- function(directory) {
     ## Read in abundance information for the sample
     file_to_read <- paste0(directory, "/quant.sf")
+    abundance <- run_info <- NULL
     if ( file.exists(file_to_read) ) {
         ## read abundance values
-        abundance <- data.table::fread(file_to_read, sep = "\t", 
-                                       skip = nlines_header)
+        abundance <- data.table::fread(file_to_read, sep = "\t")
         abundance <- as.data.frame(abundance)
-        colnames(abundance) <- c("target_id", "length", "tpm", "est_counts")
-        abundance <- abundance[, c(1, 2, 4, 3)]
+        colnames(abundance) <- c("target_id", "length", "eff_length", "tpm", "est_counts")
+        abundance <- abundance[, c(1, 2, 3, 5, 4)]
         ## extract run info
-        header <- data.table::fread(file_to_read, sep = "|", header = FALSE,
-                                    nrows = nlines_header)
-        header <- header[-nrow(header),] 
-        variables <- "salmon_version"
-        values <- header[1]
-        header <- strsplit(header[-1], " => ")
-        for (i in seq_len(length(header))) {
-            var <- header[[i]][1]
-            val <- header[[i]][2]
-            var <- gsub("# ", "", var)
-            var <- gsub("\\[ ", "", var)
-            var <- gsub(" \\]", "", var)
-            var <- gsub("mapping rate", "mapping_rate_pct", var)
-            val <- gsub("\\{ ", "", val)
-            val <- gsub(" \\}", "", val)
-            val <- gsub("%", "", val)
-            variables <- c(variables, var)
-            values <- c(values, val)
-        }
-        ## get number of fragments processed
-        n_obs_fragments <- data.table::fread(
-            paste0(directory, "/stats.tsv"), nrows = 1, header = FALSE, 
-            sep = "\t")
-        n_obs_fragments <- n_obs_fragments$V2
-        variables <- c(variables, "n_obs_fragments")
-        values <- c(values, n_obs_fragments)
+        json_file <- paste0(directory, "/aux/meta_info.json")
+        if(!file.exists(json_file)) stop(paste(json_file, "not found or does not exist."))
+        run_info <- as.data.frame(rjson::fromJSON(file = json_file))
     }
     else
         stop(paste("File", file_to_read, "not found or does not exist. 
                    Please check directory is correct."))
-    ## Read in run information
-    run_info <- t(data.frame(values, row.names = variables))
-    run_info <- data.frame(run_info, stringsAsFactors = FALSE)
     ## output list with abundances and run info
     list(abundance = abundance, run_info = run_info)
 }
@@ -114,7 +86,7 @@ readSalmonResultsOneSample <- function(directory, nlines_header = 11) {
 #' 
 readSalmonResults <- function(Salmon_log = NULL, samples = NULL, 
                               directories = NULL, logExprsOffset = 1, 
-                              nlines_header = 11, verbose = TRUE) {
+                              verbose = TRUE) {
     ## initialise failure vector
     Salmon_fail <- rep(FALSE, length(samples))
     ## Checks on arguments
@@ -146,7 +118,7 @@ readSalmonResults <- function(Salmon_log = NULL, samples = NULL,
     directories <- directories[!Salmon_fail]
     
     ## Read first file to get size of feature set
-    s1 <- readSalmonResultsOneSample(directories[1], nlines_header)
+    s1 <- readSalmonResultsOneSample(directories[1])
     nsamples <- length(samples)
     nfeatures <- nrow(s1$abundance)
     ninfo_vars <- ncol(s1$run_info)
@@ -167,7 +139,7 @@ readSalmonResults <- function(Salmon_log = NULL, samples = NULL,
     if ( verbose )
         cat(paste("\nReading results for", nsamples, "samples:\n"))
     for (i in seq_len(nsamples)) {
-        tmp_samp <- readSalmonResultsOneSample(directories[i], nlines_header)
+        tmp_samp <- readSalmonResultsOneSample(directories[i])
         ## counts
         if ( length(tmp_samp$abundance$est_counts) != nfeatures )
             warning(paste("Results for directory", directories[i], 
