@@ -61,7 +61,7 @@ Bioconductor packages:
 
 ```{r}
 source("http://bioconductor.org/biocLite.R")
-biocLite(c("Biobase", "BiocGenerics", "biomaRt", "edgeR", "limma", "rhdf5"))
+biocLite(c("Biobase", "biomaRt", "edgeR", "limma", "rhdf5"))
 ```
 
 Optional packages that are not strictly required but enhance the functionality of `scater`:

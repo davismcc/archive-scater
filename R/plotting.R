@@ -133,6 +133,8 @@
 #' arguments can flag overall differences in cells under different experimental
 #' conditions or affected by different batch and other variables.
 #' 
+#' @return a ggplot plot object
+#' 
 #' @name plot
 #' @aliases plot plot,SCESet-method plot,SCESet,ANY-method
 #' @export
@@ -161,6 +163,9 @@ setMethod("plot", signature("SCESet"),
 
 #' @rdname plot
 #' @aliases plot
+#' @importFrom dplyr mutate
+#' @importFrom plyr aaply
+#' @importFrom reshape2 melt
 #' @export
 plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL, 
                         nfeatures = 500, exprs_values = "tpm", ncol = 3, 
@@ -338,9 +343,13 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' feature-wise unit variances or not according to the \code{scale_features} 
 #' argument), added to the object and PCA is done using these new standardised
 #' expression values.
+#' 
+#' @return either a ggplot plot object or an SCESet object
 #'
 #' @name plotPCA
 #' @aliases plotPCA plotPCA,SCESet-method
+#' @importFrom matrixStats rowVars
+#' @importFrom matrixStats colVars
 #' @export
 #'
 #' @examples
@@ -1929,6 +1938,12 @@ plotFeatureData <- function(object,
 #' plots with this simple function. It was adapted from 
 #' \url{http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/}
 #' 
+#' @return a \code{ggplot} plot object
+#' 
+#' @importFrom grid grid.newpage
+#' @importFrom grid pushViewport
+#' @importFrom grid viewport
+#' @importFrom grid grid.layout
 #' @export
 #' @examples 
 #' library(ggplot2)
@@ -1980,7 +1995,7 @@ multiplot <- function(..., plotlist = NULL, cols = 1, layout = NULL) {
         
         # Make each plot, in the correct location
         for (i in 1:num_plots) {
-            # Get the i,j matrix positions of the regions that contain this subplot
+            # Get i,j matrix positions of the regions that contain this subplot
             matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
             print(plots[[i]], vp = grid::viewport(layout.pos.row = matchidx$row,
                                             layout.pos.col = matchidx$col))

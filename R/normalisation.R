@@ -63,7 +63,10 @@
 #' \code{normalizeExprs} is exactly the same as \code{normaliseExprs}, provided
 #' for those who prefer North American spelling.
 #' 
+#' @return an SCESet object
+#' 
 #' @author Davis McCarthy
+#' @importFrom edgeR calcNormFactors.default
 #' @export
 #' @examples
 #' data("sc_example_counts")

@@ -26,6 +26,9 @@ norm_fpkm(object) <- value
 
 \item{value}{a matrix of class \code{"numeric"}}
 }
+\value{
+a matrix of normalised FPKM data
+}
 \description{
 The \code{norm_fpkm} element of the arrayData slot in an SCESet object holds
 a matrix containing normalised fragments per kilobase of exon per million
@@ -34,12 +37,11 @@ reads mapped (FPKM) values. It has the same dimensions as the 'exprs' and
 respectively.
 }
 \examples{
-\dontrun{
 data("sc_example_counts")
 data("sc_example_cell_info")
 example_sceset <- newSCESet(countData = sc_example_counts)
 norm_fpkm(example_sceset)
-}
+
 }
 \author{
 Davis McCarthy

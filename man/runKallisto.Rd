@@ -93,7 +93,8 @@ for further details.
 write.table(data.frame(Sample="sample1", File1="reads_1.fastq.gz", File2="reads_1.fastq.gz"), 
  file="targets.txt", quote=FALSE, row.names=FALSE, sep="\\t")
 kallisto_log <- runKallisto("targets.txt", "transcripts.idx", single_end=FALSE, 
-         output_prefix="output", verbose=TRUE, n_bootstrap_samples=10)
+         output_prefix="output", verbose=TRUE, n_bootstrap_samples=10,
+         dry_run = FALSE)
 }
 }
 

@@ -26,6 +26,9 @@ fpkm(object) <- value
 
 \item{value}{a matrix of class \code{"numeric"}}
 }
+\value{
+a matrix of FPKM values
+}
 \description{
 The \code{fpkm} element of the arrayData slot in an SCESet object holds
 a matrix containing fragments per kilobase of exon per million reads mapped
@@ -34,12 +37,11 @@ elements, which hold the transformed expression data and count data,
 respectively.
 }
 \examples{
-\dontrun{
 data("sc_example_counts")
 data("sc_example_cell_info")
 example_sceset <- newSCESet(countData = sc_example_counts)
 fpkm(example_sceset)
-}
+
 }
 \author{
 Davis McCarthy

@@ -74,9 +74,14 @@ calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_data = "counts
 #' @return Matrix of TPM values.
 #' @export
 #' @examples
-#' \dontrun{
-#' tpm(object) <- calculateTPM(object, effective_length, calc_from="counts")
-#' }
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' effective_length <- rep(1000, 2000)
+#' tpm(example_sceset) <- calculateTPM(example_sceset, effective_length, 
+#'     calc_from = "counts")
+#' 
 calculateTPM <- function(object, effective_length = NULL, calc_from = "counts") {
     if ( !is(object, "SCESet"))
         stop("object must be an SCESet")
@@ -112,9 +117,12 @@ calculateTPM <- function(object, effective_length = NULL, calc_from = "counts") 
 #' @return Matrix of FPKM values.
 #' @export
 #' @examples
-#' \dontrun{
-#' fpkm(object) <- calculateFPKM(object, effective_length)
-#' }
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' example_sceset <- newSCESet(countData = sc_example_counts)
+#' effective_length <- rep(1000, 2000)
+#' fpkm(example_sceset) <- calculateFPKM(example_sceset, effective_length)
+#' 
 calculateFPKM <- function(object, effective_length) {
     if ( !is(object, "SCESet"))
         stop("object must be an SCESet")

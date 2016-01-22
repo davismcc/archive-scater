@@ -21,4 +21,14 @@ An object of class \code{SCESet}
 \description{
 Convert a \code{CellDataSet} to an \code{SCESet}
 }
+\examples{
+data("sc_example_counts")
+data("sc_example_cell_info")
+pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+if ( requireNamespace("monocle") ) {
+    # cds <- toCellDataSet(example_sceset) # not run 
+    # sceset <- fromCellDataSet(cds) # not run 
+}
+}
 

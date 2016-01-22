@@ -26,6 +26,9 @@ norm_exprs(object) <- value
 
 \item{value}{an integer matrix}
 }
+\value{
+a matrix of normalised expression data
+}
 \description{
 The \code{norm_exprs} element of the arrayData slot in an SCESet object holds
 a matrix containing normalised expression values. It has the same dimensions

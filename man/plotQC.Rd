@@ -22,6 +22,9 @@ frequency of expression for a set of features).}
 \code{plotImportantPCs}, \code{plotExplanatoryVariables} and 
 \code{plotExprsMeanVsFreq} as appropriate.}
 }
+\value{
+a ggplot plot object
+}
 \description{
 Produce QC diagnostic plots
 }

@@ -26,6 +26,9 @@ counts(object) <- value
 
 \item{value}{an integer matrix}
 }
+\value{
+a matrix of count data
+}
 \description{
 The counts element holds the count data as a matrix of non-negative integer
 count values, one row for each feature (gene, exon, region, etc), and one

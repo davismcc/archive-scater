@@ -51,13 +51,11 @@ of the correct size. The function \code{featDist} is simply shorthand for
 \code{featurePairwiseDistances}.
 }
 \examples{
-\dontrun{
-#' data("sc_example_counts")
+data("sc_example_counts")
 data("sc_example_cell_info")
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 featurePairwiseDistances(example_sceset)
-}
 
 }
 \author{

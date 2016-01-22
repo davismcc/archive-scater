@@ -15,6 +15,9 @@ a list of ggplot objects)}
 \item{layout}{a matrix specifying the layout. If present, \code{cols} is 
 ignored.}
 }
+\value{
+a \code{ggplot} plot object
+}
 \description{
 Place multiple \code{\link[ggplot2]{ggplot}} plots on one page.
 }

@@ -44,6 +44,9 @@ particular \code{"host"} from biomaRt to use. Useful for accessing archived
 versions of biomaRt data. Default is \code{"www.ensembl.org"}, in which case the current 
 version of the biomaRt (now hosted by Ensembl) is used.}
 }
+\value{
+an SCESet object
+}
 \description{
 Use the \code{biomaRt} package to add feature annotation information to an 
 \code{SCESet}.

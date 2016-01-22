@@ -34,6 +34,9 @@ alpha level (transparency) of plotted points.}
 \item{...}{further arguments passed to \code{\link{plotMetadata}} (should 
 only be \code{size}, if anythin).}
 }
+\value{
+a ggplot plot object
+}
 \description{
 Plot frequency of expression against mean expression level
 }

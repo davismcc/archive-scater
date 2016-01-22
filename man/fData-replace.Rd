@@ -12,6 +12,9 @@ fData(x) <- value
 
 \item{value}{AnnotatedDataFrame to replace existing featureData}
 }
+\value{
+the SCESet with replaced featureData
+}
 \description{
 Replacement for featureData
 }

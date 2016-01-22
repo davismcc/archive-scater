@@ -26,6 +26,9 @@ norm_cpm(object) <- value
 
 \item{value}{a matrix of class \code{"numeric"}}
 }
+\value{
+a matrix of normalised counts-per-million data
+}
 \description{
 The \code{norm_cpm} element of the arrayData slot in an SCESet object holds
 a matrix containing normalised counts-per-million values. It has the same dimensions
@@ -33,12 +36,11 @@ as the 'exprs' and 'counts' elements, which hold the transformed expression
 data and count data, respectively.
 }
 \examples{
-\dontrun{
 data("sc_example_counts")
 data("sc_example_cell_info")
 example_sceset <- newSCESet(countData=sc_example_counts)
 norm_cpm(example_sceset)
-}
+
 }
 \author{
 Davis McCarthy

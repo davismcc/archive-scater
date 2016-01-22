@@ -29,6 +29,9 @@ percentage of expression values accounted for by feature controls. Used as to
 flag cells that may be filtered based on high percentage of expression from 
 feature controls.}
 }
+\value{
+an SCESet object
+}
 \description{
 Calculate QC metrics
 }

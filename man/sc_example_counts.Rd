@@ -12,6 +12,9 @@ Wellcome Trust Centre for Human Genetics, Oxford
 \usage{
 sc_example_counts
 }
+\value{
+NULL, but makes aavailable a matrix of count data
+}
 \description{
 This data set contains counts for 2000 genes for 40 cells. They 
 are from a real experiment, but details have been anonymised.

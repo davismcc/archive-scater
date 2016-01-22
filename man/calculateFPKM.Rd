@@ -20,8 +20,11 @@ Calculate fragments per kilobase of exon per million reads mapped (FPKM)
 values for expression from counts for a set of features.
 }
 \examples{
-\dontrun{
-fpkm(object) <- calculateFPKM(object, effective_length)
-}
+data("sc_example_counts")
+data("sc_example_cell_info")
+example_sceset <- newSCESet(countData = sc_example_counts)
+effective_length <- rep(1000, 2000)
+fpkm(example_sceset) <- calculateFPKM(example_sceset, effective_length)
+
 }
 

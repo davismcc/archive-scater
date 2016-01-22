@@ -26,6 +26,9 @@ norm_counts(object) <- value
 
 \item{value}{an integer matrix}
 }
+\value{
+a matrix of normalised count data
+}
 \description{
 The norm_counts element holds normalised count data as a matrix of
 non-negative values, one row for each feature (gene, exon, region, etc), and one

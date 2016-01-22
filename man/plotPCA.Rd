@@ -91,6 +91,9 @@ is \code{FALSE}.}
 \item{theme_size}{numeric scalar giving default font size for plotting theme 
 (default is 10).}
 }
+\value{
+either a ggplot plot object or an SCESet object
+}
 \description{
 Produce a principal components analysis (PCA) plot of two or more principal 
 components for an \code{SCESet} dataset.

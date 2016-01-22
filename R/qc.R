@@ -141,10 +141,13 @@
 #'  are present in the \code{SCESet} object), with the appropriate term 
 #'  replacing ``counts'' in the name.
 #' 
+#' @return an SCESet object
+#' 
 #' @importFrom Biobase pData
 #' @importFrom Biobase fData
 #' @importFrom Biobase exprs
 #' @importFrom Biobase sampleNames<-
+#' @importFrom matrixStats colCumsums
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -555,6 +558,8 @@ a lower count threshold of 0.")
 #' and "high" (upper quartile), and these levels are used as a factor in the 
 #' linear model. Cells are coloured by their cluster in the plot.
 #'  
+#' @return a \code{\link{ggplot}} plot object
+#' 
 #' @import viridis
 #' @export
 #' @examples
@@ -678,21 +683,6 @@ findImportantPCs <- function(object, variable="total_features",
     (ssr/sst)
 }
 
-# 
-# .calculateSilhouetteWidth <- function(x, mat) {
-#     ave_sil_width <- rep(NA, ncol(mat))
-#     for (i in 1:ncol(mat)) {
-#         si <- cluster::silhouette(x, dist(mat[,i]))
-#         ave_sil_width[i] <- summary(si)$avg.width
-#     }
-#     ave_sil_width
-# }
-
-# Range of Silhouette Width    Interpretation
-# 0.71-1.0	A strong structure has been found
-# 0.51-0.70	A reasonable structure has been found
-# 0.26-0.50	The structure is weak and could be artificial
-# < 0.25	No substantial structure has been found
 
 ################################################################################
 
@@ -714,6 +704,9 @@ findImportantPCs <- function(object, variable="total_features",
 #'
 #' @details Plot the percentage of counts accounted for by the top n most highly
 #' expressed features across the dataset.
+#' 
+#' @return a ggplot plot object
+#' 
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -1145,6 +1138,8 @@ This variable will not be plotted."))
 #' of genes to be treated as feature controls can be specified, otherwise any 
 #' feature controls previously defined are used.
 #' 
+#' @return a ggplot plot object
+#' 
 #' @export
 #' @examples 
 #' data("sc_example_counts")
@@ -1291,6 +1286,9 @@ plotExprsFreqVsMean <- function(object, feature_set = NULL,
 #'
 #' @details Calculate useful quality control metrics to help with pre-processing
 #' of data and identification of potentially problematic features and cells.
+#' 
+#' @return a ggplot plot object
+#' 
 #' @export
 #' @examples
 #' data("sc_example_counts")

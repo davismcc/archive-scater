@@ -56,6 +56,9 @@ parlance) for the lines plotted. Default is 1.5.}
 \item{theme_size}{numeric scalar giving font size to use for the plotting 
 theme}
 }
+\value{
+a ggplot plot object
+}
 \description{
 Plot the relative proportion of the library accounted for by the most highly 
 expressed features for each cell for an \code{SCESet} dataset.

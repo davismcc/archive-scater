@@ -22,6 +22,9 @@ interest.}
 
 \item{theme_size}{numeric scalar providing base font size for ggplot theme.}
 }
+\value{
+a \code{\link{ggplot}} plot object
+}
 \description{
 Find most important principal components for a given variable
 }

@@ -7,7 +7,8 @@
 \alias{stand_exprs.SCESet}
 \alias{stand_exprs<-}
 \alias{stand_exprs<-,SCESet,matrix-method}
-\title{Accessors for the 'stand_exprs' (standardised expression) element of an SCESet object.}
+\title{Accessors for the 'stand_exprs' (standardised expression) element of an 
+SCESet object.}
 \usage{
 stand_exprs(object)
 
@@ -25,6 +26,9 @@ stand_exprs(object) <- value
 \item{object}{a \code{SCESet} object.}
 
 \item{value}{an integer matrix}
+}
+\value{
+a matrix of standardised expressiond data
 }
 \description{
 The \code{stand_exprs} element of the arrayData slot in an SCESet object holds

@@ -20,6 +20,9 @@ that will be used as the features for which summarised expression levels are
 to be produced. Default is \code{'feature_id'}.
  \code{"exprs"}.}
 }
+\value{
+an SCESet object
+}
 \description{
 Create a new \code{SCESet} with counts summarised at a different feature 
 level. A typical use would be to summarise transcript-level counts at gene

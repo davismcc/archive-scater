@@ -26,6 +26,9 @@ from endogenous rather than synthetic genes.}
 should be used to define expression? Valid options are "counts" (default), 
 "tpm", "fpkm" and "exprs".}
 }
+\value{
+a ggplot plot object
+}
 \description{
 Plot the features with the highest expression values
 }

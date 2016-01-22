@@ -23,6 +23,9 @@ Default offset value is \code{1}.}
 
 \item{verbose}{logical, should function provide output about progress?}
 }
+\value{
+an SCESet object
+}
 \description{
 After generating transcript/feature abundance results using Salmon for a 
 batch of samples, read these abundance values into an \code{SCESet} object.

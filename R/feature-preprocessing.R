@@ -41,7 +41,10 @@
 #' permitted values for the filters, attributes, biomart, dataset and host 
 #' arguments.
 #' 
+#' @return an SCESet object
+#' 
 #' @importFrom Biobase featureNames
+#' @importFrom biomaRt useMart
 #' @export
 #' 
 #' @examples
@@ -61,16 +64,17 @@ getBMFeatureAnnos <- function(object, filters="ensembl_transcript_id",
                               dataset="mmusculus_gene_ensembl",
                               host="www.ensembl.org") {
     ## Define Biomart Mart to use
-    if( is.null(host) )
-        bmart <- biomaRt::useMart(biomart=biomart, dataset=dataset)
+    if ( is.null(host) )
+        bmart <- biomaRt::useMart(biomart = biomart, dataset = dataset)
     else 
-        bmart <- biomaRt::useMart(biomart=biomart, dataset=dataset, host=host) 
+        bmart <- biomaRt::useMart(biomart = biomart, dataset = dataset, 
+                                  host = host) 
     ## Define feature IDs from SCESet object
     feature_ids <- featureNames(object)
     ## Get annotations from biomaRt
-    feature_info <- biomaRt::getBM(attributes=attributes, 
-                                   filters=filters, 
-                                   values=feature_ids, mart=bmart)
+    feature_info <- biomaRt::getBM(attributes = attributes, 
+                                   filters = filters, 
+                                   values = feature_ids, mart = bmart)
     ## Match the feature ids to the filters ids used to get info from biomaRt
     mm <- match(feature_ids, feature_info[[filters]])
     feature_info_full <- feature_info[mm, ]
@@ -132,6 +136,8 @@ getBMFeatureAnnos <- function(object, filters="ensembl_transcript_id",
 #' over transcripts to get accurate expression estimates for a gene). See the 
 #' following link for a discussion of RNA-seq expression units by Harold Pimentel:
 #' \url{https://haroldpimentel.wordpress.com/2014/05/08/what-the-fpkm-a-review-rna-seq-expression-units/}.
+#' 
+#' @return an SCESet object
 #' 
 #' @export
 #' 

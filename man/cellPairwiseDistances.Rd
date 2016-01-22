@@ -50,13 +50,11 @@ SCESet objects can contain a matrix of pairwise distances between cells. These
  is simply shorthand for \code{cellPairwiseDistances}.
 }
 \examples{
-\dontrun{
-#' data("sc_example_counts")
+data("sc_example_counts")
 data("sc_example_cell_info")
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 cellPairwiseDistances(example_sceset)
-}
 
 }
 \author{

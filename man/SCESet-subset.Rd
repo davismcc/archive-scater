@@ -38,6 +38,9 @@ index value of \code{NULL} is treated as if it were \code{integer(0)}.}
     \code{\link{drop}} for further details.
   }
 }
+\value{
+an SCESet object
+}
 \description{
 Subset method for SCESet objects, which subsets both the expression data,
 phenotype data, feature data and other slots in the object.

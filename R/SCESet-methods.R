@@ -69,6 +69,7 @@
 #'
 #' @importFrom Biobase annotatedDataFrameFrom
 #' @importFrom Biobase assayDataNew
+#' @importFrom edgeR cpm.default
 #' @import methods
 #' @export
 #' @examples
@@ -96,13 +97,13 @@ newSCESet <- function(exprsData = NULL,
          is.null(fpkmData) & is.null(cpmData))
         stop("Require at least one of exprsData, tpmData, fpkmData or countData arguments.")
     ## Check dimensions of data matrices
-
+    
     ## Check counts are a matrix; renames is_exprsData if not null
     if ( !is.null(countData) )
         countData <- as.matrix(countData)
     if ( !is.null(is_exprsData) )
         isexprs <- is_exprsData
-
+    
     ## If no exprsData provided define is_exprs from tpmData, fpkmData or countData
     if ( is.null(exprsData) ) {
         ## Define exprs data if null
@@ -167,13 +168,13 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
             message(paste0("Defining 'is_exprs' using exprsData and a lower exprs threshold of ", lowerDetectionLimit))
         }
     }
-
+    
     ## Generate valid phenoData and featureData if not provided
     if ( is.null(phenoData) )
         phenoData <- annotatedDataFrameFrom(exprsData, byrow = FALSE)
     if ( is.null(featureData) )
         featureData <- annotatedDataFrameFrom(exprsData, byrow = TRUE)
-
+    
     ## Check experimentData
     expData_null <- new("MIAME",
                         name = "<your name here>",
@@ -196,10 +197,10 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
     } else {
         expData <- expData_null
     }
-
+    
     ## Check valid useForExprs
     useForExprs <- match.arg(useForExprs, c("exprs","tpm","counts","fpkm"))
-
+    
     ## Generate new SCESet object
     assaydata <- assayDataNew("environment", exprs = exprsData,
                               is_exprs = isexprs)
@@ -212,7 +213,7 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
                    logExprsOffset = logExprsOffset,
                    logged = logged,
                    useForExprs = useForExprs)
-
+    
     ## Add non-null slots to assayData for SCESet object, omitting null slots
     if ( !is.null(tpmData) )
         tpm(sceset) <- tpmData
@@ -222,8 +223,8 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
         counts(sceset) <- countData
     if ( !is.null(cpmData) )
         cpm(sceset) <- cpmData
-
-
+    
+    
     ## Check validity of object
     validObject(sceset)
     sceset
@@ -236,81 +237,81 @@ Using log2(FPKM + logExprsOffset) for exprs slot. See also ?calculateFPKM and ?c
 setValidity("SCESet", function(object) {
     msg <- NULL
     valid <- TRUE
-
+    
     ## Check that the dimensions and names of the bootstraps slot are sensible
     if ( (length(object@bootstraps) != 0) && (nrow(object@bootstraps)
                                               != nrow(object)) ) {
-      valid <- FALSE
-      msg <- c(msg, "Number of boostrapped genes doesn't match number of genes in SCESet")
+        valid <- FALSE
+        msg <- c(msg, "Number of boostrapped genes doesn't match number of genes in SCESet")
     }
     if ( (length(object@bootstraps) != 0) && (ncol(object@bootstraps)
                                               != ncol(object)) ) {
-      valid <- FALSE
-      msg <- c(msg, "Number of boostrapped samples doesn't match number of samples in SCESet")
+        valid <- FALSE
+        msg <- c(msg, "Number of boostrapped samples doesn't match number of samples in SCESet")
     }
     if (  (length(object@bootstraps) != 0) &&
-         !identical(rownames(object@bootstraps), featureNames(object)) ) {
+          !identical(rownames(object@bootstraps), featureNames(object)) ) {
         valid <- FALSE
         msg <- c(msg, "Boostrap row names must match SCESet featureNames")
     }
     if (  (length(object@bootstraps) != 0) &&
-         !identical(colnames(object@bootstraps), sampleNames(object)) ) {
+          !identical(colnames(object@bootstraps), sampleNames(object)) ) {
         valid <- FALSE
         msg <- c(msg, "Boostrap column names must match SCESet sampleNames")
     }
     ## Check that the dimensions of the reducedDimension slot are sensible
     if ( (nrow(object@reducedDimension) != 0) &&
-        (nrow(object@reducedDimension) != ncol(object)) ) {
+         (nrow(object@reducedDimension) != ncol(object)) ) {
         valid <- FALSE
         msg <- c(msg, "Number of samples in reducedDimension doesn't match number of samples in SCESet")
     }
     if ( (nrow(object@reducedDimension) != 0) &&
-        !identical(rownames(object@reducedDimension), sampleNames(object)) ) {
+         !identical(rownames(object@reducedDimension), sampleNames(object)) ) {
         valid <- FALSE
         msg <- c(msg, "Row names of reducedDimension don't match sampleNames of SCESet")
     }
     ## Check that the dimensions of the cellPairwiseDistances slot are sensible
     if ( (nrow(object@cellPairwiseDistances) != ncol(object@cellPairwiseDistances)) ||
-        (nrow(object@cellPairwiseDistances) != 0 &&
-         nrow(object@cellPairwiseDistances) != ncol(object)) ) {
+         (nrow(object@cellPairwiseDistances) != 0 &&
+          nrow(object@cellPairwiseDistances) != ncol(object)) ) {
         valid <- FALSE
         msg <- c(msg, "cellPariwiseDistances must be of dimension ncol(SCESet) by ncol(SCESet)")
     }
     if ( (nrow(object@cellPairwiseDistances) != 0) &&
-        (!identical(rownames(object@cellPairwiseDistances),
-                    colnames(object@cellPairwiseDistances)) ||
-        !identical(rownames(object@cellPairwiseDistances), sampleNames(object))) ) {
+         (!identical(rownames(object@cellPairwiseDistances),
+                     colnames(object@cellPairwiseDistances)) ||
+          !identical(rownames(object@cellPairwiseDistances), sampleNames(object))) ) {
         valid <- FALSE
         msg <- c(msg,
                  "Row names and column names of cellPairwiseDistances must be equal to sampleNames(SCESet)")
     }
     ## Check that the dimensions of the featurePairwiseDistances slot are sensible
     if ( (nrow(object@featurePairwiseDistances) !=
-         ncol(object@featurePairwiseDistances)) ||
-        (nrow(object@featurePairwiseDistances) != 0 &&
-         nrow(object@featurePairwiseDistances) != nrow(object)) ) {
-      valid <- FALSE
-      msg <- c(msg, "featurePairwiseDistances must be of dimension nrow(SCESet) by nrow(SCESet)")
+          ncol(object@featurePairwiseDistances)) ||
+         (nrow(object@featurePairwiseDistances) != 0 &&
+          nrow(object@featurePairwiseDistances) != nrow(object)) ) {
+        valid <- FALSE
+        msg <- c(msg, "featurePairwiseDistances must be of dimension nrow(SCESet) by nrow(SCESet)")
     }
     if ( (nrow(object@featurePairwiseDistances) != 0) &&
-        (!identical(rownames(object@featurePairwiseDistances),
-                    colnames(object@featurePairwiseDistances)) ||
-         !identical(rownames(object@featurePairwiseDistances), featureNames(object))) ) {
-      valid <- FALSE
-      msg <- c(msg,
-               "Row names and column names of featurePairwiseDistances must be equal to featureNames(SCESet)")
+         (!identical(rownames(object@featurePairwiseDistances),
+                     colnames(object@featurePairwiseDistances)) ||
+          !identical(rownames(object@featurePairwiseDistances), featureNames(object))) ) {
+        valid <- FALSE
+        msg <- c(msg,
+                 "Row names and column names of featurePairwiseDistances must be equal to featureNames(SCESet)")
     }
     ## Check that we have sensible values for the counts
     if( any(is.na(exprs(object))) ) {
         warning( "The exprs data contain NA values." )
     }
     if ( (!is.null(counts(object))) && any(counts(object) < 0, na.rm = TRUE) )
-          warning( "The count data contain negative values." )
+        warning( "The count data contain negative values." )
     if( !(object@useForExprs %in% c("exprs", "tpm", "fpkm", "counts")) ) {
-      valid <- FALSE
-      msg <- c(msg, "object@useForExprs must be one of 'exprs', 'tpm', 'fpkm', 'counts'")
+        valid <- FALSE
+        msg <- c(msg, "object@useForExprs must be one of 'exprs', 'tpm', 'fpkm', 'counts'")
     }
-
+    
     if(valid) TRUE else msg
 })
 
@@ -323,6 +324,7 @@ setValidity("SCESet", function(object) {
 #' Subset method for SCESet objects, which subsets both the expression data,
 #' phenotype data, feature data and other slots in the object.
 #'
+#' @return an SCESet object
 #' @rdname SCESet-subset
 #' @name SCESet-subset
 NULL
@@ -826,7 +828,8 @@ setReplaceMethod("norm_exprs", signature(object = "SCESet", value = "matrix"),
 ################################################################################
 ### stand_exprs
 
-#' Accessors for the 'stand_exprs' (standardised expression) element of an SCESet object.
+#' Accessors for the 'stand_exprs' (standardised expression) element of an 
+#' SCESet object.
 #'
 #' The \code{stand_exprs} element of the arrayData slot in an SCESet object holds
 #' a matrix containing standardised (mean-centred, variance standardised, by
@@ -912,12 +915,11 @@ setReplaceMethod("stand_exprs", signature(object = "SCESet", value = "matrix"),
 #' @aliases tpm tpm,SCESet-method tpm<-,SCESet,matrix-method
 #'
 #' @examples
-#' \dontrun{
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' example_sceset <- newSCESet(countData = sc_example_counts)
 #' tpm(example_sceset)
-#' }
+#' 
 tpm.SCESet <- function(object) {
     object@assayData$tpm
 }
@@ -968,12 +970,11 @@ setReplaceMethod("tpm", signature(object = "SCESet", value = "matrix"),
 #' @aliases norm_tpm norm_tpm,SCESet-method norm_tpm<-,SCESet,matrix-method
 #'
 #' @examples
-#' \dontrun{
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' example_sceset <- newSCESet(countData = sc_example_counts)
 #' norm_tpm(example_sceset)
-#' }
+#' 
 norm_tpm.SCESet <- function(object) {
     object@assayData$norm_tpm
 }
@@ -1024,12 +1025,10 @@ setReplaceMethod("norm_tpm", signature(object = "SCESet", value = "matrix"),
 #' @aliases cpm cpm,SCESet-method cpm<-,SCESet,matrix-method
 #'
 #' @examples
-#' \dontrun{
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' example_sceset <- newSCESet(countData=sc_example_counts)
-#' cpm(example_sceset)
-#' }
+#' cpm(example_sceset)[1:10, 1:6]
 cpm.SCESet <- function(object) {
     object@assayData$cpm
 }
@@ -1080,12 +1079,11 @@ setReplaceMethod("cpm", signature(object = "SCESet", value = "matrix"),
 #' @aliases norm_cpm norm_cpm,SCESet-method norm_cpm<-,SCESet,matrix-method
 #'
 #' @examples
-#' \dontrun{
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' example_sceset <- newSCESet(countData=sc_example_counts)
 #' norm_cpm(example_sceset)
-#' }
+#' 
 norm_cpm.SCESet <- function(object) {
     object@assayData$norm_cpm
 }
@@ -1136,12 +1134,11 @@ setReplaceMethod("norm_cpm", signature(object = "SCESet", value = "matrix"),
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' example_sceset <- newSCESet(countData = sc_example_counts)
 #' fpkm(example_sceset)
-#' }
+#' 
 fpkm.SCESet <- function(object) {
     object@assayData$fpkm
 }
@@ -1192,12 +1189,11 @@ setReplaceMethod("fpkm", signature(object = "SCESet", value = "matrix"),
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' example_sceset <- newSCESet(countData = sc_example_counts)
 #' norm_fpkm(example_sceset)
-#' }
+#' 
 norm_fpkm.SCESet <- function(object) {
     object@assayData$norm_fpkm
 }
@@ -1249,10 +1245,11 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 #' @aliases bootstraps bootstraps,SCESet-method bootstraps<-,SCE-Set,array-method
 #'
 #' @examples
-#' \dontrun{
-#' ## If 'object' is an SCESet:
-#' bootstraps(object)
-#' }
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' bootstraps(example_sceset)
 #'
 bootstraps.SCESet <- function(object) {
     object@bootstraps
@@ -1261,16 +1258,17 @@ bootstraps.SCESet <- function(object) {
 #' @rdname bootstraps
 #' @aliases bootstraps
 #' @export
-setMethod("bootstraps", signature(object="SCESet"), bootstraps.SCESet)
+setMethod("bootstraps", signature(object = "SCESet"), bootstraps.SCESet)
 
 
 #' @name bootstraps<-
 #' @aliases bootstraps
 #' @rdname bootstraps
 #' @export "bootstraps<-"
-setReplaceMethod("bootstraps", signature(object="SCESet", value="array"),
+setReplaceMethod("bootstraps", signature(object = "SCESet", value = "array"),
                  function(object, value) {
-                     if( (nrow(value) == nrow(object)) & (ncol(value) == ncol(object)) ) {
+                     if ( (nrow(value) == nrow(object)) & 
+                          (ncol(value) == ncol(object)) ) {
                          object@bootstraps <- value
                          return(object)
                      } else
@@ -1305,13 +1303,11 @@ setReplaceMethod("bootstraps", signature(object="SCESet", value="array"),
 #'
 #' @export
 #' @examples
-#' \dontrun{
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' reducedDimension(example_sceset)
-#' }
 #'
 reducedDimension.SCESet <- function(object) {
     object@reducedDimension
@@ -1320,7 +1316,7 @@ reducedDimension.SCESet <- function(object) {
 #' @rdname reducedDimension
 #' @aliases reducedDimension
 #' @export
-setMethod("reducedDimension", signature(object="SCESet"),
+setMethod("reducedDimension", signature(object = "SCESet"),
           reducedDimension.SCESet)
 
 #' @rdname reducedDimension
@@ -1333,21 +1329,22 @@ redDim.SCESet <- function(object) {
 #' @rdname reducedDimension
 #' @aliases reducedDimension
 #' @export
-setMethod("redDim", signature(object="SCESet"), redDim.SCESet)
+setMethod("redDim", signature(object = "SCESet"), redDim.SCESet)
 
 #' @name reducedDimension<-
 #' @aliases reducedDimension
 #' @rdname reducedDimension
 #' @exportMethod "reducedDimension<-"
-setReplaceMethod("reducedDimension", signature(object="SCESet", value="matrix"),
+setReplaceMethod("reducedDimension", signature(object = "SCESet", 
+                                               value = "matrix"),
                  function(object, value) {
-                     if( nrow(value) == ncol(object) ) {
-                        if(is.null(rownames(value))) {
-                          rownames(value) <- sampleNames(object)
-                        } else {
-                          if(!identical(rownames(value), sampleNames(object)))
-                            stop("Rownames of reduced dimension must be NULL or equal to sampleNames(SCESet)")
-                        }
+                     if ( nrow(value) == ncol(object) ) {
+                         if (is.null(rownames(value))) {
+                             rownames(value) <- sampleNames(object)
+                         } else {
+                             if (!identical(rownames(value), sampleNames(object)))
+                                 stop("Rownames of reduced dimension must be NULL or equal to sampleNames(SCESet)")
+                         }
                          object@reducedDimension <- value
                          return(object)
                      }
@@ -1360,20 +1357,20 @@ setReplaceMethod("reducedDimension", signature(object="SCESet", value="matrix"),
 #' @aliases reducedDimension
 #' @rdname reducedDimension
 #' @exportMethod "redDim<-"
-setReplaceMethod("redDim", signature(object="SCESet", value="matrix"),
+setReplaceMethod("redDim", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
-                   if( nrow(value) == ncol(object) ) {
-                     if(is.null(rownames(value))) {
-                       rownames(value) <- sampleNames(object)
-                     } else {
-                       if(!identical(rownames(value), sampleNames(object)))
-                         stop("Rownames of reduced dimension must be NULL or equal to sampleNames(SCESet)")
+                     if ( nrow(value) == ncol(object) ) {
+                         if (is.null(rownames(value))) {
+                             rownames(value) <- sampleNames(object)
+                         } else {
+                             if (!identical(rownames(value), sampleNames(object)))
+                                 stop("Rownames of reduced dimension must be NULL or equal to sampleNames(SCESet)")
+                         }
+                         object@reducedDimension <- value
+                         return(object)
                      }
-                     object@reducedDimension <- value
-                     return(object)
-                   }
-                   else
-                     stop("Reduced dimension matrix supplied is of incorrect size.
+                     else
+                         stop("Reduced dimension matrix supplied is of incorrect size.
                               Rows of reduced dimension matrix should correspond to cells, i.e. columns of SCESet object.")
                  } )
 
@@ -1403,13 +1400,11 @@ setReplaceMethod("redDim", signature(object="SCESet", value="matrix"),
 #'
 #' @export
 #' @examples
-#' \dontrun{
-#' #' data("sc_example_counts")
+#' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' cellPairwiseDistances(example_sceset)
-#' }
 #'
 cellPairwiseDistances.SCESet <- function(object) {
     object@cellPairwiseDistances
@@ -1418,7 +1413,7 @@ cellPairwiseDistances.SCESet <- function(object) {
 #' @rdname cellPairwiseDistances
 #' @aliases cellPairwiseDistances
 #' @export
-setMethod("cellPairwiseDistances", signature(object="SCESet"),
+setMethod("cellPairwiseDistances", signature(object = "SCESet"),
           cellPairwiseDistances.SCESet)
 
 #' @rdname cellPairwiseDistances
@@ -1431,15 +1426,16 @@ cellDistSCESet <- function(object) {
 #' @rdname cellPairwiseDistances
 #' @aliases cellPairwiseDistances
 #' @export
-setMethod("cellDist", signature(object="SCESet"), cellDistSCESet)
+setMethod("cellDist", signature(object = "SCESet"), cellDistSCESet)
 
 #' @name cellPairwiseDistances<-
 #' @aliases cellPairwiseDistances
 #' @rdname cellPairwiseDistances
 #' @exportMethod "cellPairwiseDistances<-"
-setReplaceMethod("cellPairwiseDistances", signature(object="SCESet", value="matrix"),
+setReplaceMethod("cellPairwiseDistances", signature(object = "SCESet", 
+                                                    value = "matrix"),
                  function(object, value) {
-                     if( nrow(value) == ncol(object) ) {
+                     if ( nrow(value) == ncol(object) ) {
                          object@cellPairwiseDistances <- value
                          return(object)
                      }
@@ -1451,9 +1447,9 @@ setReplaceMethod("cellPairwiseDistances", signature(object="SCESet", value="matr
 #' @aliases cellPairwiseDistances
 #' @rdname cellPairwiseDistances
 #' @exportMethod "cellDist<-"
-setReplaceMethod("cellDist", signature(object="SCESet", value="matrix"),
+setReplaceMethod("cellDist", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
-                     if( nrow(value) == ncol(object) ) {
+                     if ( nrow(value) == ncol(object) ) {
                          object@cellPairwiseDistances <- value
                          return(object)
                      }
@@ -1487,13 +1483,11 @@ setReplaceMethod("cellDist", signature(object="SCESet", value="matrix"),
 #' @return An SCESet object containing new feature pairwise distances matrix.
 #' @export
 #' @examples
-#' \dontrun{
-#' #' data("sc_example_counts")
+#' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' featurePairwiseDistances(example_sceset)
-#' }
 #'
 featurePairwiseDistancesSCESet <- function(object) {
     object@featurePairwiseDistances
@@ -1502,7 +1496,7 @@ featurePairwiseDistancesSCESet <- function(object) {
 #' @rdname featurePairwiseDistances
 #' @aliases featurePairwiseDistances
 #' @export
-setMethod("featurePairwiseDistances", signature(object="SCESet"),
+setMethod("featurePairwiseDistances", signature(object = "SCESet"),
           featurePairwiseDistancesSCESet)
 
 #' @aliases featurePairwiseDistances
@@ -1515,15 +1509,16 @@ featDistSCESet <- function(object) {
 #' @aliases featurePairwiseDistances
 #' @rdname featurePairwiseDistances
 #' @export
-setMethod("featDist", signature(object="SCESet"), featDistSCESet)
+setMethod("featDist", signature(object = "SCESet"), featDistSCESet)
 
 #' @name featurePairwiseDistances<-
 #' @aliases featurePairwiseDistances
 #' @rdname featurePairwiseDistances
 #' @export "featurePairwiseDistances<-"
-setReplaceMethod("featurePairwiseDistances", signature(object="SCESet", value="matrix"),
+setReplaceMethod("featurePairwiseDistances", signature(object = "SCESet", 
+                                                       value = "matrix"),
                  function(object, value) {
-                     if( nrow(value) == nrow(object) ) {
+                     if ( nrow(value) == nrow(object) ) {
                          object@featurePairwiseDistances <- value
                          return(object)
                      }
@@ -1535,9 +1530,9 @@ setReplaceMethod("featurePairwiseDistances", signature(object="SCESet", value="m
 #' @rdname featurePairwiseDistances
 #' @aliases featurePairwiseDistances
 #' @export "featDist<-"
-setReplaceMethod("featDist", signature(object="SCESet", value="matrix"),
+setReplaceMethod("featDist", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
-                     if( nrow(value) == nrow(object) ) {
+                     if ( nrow(value) == nrow(object) ) {
                          object@featurePairwiseDistances <- value
                          return(object)
                      }
@@ -1559,6 +1554,14 @@ setReplaceMethod("featDist", signature(object="SCESet", value="matrix"),
 #' @rdname toCellDataSet
 #' @name toCellDataSet
 #' @return An object of class \code{SCESet}
+#' @examples 
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' if ( requireNamespace("monocle") ) {
+#'     toCellDataSet(example_sceset)
+#' }
 toCellDataSet <- function(sce, exprs_values = "exprs") {
     pkgAvail <- requireNamespace("monocle")
     if (pkgAvail) {
@@ -1570,12 +1573,14 @@ toCellDataSet <- function(sce, exprs_values = "exprs") {
                             tpm = tpm(sce),
                             fpkm = fpkm(sce),
                             counts = counts(sce))
-        cds <- monocle::newCellDataSet(
+        if ( exprs_values == "exprs" && sce@logged )
+            exprsData <- 2 ^ exprsData - sce@logExprsOffset
+        celldataset <- monocle::newCellDataSet(
             exprsData, phenoData = phenoData(sce), 
             featureData = featureData(sce),
             lowerDetectionLimit = sce@lowerDetectionLimit)
-        cds@reducedDimS <- t(redDim(sce))
-        return( cds )
+        celldataset@reducedDimS <- t(redDim(sce))
+        celldataset
     }
     else
         stop("Require package monocle to be installed to use this function.")
@@ -1595,7 +1600,16 @@ toCellDataSet <- function(sce, exprs_values = "exprs") {
 #' @rdname fromCellDataSet
 #' @name fromCellDataSet
 #' @return An object of class \code{SCESet}
-fromCellDataSet <- function(cds, exprs_values = "tpm", logged=FALSE) {
+#' @examples 
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' if ( requireNamespace("monocle") ) {
+#'     # cds <- toCellDataSet(example_sceset) # not run 
+#'     # sceset <- fromCellDataSet(cds) # not run 
+#' }
+fromCellDataSet <- function(cds, exprs_values = "tpm", logged = FALSE) {
     pkgAvail <- requireNamespace("monocle")
     if (pkgAvail) {
         if (!is(cds,'CellDataSet')) stop('cds must be of type CellDataSet from package monocle')
@@ -1604,15 +1618,15 @@ fromCellDataSet <- function(cds, exprs_values = "tpm", logged=FALSE) {
                                   c("exprs", "tpm", "fpkm", "counts"))
         exprsData <- countData <- tpmData <- fpkmData <- NULL
         if (exprs_values == "exprs") {
-          exprsData <- exprs(cds)
+            exprsData <- exprs(cds)
         } else if (exprs_values == "tpm") {
-          tpmData <- exprs(cds)
+            tpmData <- exprs(cds)
         } else if (exprs_values == "fpkm") {
-          fpkmData <- exprs(cds)
+            fpkmData <- exprs(cds)
         } else {
-          countData <- exprs(cds)
+            countData <- exprs(cds)
         }
-
+        
         sce <- newSCESet(exprsData = exprsData, tpmData = tpmData,
                          fpkmData = fpkmData, countData = countData,
                          phenoData = phenoData(cds),
@@ -1623,15 +1637,15 @@ fromCellDataSet <- function(cds, exprs_values = "tpm", logged=FALSE) {
         ## now try and preserve a reduced dimension representation
         ## this is really not elegant - KC
         rds <- cds@reducedDimS
-        if(length(rds) == 0) {
-          rds <- cds@reducedDimA
+        if (length(rds) == 0) {
+            rds <- cds@reducedDimA
         } 
-        if(length(rds) == 2 * ncol(sce)) { # something is there and of the right dimension
-          if(nrow(rds) == 2) {
-            redDim(sce) <- t(rds)
-          } else if(ncol(rds) == 2) {
-            redDim(sce) <- rds
-          } # else do nothing
+        if (length(rds) == 2 * ncol(sce)) { # something is there and of the right dimension
+            if (nrow(rds) == 2) {
+                redDim(sce) <- t(rds)
+            } else if (ncol(rds) == 2) {
+                redDim(sce) <- rds
+            } # else do nothing
         }
         
         return( sce )
@@ -1666,15 +1680,15 @@ fromCellDataSet <- function(cds, exprs_values = "tpm", logged=FALSE) {
 #' all(exprs(example_sceset) == getExprs(example_sceset)) # FALSE
 #' all(counts(example_sceset) == getExprs(example_sceset)) # TRUE
 getExprs <- function(object) {
-  if(!is(object,'SCESet')) stop('object must be of type SCESet')
-
-  x <- switch(object@useForExprs,
-              exprs = exprs(object),
-              tpm = tpm(object),
-              fpkm = fpkm(object),
-              counts = counts(object))
-
-  if(is.null(x)) warning(paste("Slot for", object@useForExprs, "is empty; returning NULL"))
-
-  return( x )
+    if (!is(object,'SCESet')) stop('object must be of type SCESet')
+    
+    x <- switch(object@useForExprs,
+                exprs = exprs(object),
+                tpm = tpm(object),
+                fpkm = fpkm(object),
+                counts = counts(object))
+    
+    if(is.null(x)) warning(paste("Slot for", object@useForExprs, "is empty; returning NULL"))
+    
+    return( x )
 }

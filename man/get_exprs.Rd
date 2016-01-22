@@ -28,6 +28,9 @@ expression values) or \code{"stand_exprs"} (standardised expression values)
 or any other slots that have been added to the \code{"assayData"} slot by 
 the user.}
 }
+\value{
+a matrix of expression values
+}
 \description{
 Access by name a matrix of expression values, one row for each feature (gene, 
 exon, region, etc), and one column for each cell stored an element of the

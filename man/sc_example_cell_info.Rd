@@ -12,6 +12,9 @@ Wellcome Trust Centre for Human Genetics, Oxford
 \usage{
 sc_example_cell_info
 }
+\value{
+NULL, but makes aavailable a data frame with cell metadata
+}
 \description{
 This data.frame contains cell metadata information for the 40 
 cells included in the example \code{counts} dataset included in the package.

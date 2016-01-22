@@ -26,6 +26,9 @@ is_exprs(object) <- value
 
 \item{value}{an integer matrix}
 }
+\value{
+a logical matrix indicating if observations are "expressed" or not
+}
 \description{
 The is_exprs element holds a logical matrix indicating whether or not each
 observation is above the defined lowerDetectionLimit in the SCESet object. It

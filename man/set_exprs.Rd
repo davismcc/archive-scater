@@ -20,6 +20,9 @@ matrix is to be assigned (can already exist or not).}
 \item{value}{a numeric or integer matrix matching the dimensions of the other
 elements of the \code{assayData} slot of the \code{SCESet} object.}
 }
+\value{
+NULL, but adds expression data to the SCESet object
+}
 \description{
 The assayData slot of an SCESet object holds the expression data matrices. 
 This functions makes it convenient to add new transformations of the 

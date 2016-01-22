@@ -73,6 +73,8 @@ readSalmonResultsOneSample <- function(directory) {
 #' results per directory; multiple adundance results in a given directory will 
 #' be problematic.
 #' 
+#' @return an SCESet object
+#' 
 #' @export
 #' @examples
 #' \dontrun{

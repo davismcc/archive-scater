@@ -53,13 +53,11 @@ size. The function \code{redDim} is simply shorthand for
 \code{reducedDimension}.
 }
 \examples{
-\dontrun{
 data("sc_example_counts")
 data("sc_example_cell_info")
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 reducedDimension(example_sceset)
-}
 
 }
 \author{

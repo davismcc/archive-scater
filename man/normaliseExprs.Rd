@@ -36,6 +36,9 @@ expression slot, \code{'tpm'} the transcripts-per-million slot or
 \item{...}{arguments passed to \code{normaliseExprs} (in the case of 
 \code{normalizeExprs}) or to \code{\link[edgeR]{calcNormFactors}}.}
 }
+\value{
+an SCESet object
+}
 \description{
 Compute normalised expression values from an SCESet object and return the 
 object with the normalsed expression values added.

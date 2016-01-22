@@ -12,6 +12,9 @@ pData(x) <- value
 
 \item{value}{AnnotatedDataFrame to replace existing phenoData}
 }
+\value{
+an SCESet object with replaced phenoData
+}
 \description{
 Replacement for phenoData
 }
