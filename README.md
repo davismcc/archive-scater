@@ -97,7 +97,7 @@ and functionality of `scater`.
 
 The diagram below provised an overview of the pre-processing and QC workflow possible in `scater`, listing the functions that can be used at various stages.
 
-![Diagram outlining the scater workflow](https://github.com/davismcc/scater/raw/master/inst/figures/scater_qc_workflow.png)
+![Diagram outlining the scater workflow](inst/figures/scater_qc_workflow.png?raw=true "Diagram outlining the scater workflow")
 
 ## Highlights
 
