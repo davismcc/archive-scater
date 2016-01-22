@@ -1,3 +1,4 @@
 library(testthat)
 library(scater)
-test_package("scater")
+
+test_check("scater")

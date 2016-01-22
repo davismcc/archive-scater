@@ -7,6 +7,8 @@
 \alias{plotPCASCESet}
 \title{Plot PCA for an SCESet object}
 \usage{
+plotPCA(object, ...)
+
 plotPCASCESet(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
   colour_by = NULL, shape_by = NULL, size_by = NULL, feature_set = NULL,
   return_SCESet = FALSE, scale_features = FALSE, draw_plot = TRUE,
@@ -21,6 +23,8 @@ plotPCASCESet(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
 }
 \arguments{
 \item{object}{an \code{SCESet} object}
+
+\item{...}{further arguments passed to \code{\link{plotPCASCESet}}}
 
 \item{ntop}{numeric scalar indicating the number of most variable features to 
 use for the PCA. Default is \code{500}, but any \code{ntop} argument is 

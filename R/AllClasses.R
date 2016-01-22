@@ -43,7 +43,6 @@
 #' @rdname SCESet
 #' @inheritParams Biobase ExpressionSet
 #' @aliases SCESet-class
-#' @import BiocGenerics
 #' @exportClass SCESet
 setClass("SCESet",
          contains = "ExpressionSet",

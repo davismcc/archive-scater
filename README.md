@@ -53,24 +53,28 @@ below should help with package installations.
 CRAN packages:
 
 ```{r}
-install.packages(c("cowplot", "data.table", "ggplot2", "ggthemes", "knitr",
-    "matrixStats", "MASS", "plyr", "reshape2", "rjson", "Rtsne", "testthat",
-    "viridis"))
+install.packages(c("data.table", "ggplot2", "knitr", "matrixStats", "MASS",
+                "plyr", "reshape2", "rjson", "testthat", "viridis"))
 ```
 
 Bioconductor packages:
 
 ```{r}
 source("http://bioconductor.org/biocLite.R")
-biocLite(c("Biobase", "BiocGenerics", "biomaRt", "edgeR", "limma", "monocle", "rhdf5"))
+biocLite(c("Biobase", "BiocGenerics", "biomaRt", "edgeR", "limma", "rhdf5"))
 ```
 
-You might like to install `dplyr` from Hadley Wickham's GitHub site (`dplyr` was
-not available on CRAN for R 3.2.0 when this was written):
+Optional packages that are not strictly required but enhance the functionality of `scater`:
 
 ```{r}
-devtools::install_github("hadley/lazyeval")
-devtools::install_github("hadley/dplyr")
+install.packages(c("cowplot", "cluster", "mvoutlier", "parallel", "Rtsne"))
+biocLite(c("destiny", "monocle"))
+```
+
+You might also like to install `dplyr` for convenient data manipulation:
+
+```{r}
+install.packages("dplyr")
 ```
 
 We plan to contribute `scater` to Bioconductor in the near future.
@@ -97,7 +101,7 @@ and functionality of `scater`.
 
 The diagram below provised an overview of the pre-processing and QC workflow possible in `scater`, listing the functions that can be used at various stages.
 
-![Diagram outlining the scater workflow](inst/figures/scater_qc_workflow.png)
+![Diagram outlining the scater workflow](inst/scater_qc_workflowpng)
 
 
 ## Highlights

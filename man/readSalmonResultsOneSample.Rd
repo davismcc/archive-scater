@@ -4,14 +4,11 @@
 \alias{readSalmonResultsOneSample}
 \title{Read Salmon results for a single sample into a list}
 \usage{
-readSalmonResultsOneSample(directory, nlines_header = 11)
+readSalmonResultsOneSample(directory)
 }
 \arguments{
 \item{directory}{character string giving the path to the directory containing
 the Salmon results for the sample.}
-
-\item{nlines_header}{integer giving the number of header lines in the 
-`quant.sf` file produced by Salmon. Defaults to 11.}
 }
 \value{
 A list with two elements: (1) a data.frame \code{abundance} with 

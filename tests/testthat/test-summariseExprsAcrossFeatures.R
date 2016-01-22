@@ -12,7 +12,7 @@ test_that("we can compute standard QC metrics", {
     feature_id = paste("feature", rep(1:500, each = 4, sep = "_"))))
     fData(example_sceset) <- fd
     example_sceset_summarised <- 
-    summariseExprsAcrossFeatures(example_sceset, exprs_values = "counts")
+        summariseExprsAcrossFeatures(example_sceset, exprs_values = "counts")
     
     expect_that(example_sceset_summarised, is_a("SCESet"))
     expect_equivalent(nrow(example_sceset_summarised), 500)

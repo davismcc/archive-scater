@@ -83,12 +83,7 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
         stop("object must be an SCESet.")
     ## Define expression values to be used
     exprs_values <- match.arg(exprs_values, c("exprs", "tpm", "fpkm", "counts"))
-    exprs_mat <- switch(exprs_values,
-                        exprs = exprs(object),
-                        tpm = tpm(object),
-                        cpm = cpm(object),
-                        fpkm = fpkm(object),
-                        counts = counts(object))
+    exprs_mat <- get_exprs(object, exprs_values)
     if ( exprs_values == "exprs" && object@logged ) {
         exprs_mat <- 2 ^ exprs_mat - object@logExprsOffset
     }
@@ -105,6 +100,10 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
     ## Compute normalisation factors with calcNormFactors from edgeR
     norm_factors <- edgeR::calcNormFactors.default(exprs_mat_for_norm, 
                                                    method = method, ...)
+    if ( any(is.na(norm_factors)) ) {
+        norm_factors[is.na(norm_factors)] <- 1
+        warning("One or more normalisation factors were computed to be NA. NA values have been replaced with 1.")
+    }
     if ( !is.null(feature_set) ) {
         ## Divide expression values by the normalisation factors and total 
         expression 

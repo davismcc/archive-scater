@@ -33,7 +33,7 @@
     )
 }
 
-#' Get nice plotting colour schemes for very general colour variables
+# Get nice plotting colour schemes for very general colour variables
 .resolve_plot_colours <- function(plot_out, colour_by, colour_by_name,
                                   fill = FALSE) {
     if ( fill ) {
@@ -567,6 +567,7 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
     
 
 #' @rdname plotPCA
+#' @param ... further arguments passed to \code{\link{plotPCASCESet}}
 #' @aliases plotPCA
 #' @export
 setMethod("plotPCA", signature("SCESet"),

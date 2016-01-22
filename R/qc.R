@@ -608,13 +608,7 @@ findImportantPCs <- function(object, variable="total_features",
                                       digits = 2, format = "fg", flag = "#"), ")")
     top5 <- order(pca_r_squared, decreasing = TRUE)[1:5]
     if ( plot_type == "pairs-pcs" ) {
-#         ## Define colours for points
-#         Col <- rep("firebrick", nrow(pca$x))
-#         Col[!x_na] <- colour_pal[x_int]
-#         ## Plot these bad boys
-#         ## Get rid of any NA variable columns of PC so that top ordering aligns
-#         par(bty = "n", col.lab = "gray60")
-#         pairs(pca$x[, top5], pch = 21, col = "gray70", bg = Col)
+        ## Define colours for points
         colour_by <- pData(object)[, variable]
         ## Generate a larger data.frame for pairs plot
         df_to_expand <- pca$x[, top5]
@@ -639,13 +633,6 @@ findImportantPCs <- function(object, variable="total_features",
             theme_bw(theme_size)
         plot_out <- .resolve_plot_colours(plot_out, colour_by, get("variable"),
                                           fill = TRUE)
-#         if ( typeof_x == "discrete" ) {
-#             plot_out <- plot_out + 
-#                 ggthemes::scale_fill_tableau(name = get("variable"))
-#         } else {
-#             plot_out <- plot_out +
-#                 viridis::scale_fill_viridis(name = get("variable"))
-#         }
         return(plot_out)
     } else {
         top6 <- order(pca_r_squared, decreasing = TRUE)[1:6]
@@ -663,7 +650,7 @@ findImportantPCs <- function(object, variable="total_features",
                 geom_violin(fill = "aliceblue", colour = "gray60", 
                             alpha = 0.6, scale = "width") +
                 geom_boxplot(width = 0.25, outlier.size = 0) +
-                geom_dotplot(fill = "gray10", alpha = 0.6, shape = 21, 
+                geom_dotplot(fill = "gray10", alpha = 0.6, 
                              binaxis = 'y', stackdir = 'center', dotsize = 1)
 #                 geom_point(fill = "gray10", alpha = 0.5, shape = 21,
 #                            position = position_jitter(height = 0, width = 0.2))

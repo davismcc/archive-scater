@@ -1,5 +1,18 @@
 # ### defining all generic methods
- 
+
+# #' Importing generic functions from BiocGenerics
+# #' 
+# #' @importFrom BiocGenerics plotPCA
+# #' @importFrom BiocGenerics counts
+# #' @importFrom BiocGenerics counts<-
+# #' @importFrom BiocGenerics rownames
+# #' @importFrom BiocGenerics rownames<-
+# #' @importFrom BiocGenerics colnames
+# #' @importFrom BiocGenerics colnames<-
+# #' @importFrom BiocGenerics nrow
+# #' @importFrom BiocGenerics ncol
+
+
 #' Replacement for phenoData
 #' 
 #' @name pData<-
@@ -112,6 +125,20 @@ setGeneric("fpkm", function(object) {standardGeneric("fpkm")})
 #' @docType methods
 #' @rdname fpkm
 setGeneric("fpkm<-", function(object, value) {standardGeneric("fpkm<-")})
+
+
+#' @name counts
+#' @export
+#' @docType methods
+#' @rdname counts
+setGeneric("counts", function(object) {standardGeneric("counts")})
+
+#' @name counts<-
+#' @export
+#' @docType methods
+#' @rdname counts
+setGeneric("counts<-", function(object, value) {standardGeneric("counts<-")})
+
 
 #' @name norm_counts
 #' @export
@@ -291,17 +318,25 @@ setGeneric("plotExpression", function(object, ...) {
 })
 
 
+# #' @name plotPCA
+# #' @export
+# #' @docType methods
+# #' @rdname plotPCA
+# if ( !isGeneric("plotPCA") ) {
+#     ## plotPCA is a generic in BiocGenerics_0.14.0 in R 3.2.0 - for earlier
+#     ## versions need to manually add it as a generic
+#     setGeneric("plotPCA", function(object, ...) {
+#         standardGeneric("plotPCA")
+#     })
+# }
+
 #' @name plotPCA
 #' @export
 #' @docType methods
 #' @rdname plotPCA
-if ( !isGeneric("plotPCA") ) {
-    ## plotPCA is a generic in BiocGenerics_0.14.0 in R 3.2.0 - for earlier
-    ## versions need to manually add it as a generic
-    setGeneric("plotPCA", function(object, ...) {
-        standardGeneric("plotPCA")
-    })
-}
+setGeneric("plotPCA", function(object, ...) {
+    standardGeneric("plotPCA")
+})
 
 #' @name plotTSNE
 #' @export

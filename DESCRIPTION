@@ -12,7 +12,6 @@ Description: A collection of tools for doing various analyses of single-cell
 Depends:
     R (>= 3.2),
     Biobase,
-    BiocGenerics,
     ggplot2,
     methods
 Imports:
