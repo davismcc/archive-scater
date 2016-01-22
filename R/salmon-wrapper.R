@@ -67,8 +67,6 @@ readSalmonResultsOneSample <- function(directory) {
 #' @param logExprsOffset numeric scalar, providing the offset used when doing
 #' log2-transformations of expression data to avoid trying to take logs of zero.
 #' Default offset value is \code{1}.
-#' @param nlines_header integer giving the number of header lines in the 
-#' `quant.sf` file produced by Salmon. Defaults to 11.
 #' @param verbose logical, should function provide output about progress?
 #' 
 #' @details This function expects to find only one set of Salmon abundance 
