@@ -81,7 +81,8 @@ You might also like to install `dplyr` for convenient data manipulation:
 install.packages("dplyr")
 ```
 
-We plan to contribute `scater` to Bioconductor in the near future.
+The `scater` package has been submitted to 
+[Bioconductor](http://bioconductor.org/) and is currently under review.
 
 
 ## Getting started
