@@ -36,12 +36,23 @@ This package currently lives on GitHub, so I recommend using Hadley Wickham's
 `devtools` installed, then install that from CRAN (as shown below) and then run
 the call to install `scater`:
 
+**If you are using the development version of R, 3.3:**
 ```{r}
 install.packages("devtools")
 devtools::install_github("davismcc/scater", build_vignettes = TRUE)
 ```
 
-Using the most recent version of R is strongly recommended (R 3.2.2 at the time
+**If you are using the current release version of R, 3.2.3:**
+```{r}
+devtools::install_github("davismcc/scater", ref = "release-R-3.2", build_vignettes = TRUE)
+```
+
+I have recently submitted `scater` to Bioconductor, so development of the 
+package is proceeding with the development version of R (version 3.3). As such, 
+the master branch of this repository requires R >= 3.3. If you are using the
+release version of R, then please install using the adjusted command above.
+
+Using the most recent version of R is strongly recommended (R 3.2.3 at the time
 of writing). Effort has been made to ensure the package works with R >3.0, but
 the package has not been tested with R <3.1.1.
 
