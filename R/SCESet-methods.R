@@ -93,8 +93,8 @@ newSCESet <- function(exprsData = NULL,
                       useForExprs = "exprs")
 {
     ## Check that we have some expression data
-    if ( is.null(exprsData) & is.null(countData) & is.null(tpmData) &
-         is.null(fpkmData) & is.null(cpmData))
+    if ( is.null(exprsData) && is.null(countData) && is.null(tpmData) &
+         is.null(fpkmData) && is.null(cpmData))
         stop("Require at least one of exprsData, tpmData, fpkmData or countData arguments.")
     ## Check dimensions of data matrices
     
@@ -1267,7 +1267,7 @@ setMethod("bootstraps", signature(object = "SCESet"), bootstraps.SCESet)
 #' @export "bootstraps<-"
 setReplaceMethod("bootstraps", signature(object = "SCESet", value = "array"),
                  function(object, value) {
-                     if ( (nrow(value) == nrow(object)) & 
+                     if ( (nrow(value) == nrow(object)) && 
                           (ncol(value) == ncol(object)) ) {
                          object@bootstraps <- value
                          return(object)

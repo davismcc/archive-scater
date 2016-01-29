@@ -51,15 +51,16 @@
 #' \describe{
 #'  \item{total_counts}{Total number of counts for the cell (aka ``library size'')}
 #'  \item{log10_total_counts}{Total counts on the log10-scale}
-#'  \item{coverage}{The number of features for the cell that have expression 
-#'  above the detection limit (default detection limit is zero)}
+#'  \item{total_features}{The number of endogenous features (i.e. not control 
+#'  features) for the cell that have expression above the detection limit
+#'   (default detection limit is zero)}
 #'  \item{filter_on_depth}{Would this cell be filtered out based on its 
 #'  log10-depth being (by default) more than 5 median absolute deviations from 
 #'  the median log10-depth for the dataset?} 
 #'  \item{filter_on_coverage}{Would this cell be filtered out based on its 
 #'  coverage being (by default) more than 5 median absolute deviations from the 
 #'  median coverage for the dataset?}
-#'  \item{counts_from_feature_controls}{Total number of counts for the cell 
+#'  \item{counts_feature_controls}{Total number of counts for the cell 
 #'  that come from (one or more sets of user-defined) control features. Defaults
 #'   to zero if no control features are indicated. If more than one set of 
 #'   feature controls are defined (for example, ERCC and MT genes are defined 
@@ -68,7 +69,7 @@
 #'   \code{counts_feature_controls_ERCC}, 
 #'   \code{counts_feature_controls_MT} and 
 #'   \code{counts_feature_controls}).}
-#'  \item{log10_counts_from_feature_controls}{Just as above, the total 
+#'  \item{log10_counts_feature_controls}{Just as above, the total 
 #'   number of counts from feature controls, but on the log10-scale. Defaults 
 #'   to zero (i.e.~log10(0 + 1), offset to avoid negative infinite values) if 
 #'   no feature control are indicated.}
@@ -187,26 +188,7 @@ a lower count threshold of 0.")
     counts_mat <- counts(object)
     tpm_mat <- tpm(object)
     fpkm_mat <- fpkm(object)
-    
-    ## Compute total_features and find outliers
-    total_features <- colSums(is_exprs(object))
-    mad_total_features <- mad(total_features)
-    med_total_features <- median(total_features)
-    keep_total_features <- c(med_total_features - nmads * mad_total_features, 
-                       med_total_features + nmads * mad_total_features)
-    filter_on_total_features <- (findInterval(total_features, 
-                                              keep_total_features) != 1)
-    ## Compute total_counts if counts are present
-    if ( !is.null(counts_mat) )
-        total_counts <- colSums(counts_mat)
-    else 
-        total_counts <- colSums(exprs_mat)
-    mad_total_counts <- mad(log10(total_counts))
-    med_total_counts <- median(log10(total_counts))
-    keep_total_counts <- c(med_total_counts - nmads * mad_total_counts, 
-                           med_total_counts + nmads * mad_total_counts)
-    filter_on_total_counts <- (findInterval(log10(total_counts), 
-                                            keep_total_counts) != 1)
+
     
     ## Contributions from control features
     ### Determine if vector or list
@@ -357,6 +339,26 @@ a lower count threshold of 0.")
         feature_controls_pdata <- cbind(feature_controls_pdata, df_pdata_this)
     }
     
+
+    ## Compute total_features and find outliers
+    total_features <- colSums(is_exprs(object)[!is_feature_control,])
+    mad_total_features <- mad(total_features)
+    med_total_features <- median(total_features)
+    keep_total_features <- c(med_total_features - nmads * mad_total_features, 
+                             med_total_features + nmads * mad_total_features)
+    filter_on_total_features <- (findInterval(total_features, 
+                                              keep_total_features) != 1)
+    ## Compute total_counts if counts are present
+    if ( !is.null(counts_mat) )
+        total_counts <- colSums(counts_mat)
+    else 
+        total_counts <- colSums(exprs_mat)
+    mad_total_counts <- mad(log10(total_counts))
+    med_total_counts <- median(log10(total_counts))
+    keep_total_counts <- c(med_total_counts - nmads * mad_total_counts, 
+                           med_total_counts + nmads * mad_total_counts)
+    filter_on_total_counts <- (findInterval(log10(total_counts), 
+                                            keep_total_counts) != 1)
     
     ## Define counts from endogenous features
     qc_pdata <- feature_controls_pdata

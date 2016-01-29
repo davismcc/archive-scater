@@ -247,11 +247,11 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
     if ( !(is.null(block1) | is.null(block2)) )
         plot_out <- plot_out + facet_grid(block2 ~ block1)
     else {
-        if ( !is.null(block1) & is.null(block2) ) {
+        if ( !is.null(block1) && is.null(block2) ) {
             plot_out <- plot_out + 
                 facet_wrap(~block1, ncol = ncol)
         }
-        if ( is.null(block1) & !is.null(block2) ) {
+        if ( is.null(block1) && !is.null(block2) ) {
             plot_out <- plot_out + 
                 facet_wrap(~block2, ncol = ncol)
         }
@@ -1230,7 +1230,7 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                                           colour_by)
     } else {
         if  ( sum(is.null(colour_by) + is.null(shape_by) + is.null(size_by)) == 1 ) {
-            if ( !is.null(colour_by) & !is.null(shape_by) ) {
+            if ( !is.null(colour_by) && !is.null(shape_by) ) {
                 plot_out <- plot_out + 
                     geom_point(aes_string(colour = "colour_by", 
                                           shape = "shape_by"), size = 4, 
@@ -1240,7 +1240,7 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                                                   df_to_plot$colour_by, 
                                                   colour_by)
             }
-            if ( !is.null(colour_by) & !is.null(size_by) ) {
+            if ( !is.null(colour_by) && !is.null(size_by) ) {
                 plot_out <- plot_out + 
                     geom_point(aes_string(fill = "colour_by", size = "size_by"), 
                                shape = 21, colour = "gray70", alpha = 0.65) +
@@ -1249,7 +1249,7 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                                                   df_to_plot$colour_by,
                                                   colour_by, fill = TRUE)
             }
-            if ( !is.null(shape_by) & !is.null(size_by) ) {
+            if ( !is.null(shape_by) && !is.null(size_by) ) {
                 plot_out <- plot_out + 
                     geom_point(aes_string(shape = "shape_by", size = "size_by"), 
                                fill = "gray20", colour = "gray20", 
@@ -1411,8 +1411,10 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' @param features a character vector of feature names or Boolean
 #' vector or numeric vector of indices indicating which features should have 
 #' their expression values plotted
-#' @param x character string providing a column name of \code{pData(object)} to 
-#' plot on the x-axis in the expression plot(s)
+#' @param x character string providing a column name of \code{pData(object)} or 
+#' a feature name (i.e. gene or transcript) to plot on the x-axis in the 
+#' expression plot(s). If a feature name, then expression values for the feature
+#' will be plotted on the x-axis for each subplot.
 #' @param exprs_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"} 
 #' (default; transcripts per million), \code{"norm_tpm"} (normalised TPM 
@@ -1458,21 +1460,32 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' @export
 #' 
 #' @examples
+#' ## prepare data
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset <- calculateQCMetrics(example_sceset)
+#' 
+#' ## default plot
+#' plotExpression(example_sceset, 1:6, "Mutation_Status")
+#'
+#' ## explore options 
 #' plotExpression(example_sceset, 1:6, x="Mutation_Status", exprs_values="exprs", 
 #' colour_by="Cell_Cycle", show_violin=TRUE, show_median=TRUE)
 #' plotExpression(example_sceset, 1:6, x="Mutation_Status", exprs_values="counts", 
 #' colour_by="Cell_Cycle", show_violin=TRUE, show_median=TRUE)
 #' 
+#' ## plot expression against expression values for Gene_0004
+#' plotExpression(example_sceset, 1:4, "Gene_0004")
+#' plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE)
+#' 
 plotExpressionSCESet <- function(object, features, x, exprs_values = "exprs", 
                                  colour_by = NULL, shape_by = NULL, 
                                  size_by = NULL, ncol = 2, xlab = NULL, 
                                  show_median = FALSE, show_violin = TRUE, 
-                                 theme_size = 10, log2_values = FALSE) {
+                                 show_smooth = FALSE, theme_size = 10, 
+                                 log2_values = FALSE) {
     ## Check object is an SCESet object
     if ( !is(object, "SCESet") )
         stop("object must be an SCESet")
@@ -1484,8 +1497,14 @@ plotExpressionSCESet <- function(object, features, x, exprs_values = "exprs",
         nfeatures <- length(features)
     
     ## Check arguments are valid
-    if ( !(x %in% varLabels(object)) )
-        stop("the argument 'x' should specify a column of pData(object) [see varLabels(object)]")
+    if ( !(x %in% varLabels(object)) && !(x %in% featureNames(object)))
+        stop("the argument 'x' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)")
+    if ( x %in% featureNames(object) ) {
+        x_is_feature <- TRUE
+        show_violin <- FALSE
+        show_median <- FALSE
+    } else
+        x_is_feature <- FALSE
     if ( !is.null(colour_by) ) {
         if ( !(colour_by %in% varLabels(object)) )
             stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)]")
@@ -1517,7 +1536,10 @@ plotExpressionSCESet <- function(object, features, x, exprs_values = "exprs",
     evals_long <- reshape2::melt(to_melt, value.name = "evals")
     colnames(evals_long) <- c("Feature", "Cell", "evals")
     ## Extend the samples information
-    samples_long <- pData(object)[rep(seq_len(ncol(object)), each = nfeatures),]
+    samps <-  pData(object) 
+    if ( x_is_feature )
+        samps[[x]] <- exprs_mat[x, ]
+    samples_long <- samps[rep(seq_len(ncol(object)), each = nfeatures),]
     
     ## Construct a ggplot2 aesthetic for the plot
     aesth <- aes()
@@ -1546,7 +1568,7 @@ plotExpressionSCESet <- function(object, features, x, exprs_values = "exprs",
     
     ## Make the plot
     plot_out <- plotExpressionDefault(object, aesth, ncol, xlab, ylab, 
-                                      show_median, show_violin)
+                                      show_median, show_violin, show_smooth)
     
     ## Define plotting theme
     if ( requireNamespace("cowplot", quietly = TRUE) )
@@ -1560,12 +1582,13 @@ plotExpressionSCESet <- function(object, features, x, exprs_values = "exprs",
 #' @param aesth an \code{aes} object to use in the call to \code{\link{ggplot}}.
 #' @param ylab character string defining a label for the y-axis (y-axes) of the 
 #' plot.
+#' @param show_smooth show a smoothed fit through the data points?
 #' @rdname plotExpression
 #' @aliases plotExpression
 #' @export
-plotExpressionDefault <- function(object, aesth, ncol=2, xlab=NULL, 
-                                  ylab=NULL, show_median=FALSE, 
-                                  show_violin=TRUE) {
+plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL, 
+                                  ylab = NULL, show_median = FALSE, 
+                                  show_violin = TRUE, show_smooth = FALSE) {
     if ( !("Feature" %in% names(object)) )
         stop("object needs a column named 'Feature' to define the feature(s) by which to plot expression.")
  
@@ -1578,7 +1601,7 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab=NULL,
                                       object[[as.character(aesth$colour)]],
                                       as.character(aesth$colour))
     if (show_violin) {
-        plot_out <- plot_out + geom_violin(group = 1, colour = "gray80", 
+        plot_out <- plot_out + geom_violin(colour = "gray80", 
                                            fill = "gray80", scale = "width")
     }
     if (show_median) {
@@ -1586,24 +1609,28 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab=NULL,
             stat_summary(fun.y = median, fun.ymin = median, fun.ymax = median, 
                          geom = "crossbar", width = 0.3, alpha = 0.8)
     }
+    if (show_smooth) {
+        plot_out <- plot_out + stat_smooth()
+    }
     plot_out <- plot_out + 
         geom_jitter(size = 4, alpha = 0.8,
                     position = position_jitter(height = 0))
     plot_out
 }
 
-
-#' @rdname plotExpression
-#' @aliases plotExpression
-#' @export
-setMethod("plotExpression", signature(object = "SCESet"),
-          function(object, features, x, exprs_values = "exprs", colour_by = NULL, 
-                   shape_by = NULL, size_by = NULL, ncol = 2, xlab = NULL, 
-                   show_median=TRUE, show_violin=TRUE) {
-              plotExpressionSCESet(object, features, x, exprs_values, 
-                                        colour_by, shape_by, size_by, ncol, 
-                                        xlab, show_median, show_violin)
-          })
+# 
+# #' @rdname plotExpression
+# #' @aliases plotExpression
+# #' @export
+# setMethod("plotExpression", signature(object = "SCESet"),
+#           function(object, features, x, exprs_values = "exprs", colour_by = NULL, 
+#                    shape_by = NULL, size_by = NULL, ncol = 2, xlab = NULL, 
+#                    show_median=FALSE, show_violin=TRUE, show_smooth=FALSE) {
+#               plotExpressionSCESet(object, features, x, exprs_values, 
+#                                         colour_by, shape_by, size_by, ncol, 
+#                                         xlab, show_median, show_violin, 
+#                                    show_smooth)
+#           })
 
 #' @rdname plotExpression
 #' @aliases plotExpression
@@ -1700,10 +1727,10 @@ plotMetadata <- function(object,
             if (is.character(y) | is.factor(y))
                 var_type_x <- "discrete"
         }
-        if ( var_type_x == "continuous" & var_type_y == "continuous" )
+        if ( var_type_x == "continuous" && var_type_y == "continuous" )
             plot_type <- "scatter"
         else {
-            if ( var_type_x == "discrete" & var_type_y == "discrete" )
+            if ( var_type_x == "discrete" && var_type_y == "discrete" )
                 plot_type <- "jitter"
             else
                 plot_type <- "violin"

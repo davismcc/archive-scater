@@ -13,13 +13,11 @@ plotExpression(object, ...)
 
 plotExpressionSCESet(object, features, x, exprs_values = "exprs",
   colour_by = NULL, shape_by = NULL, size_by = NULL, ncol = 2,
-  xlab = NULL, show_median = FALSE, show_violin = TRUE, theme_size = 10,
-  log2_values = FALSE)
+  xlab = NULL, show_median = FALSE, show_violin = TRUE,
+  show_smooth = FALSE, theme_size = 10, log2_values = FALSE)
 
 plotExpressionDefault(object, aesth, ncol = 2, xlab = NULL, ylab = NULL,
-  show_median = FALSE, show_violin = TRUE)
-
-\S4method{plotExpression}{SCESet}(object, ...)
+  show_median = FALSE, show_violin = TRUE, show_smooth = FALSE)
 
 \S4method{plotExpression}{SCESet}(object, ...)
 
@@ -40,8 +38,10 @@ data.frame in 'long' format providing expression values for a set of features
 vector or numeric vector of indices indicating which features should have 
 their expression values plotted}
 
-\item{x}{character string providing a column name of \code{pData(object)} to 
-plot on the x-axis in the expression plot(s)}
+\item{x}{character string providing a column name of \code{pData(object)} or 
+a feature name (i.e. gene or transcript) to plot on the x-axis in the 
+expression plot(s). If a feature name, then expression values for the feature
+will be plotted on the x-axis for each subplot.}
 
 \item{exprs_values}{character string indicating which values should be used
 as the expression values for this plot. Valid arguments are \code{"tpm"} 
@@ -77,6 +77,8 @@ used as the x-axis label}
 \item{show_violin}{logical, show a violin plot for the distribution
 for each group on the plot}
 
+\item{show_smooth}{show a smoothed fit through the data points?}
+
 \item{theme_size}{numeric scalar giving default font size for plotting theme 
 (default is 10)}
 
@@ -99,15 +101,25 @@ Plot expression values (default log2(transcripts-per-million +
 1), if available) for a set of features.
 }
 \examples{
+## prepare data
 data("sc_example_counts")
 data("sc_example_cell_info")
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 example_sceset <- calculateQCMetrics(example_sceset)
+
+## default plot
+plotExpression(example_sceset, 1:6, "Mutation_Status")
+
+## explore options 
 plotExpression(example_sceset, 1:6, x="Mutation_Status", exprs_values="exprs", 
 colour_by="Cell_Cycle", show_violin=TRUE, show_median=TRUE)
 plotExpression(example_sceset, 1:6, x="Mutation_Status", exprs_values="counts", 
 colour_by="Cell_Cycle", show_violin=TRUE, show_median=TRUE)
+
+## plot expression against expression values for Gene_0004
+plotExpression(example_sceset, 1:4, "Gene_0004")
+plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE)
 
 }
 
