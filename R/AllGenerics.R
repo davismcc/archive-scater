@@ -356,3 +356,12 @@ setGeneric("plotDiffusionMap", function(object, ...) {
     standardGeneric("plotDiffusionMap")
 })
 
+#' @name plotMDS
+#' @export
+#' @docType methods
+#' @rdname plotMDS
+setGeneric("plotMDS", function(object, ...) {
+    standardGeneric("plotMDS")
+})
+
+

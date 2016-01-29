@@ -1117,6 +1117,187 @@ setMethod("plotDiffusionMap", signature("SCESet"),
 
 
 ################################################################################
+### plotMDS
+
+#' Produce a multidimensional scaling plot for an SCESet object
+#' 
+#' #' Produce an MDS plot from the cell pairwise distance data in an 
+#' \code{SCESet} dataset.
+#' 
+#' @param object an \code{SCESet} object
+#' @param ncomponents numeric scalar indicating the number of principal 
+#' components to plot, starting from the first principal component. Default is 
+#' 2. If \code{ncomponents} is 2, then a scatterplot of PC2 vs PC1 is produced.
+#' If \code{ncomponents} is greater than 2, a pairs plots for the top components
+#' is produced. NB: computing more than two components for t-SNE can become very
+#' time consuming.
+#' @param colour_by character string defining the column of \code{pData(object)} to
+#' be used as a factor by which to colour the points in the plot.
+#' @param shape_by character string defining the column of \code{pData(object)} to
+#' be used as a factor by which to define the shape of the points in the plot.
+#' @param size_by character string defining the column of \code{pData(object)} to
+#' be used as a factor by which to define the size of points in the plot.
+#' @param return_SCESet logical, should the function return an \code{SCESet} 
+#' object with principal component values for cells in the 
+#' \code{reducedDimension} slot. Default is \code{FALSE}, in which case a 
+#' \code{ggplot} object is returned.
+#' @param draw_plot logical, should the plot be drawn on the current graphics 
+#' device? Only used if \code{return_SCESet} is \code{TRUE}, otherwise the plot 
+#' is always produced.
+#' @param theme_size numeric scalar giving default font size for plotting theme 
+#' (default is 10).
+#' @param ... arguments passed to S4 plotMDS method
+#' 
+#' @details The function \code{\link{cmdscale}} is used internally to 
+#' compute the multidimensional scaling components to plot. 
+#'
+#' @return If \code{return_SCESet} is \code{TRUE}, then the function returns an
+#' \code{SCESet} object, otherwise it returns a \code{ggplot} object.
+#' @name plotMDS
+#' @aliases plotMDS plotMDS,SCESet-method
+#' 
+#' @export
+#' 
+#' @examples
+#' ## Set up an example SCESet
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' drop_genes <- apply(exprs(example_sceset), 1, function(x) {var(x) == 0})
+#' example_sceset <- example_sceset[!drop_genes, ]
+#' example_sceset <- calculateQCMetrics(example_sceset)
+#' 
+#' ## define cell-cell distances
+#' cellDist(example_sceset) <- as.matrix(dist(t(exprs(example_sceset))))
+#' 
+#' ## Examples plotting 
+#' plotMDS(example_sceset)
+#' plotMDS(example_sceset, colour_by = "Cell_Cycle")
+#' plotMDS(example_sceset, colour_by = "Cell_Cycle", 
+#' shape_by = "Treatment")
+#'
+#' ## define cell-cell distances differently
+#' cellDist(example_sceset) <- as.matrix(dist(t(counts(example_sceset)),
+#' method = "canberra"))
+#' plotMDS(example_sceset, colour_by = "Cell_Cycle", 
+#' shape_by = "Treatment", size_by = "Mutation_Status")
+#' 
+plotMDSSCESet <- function(object, ncomponents = 2, colour_by = NULL, 
+                          shape_by = NULL, size_by = NULL, 
+                          return_SCESet = FALSE, draw_plot = TRUE, 
+                          theme_size = 10) {
+    ##
+    cell_dist <- cellDist(object)
+    ncells <- ncol(object)
+    if ( !(dim(cellDist(object))[1] == ncells && 
+           dim(cellDist(object))[2] == ncells) )
+        stop("cellDist(object) is not of the correct dimensions. Please define cell pairwise distances and try again:
+             e.g. cellDist(object) <- as.matrix(dist(t(exprs(object))))")
+    ## Set up indicator for whether to use pData or features 
+    ## for size_by and
+    ## colour_by
+    colour_by_use_pdata <- TRUE
+    size_by_use_pdata <- TRUE
+    ## Check arguments are valid
+    if ( !is.null(colour_by) ) {
+        if ( !(colour_by %in% varLabels(object)) && 
+             !(colour_by %in% featureNames(object)) )
+            stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
+        if ( !(colour_by %in% varLabels(object)) && 
+             (colour_by %in% featureNames(object)) )
+            colour_by_use_pdata <- FALSE
+    } else {
+        if ( "is_cell_control" %in% varLabels(object) )
+            colour_by <- "is_cell_control"
+    }
+    if ( !is.null(shape_by) ) {
+        if ( !(shape_by %in% varLabels(object)) )
+            stop("the argument 'shape_by' should specify a column of pData(object) [see varLabels(object)]")
+        if ( nlevels(as.factor(pData(object)[[shape_by]])) > 10 )
+            stop("when coerced to a factor, 'shape_by' should have fewer than 10 levels")   
+    } else {
+        if ( "is_cell_control" %in% varLabels(object) )
+            shape_by <- "is_cell_control"
+    }
+    if ( !is.null(size_by) ) {
+        if ( !(size_by %in% varLabels(object)) && 
+             !(size_by %in% featureNames(object)) )
+            stop("the argument 'size_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
+        if ( !(size_by %in% varLabels(object)) && 
+             (size_by %in% featureNames(object)) )
+            size_by_use_pdata <- FALSE
+    }
+    
+    ## Compute multidimentional scaling
+    mds_out <- cmdscale(cell_dist, k = ncomponents)
+    
+    ## Define data.frame for plotting
+    df_to_plot <- data.frame(mds_out[, 1:ncomponents], 
+                             row.names = sampleNames(object))
+    colnames(df_to_plot) <- paste0("Component_", 1:ncomponents)
+    if ( !is.null(colour_by) ) {
+        if ( colour_by_use_pdata )
+            colour_by_vals <- pData(object)[[colour_by]]
+        else 
+            colour_by_vals <- exprs(object)[colour_by,]
+        if ( nlevels(as.factor(colour_by_vals)) > 10 )
+            df_to_plot <- data.frame(
+                df_to_plot, colour_by = colour_by_vals)
+        else
+            df_to_plot <- data.frame(
+                df_to_plot, colour_by = as.factor(colour_by_vals))
+    }
+    if ( !is.null(shape_by) )
+        df_to_plot <- data.frame(
+            df_to_plot, 
+            shape_by = as.factor(pData(object)[[shape_by]]))
+    if ( !is.null(size_by) ) {
+        if ( size_by_use_pdata )
+            size_by_vals <- pData(object)[[size_by]]
+        else 
+            size_by_vals <- exprs(object)[size_by,]
+        df_to_plot <- data.frame(df_to_plot, size_by = size_by_vals)
+    }
+    
+    ## Make reduced-dimension plot
+    plot_out <- plotReducedDim.default(df_to_plot, ncomponents, 
+                                       colour_by, shape_by, size_by)
+    
+    ## Define plotting theme
+    if ( requireNamespace("cowplot", quietly = TRUE) )
+        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+    else
+        plot_out <- plot_out + theme_bw(theme_size)
+    
+    ## Plot PCA and return appropriate object
+    if (return_SCESet) {
+        df_out <- mds_out[, 1:ncomponents]
+        rownames(df_out) <- sampleNames(object)
+        reducedDimension(object) <- df_out
+        if ( draw_plot )
+            print(plot_out)
+        return(object)
+    } else {
+        ## Return PCA plot
+        return(plot_out)
+    }
+}
+
+#' @rdname plotMDS
+#' @aliases plotMDS
+#' @export
+setMethod("plotMDS", signature("SCESet"),
+          function(object, ncomponents = 2, colour_by = NULL, shape_by = NULL, 
+                   size_by = NULL, return_SCESet = FALSE, draw_plot = TRUE, 
+                   theme_size = 10) {
+              plotMDSSCESet(object, ncomponents, colour_by, shape_by, size_by, 
+                            return_SCESet, draw_plot, theme_size)
+          })
+
+
+
+################################################################################
 ### plotReducedDim
 
 #' Plot reduced dimension representation of cells
