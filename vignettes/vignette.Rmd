@@ -2,15 +2,17 @@
 title: "Introduction to `scater`: Single-cell analysis toolkit for expression in R"
 author: "Davis McCarthy"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output: 
+    rmarkdown::html_vignette:
+        toc: true
 vignette: >
   %\VignetteIndexEntry{An introduction to the scater package}
-  %\VignetteEngine{rmarkdown::render}
+  %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
 
 
-```{r knitr-options, echo=FALSE}
+```{r knitr-options, echo=FALSE, message=FALSE, warning=FALSE}
 ## To render an HTML version that works nicely with github and web pages, do:
 ## rmarkdown::render("vignettes/vignette.Rmd", "all")
 library(knitr)
@@ -58,8 +60,8 @@ Here we use the example data provided with
 the package, which gives us two objects, a matrix of counts and a dataframe
 with information about the cells we are studying:
 
-```{r quickstart-load-data}
-library(scater)
+```{r quickstart-load-data, message=FALSE, warning=FALSE}
+library(scater, quietly = TRUE)
 data("sc_example_counts")
 data("sc_example_cell_info")
 ```
