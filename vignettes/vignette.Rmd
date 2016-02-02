@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{An introduction to the scater package}
-  %\VignetteEngine{rmarkdown::render}
+  %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
 
@@ -39,7 +39,7 @@ ahead of downstream statistical analysis and modeling.
 Future versions of `scater` may also incorporate:
 
 * Methods for identifying cells at different stages of the cell cycle;
-* Differential testing methods for finding features with differences in 
+* Differential testing methods for finding features with differences in
 behaviour between experimental conditions.
 
 To get up and running as quickly as possible, see the [Quick Start](#quickstart)
@@ -58,7 +58,7 @@ Here we use the example data provided with
 the package, which gives us two objects, a matrix of counts and a dataframe
 with information about the cells we are studying:
 
-```{r quickstart-load-data}
+```{r quickstart-load-data, message=FALSE}
 library(scater)
 data("sc_example_counts")
 data("sc_example_cell_info")
@@ -174,7 +174,7 @@ object need to match the column names of the expression matrix. Row names of the
 
 You can create a new `SCESet` object using count data as follows. In this case,
 the `exprs` slot in the object will be generated as log2(counts-per-million)
-using the `cpm` function from `edgeR`, with a "prior count" value of 1:  
+using the `cpm` function from `edgeR`, with a "prior count" value of 1:
 
 ```{r sceset-make-sceset-counts-only}
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
@@ -433,9 +433,9 @@ The first step in the QC process is filtering out unwanted features. We will
 typically filter out features with very low overall expression, and any others
 that plots or other metrics indicate may be problematic.
 
-First we look at a plot that shows the top 50 (by default) most-expressed 
-features. By default, "expression" is defined using the feature counts (if 
-available), but $tpm$, $cpm$, $fpkm$ or the `exprs` values can be used instead, 
+First we look at a plot that shows the top 50 (by default) most-expressed
+features. By default, "expression" is defined using the feature counts (if
+available), but $tpm$, $cpm$, $fpkm$ or the `exprs` values can be used instead,
 if desired.
 
 ```{r plot-qc-expression, fig.height=7.5, fig.width=8.5}
@@ -456,7 +456,7 @@ plot twice.
 The `multiplot` function allows a very simple way to plot multiple `ggplot2`
 plots on the same page. For more sophisticated possibilities for arranging
 multiple `ggplot2` plots, check out the excellent [`cowplot`](http://cran.r-project.org/web/packages/cowplot/vignettes/introduction.html)
-package, available on CRAN. If you have `cowplot` installed (highly 
+package, available on CRAN. If you have `cowplot` installed (highly
 recommended), then `scater` will automatically use it to create particularly
 attractive plots.
 
@@ -537,8 +537,8 @@ plotPhenoData(example_sceset, aes(x = Mutation_Status, y = total_features,
                                   colour = log10_total_counts))
 ```
 
-Note that ggplot aesthetics will work correctly (in general) for everything 
-except `colour` (`color`) and `fill`, which must be either columns of `pData` 
+Note that ggplot aesthetics will work correctly (in general) for everything
+except `colour` (`color`) and `fill`, which must be either columns of `pData`
 or feature names (i.e. gene/transcript names).
 
 These sorts of plots can be very useful for finding potentially problematic
@@ -550,24 +550,24 @@ plotPhenoData(example_sceset, aes(x = total_counts, y = total_features,
 ```
 
 ```{r plot-pdatacol-gene-exprs-2, fig.show = FALSE}
-plotPhenoData(example_sceset, aes(x = pct_exprs_feature_controls, 
+plotPhenoData(example_sceset, aes(x = pct_exprs_feature_controls,
                                   y = total_features, colour = Gene_0500))
 ```
 
 
 ```{r plot-pdatacol-gene-exprs-3, fig.show = FALSE}
-plotPhenoData(example_sceset, aes(x = pct_exprs_feature_controls, 
-                                  y = pct_exprs_top_50_features, 
+plotPhenoData(example_sceset, aes(x = pct_exprs_feature_controls,
+                                  y = pct_exprs_top_50_features,
                                   colour = Gene_0001))
 ```
 
 The output of these functions is a `ggplot` object, which can be added to,
 amended and altered. For example, if we don't like the legend position in the
-`total_features` vs `total_counts` plot above, we can change it, and we could 
+`total_features` vs `total_counts` plot above, we can change it, and we could
 also add a trend line for each group:
 
 ```{r plot-pdata-move-legend-add-trend}
-plotPhenoData(example_sceset, aes(x = log10_exprs_feature_controls, 
+plotPhenoData(example_sceset, aes(x = log10_exprs_feature_controls,
                                   y = total_features, colour = Mutation_Status)) +
     theme(legend.position = "top") +
     stat_smooth(method = "lm", se = FALSE, size = 2, fullrange = TRUE)
@@ -579,7 +579,7 @@ A particularly useful plot for cell QC is plotting the percentage of expression
 accounted for by feature controls against total_features.
 
 ```{r plot-pdata-pct-exprs-controls}
-plotPhenoData(example_sceset, aes(x = total_features, 
+plotPhenoData(example_sceset, aes(x = total_features,
                                   y = pct_exprs_feature_controls,
                                   colour = Mutation_Status)) +
     theme(legend.position = "top") +
@@ -615,15 +615,15 @@ argument. Alternatively, a specific set of features to use for the PCA can be
 defined with the `feature_set` argument. This allows, for example, using only
 housekeeping features or control features to produce a PCA plot.
 
-By default the PCA plot uses the expression values in the `exprs` slot of the 
-`SCESet` object, but other expression values can be used by specifying the 
+By default the PCA plot uses the expression values in the `exprs` slot of the
+`SCESet` object, but other expression values can be used by specifying the
 `exprs_values` argument:
 
 ```{r plot-pca-cpm}
 plotPCA(example_sceset, exprs_values = "cpm")
 ```
 
-A subset of features can be used to produce a PCA plot. In the code below only 
+A subset of features can be used to produce a PCA plot. In the code below only
 the features defined as "feature controls" are used for the PCA (plot not shown).
 
 ```{r plot-pca-feature-controls, fig.show = FALSE}
@@ -642,7 +642,7 @@ plotPCA(example_sceset, ncomponents = 4, colour_by = "Treatment",
 When more than two components are plotted, the diagonal boxes in the scatter
 plot matrix show the density for each component.
 
-We can also use the colour and size of point in the plot to reflect feature 
+We can also use the colour and size of point in the plot to reflect feature
 expression values.
 
 ```{r plot-pca-4comp-colby-sizeby-exprs, fig.height=5.5}
@@ -733,9 +733,9 @@ plotDiffusionMap(example_sceset, colour_by = "Gene_1000")
 
 #### Filtering cells
 
-On this example dataset there are no cells that need filtering, but the 
-subsetting capabilities of `scater` make it easy to filter out unwanted cells. 
-Column subsetting selects cells, while row subsetting selects features (genes 
+On this example dataset there are no cells that need filtering, but the
+subsetting capabilities of `scater` make it easy to filter out unwanted cells.
+Column subsetting selects cells, while row subsetting selects features (genes
 or transcripts).
 
 ### QC of experimental variables
@@ -770,7 +770,7 @@ components in decreasing order of $R^2$ from a linear model regressing PC value
 against the variable of interest.
 
 We can also produce a pairs plot of potential explanatory variables ranked by
-their median percentage of expression variance explained in a marginal (only 
+their median percentage of expression variance explained in a marginal (only
 one explanatory variable) linear model.
 
 ```{r plot-qc-pairs-pc}
@@ -781,7 +781,7 @@ In this small dataset total_counts and total_features explain a very large propo
 variance in feature expression. The proportion of variance that they explain for a
 real dataset should be much smaller (say 1-5%).
 
-The default is to plot six most-associated principal components against the 
+The default is to plot six most-associated principal components against the
 variable of interest.
 
 ```{r plot-qc-find-pcs-pcs-vs-vars, fig.width=8, fig.height=7}
@@ -828,7 +828,7 @@ out, so that normalised data has these effects removed.
 In many single-cell expression analyses we may want to generate and store
 pairwise distance matrices for both cells and features.
 
-We can first look at a multidimensional scaling (MDS) plot using Euclidean 
+We can first look at a multidimensional scaling (MDS) plot using Euclidean
 distance between cells.
 
 ```{r cell-pairwise-distance-matrices-euclidean, eval=TRUE}
