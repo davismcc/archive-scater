@@ -37,6 +37,7 @@ Suggests:
     monocle,
     mvoutlier,
     parallel,
+    rmarkdown,
     Rtsne,
     testthat
 VignetteBuilder: knitr
