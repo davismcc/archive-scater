@@ -47,8 +47,12 @@ devtools::install_github("davismcc/scater", build_vignettes = TRUE)
 devtools::install_github("davismcc/scater", ref = "release-R-3.2", build_vignettes = TRUE)
 ```
 
-I have recently submitted `scater` to Bioconductor, so development of the 
-package is proceeding with the development version of R (version 3.3). As such, 
+If you find that the above will not install on Linux systems, please
+try with the option `build_vignettes = FALSE`. This is a known issue
+that we are working to resolve.
+
+I have recently submitted `scater` to Bioconductor, so development of the
+package is proceeding with the development version of R (version 3.3). As such,
 the master branch of this repository requires R >= 3.3. If you are using the
 release version of R, then please install using the adjusted command above.
 
@@ -92,7 +96,7 @@ You might also like to install `dplyr` for convenient data manipulation:
 install.packages("dplyr")
 ```
 
-The `scater` package has been submitted to 
+The `scater` package has been submitted to
 [Bioconductor](http://bioconductor.org/) and is currently under review.
 
 
@@ -143,24 +147,24 @@ The `runKallisto` function provides a wrapper to the [`kallisto`](http://pachter
 
 ### Plotting functions
 
-Default `plot` for an SCESet object gives cumulative expression for the 
+Default `plot` for an SCESet object gives cumulative expression for the
 most-expressed features (genes or transcripts)
 
 The `plotTSNE` function produces a t-distributed stochastic neighbour embedding
 plot for the cells.
 
-The `plotPCA` function produces a principal components analysis plot for the 
+The `plotPCA` function produces a principal components analysis plot for the
 cells.
 
 The `plotDiffusionMap` function produces a diffusion map plot for the cells.
 
-The `plotExpression` function plots the expression values for a selection of 
+The `plotExpression` function plots the expression values for a selection of
 features.
 
 The `plotQC` function produces a variety of QC plots useful for diagnostics and
-feature and cell filtering. It can be used to plot the most highly-expressed 
-genes (or features) in the data set or create density plots to assess the 
-relative importance of explanatory variables, as well as many other 
+feature and cell filtering. It can be used to plot the most highly-expressed
+genes (or features) in the data set or create density plots to assess the
+relative importance of explanatory variables, as well as many other
 visualisations useful for QC.
 
 The `plotPhenoData` function plots two phenotype metadata variables (such as QC
@@ -185,9 +189,9 @@ It also uses and extends code for an approximate rank-product test by [Heskes et
 -->
 
 
-The package is currently in an Beta state. The major functionality of the 
-package is settled, but it is still under development so may change from time 
-to time. Please do try it and contact me with bug reports, feedback, feature 
+The package is currently in an Beta state. The major functionality of the
+package is settled, but it is still under development so may change from time
+to time. Please do try it and contact me with bug reports, feedback, feature
 requests, questions and suggestions to improve the package.
 
 Davis McCarthy, December 2015
