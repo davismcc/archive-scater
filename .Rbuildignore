@@ -4,3 +4,4 @@
 ^NEWS\.md$
 ^\.travis\.yml$
 ^appveyor\.yml$
+^.git*

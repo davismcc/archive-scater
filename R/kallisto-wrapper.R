@@ -65,6 +65,7 @@
 #' @importFrom parallel makeCluster
 #' @importFrom parallel stopCluster
 #' @importFrom parallel parLapply
+#' @importFrom utils read.delim
 #' @export
 #' @examples
 #' \dontrun{

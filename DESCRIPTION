@@ -27,6 +27,8 @@ Imports:
     reshape2,
     rhdf5,
     rjson,
+    stats,
+    utils,
     viridis
 Suggests:
     BiocStyle,
@@ -36,6 +38,7 @@ Suggests:
     knitr,
     monocle,
     mvoutlier,
+    rmarkdown,
     Rtsne,
     testthat
 VignetteBuilder: knitr

@@ -1794,8 +1794,7 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
         plot_out <- plot_out + stat_smooth()
     }
     plot_out <- plot_out + 
-        geom_jitter(size = 4, alpha = 0.8,
-                    position = position_jitter(height = 0))
+        geom_jitter(alpha = 0.5, position = position_jitter(height = 0))
     plot_out
 }
 

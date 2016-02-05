@@ -1029,7 +1029,7 @@ setReplaceMethod("norm_tpm", signature(object = "SCESet", value = "matrix"),
 #' data("sc_example_cell_info")
 #' example_sceset <- newSCESet(countData=sc_example_counts)
 #' cpm(example_sceset)[1:10, 1:6]
-cpm.SCESet <- function(object) {
+cpmSCESet <- function(object) {
     object@assayData$cpm
 }
 
@@ -1037,7 +1037,7 @@ cpm.SCESet <- function(object) {
 #' @rdname cpm
 #' @export
 #' @aliases cpm,SCESet-method
-setMethod("cpm", signature(object = "SCESet"), cpm.SCESet)
+setMethod("cpm", signature(object = "SCESet"), cpmSCESet)
 
 #' @name cpm<-
 #' @rdname cpm

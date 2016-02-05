@@ -149,6 +149,7 @@
 #' @importFrom Biobase exprs
 #' @importFrom Biobase sampleNames<-
 #' @importFrom matrixStats colCumsums
+#' @importFrom stats cmdscale coef mad median model.matrix nls prcomp quantile var
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -162,9 +163,13 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
                                cell_controls = NULL, nmads = 5, 
                                pct_feature_controls_threshold = 80) {
     ## We must have an SCESet object
-    if (!is(object, "SCESet"))
+    if ( !is(object, "SCESet") )
         stop("object must be an SCESet object.")
-    
+    ## the object must have some samples
+    if ( ncol(object) < 1 )
+        stop("object must have at least one sample (column)")
+    if ( nrow(object) < 1 )
+        stop("object must have at least one feature (row)")
     ## Compute cell-level metrics
     if ( is.null(is_exprs(object)) ) {
         if (is.null(counts(object))) {
@@ -656,11 +661,12 @@ findImportantPCs <- function(object, variable="total_features",
             pcs_vars_plot <- pcs_vars_plot + 
                 geom_violin(fill = "aliceblue", colour = "gray60", 
                             alpha = 0.6, scale = "width") +
-                geom_boxplot(width = 0.25, outlier.size = 0) +
-                geom_dotplot(fill = "gray10", alpha = 0.6, 
-                             binaxis = 'y', stackdir = 'center', dotsize = 1)
-#                 geom_point(fill = "gray10", alpha = 0.5, shape = 21,
-#                            position = position_jitter(height = 0, width = 0.2))
+                geom_boxplot(width = 0.25, outlier.size = 0)
+            if ( ncol(object) <= 150 ) {
+                pcs_vars_plot <- pcs_vars_plot +
+                    geom_dotplot(fill = "gray10", alpha = 0.6, binaxis = 'y',
+                                 stackdir = 'center', dotsize = 1)
+            }
         } else {
             pcs_vars_plot <- pcs_vars_plot + 
                 geom_point(fill = "gray10", alpha = 0.6, shape = 21) +
