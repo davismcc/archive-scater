@@ -3,3 +3,6 @@
 ^output*
 ^NEWS\.md$
 ^scater.Rproj$
+^\.travis\.yml$
+^appveyor\.yml$
+^.git*
