@@ -1,6 +1,7 @@
 # scater: single-cell analysis toolkit for expression with R
 
-[![Linux Build Status](https://travis-ci.org/davismcc/scater.svg?branch=master)](https://travis-ci.org/davismcc/scater)
+[//]: # ([![Linux Build Status](https://travis-ci.org/davismcc/scater.svg?branch=master)](https://travis-ci.org/davismcc/scater))
+
 [![Windows Build status](https://ci.appveyor.com/api/projects/status/github/davismcc/scater?svg=true)](https://ci.appveyor.com/project/davismcc/scater)
 [![Coverage Status](https://img.shields.io/codecov/c/github/davismcc/scater/master.svg)](https://codecov.io/github/davismcc/scater?branch=master)
 
