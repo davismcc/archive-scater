@@ -770,11 +770,11 @@ setMethod("plotTSNE", signature("SCESet"),
               
               ## Define an expression matrix depending on which values we're 
               ## using
-              exprs_values <- match.arg(
-                  exprs_values, 
-                  choices = c("exprs", "norm_exprs", "stand_exprs", "counts", 
-                              "norm_counts", "tpm", "norm_tpm", "fpkm", 
-                              "norm_fpkm", "cpm", "norm_cpm"))
+#               exprs_values <- match.arg(
+#                   exprs_values, 
+#                   choices = c("exprs", "norm_exprs", "stand_exprs", "counts", 
+#                               "norm_counts", "tpm", "norm_tpm", "fpkm", 
+#                               "norm_fpkm", "cpm", "norm_cpm"))
               
               exprs_mat <- get_exprs(object, exprs_values)
               if ( is.null(exprs_mat) ) {
@@ -1008,11 +1008,11 @@ plotDiffusionMapSCESet <- function(object, ntop = 500, ncomponents = 2,
     
     ## Define an expression matrix depending on which values we're 
     ## using
-    exprs_values <- match.arg(
-        exprs_values, 
-        choices = c("exprs", "norm_exprs", "stand_exprs", "counts", 
-                    "norm_counts", "tpm", "norm_tpm", "fpkm", 
-                    "norm_fpkm", "cpm", "norm_cpm"))
+#     exprs_values <- match.arg(
+#         exprs_values, 
+#         choices = c("exprs", "norm_exprs", "stand_exprs", "counts", 
+#                     "norm_counts", "tpm", "norm_tpm", "fpkm", 
+#                     "norm_fpkm", "cpm", "norm_cpm"))
     
     exprs_mat <- get_exprs(object, exprs_values)
     if ( is.null(exprs_mat) ) {
@@ -1414,7 +1414,7 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
             if ( !is.null(colour_by) && !is.null(shape_by) ) {
                 plot_out <- plot_out + 
                     geom_point(aes_string(colour = "colour_by", 
-                                          shape = "shape_by"), size = 4, 
+                                          shape = "shape_by"), 
                                alpha = 0.65) +
                     guides(shape = guide_legend(title = shape_by))
                 plot_out <- .resolve_plot_colours(plot_out, 
@@ -1443,7 +1443,7 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                      is.null(size_by)) == 2 ) {
                 if ( !is.null(colour_by) ) {
                     plot_out <- plot_out + 
-                        geom_point(aes_string(fill = "colour_by"), size = 4, 
+                        geom_point(aes_string(fill = "colour_by"), 
                                    shape = 21, colour = "gray70", alpha = 0.65)
                     plot_out <- .resolve_plot_colours(plot_out, 
                                                       df_to_plot$colour_by,
@@ -1451,7 +1451,7 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                 }
                 if ( !is.null(shape_by) ) {
                     plot_out <- plot_out + 
-                        geom_point(aes_string(shape = "shape_by"), size = 4, 
+                        geom_point(aes_string(shape = "shape_by"), 
                                    colour = "gray20", alpha = 0.65) +
                         guides(shape = guide_legend(title = shape_by))
                 }
@@ -1464,7 +1464,7 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                 } 
             } else {
                 plot_out <- plot_out + 
-                    geom_point(size = 4, fill = "gray20", shape = 21, 
+                    geom_point(fill = "gray20", shape = 21, 
                                colour = "gray70", alpha = 0.65)
             }            
         }
@@ -1781,8 +1781,10 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
     plot_out <- .resolve_plot_colours(plot_out, 
                                       object[[as.character(aesth$colour)]],
                                       as.character(aesth$colour))
+    plot_out <- plot_out + 
+        geom_jitter(alpha = 0.5, position = position_jitter(height = 0))
     if (show_violin) {
-        plot_out <- plot_out + geom_violin(colour = "gray80", 
+        plot_out <- plot_out + geom_violin(colour = "gray60", alpha = 0.3,
                                            fill = "gray80", scale = "width")
     }
     if (show_median) {
@@ -1793,8 +1795,6 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
     if (show_smooth) {
         plot_out <- plot_out + stat_smooth()
     }
-    plot_out <- plot_out + 
-        geom_jitter(alpha = 0.5, position = position_jitter(height = 0))
     plot_out
 }
 

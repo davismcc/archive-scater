@@ -3,12 +3,12 @@ title: "Introduction to `scater`: Single-cell analysis toolkit for expression in
 author: "Davis McCarthy"
 date: "`r Sys.Date()`"
 output: 
-    rmarkdown::html_vignette:
+    BiocStyle::html_document:
         toc: true
 vignette: >
   %\VignetteIndexEntry{An introduction to the scater package}
   %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+  %\VignetteEncoding{UTF-8}
 ---
 
 
@@ -48,7 +48,7 @@ To get up and running as quickly as possible, see the [Quick Start](#quickstart)
 section below. For see the various in-depth sections on various aspects of the
 functionality that follow.
 
-## Quick Start
+# Quick Start
 <a name="quickstart"></a>
 
 Assuming you have a matrix containing expression count data summarised at the
@@ -119,7 +119,7 @@ After QC and data normalisation (methods are available in `scater`), the dataset
 is ready for downstream statistical modeling.
 
 
-## A note on terminology
+#  A note on terminology
 
 The capabilities of `scater` are built on top of Bioconductor's `Biobase`, which
 ties us to some specific terminology. Some of this terminology may be unfamiliar
@@ -146,7 +146,7 @@ individual) we may have assayed numerous cells. Thus, the function `sampleNames`
 when applied to an `SCESet` object returns the cell IDs.
 
 
-## The SCESet class and methods
+#  The SCESet class and methods
 
 In `scater` we organise single-cell expression data in objects of the `SCESet`
 class. The class inherits the Bioconductor `ExpressionSet` class, which
@@ -291,7 +291,7 @@ distributions across different experimental blocks (e.g. processing batches or
 similar.)
 
 
-## Plots of expression values
+#  Plots of expression values
 
 In `scater`, the `plotExpression` function makes it easy to plot expression
 values for a subset of genes or features. This can be particularly useful when
@@ -315,7 +315,7 @@ plotExpression(example_sceset, rownames(example_sceset)[7:12],
 ```
 
 
-## Quality control
+#  Quality control
 
 The `scater` package puts a focus on aiding with quality control (QC) and
 pre-processing of single-cell RNA-seq data before further downstream analysis.
@@ -332,7 +332,7 @@ and modelling.
 In the next few sections we discuss the QC and filtering capabilities available
 in `scater`.
 
-### Calculate QC metrics
+## Calculate QC metrics
 
 To compute commonly-used QC metrics we have the function `calculateQCMetrics()`:
 
@@ -350,7 +350,7 @@ example_sceset <- calculateQCMetrics(
 varLabels(example_sceset)
 ```
 
-#### Cell-level QC metrics
+### Cell-level QC metrics
 
 This function adds the following columns to `pData(object)`:
 
@@ -388,7 +388,7 @@ Furthermore, where "counts" appear in the above, the same metrics will also be
 computed for "exprs", "tpm" and "fpkm" (if tpm and fpkm are present in the
 `SCESet` object).
 
-#### Feature-level QC metrics
+### Feature-level QC metrics
 
 The function further adds the following columns to `fData(object)`:
 
@@ -413,7 +413,7 @@ computed for "exprs", "tpm" and "fpkm" (if tpm and fpkm are present in the
 `SCESet` object).
 
 
-### Produce diagnostic plots for QC
+## Produce diagnostic plots for QC
 
 Visualising the data and metadata in various ways can be very helpful for QC. We
 have a suite of plotting functions to produce diagnostic plots for:
@@ -429,7 +429,7 @@ These three QC plots can all be accessed through the function `plotQC` (we need
 to make sure there are no features with zero or constant expression).
 
 
-### QC and filtering of features
+## QC and filtering of features
 
 The first step in the QC process is filtering out unwanted features. We will
 typically filter out features with very low overall expression, and any others
@@ -519,13 +519,13 @@ The subsetting of rows of `SCESet` objects makes it easy to drop unwanted
 features.
 
 
-### QC and filtering of cells
+## QC and filtering of cells
 
 See `plotPhenoData` and other QC plots below. The subsetting of columns (which
 correspond to cells) of `SCESet` objects makes it easy to drop unwanted cells.
 
 
-#### Plotting cell metadata variables
+### Plotting cell metadata variables
 
 We also have neat functions to plot two cell metadata variables:
 
@@ -598,7 +598,7 @@ the many QC metrics computed by `calculateQCMetrics` above. Often, problematic
 cells can be identified from such plots.
 
 
-#### PCA and dimensionality reduction
+### PCA and dimensionality reduction
 
 The `plotPCA` function makes it easy to produce a PCA plot directly from an
 `SCESet` object, which is useful for visualising cells.
@@ -733,14 +733,14 @@ plotDiffusionMap(example_sceset, colour_by = "Gene_1000")
 
 
 
-#### Filtering cells
+### Filtering cells
 
 On this example dataset there are no cells that need filtering, but the 
 subsetting capabilities of `scater` make it easy to filter out unwanted cells. 
 Column subsetting selects cells, while row subsetting selects features (genes 
 or transcripts).
 
-### QC of experimental variables
+## QC of experimental variables
 
 See the `plotQC` options below. The various plotting functions enable
 visualisation of the relationship betwen experimental variables and the
@@ -810,7 +810,7 @@ have convenient tools for conducting QC and pre-processing (e.g. filtering) data
 for downstream analysis.
 
 
-## Data normalisation
+#  Data normalisation
 
 High levels of variability between cells characterise single-cell expression
 data. In almost all settings, many sources of unwanted variation should be
@@ -825,7 +825,7 @@ Important experimental variables and latent factors (if used) can be regressed
 out, so that normalised data has these effects removed.
 
 
-## Feature and cell pairwise distance matrices
+#  Feature and cell pairwise distance matrices
 
 In many single-cell expression analyses we may want to generate and store
 pairwise distance matrices for both cells and features.
@@ -858,7 +858,7 @@ limma::plotMDS(featDist(example_sceset))
 ```
 
 
-## Using **kallisto** to quantify transcript abundance from within R
+#  Using **kallisto** to quantify transcript abundance from within R
 
 Lior Pachter's group at Berkeley has recently released a new software tool
 called **kallisto** for rapid quantification of transcript abundance from RNA-seq
