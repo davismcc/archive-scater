@@ -101,6 +101,7 @@ of expression across cells.
 * `plotTSNE`: produce a t-distributed stochastic neighbour embedding (reduced dimension) plot for the cells.
 * `plotDiffusionMap`: produce a diffusion map (reduced dimension) plot for the
 cells.
+* * `plotMDS`: produce a multi-dimensional scaling plot for the cells.
 * `plotReducedDim`: plot a reduced-dimension representation of the cells.
 * `plotExpression`: plot expression levels for a defined set of features.
 * `plotPhenoData`: plot cell metadata and QC metrics.
