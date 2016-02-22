@@ -27,6 +27,19 @@ Briefly, `scater` enables the following:
 See below for information about installation, getting started and highlights of the package.
 
 ## Installation
+Once the package is accepted into Bioconductor, the most reliable way to install
+the package will be to use the usual Bioconductor method:
+
+```
+## try http:// if https:// URLs are not supported
+source("https://bioconductor.org/biocLite.R")
+biocLite("scater")
+```
+
+The `scater` package should become available in the next Bioconductor release in
+April 2016. In the meantime, `scater` can be installed directly from GitHub as
+described below.
+
 This package currently lives on GitHub, so I recommend using Hadley Wickham's
 `devtools` package to install `scater` directly from GitHub. If you don't have
 `devtools` installed, then install that from CRAN (as shown below) and then run
