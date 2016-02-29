@@ -32,7 +32,7 @@ Briefly, `scater` enables the following:
 See below for information about installation, getting started and highlights of the package.
 
 ## Installation
-The `scater` package has been accepted into Bioconductor!.
+The `scater` package has been accepted into Bioconductor!
 Thus, the most reliable way to install the package is to use the usual
 Bioconductor method:
 
