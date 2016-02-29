@@ -11,16 +11,16 @@ emphasis on tools for quality control, visualisation and pre-processing of data
 before further downstream analysis.
 
 We hope that `scater` fills a useful niche between raw RNA-sequencing
-count data and more focused downstream modelling tools such as
+count or transcripts-per-million data and more focused downstream
+modelling tools such as
 [monocle](http://www.bioconductor.org/packages/release/bioc/html/monocle.html),
 [scLVM](http://github.com/PMBio/scLVM),
 [SCDE](http://pklab.med.harvard.edu/scde/index.html),
 [edgeR](http://www.bioconductor.org/packages/release/bioc/html/edgeR.html),
-[limma](http://www.bioconductor.org/packages/release/bioc/html/limma.html) and
-so on.
+[limma](http://www.bioconductor.org/packages/release/bioc/html/limma.html)
+and so on.
 
 Briefly, `scater` enables the following:
-
 
 1. Automated computation of QC metrics
 1. Transcript quantification from read data with pseudo-alignment
@@ -32,10 +32,36 @@ Briefly, `scater` enables the following:
 See below for information about installation, getting started and highlights of the package.
 
 ## Installation
-This package currently lives on GitHub, so I recommend using Hadley Wickham's
-`devtools` package to install `scater` directly from GitHub. If you don't have
-`devtools` installed, then install that from CRAN (as shown below) and then run
-the call to install `scater`:
+The `scater` package has been accepted into Bioconductor!.
+Thus, the most reliable way to install the package is to use the usual
+Bioconductor method:
+
+```{R}
+## try http:// if https:// URLs are not supported
+source("https://bioconductor.org/biocLite.R")
+biocLite("scater")
+```
+
+Currently, only the "devel" (i.e. development) version of `scater` is
+available through Bioconductor. This means that you will need to be
+using Bioconductor devel and the development version of R (R 3.3) in
+order to install `scater` from Bioconductor.
+
+The `scater` package will become available as a "release" version in
+the next Bioconductor release in April 2016. At this point the release
+version of `scater` will work with the release version of R and
+Bioconductor, and development will continue in the devel version of
+the package.
+
+Alternatively, `scater` can be installed directly from GitHub as
+described below. In this case, package that `scater` uses ("depends
+on" in R parlance) will not be automatically installed, so you will
+have to install the required packages as shown below.
+
+I recommend using Hadley Wickham's `devtools` package to install
+`scater` directly from GitHub. If you don't have `devtools` installed,
+then install that from CRAN (as shown below) and then run the call to
+install `scater`:
 
 **If you are using the development version of R, 3.3:**
 ```{r}
@@ -51,11 +77,6 @@ devtools::install_github("davismcc/scater", ref = "release-R-3.2", build_vignett
 If you find that the above will not install on Linux systems, please
 try with the option `build_vignettes = FALSE`. This is a known issue
 that we are working to resolve.
-
-I have recently submitted `scater` to Bioconductor, so development of the
-package is proceeding with the development version of R (version 3.3). As such,
-the master branch of this repository requires R >= 3.3. If you are using the
-release version of R, then please install using the adjusted command above.
 
 Using the most recent version of R is strongly recommended (R 3.2.3 at the time
 of writing). Effort has been made to ensure the package works with R >3.0, but
@@ -195,4 +216,4 @@ package is settled, but it is still under development so may change from time
 to time. Please do try it and contact me with bug reports, feedback, feature
 requests, questions and suggestions to improve the package.
 
-Davis McCarthy, December 2015
+Davis McCarthy, February 2016
