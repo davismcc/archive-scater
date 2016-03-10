@@ -33,6 +33,7 @@
 #' length data from the supplied samples.
 #' 
 #' @importFrom tximport tximport
+#' @export
 #' @references 
 #' Soneson C, Love MI, Robinson MD. Differential analyses for RNA-seq: transcript-level estimates improve gene-level inferences. F1000Res. 2015;4: 1521.
 #' 
