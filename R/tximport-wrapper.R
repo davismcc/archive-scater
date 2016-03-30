@@ -100,7 +100,7 @@ readTxResults <- function(samples = NULL, files = NULL,
     }
     
     ## Read tx results into results objects
-    
+    names(samples) <- NULL # found that named vector can mess things up
     if ( !all(file.exists(files)) )
         stop("Some of the files provided do not exist!")
     txi <- tximport::tximport(files, type = type, txOut = txOut, ...)
