@@ -7,7 +7,8 @@
 scater_gui(sce_set)
 }
 \arguments{
-\item{sce_set}{SCESet object after the calculateQCMetrics()}
+\item{sce_set}{SCESet object after running \code{\link{calculateQCMetrics}} 
+on it}
 }
 \value{
 Opens a browser window with an interactive shiny app and visualize
@@ -15,5 +16,18 @@ all possible plots included in the scater
 }
 \description{
 scater shiny app GUI for workflow for less programmatically inclined users
+}
+\examples{
+data("sc_example_counts")
+data("sc_example_cell_info")
+pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
+rownames(pd) <- pd$Cell
+example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
+drop_genes <- apply(exprs(example_sceset), 1, function(x) {var(x) == 0})
+example_sceset <- example_sceset[!drop_genes, ]
+example_sceset <- calculateQCMetrics(example_sceset, feature_controls = 1:40)
+\dontrun{
+scater_gui(example_sceset)
+}
 }
 
