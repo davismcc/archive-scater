@@ -227,7 +227,9 @@ readKallistoResultsOneSample <- function(directory, read_h5=FALSE,
     else
         file_to_read <- paste0(directory, "/abundance.tsv")
     if ( file.exists(file_to_read) )
-        abundance <- data.table::fread(file_to_read, sep = "\t")
+        abundance <- data.table::fread(file_to_read, colClasses = c("numeric", "numeric", "numeric", "character", "character"), sep = "\t")
+        abundance$est_counts <- as.numeric(abundance$est_counts)
+        abundance$tpm <- as.numeric(abundance$tpm)
     else
         stop(paste("File", file_to_read, "not found or does not exist. Please check directory is correct."))
     ## Read in run information
