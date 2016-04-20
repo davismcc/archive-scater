@@ -79,6 +79,7 @@
 #' }
 runKallisto <- function(targets_file, transcript_index, single_end = TRUE,
                         output_prefix = "output", fragment_length = NULL,
+                        fragment_standard_deviation = NULL,
                         n_cores = 2, n_bootstrap_samples = 0,
                         bootstrap_seed = NULL, correct_bias = TRUE,
                         plaintext = FALSE, kallisto_version = "current",
@@ -108,6 +109,10 @@ defined. Either a scalar giving the average fragment length to use for all
 samples, or a vector providing the ave fragment length for each sample.")
     else
         paired_end <- !single_end
+    if ( single_end && is.null(fragment_standard_deviation) )
+        stop("If single-end reads are used, then fragment_standard_deviation must be defined.")
+    else
+        paired_end <- !single_end
     if ( correct_bias && kallisto_version == "pre-0.42.2" )
         stop("Bias correction requires kallisto version 0.42.2 or higher.")
     ## Make sure that we'll be able to find the fastq files
@@ -123,6 +128,8 @@ samples, or a vector providing the ave fragment length for each sample.")
         kallisto_args <- paste(kallisto_args, "--single")
     if ( !is.null(fragment_length) )
         kallisto_args <- paste(kallisto_args, "-l", fragment_length)
+    if ( !is.null(fragment_standard_deviation) )
+        kallisto_args <- paste(kallisto_args, "-s", fragment_standard_deviation)
     if ( !is.null(bootstrap_seed) )
         kallisto_args <- paste0(kallisto_args, " --seed=", bootstrap_seed)
     if ( correct_bias && kallisto_version != "pre-0.42.2" )
