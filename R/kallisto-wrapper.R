@@ -24,7 +24,11 @@
 #' @param fragment_length scalar integer or numeric giving the estimated
 #' average fragment length. Required argument if \code{single_end} is \code{TRUE},
 #' optional if \code{FALSE} (kallisto default for paired-end data is that the
-#' value is estimated from the input data.
+#' value is estimated from the input data).
+#' @param fragment_standard_deviation scalar numeric giving the estimated 
+#' standard deviation of read fragment length. Required argument if 
+#' \code{single_end} is \code{TRUE}, optional if \code{FALSE} (kallisto default 
+#' for paired-end data is that the value is estimated from the input data).
 #' @param n_cores integer giving the number of cores (nodes/threads) to use for
 #' the kallisto jobs. The package \code{parallel} is used. Default is 2 cores.
 #' @param n_bootstrap_samples integer giving the number of bootstrap samples
@@ -233,11 +237,11 @@ readKallistoResultsOneSample <- function(directory, read_h5=FALSE,
         file_to_read <- paste0(directory, "/abundance.txt")
     else
         file_to_read <- paste0(directory, "/abundance.tsv")
-    if ( file.exists(file_to_read) )
+    if ( file.exists(file_to_read) ) {
         abundance <- data.table::fread(file_to_read, colClasses = c("numeric", "numeric", "numeric", "character", "character"), sep = "\t")
         abundance$est_counts <- as.numeric(abundance$est_counts)
         abundance$tpm <- as.numeric(abundance$tpm)
-    else
+    } else
         stop(paste("File", file_to_read, "not found or does not exist. Please check directory is correct."))
     ## Read in run information
     run_info <- rjson::fromJSON(file = paste0(directory, "/run_info.json"))
