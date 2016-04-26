@@ -16,4 +16,8 @@ test_that("sizeFactors() works as expected", {
     
     ## size factors should return a vector
     expect_that(sizeFactors(example_sceset), is_a("numeric"))
+    
+    ## reset size factors with NULL
+    sizeFactors(example_sceset) <- NULL
+    expect_null(sizeFactors(example_sceset))
 })

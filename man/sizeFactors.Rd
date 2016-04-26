@@ -6,21 +6,25 @@
 \alias{sizeFactors,SCESet-method}
 \alias{sizeFactors.SCESet}
 \alias{sizeFactors<-}
-\alias{sizeFactors<-,SCESet,vector-method}
+\alias{sizeFactors<-,SCESet,NULL-method}
+\alias{sizeFactors<-,SCESet,numeric-method}
 \title{Accessors size factors of an SCESet object.}
 \usage{
 \S4method{sizeFactors}{SCESet}(object)
 
-\S4method{sizeFactors}{SCESet,vector}(object)<-value
+\S4method{sizeFactors}{SCESet,numeric}(object)<-value
+\S4method{sizeFactors}{SCESet,NULL}(object)<-value
 
 \S4method{sizeFactors}{SCESet}(object)
 
-\S4method{sizeFactors}{SCESet,vector}(object) <- value
+\S4method{sizeFactors}{SCESet,numeric}(object) <- value
+
+\S4method{sizeFactors}{SCESet,`NULL`}(object) <- value
 }
 \arguments{
 \item{object}{a \code{SCESet} object.}
 
-\item{value}{a vector of class \code{"numeric"}}
+\item{value}{a vector of class \code{"numeric"} or \code{NULL}}
 }
 \description{
 For normalisation, library-specific size factors can be defined. Raw values 
@@ -31,6 +35,8 @@ TPM, etc.
 data("sc_example_counts")
 data("sc_example_cell_info")
 example_sceset <- newSCESet(countData = sc_example_counts)
+sizeFactors(example_sceset)
+sizeFactors(example_sceset) <- 2 ^ rnorm(ncol(example_sceset))
 sizeFactors(example_sceset)
 
 }

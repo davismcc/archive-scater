@@ -1223,15 +1223,16 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 #' @usage
 #' \S4method{sizeFactors}{SCESet}(object)
 #'
-#' \S4method{sizeFactors}{SCESet,vector}(object)<-value
+#' \S4method{sizeFactors}{SCESet,numeric}(object)<-value
+#' \S4method{sizeFactors}{SCESet,NULL}(object)<-value
 #'
 #' @docType methods
 #' @name sizeFactors
 #' @rdname sizeFactors
-#' @aliases sizeFactors sizeFactors,SCESet-method sizeFactors<-,SCESet,vector-method
+#' @aliases sizeFactors sizeFactors,SCESet-method sizeFactors<-,SCESet,numeric-method sizeFactors<-,SCESet,NULL-method
 #'
 #' @param object a \code{SCESet} object.
-#' @param value a vector of class \code{"numeric"}
+#' @param value a vector of class \code{"numeric"} or \code{NULL}
 #'
 #' @author Davis McCarthy
 #' @export
@@ -1244,9 +1245,17 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 #' data("sc_example_cell_info")
 #' example_sceset <- newSCESet(countData = sc_example_counts)
 #' sizeFactors(example_sceset)
+#' sizeFactors(example_sceset) <- 2 ^ rnorm(ncol(example_sceset))
+#' sizeFactors(example_sceset)
 #'
 sizeFactors.SCESet <- function(object) {
-    object$size_factor
+    out <- object$size_factor
+    if ( is.null(out) ) { 
+        warning("'sizeFactors' have not been set") 
+        return(NULL)
+    }
+    names(out) <- colnames(object) 
+    return(out)
 }
 
 #' @name sizeFactors
@@ -1258,13 +1267,25 @@ setMethod("sizeFactors", signature(object = "SCESet"), sizeFactors.SCESet)
 #' @name sizeFactors<-
 #' @rdname sizeFactors
 #' @exportMethod "sizeFactors<-"
-#' @aliases sizeFactors<-,SCESet,vector-method
-setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "vector"),
+#' @aliases sizeFactors<-,SCESet,numeric-method
+setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "numeric"),
                  function(object, value) {
                      object$size_factor <- value
                      validObject(object)
                      object
                  })
+
+#' @name sizeFactors<-
+#' @rdname sizeFactors
+#' @exportMethod "sizeFactors<-"
+#' @aliases sizeFactors<-,SCESet,NULL-method
+setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "NULL"),
+                 function(object, value) {
+                     object$size_factor <- value
+                     validObject(object)
+                     object
+                 })
+
 
 ################################################################################
 ### bootstraps
