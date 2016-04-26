@@ -442,7 +442,7 @@ cellNames <- function(object) {
 #' SCESet objects contain feature information (inherited from the ExpressionSet
 #' class). This function conveniently replaces the feature data with the
 #' value supplied, which must be an AnnotatedDataFrame.
-#' @param x An SCESet object.
+#' @param object An SCESet object.
 #' @param value an AnnotatedDataFrame with updated featureData to replace
 #' existing
 #' @return A matrix of expression count data, where rows correspond to features
@@ -461,19 +461,19 @@ cellNames <- function(object) {
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' fData(example_sceset)
 #' }
-setReplaceMethod("fData", signature(x = "SCESet", value = "AnnotatedDataFrame"),
-                 function(x, value) {
-                     x@featureData <- value
-                     x
+setReplaceMethod("fData", signature(object = "SCESet", value = "AnnotatedDataFrame"),
+                 function(object, value) {
+                     object@featureData <- value
+                     object
                  } )
 
 #' @name fData
 #' @rdname fData
 #' @exportMethod "fData<-"
-setReplaceMethod("fData", signature(x = "SCESet", value = "data.frame"),
-                 function(x, value) {
-                     x@featureData <- new("AnnotatedDataFrame", value)
-                     x
+setReplaceMethod("fData", signature(object = "SCESet", value = "data.frame"),
+                 function(object, value) {
+                     object@featureData <- new("AnnotatedDataFrame", value)
+                     object
                  } )
 
 
@@ -483,7 +483,7 @@ setReplaceMethod("fData", signature(x = "SCESet", value = "data.frame"),
 #' SCESet objects contain phenotype information (inherited from the
 #' ExpressionSet class). This function conveniently replaces the phenotype data
 #' with the value supplied, which must be an AnnotatedDataFrame.
-#' @param x An SCESet object.
+#' @param object An SCESet object.
 #' @param value an AnnotatedDataFrame with updated phenoData to replace
 #' existing
 #' @return A matrix of expression count data, where rows correspond to features
@@ -502,20 +502,20 @@ setReplaceMethod("fData", signature(x = "SCESet", value = "data.frame"),
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' pData(example_sceset)
 #' }
-setReplaceMethod("pData", signature(x = "SCESet", value = "AnnotatedDataFrame"),
-                 function(x, value) {
-                     x@phenoData <- value
-                     x
+setReplaceMethod("pData", signature(object = "SCESet", value = "AnnotatedDataFrame"),
+                 function(object, value) {
+                     object@phenoData <- value
+                     object
                  } )
 
 
 #' @name pData
 #' @rdname pData
 #' @exportMethod "pData<-"
-setReplaceMethod("pData", signature(x = "SCESet", value = "data.frame"),
-                 function(x, value) {
-                     x@phenoData <- new("AnnotatedDataFrame", value)
-                     x
+setReplaceMethod("pData", signature(object = "SCESet", value = "data.frame"),
+                 function(object, value) {
+                     object@phenoData <- new("AnnotatedDataFrame", value)
+                     object
                  } )
 
 
