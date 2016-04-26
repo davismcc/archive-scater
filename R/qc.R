@@ -539,7 +539,26 @@ a lower count threshold of 0.")
     df_pdata_this
 }
 
+################################################################################
 
+isOutlier <- function(metric, nmads=5, type=c("both", "lower", "higher"), log=FALSE) {
+    if (log) {
+        metric <- log10(metric)
+    }
+    cur.med <- median(metric)
+    cur.mad <- mad(metric, center=cur.med)
+
+    type <- match.arg(type)
+    upper.limit <- cur.med + nmads * cur.mad
+    lower.limit <- cur.med - nmads * cur.mad
+    if (type=="lower") {
+        upper.limit <- Inf
+    } else if (type=="higher") {
+        lower.limit <- -Inf
+    }
+
+    return(metric < lower.limit | upper.limit < metric)
+}
 
 ################################################################################
 
