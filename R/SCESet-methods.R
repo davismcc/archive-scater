@@ -1212,6 +1212,61 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 
 
 ################################################################################
+### sizeFactors
+
+#' Accessors size factors of an SCESet object.
+#'
+#' For normalisation, library-specific size factors can be defined. Raw values 
+#' can be divided by the appropriate size factors to obtain normalised counts, 
+#' TPM, etc.
+#'
+#' @usage
+#' \S4method{sizeFactors}{SCESet}(object)
+#'
+#' \S4method{sizeFactors}{SCESet,vector}(object)<-value
+#'
+#' @docType methods
+#' @name sizeFactors
+#' @rdname sizeFactors
+#' @aliases sizeFactors sizeFactors,SCESet-method sizeFactors<-,SCESet,vector-method
+#'
+#' @param object a \code{SCESet} object.
+#' @param value a vector of class \code{"numeric"}
+#'
+#' @author Davis McCarthy
+#' @export
+#' 
+#' @importFrom BiocGenerics sizeFactors
+#' @importFrom BiocGenerics sizeFactors<-
+#' 
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' example_sceset <- newSCESet(countData = sc_example_counts)
+#' sizeFactors(example_sceset)
+#'
+sizeFactors.SCESet <- function(object) {
+    object$size_factors
+}
+
+#' @name sizeFactors
+#' @rdname sizeFactors
+#' @export
+#' @aliases sizeFactors,SCESet-method
+setMethod("sizeFactors", signature(object = "SCESet"), sizeFactors.SCESet)
+
+#' @name sizeFactors<-
+#' @rdname sizeFactors
+#' @exportMethod "sizeFactors<-"
+#' @aliases sizeFactors<-,SCESet,vector-method
+setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "vector"),
+                 function(object, value) {
+                     object$size_factors <- value
+                     validObject(object)
+                     object
+                 })
+
+################################################################################
 ### bootstraps
 
 #' Accessor and replacement for bootstrap results in an SCESet object
