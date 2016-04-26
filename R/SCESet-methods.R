@@ -1244,9 +1244,17 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 #' data("sc_example_cell_info")
 #' example_sceset <- newSCESet(countData = sc_example_counts)
 #' sizeFactors(example_sceset)
+#' sizeFactors(example_sceset) <- 2^rnorm(ncol(example_sceset))
+#' sizeFactors(example_sceset)
 #'
 sizeFactors.SCESet <- function(object) {
-    object$size_factors
+    out <- object$size_factors
+    if (is.null(out)) { 
+        warning("'sizeFactors' have not been set") 
+        return(NULL)
+    }
+    names(out) <- colnames(object) 
+    return(out)
 }
 
 #' @name sizeFactors
