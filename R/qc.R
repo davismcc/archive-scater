@@ -350,7 +350,7 @@ a lower count threshold of 0.")
     # med_total_counts <- median(log10(total_counts))
     # keep_total_counts <- c(med_total_counts - nmads * mad_total_counts,
     #                        med_total_counts + nmads * mad_total_counts)
-    filter_on_total_counts <- !isOutlier(total_counts, nmads, log = TRUE)
+    filter_on_total_counts <- isOutlier(total_counts, nmads, log = TRUE)
 
     ## Define counts from endogenous features
     qc_pdata <- feature_controls_pdata
