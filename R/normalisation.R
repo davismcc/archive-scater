@@ -21,6 +21,11 @@
 #' Valid options are \code{'counts'}, the count values, \code{'exprs'} the 
 #' expression slot, \code{'tpm'} the transcripts-per-million slot or 
 #' \code{'fpkm'} the FPKM slot.
+#' @param return_norm_as_exprs logical, should the normalised expression values
+#' be returned to the \code{exprs} slot of the object? Default is TRUE. If 
+#' FALSE, values in the \code{exprs} slot will be left untouched. Regardless,
+#' normalised expression values will be returned to the \code{norm_exprs} slot 
+#' of the object.
 #' @param ... arguments passed to \code{normaliseExprs} (in the case of 
 #' \code{normalizeExprs}) or to \code{\link[edgeR]{calcNormFactors}}.
 #' 
@@ -85,7 +90,8 @@
 #' feature_set = 1:100)
 #' 
 normaliseExprs <- function(object, method = "none", design = NULL, feature_set = NULL,
-                           exprs_values = "counts", ...) {
+                           exprs_values = "counts", return_norm_as_exprs = TRUE,
+                           ...) {
     if ( !is(object, "SCESet") )
         stop("object must be an SCESet.")
     ## Define expression values to be used
@@ -112,52 +118,58 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
     ## Compute normalisation factors with calcNormFactors from edgeR
     norm_factors <- edgeR::calcNormFactors.default(exprs_mat_for_norm, 
                                                    method = method, ...)
+    lib_size <- colSums(exprs_mat_for_norm)
+    
     if ( any(is.na(norm_factors)) ) {
         norm_factors[is.na(norm_factors)] <- 1
         warning("One or more normalisation factors were computed to be NA. NA values have been replaced with 1.")
     }
+    
+    ## define size factors from norm factors
+    size_factors <- norm_factors * lib_size
+    size_factors <- size_factors / mean(size_factors) 
+    
     if ( !is.null(feature_set) ) {
-        ## Divide expression values by the normalisation factors and total 
-        expression 
-        norm_exprs_mat <- t(t(exprs_mat_for_norm) / norm_factors / 
-                                colSums(exprs_mat_for_norm))
+        ## Divide expression values by the normalisation factors 
+        norm_exprs_mat <- t(t(exprs_mat_for_norm) / size_factors)
     } else {
         ## Divide expression values by the normalisation factors
-        norm_exprs_mat <- t(t(exprs_mat) / norm_factors)
+        norm_exprs_mat <- t(t(exprs_mat) / size_factors)
     }
     ## Assign normalised expression values
     if ( exprs_values == "counts" ) {
         ## Divide expression values by the normalisation factors
-        norm_exprs_mat <- t(t(exprs_mat) / norm_factors)
+        norm_exprs_mat <- t(t(exprs_mat) / size_factors)
         norm_counts(object) <- norm_exprs_mat
-        object$norm_factors_counts <- norm_factors
+        object$size_factor_counts <- size_factors
         norm_cpm(object) <- 
             edgeR::cpm.default(exprs_mat, 
-                       lib.size = (colSums(exprs_mat_for_norm) * norm_factors),
+                       lib.size = (size_factors * mean(lib_size) / 
+                                       mean(size_factors)),
                        prior.count = object@logExprsOffset, log = FALSE)
         if ( object@logged )
             norm_exprs(object) <- 
             edgeR::cpm.default(exprs_mat, 
-                       lib.size = (colSums(exprs_mat_for_norm) * norm_factors),
+                       lib.size = (1e06 * size_factors),
                        prior.count = object@logExprsOffset, log = object@logged)
     } else {
         ## Add tpm if relevant
         if ( exprs_values == "tpm" ) {
-            object$norm_factors_tpm <- norm_factors
+            object$size_factor_tpm <- size_factors
             if ( !is.null(feature_set) )
-                norm_exprs_mat <- norm_exprs_mat * (10 ^ 6) 
+                norm_exprs_mat <- norm_exprs_mat * 1e06 
             norm_tpm(object) <- norm_exprs_mat
         }
         ## Add fpkm if relevant
         if ( exprs_values == "fpkm" ) {
-            object$norm_factors_fpkm <- norm_factors
+            object$size_factor_fpkm <- size_factors
             if ( !is.null(feature_set) )
-                norm_exprs_mat <- norm_exprs_mat * (10 ^ 6)
+                norm_exprs_mat <- norm_exprs_mat * 1e06
             norm_fpkm(object) <- norm_exprs_mat
         }
         ## Add exprs norm factors if relevant
         if ( exprs_values == "exprs" ) {
-            object$norm_factors_exprs <- norm_factors
+            object$size_factor_exprs <- size_factors
         }
         ## Add norm_exprs values, logged if appropriate
         if ( object@logged )
@@ -166,6 +178,9 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
             norm_exprs(object) <- norm_exprs_mat
     }
     
+    ## save size factors to matrix under that name
+    object$size_factor <- size_factors
+    
     ## If a design matrix is provided, then normalised expression values are
     ## residuals of a linear model fit to norm_exprs values with that design
     if ( !is.null(design) ) {
@@ -173,6 +188,10 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
         norm_exprs(object) <- limma::residuals.MArrayLM(limma_fit, 
                                                         norm_exprs(object))
     }
+    
+    ## Return normalised expression values in exprs(object)?
+    if ( return_norm_as_exprs )
+        set_exprs(object, "exprs") <- norm_exprs(object)
     
     ## Return SCESet object
     object

@@ -1246,7 +1246,7 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 #' sizeFactors(example_sceset)
 #'
 sizeFactors.SCESet <- function(object) {
-    object$size_factors
+    object$size_factor
 }
 
 #' @name sizeFactors
@@ -1261,7 +1261,7 @@ setMethod("sizeFactors", signature(object = "SCESet"), sizeFactors.SCESet)
 #' @aliases sizeFactors<-,SCESet,vector-method
 setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "vector"),
                  function(object, value) {
-                     object$size_factors <- value
+                     object$size_factor <- value
                      validObject(object)
                      object
                  })

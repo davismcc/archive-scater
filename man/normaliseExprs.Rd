@@ -7,7 +7,7 @@
 \title{Normalise expression expression levels for an SCESet object}
 \usage{
 normaliseExprs(object, method = "none", design = NULL, feature_set = NULL,
-  exprs_values = "counts", ...)
+  exprs_values = "counts", return_norm_as_exprs = TRUE, ...)
 
 normalizeExprs(...)
 }
@@ -32,6 +32,12 @@ assayData from the \code{SCESet} object should be used as expression values.
 Valid options are \code{'counts'}, the count values, \code{'exprs'} the 
 expression slot, \code{'tpm'} the transcripts-per-million slot or 
 \code{'fpkm'} the FPKM slot.}
+
+\item{return_norm_as_exprs}{logical, should the normalised expression values
+be returned to the \code{exprs} slot of the object? Default is TRUE. If 
+FALSE, values in the \code{exprs} slot will be left untouched. Regardless,
+normalised expression values will be returned to the \code{norm_exprs} slot 
+of the object.}
 
 \item{...}{arguments passed to \code{normaliseExprs} (in the case of 
 \code{normalizeExprs}) or to \code{\link[edgeR]{calcNormFactors}}.}
