@@ -1281,7 +1281,7 @@ setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "numeric"),
 #' @aliases sizeFactors<-,SCESet,NULL-method
 setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "NULL"),
                  function(object, value) {
-                     object$size_factor <- value
+                     object$size_factor <- NULL
                      validObject(object)
                      object
                  })

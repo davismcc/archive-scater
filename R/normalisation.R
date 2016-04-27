@@ -1,9 +1,11 @@
 ## Methods for normalisation of single-cell RNA-seq data
 
+################################################################################
+
 #' Normalise expression expression levels for an SCESet object
 #' 
 #' Compute normalised expression values from an SCESet object and return the 
-#' object with the normalsed expression values added.
+#' object with the normalised expression values added.
 #' 
 #' @param object an \code{SCESet} object.
 #' @param method character string giving method to be used to calculate 
@@ -141,7 +143,7 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
         ## Divide expression values by the normalisation factors
         norm_exprs_mat <- t(t(exprs_mat) / size_factors)
         norm_counts(object) <- norm_exprs_mat
-        object$size_factor_counts <- size_factors
+        # object$size_factor_counts <- size_factors
         norm_cpm(object) <- 
             edgeR::cpm.default(exprs_mat, 
                        lib.size = (size_factors * mean(lib_size) / 
@@ -155,21 +157,21 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
     } else {
         ## Add tpm if relevant
         if ( exprs_values == "tpm" ) {
-            object$size_factor_tpm <- size_factors
+            # object$size_factor_tpm <- size_factors
             if ( !is.null(feature_set) )
                 norm_exprs_mat <- norm_exprs_mat * 1e06 
             norm_tpm(object) <- norm_exprs_mat
         }
         ## Add fpkm if relevant
         if ( exprs_values == "fpkm" ) {
-            object$size_factor_fpkm <- size_factors
+            # object$size_factor_fpkm <- size_factors
             if ( !is.null(feature_set) )
                 norm_exprs_mat <- norm_exprs_mat * 1e06
             norm_fpkm(object) <- norm_exprs_mat
         }
         ## Add exprs norm factors if relevant
         if ( exprs_values == "exprs" ) {
-            object$size_factor_exprs <- size_factors
+            # object$size_factor_exprs <- size_factors
         }
         ## Add norm_exprs values, logged if appropriate
         if ( object@logged )
@@ -206,6 +208,123 @@ normalizeExprs <- function(...) {
 
 
 
+################################################################################
 
+#' Normalise an SCESet object using pre-computed size factors
+#' 
+#' Compute normalised expression values from an SCESet object using the size 
+#' factors stored in the object. Return the object with the normalised 
+#' expression values added.
+#' 
+#' @param object an \code{SCESet} object.
+#' @param exprs_values character string indicating which slot of the 
+#' assayData from the \code{SCESet} object should be used as expression values. 
+#' Valid options are \code{'counts'}, the count values, \code{'exprs'} the 
+#' expression slot, \code{'tpm'} the transcripts-per-million slot or 
+#' \code{'fpkm'} the FPKM slot.
+#' @param logExprsOffset scalar numeric value giving the offset to add when 
+#' taking log2 of normalised values to return as expression values. If NULL 
+#' (default), then the value from \code{object@logExprsOffset} is used.
+#' @param recompute_cpm logical, should the counts-per-million values be 
+#' recomputed after normalising with the stored size factors in the object and
+#' stored in \code{cpm(object)} in the returned object?
+#' @param return_norm_as_exprs logical, should the normalised expression values
+#' be returned to the \code{exprs} slot of the object? Default is TRUE. If 
+#' FALSE, values in the \code{exprs} slot will be left untouched. Regardless,
+#' normalised expression values will be returned in the 
+#' \code{norm_exprs(object)} slot.
+#' @param ... arguments passed to \code{normalize} when calling \code{normalise}.
+#' 
+#' @details \code{normalize} is exactly the same as \code{normalise}, the option
+#' provided for those who have a preference for North American or 
+#' British/Australian spelling.
+#' 
+#' @return an SCESet object
+#' 
+#' @name normalize
+#' @rdname normalize
+#' @aliases normalize normalise normalize,SCESet-method normalise,SCESet-method
+#' @author Davis McCarthy and Aaron Lun
+#' @importFrom BiocGenerics normalize
+#' @importFrom Biobase 'exprs<-'
+#' 
+#' @export
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' keep_gene <- rowSums(counts(example_sceset)) > 0
+#' example_sceset <- example_sceset[keep_gene,]
+#' 
+#' ## Apply TMM normalisation taking into account all genes
+#' example_sceset <- normaliseExprs(example_sceset, method = "TMM")
+#' ## Scale counts relative to a set of control features (here the first 100 features)
+#' example_sceset <- normaliseExprs(example_sceset, method = "none", 
+#' feature_set = 1:100)
+#' 
+#' ## normalize the object using the saved size factors
+#' example_sceset <- normalize(example_sceset)
+#' 
+normalize.SCESet <- function(object, exprs_values = "counts", 
+                             logExprsOffset = NULL, recompute_cpm = TRUE,
+                             return_norm_as_exprs = TRUE) {
+    if ( !is(object, "SCESet") )
+        stop("object must be an SCESet.")
+    ## Define expression values to be used
+    exprs_values <- match.arg(exprs_values, c("tpm", "fpkm", "counts"))
+    exprs_mat <- get_exprs(object, exprs_values)
+    ## extract existing size factors
+    size_factors <- sizeFactors(object) 
+    if ( is.null(size_factors) ) {
+        message("No size factors defined in object$size_factor so returning 
+                original object")   
+        return(object)
+    }
+    ## extract logExprsOffset if argument is NULL
+    if ( is.null(logExprsOffset) )
+        logExprsOffset <- object@logExprsOffset
+    ## recompute cpm if desired
+    if ( recompute_cpm && exprs_values == "counts" ) { 
+        lib_size <- colSums(exprs_mat)
+        new_cpm <- edgeR::cpm.default(
+            exprs_mat, 
+            lib.size = (size_factors * mean(lib_size) / mean(size_factors)),
+            prior.count = logExprsOffset, log = FALSE)
+        cpm(object) <- new_cpm
+    }
+    
+    ## compute normalised expression values
+    if ( exprs_values == "counts" )
+        norm_exprs_mat <- edgeR::cpm.default(
+            exprs_mat, prior.count = logExprsOffset, 
+            lib.size = size_factors * 1e6, log = TRUE)
+    else {
+        norm_exprs_mat <- log2(t(t(exprs_mat) / size_factors) + logExprsOffset)
+    }
+    
+    ## add normalised values to object
+    norm_exprs(object) <- norm_exprs_mat
+    if ( return_norm_as_exprs ) 
+        exprs(object) <- norm_exprs_mat
+    
+    ## return object
+    return(object)
+}
+
+
+#' @rdname normalize
+#' @aliases normalize
+#' @export
+setMethod("normalize", signature(object = "SCESet"),
+          normalize.SCESet)
+
+
+#' @rdname normalize
+#' @aliases normalise
+#' @export
+normalise <- function(...) {
+    normalize(...)
+}
 
 

@@ -47,7 +47,7 @@ an SCESet object
 }
 \description{
 Compute normalised expression values from an SCESet object and return the 
-object with the normalsed expression values added.
+object with the normalised expression values added.
 }
 \details{
 This function allows the user to compute normalised expression 
