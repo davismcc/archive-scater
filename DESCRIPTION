@@ -21,7 +21,7 @@ Imports: biomaRt, BiocGenerics, data.table, dplyr, edgeR, grid, limma,
         matrixStats, parallel, plyr, reshape2, rhdf5, rjson, shiny, 
         shinydashboard, tximport, viridis
 Suggests: BiocStyle, cowplot, cluster, destiny, knitr, monocle,
-        mvoutlier, rmarkdown, Rtsne, testthat
+        mvoutlier, rmarkdown, Rtsne, testthat, magrittr
 VignetteBuilder: knitr
 LazyData: true
 biocViews: RNASeq, QualityControl, Preprocessing, Normalization,
