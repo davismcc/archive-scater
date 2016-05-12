@@ -128,16 +128,27 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
     }
     
     ## define size factors from norm factors
-    size_factors <- norm_factors * lib_size
-    size_factors <- size_factors / mean(size_factors) 
-    
-    if ( !is.null(feature_set) ) {
-        ## Divide expression values by the normalisation factors 
-        norm_exprs_mat <- t(t(exprs_mat_for_norm) / size_factors)
-    } else {
-        ## Divide expression values by the normalisation factors
-        norm_exprs_mat <- t(t(exprs_mat) / size_factors)
+    if ( exprs_values == "exprs" )
+        ## if 'exprs' is used as expression values, then do not adjust by library size
+        size_factors <- rep(1, length(norm_factors))
+    else {
+        size_factors <- norm_factors * lib_size
+        size_factors <- size_factors / mean(size_factors) 
     }
+    
+    if ( exprs_values == "exprs" && method == "none")
+        ## in this case "norm" values are the same as original
+        norm_exprs_mat <- get_exprs(object, exprs_values)
+    else {
+        if ( !is.null(feature_set) ) {
+            ## Divide expression values by the normalisation factors 
+            norm_exprs_mat <- t(t(exprs_mat_for_norm) / size_factors)
+        } else {
+            ## Divide expression values by the normalisation factors
+            norm_exprs_mat <- t(t(exprs_mat) / size_factors)
+        }
+    }
+        
     ## Assign normalised expression values
     if ( exprs_values == "counts" ) {
         ## Divide expression values by the normalisation factors
@@ -173,11 +184,15 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
         if ( exprs_values == "exprs" ) {
             # object$size_factor_exprs <- size_factors
         }
-        ## Add norm_exprs values, logged if appropriate
-        if ( object@logged )
-            norm_exprs(object) <- log2(norm_exprs_mat + object@logExprsOffset)
-        else
-            norm_exprs(object) <- norm_exprs_mat
+        if ( exprs_values == "exprs" && method == "none" )
+            norm_exprs(object) <- get_exprs(object, exprs_values)
+        else {
+            ## Add norm_exprs values, logged if appropriate
+            if ( object@logged )
+                norm_exprs(object) <- log2(norm_exprs_mat + object@logExprsOffset)
+            else
+                norm_exprs(object) <- norm_exprs_mat
+        }
     }
     
     ## save size factors to matrix under that name
