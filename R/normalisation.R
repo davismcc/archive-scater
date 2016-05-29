@@ -273,6 +273,7 @@ normalize.SCESet <- function(object, exprs_values = "counts",
         stop("object must be an SCESet.")
     ## Define expression values to be used
     exprs_values <- match.arg(exprs_values, c("tpm", "fpkm", "counts"))
+    isCount <- exprs_values == "counts"
     exprs_mat <- get_exprs(object, exprs_values)
     ## extract existing size factors
     size_factors <- sizeFactors(object) 
@@ -281,26 +282,45 @@ normalize.SCESet <- function(object, exprs_values = "counts",
                 original object")   
         return(object)
     }
+    ## figuring out how many controls have their own size factors
+    control_list <- list()
+    for (fc in .get_feature_control_names(object)) {
+        specific_sf <- suppressWarnings(sizeFactors(object, type=fc))
+        if (!is.null(specific_sf)) { 
+            which.current <- fData(object)[[paste0("is_feature_control_", fc)]]
+            control_list[[fc]] <- list(SF=specific_sf, ID=which.current)
+        }
+    }
+     
     ## extract logExprsOffset if argument is NULL
     if ( is.null(logExprsOffset) )
         logExprsOffset <- object@logExprsOffset
+    
     ## recompute cpm if desired
-    if ( recompute_cpm && exprs_values == "counts" ) { 
+    if ( recompute_cpm && isCount ) { 
         lib_size <- colSums(exprs_mat)
-        new_cpm <- edgeR::cpm.default(
-            exprs_mat, 
-            lib.size = (size_factors * mean(lib_size) / mean(size_factors)),
-            prior.count = logExprsOffset, log = FALSE)
+        new_cpm <- .recompute_cpm_fun(exprs_mat = exprs_mat, 
+                        size_factors = size_factors, 
+                        lib_size = lib_size, logExprsOffset = logExprsOffset)
+        for (alt in control_list) { 
+            new_cpm[alt$ID,] <- .recompute_cpm_fun(
+                                    exprs_mat = exprs_mat[alt$ID,,drop=FALSE],
+                                    size_factors = alt$SF, lib_size = lib_size,
+                                    logExprsOffset = logExprsOffset)
+        }
         cpm(object) <- new_cpm
     }
     
     ## compute normalised expression values
-    if ( exprs_values == "counts" )
-        norm_exprs_mat <- edgeR::cpm.default(
-            exprs_mat, prior.count = logExprsOffset, 
-            lib.size = size_factors * 1e6, log = TRUE)
-    else {
-        norm_exprs_mat <- log2(t(t(exprs_mat) / size_factors) + logExprsOffset)
+    norm_exprs_mat <- .recompute_expr_fun(exprs_mat = exprs_mat, 
+                        size_factors = size_factors, 
+                        logExprsOffset = logExprsOffset, isCount = isCount)
+    for (alt in control_list) {
+        norm_exprs_mat[alt$ID,] <- .recompute_expr_fun(
+                                        exprs_mat[alt$ID,,drop=FALSE], 
+                                        size_factors = alt$SF, 
+                                        logExprsOffset = logExprsOffset, 
+                                        isCount = isCount)
     }
     
     ## add normalised values to object
@@ -312,6 +332,28 @@ normalize.SCESet <- function(object, exprs_values = "counts",
     return(object)
 }
 
+.recompute_cpm_fun <- function(exprs_mat, size_factors, 
+                               lib_size, logExprsOffset) {
+    edgeR::cpm.default(
+       exprs_mat, 
+       # centering size factors on the average library size:
+       lib.size = (size_factors * mean(lib_size) / mean(size_factors)), 
+       prior.count = logExprsOffset, log = FALSE)
+}
+
+.recompute_expr_fun <- function(exprs_mat, size_factors, 
+                                logExprsOffset, isCount) {
+    size_factors <- size_factors / mean(size_factors)
+    if (isCount) { 
+        out <- edgeR::cpm.default(
+                   exprs_mat, prior.count = logExprsOffset, 
+                   # 1e6 multiplication, so CPM *is* the "normalized" count:
+                   lib.size = size_factors * 1e6, log = TRUE) 
+    } else {
+        out <- log2(t(t(exprs_mat) / size_factors) + logExprsOffset)
+    } 
+    return(out)
+}
 
 #' @rdname normalize
 #' @aliases normalize
