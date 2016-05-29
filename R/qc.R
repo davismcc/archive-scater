@@ -224,6 +224,7 @@ a lower count threshold of 0.")
         is_feature_control <- rep(FALSE, nrow(object))
         feature_controls_fdata <- data.frame(is_feature_control)
         n_sets_feature_controls <- 1
+        collected.names <- character(0)
     } else {
         if ( is.list(feature_controls) ) {
             feature_controls_list <- feature_controls
@@ -233,6 +234,18 @@ a lower count threshold of 0.")
             feature_controls_list <- list(feature_controls)
             n_sets_feature_controls <- 1
         }
+        ## Naming, if unnamed.
+        collected.names <- list()
+        counter <- 1L
+        for (i in seq_along(feature_controls_list)) {
+                set_name <- names(feature_controls_list)[i]
+            if (is.null(set_name) || set_name=="") {
+                        set_name <- paste0("unnamed", i)
+                }
+                collected.names[[i]] <- set_name
+        }
+        collected.names <- unlist(collected.names)
+        names(feature_controls_list) <- collected.names
         ## Cycle through the feature_controls list and add QC info
         for (i in seq_len(length(feature_controls_list)) ) {
             gc_set <- feature_controls_list[[i]]
@@ -294,6 +307,8 @@ a lower count threshold of 0.")
                 feature_controls_fdata <- df_fdata_this
         }
     }
+    ## Adding control names.
+    experimentData(object)@normControls$feature_controls <- collected.names
 
     ## Fix column names and define feature controls across all control sets
     if ( n_sets_feature_controls == 1 ) {
@@ -529,6 +544,10 @@ a lower count threshold of 0.")
     }
     colnames(df_pdata_this) <- gsub("exprs", exprs_type, colnames(df_pdata_this))
     df_pdata_this
+}
+
+.get_feature_control_names <- function(object) {
+    normControls(experimentData(object))$feature_controls
 }
 
 ################################################################################
