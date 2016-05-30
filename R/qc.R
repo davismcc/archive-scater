@@ -175,8 +175,6 @@
 #' biological_feature_controls = list(MT = 50:100))
 #' 
 calculateQCMetrics <- function(object, feature_controls = NULL,
-                               technical_feature_controls = NULL,
-                               biological_feature_controls = NULL,
                                cell_controls = NULL, nmads = 5,
                                pct_feature_controls_threshold = 80) {
     ## We must have an SCESet object
@@ -210,40 +208,44 @@ a lower count threshold of 0.")
     counts_mat <- counts(object)
     tpm_mat <- tpm(object)
     fpkm_mat <- fpkm(object)
-
-    if ( !is.null(technical_feature_controls) ) {
-        if ( !is.null(feature_controls) )
-            warning("Both technical_feature_controls and feature_controls arguments provided, so ignoring feature_controls")
-        feature_controls <- technical_feature_controls
-
+  
+    ## get number of sets of feature controls, and name them
+    if ( is.null(feature_controls) ) {
+        feature_controls <- list()
+    } else if ( !is.list(feature_controls) ) {
+        feature_controls <- list(feature_controls) 
+    } 
+    n_sets_feature_controls <- length(feature_controls)
+    counter <- 1L
+    for (i in seq_len(n_sets_feature_controls)) {
+        curname <- names(feature_controls)[i]
+        if (is.null(curname) || curname=="") {
+            names(feature_controls)[i] <- paste0("unnamed", counter)
+            counter <- counter + 1L
+        }
     }
+    object@featureControlInfo <- AnnotatedDataFrame(
+        data.frame(name=names(feature_controls))
+    )
     
-    ## get number of sets of technical feature controls
-    if ( is.list(feature_controls) )
-        n_sets_feature_controls <- length(feature_controls)
-    else
-        n_sets_feature_controls <- 1
-    
-    ## Contributions from technical control features
-    tech_features <- .process_feature_controls(
-        object, feature_controls, pct_feature_controls_threshold, exprs_mat, 
-        counts_mat, tpm_mat, fpkm_mat)
-    feature_controls_pdata <- tech_features$pData
-    feature_controls_fdata <- tech_features$fData
-    
-
-    ## Fix column names and define feature controls across all control sets
-    if ( n_sets_feature_controls == 1 ) {
-        colnames(feature_controls_pdata) <- gsub("_$", "",
-                                              colnames(feature_controls_pdata))
-        colnames(feature_controls_fdata) <- gsub("_$", "",
-                                              colnames(feature_controls_fdata))
-        is_feature_control <- apply(feature_controls_fdata, 1, any)        
-    } else {
+    if (n_sets_feature_controls) {
+        ## Contributions from technical control features
+        tech_features <- .process_feature_controls(
+            object, feature_controls, pct_feature_controls_threshold, exprs_mat, 
+            counts_mat, tpm_mat, fpkm_mat)
+        feature_controls_pdata <- tech_features$pData
+        feature_controls_fdata <- tech_features$fData
+       
         ## Combine all feature controls
         is_feature_control <- apply(feature_controls_fdata, 1, any)
         feature_controls_fdata <- cbind(feature_controls_fdata,
                                         is_feature_control)
+    } else {
+        is_feature_control <- logical(nrow(object))
+        feature_controls_fdata <- data.frame(is_feature_control)
+        feature_controls_pdata <- data.frame(matrix(0, nrow=ncol(object), ncol=0))
+    }
+
         ## Compute metrics using all feature controls
         df_pdata_this <- .get_qc_metrics_exprs_mat(
             exprs_mat, is_feature_control, pct_feature_controls_threshold,
@@ -270,26 +272,6 @@ a lower count threshold of 0.")
             is_exprs(object)[is_feature_control,])
         df_pdata_this$n_detected_feature_controls <- n_detected_feature_controls
         feature_controls_pdata <- cbind(feature_controls_pdata, df_pdata_this)
-    }
-    
-    ## get metrics for biological feature controls if present
-    if ( !is.null(biological_feature_controls) ) {
-        if ( is.list(biological_feature_controls) )
-            n_sets_biological_feature_controls <- 
-                length(biological_feature_controls)
-        else
-            n_sets_biological_feature_controls <- 1
-        ## compute metrics
-        biol_features <- .process_feature_controls(
-            object, biological_feature_controls, pct_feature_controls_threshold,
-            exprs_mat, counts_mat, tpm_mat, fpkm_mat, biological = TRUE)
-        biol_feature_controls_pdata <- biol_features$pData
-        biol_feature_controls_fdata <- biol_features$fData
-        feature_controls_pdata <- cbind(
-            feature_controls_pdata, biol_feature_controls_pdata)
-        feature_controls_fdata <- cbind(
-            feature_controls_fdata, biol_feature_controls_fdata)
-    }
 
     ## Compute total_features and find outliers
     total_features <- colSums(is_exprs(object)[!is_feature_control,])
@@ -355,7 +337,7 @@ a lower count threshold of 0.")
             ## Construct data.frame for pData from this feature control set
             is_cell_control <- as.data.frame(is_cell_control)
             colnames(is_cell_control) <- paste0("is_cell_control_", set_name)
-            if ( exists("cell_controls_pdata") ) {
+            if ( i > 1L ) {
                 cell_controls_pdata <- data.frame(cell_controls_pdata,
                                                   is_cell_control)
             } else
@@ -488,8 +470,7 @@ a lower count threshold of 0.")
 .process_feature_controls <- function(object, feature_controls, 
                                       pct_feature_controls_threshold,
                                       exprs_mat, counts_mat = NULL, 
-                                      tpm_mat = NULL, fpkm_mat = NULL, 
-                                      biological = FALSE) {
+                                      tpm_mat = NULL, fpkm_mat = NULL) {
     ## Take a vector or list of feature_controls and process them to return 
     ## new pData and fData in a list
     
@@ -516,26 +497,26 @@ a lower count threshold of 0.")
             gc_set <- which(rownames(object) %in% gc_set)
         df_pdata_this <- .get_qc_metrics_exprs_mat(
             exprs_mat, gc_set, pct_feature_controls_threshold,
-            calc_top_features = (n_sets_feature_controls == 1 && !biological),
+            calc_top_features = (n_sets_feature_controls == 1),
             exprs_type = "exprs")
         if ( !is.null(counts_mat) ) {
             df_pdata_counts <- .get_qc_metrics_exprs_mat(
                 counts_mat, gc_set, pct_feature_controls_threshold,
-                calc_top_features = (n_sets_feature_controls == 1 && !biological),
+                calc_top_features = (n_sets_feature_controls == 1),
                 exprs_type = "counts")
             df_pdata_this <- cbind(df_pdata_this, df_pdata_counts)
         }
         if ( !is.null(tpm_mat) ) {
             df_pdata_tpm <- .get_qc_metrics_exprs_mat(
                 tpm_mat, gc_set, pct_feature_controls_threshold,
-                calc_top_features = (n_sets_feature_controls == 1 && !biological),
+                calc_top_features = (n_sets_feature_controls == 1),
                 exprs_type = "tpm")
             df_pdata_this <- cbind(df_pdata_this, df_pdata_tpm)
         }
         if ( !is.null(fpkm_mat) ) {
             df_pdata_fpkm <- .get_qc_metrics_exprs_mat(
                 fpkm_mat, gc_set, pct_feature_controls_threshold,
-                calc_top_features = (n_sets_feature_controls == 1 && !biological),
+                calc_top_features = (n_sets_feature_controls == 1),
                 exprs_type = "fpkm")
             df_pdata_this <- cbind(df_pdata_this, df_pdata_fpkm)
         }
@@ -544,10 +525,10 @@ a lower count threshold of 0.")
         n_detected_feature_controls <- colSums(is_exprs(object)[gc_set,])
         df_pdata_this$n_detected_feature_controls <-
             n_detected_feature_controls
-        if ( n_sets_feature_controls > 1 )
+#        if ( n_sets_feature_controls > 1 )
             colnames(df_pdata_this) <- paste(colnames(df_pdata_this),
                                              set_name, sep = "_")
-        if ( exists("feature_controls_pdata") )
+        if ( i > 1L )  
             feature_controls_pdata <- cbind(feature_controls_pdata,
                                             df_pdata_this)
         else
@@ -556,25 +537,19 @@ a lower count threshold of 0.")
         df_fdata_this <- data.frame(is_feature_control)
         colnames(df_fdata_this) <- paste(colnames(df_fdata_this), set_name,
                                          sep = "_")
-        if ( exists("feature_controls_fdata") )
+        if ( i > 1L ) 
             feature_controls_fdata <- cbind(feature_controls_fdata,
                                             df_fdata_this)
         else
             feature_controls_fdata <- df_fdata_this
     }
-    if ( biological ) {
-        colnames(feature_controls_fdata) <- gsub("feature_control", 
-                                                 "biological_feature_control",
-                                                 colnames(feature_controls_fdata))
-        colnames(feature_controls_pdata) <- gsub("feature_control", 
-                                                 "biological_feature_control",
-                                                 colnames(feature_controls_pdata))
-    }    
     out <- list(pData = feature_controls_pdata, fData = feature_controls_fdata)
     out
 }
-    
 
+.get_feature_control_names <- function(object) {
+    object@featureControlInfo$name
+}
 
 ################################################################################
 
