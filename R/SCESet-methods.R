@@ -203,6 +203,7 @@ newSCESet <- function(exprsData = NULL,
                    lowerDetectionLimit = lowerDetectionLimit,
                    logExprsOffset = logExprsOffset,
                    logged = logged,
+                   featureControlInfo = AnnotatedDataFrame(),
                    useForExprs = useForExprs)
 
     ## Add non-null slots to assayData for SCESet object, omitting null slots
@@ -1268,7 +1269,7 @@ sizeFactors.SCESet <- function(object, type=NULL) {
     if (!is.null(type)) {
         fc_available <- .get_feature_control_names(object)
         if (length(fc_available)==0L) {
-            stop("no controls specified in the SCESet object")
+            stop("no named controls specified in the SCESet object")
         }
         type <- match.arg(type, fc_available)
         ofield <- paste0(ofield, "_", type)
