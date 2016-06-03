@@ -38,6 +38,7 @@ SEXP colsum_subset_internal (const T* ptr, const matrix_info& MAT, SEXP subset) 
         UNPROTECT(1);
         throw;
     }
+    UNPROTECT(1);
     return output;
 }
 

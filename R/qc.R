@@ -437,6 +437,7 @@ a lower count threshold of 0.")
     ## Many thanks to Aaron Lun for suggesting efficiency improvements
     ## for this function.
     ## Get total expression from feature controls
+    if (is.logical(is_feature_control)) { is_feature_control <- which(is_feature_control) }
     exprs_feature_controls <- .checkedCall(cxx_colsum_subset, exprs_mat, is_feature_control)
     ## Get % expression from feature controls
     pct_exprs_feature_controls <- (100 * exprs_feature_controls /

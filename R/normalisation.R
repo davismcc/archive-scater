@@ -362,8 +362,11 @@ normalize.SCESet <- function(object, exprs_values = "counts",
     } else {
         prior.count <- numeric(ncol(counts))
     }
-
-    .checkedCall(cxx_calc_cpm, counts, lib.sizes, prior.count, log)
+    
+    lib.sizes <- lib.sizes/1e6 # per million, obviously.
+    out <- .checkedCall(cxx_calc_cpm, counts, lib.sizes, prior.count, log)
+    dimnames(out) <- dimnames(counts)
+    return(out)
 }
 
 
