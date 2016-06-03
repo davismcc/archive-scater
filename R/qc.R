@@ -437,7 +437,7 @@ a lower count threshold of 0.")
     ## Many thanks to Aaron Lun for suggesting efficiency improvements
     ## for this function.
     ## Get total expression from feature controls
-    exprs_feature_controls <- colSums(exprs_mat[is_feature_control,])
+    exprs_feature_controls <- .checkedCall(cxx_colsum_subset, exprs_mat, is_feature_control)
     ## Get % expression from feature controls
     pct_exprs_feature_controls <- (100 * exprs_feature_controls /
                                          colSums(exprs_mat))
@@ -451,16 +451,10 @@ a lower count threshold of 0.")
     if (calc_top_features) { ## Do we want to calculate exprs accounted for by
         ## top features?
         ## Determine percentage of counts for top features by cell
-        pct_exprs_top_out <- rep(list(list()), ncol(exprs_mat))
-        for (cell in seq_along(pct_exprs_top_out)) {
-            exprs_by_cell_sorted <- sort(exprs_mat[,cell], decreasing = TRUE)
-            pct_exprs_top <- cumsum(exprs_by_cell_sorted[1:500]) / 
-                sum(exprs_by_cell_sorted) * 100
-            pct_exprs_top_out[[cell]] <- pct_exprs_top[c(50, 100, 200)]
-        }
-        pct_exprs_top_out <- do.call(rbind, pct_exprs_top_out)
+        top.number <- c(50L, 100L, 200L)
+        pct_exprs_top_out <- .checkedCall(cxx_calc_top_features, exprs_mat, top.number)
         colnames(pct_exprs_top_out) <- paste0("pct_exprs_top_",
-                                              c(50, 100, 200), "_features")
+                                              top.number, "_features")
         df_pdata_this <- cbind(df_pdata_this, pct_exprs_top_out)
     }
     colnames(df_pdata_this) <- gsub("exprs", exprs_type, colnames(df_pdata_this))
