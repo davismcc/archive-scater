@@ -203,6 +203,7 @@ newSCESet <- function(exprsData = NULL,
                    lowerDetectionLimit = lowerDetectionLimit,
                    logExprsOffset = logExprsOffset,
                    logged = logged,
+                   featureControlInfo = AnnotatedDataFrame(),
                    useForExprs = useForExprs)
 
     ## Add non-null slots to assayData for SCESet object, omitting null slots
@@ -1248,14 +1249,32 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 #' sizeFactors(example_sceset) <- 2 ^ rnorm(ncol(example_sceset))
 #' sizeFactors(example_sceset)
 #'
-sizeFactors.SCESet <- function(object) {
-    out <- object$size_factor
-    if ( is.null(out) ) { 
-        warning("'sizeFactors' have not been set") 
+sizeFactors.SCESet <- function(object, type=NULL) {
+    ofield <- .construct_sf_field(object, type)
+    out <- pData(object)[[ofield]]
+    if ( is.null(out) ) {
+        wstring <- "'sizeFactors' have not been set"
+        if (!is.null(type)) { 
+            wstring <- paste0(wstring, " for '", type, "'")
+        } 
+        warning(wstring) 
         return(NULL)
     }
     names(out) <- colnames(object) 
     return(out)
+}
+
+.construct_sf_field <- function(object, type) {
+    ofield <- "size_factor"
+    if (!is.null(type)) {
+        fc_available <- .get_feature_control_names(object)
+        if (length(fc_available)==0L) {
+            stop("no named controls specified in the SCESet object")
+        }
+        type <- match.arg(type, fc_available)
+        ofield <- paste0(ofield, "_", type)
+    }
+    return(ofield)
 }
 
 #' @name sizeFactors
@@ -1269,8 +1288,9 @@ setMethod("sizeFactors", signature(object = "SCESet"), sizeFactors.SCESet)
 #' @exportMethod "sizeFactors<-"
 #' @aliases sizeFactors<-,SCESet,numeric-method
 setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "numeric"),
-                 function(object, value) {
-                     object$size_factor <- value
+                 function(object, type=NULL, ..., value) {
+                     ofield <- .construct_sf_field(object, type)
+                     pData(object)[[ofield]] <- value
                      validObject(object)
                      object
                  })
@@ -1280,8 +1300,9 @@ setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "numeric"),
 #' @exportMethod "sizeFactors<-"
 #' @aliases sizeFactors<-,SCESet,NULL-method
 setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "NULL"),
-                 function(object, value) {
-                     object$size_factor <- NULL
+                 function(object, type=NULL, ..., value) {
+                     ofield <- .construct_sf_field(object, type)
+                     pData(object)[[ofield]] <- NULL
                      validObject(object)
                      object
                  })
