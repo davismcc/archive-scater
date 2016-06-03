@@ -225,7 +225,7 @@ a lower count threshold of 0.")
         }
     }
     object@featureControlInfo <- AnnotatedDataFrame(
-        data.frame(name=names(feature_controls))
+        data.frame(name=names(feature_controls), stringsAsFactors=FALSE)
     )
     
     if (n_sets_feature_controls) {
