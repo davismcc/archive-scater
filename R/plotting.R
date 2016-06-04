@@ -485,14 +485,12 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
         exprs_to_plot <- scale(fData(object)[, use_variable],
                                scale = scale_features)
     } else {
+        # Subsetting to the desired features
+        exprs_to_plot <- exprs_mat[feature_set,,drop=FALSE]
         ## Standardise expression if scale_features argument is TRUE
-        exprs_to_plot <- scale(t(exprs_mat), scale = scale_features)
+        exprs_to_plot <- scale(t(exprs_to_plot), scale = scale_features)
     }
 
-    ## select subset of features, if relevant
-    if ( pca_data_input != "pdata" && pca_data_input != "fdata") {
-        exprs_to_plot <- exprs_to_plot[, feature_set]
-    }
     ## Drop any features with zero variance
     keep_feature <- (matrixStats::colVars(exprs_to_plot) > 0.001)
     keep_feature[is.na(keep_feature)] <- FALSE
