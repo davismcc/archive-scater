@@ -1337,8 +1337,8 @@ plotExprsFreqVsMean <- function(object, feature_set = NULL,
     ## Plot this
     if ( any(fData(object)$is_feature_control[feature_set_logical]) &&
          !all(fData(object)$is_feature_control[feature_set_logical]) ) {
-        plot_out <- plotFeatureData(object[feature_set_logical,],
-                                    aes_string(x = "mean_exprs",
+        plot_out <- plotMetadata(fData(object)[feature_set_logical,],
+                                    aesth = aes_string(x = "mean_exprs",
                                                y = "pct_cells_exprs",
                                                colour = "is_feature_control",
                                                shape = "is_feature_control"),
@@ -1347,8 +1347,8 @@ plotExprsFreqVsMean <- function(object, feature_set = NULL,
             ylab(y_lab) +
             xlab(x_lab)
     } else {
-        plot_out <- plotFeatureData(object[feature_set_logical,],
-                                    aes_string(x = "mean_exprs",
+        plot_out <- plotMetadata(fData(object)[feature_set_logical,],
+                                    aesth = aes_string(x = "mean_exprs",
                                                y = "pct_cells_exprs"),
                                     alpha = alpha, shape = shape, ...) +
             ylab(y_lab) +
