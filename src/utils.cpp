@@ -1,5 +1,13 @@
 #include "scater.h"
 
+bool isNA(int x) {
+    return x==NA_INTEGER;
+}
+
+bool isNA(double x) {
+    return ISNA(x);
+}
+
 /*********************************************************
  This contains a number of small functions, written to improve 
  speed or memory efficiency over a native R implementation. 
@@ -149,6 +157,50 @@ SEXP rowsum_exprs(SEXP matrix, SEXP threshold) try {
             throw std::runtime_error("threshold should be a double-precision scalar");
         }
         return rowsum_exprs_internal<double>(MAT.dptr, MAT, asReal(threshold));
+    }
+} catch (std::exception& e) {
+    return mkString(e.what());
+}
+
+/* A function to check whether the counts are non-negative or missing. */
+
+template <typename T>
+SEXP negative_counts_internal(const T* ptr, const matrix_info& MAT) {
+    const size_t total_size=MAT.nrow*MAT.ncol;
+    for (size_t i=0; i<total_size; ++i) {
+        if (ptr[i] < 0 || isNA(ptr[i])) { return ScalarLogical(1); }
+    } 
+    return ScalarLogical(0);        
+}
+
+SEXP negative_counts(SEXP matrix) try {
+    matrix_info MAT=check_matrix(matrix);
+    if (MAT.is_integer){
+        return negative_counts_internal<int>(MAT.iptr, MAT);
+    } else {
+        return negative_counts_internal<double>(MAT.dptr, MAT);
+    }
+} catch (std::exception& e) {
+    return mkString(e.what());
+}
+
+/* A function to check whether the expression values are NA. */
+
+template <typename T>
+SEXP missing_exprs_internal(const T* ptr, const matrix_info& MAT) {
+    const size_t total_size=MAT.nrow*MAT.ncol;
+    for (size_t i=0; i<total_size; ++i) {
+        if (isNA(ptr[i])) { return ScalarLogical(1); }
+    } 
+    return ScalarLogical(0);        
+}
+
+SEXP missing_exprs(SEXP matrix) try {
+    matrix_info MAT=check_matrix(matrix);
+    if (MAT.is_integer){
+        return missing_exprs_internal<int>(MAT.iptr, MAT);
+    } else {
+        return missing_exprs_internal<double>(MAT.dptr, MAT);
     }
 } catch (std::exception& e) {
     return mkString(e.what());

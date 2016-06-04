@@ -263,10 +263,10 @@ setValidity("SCESet", function(object) {
                  "Row names and column names of featurePairwiseDistances must be equal to featureNames(SCESet)")
     }
     ## Check that we have sensible values for the counts
-    if( any(is.na(exprs(object))) ) {
+    if( .checkedCall(cxx_missing_exprs, exprs(objects)) ) {
         warning( "The exprs data contain NA values." )
     }
-    if ( (!is.null(counts(object))) && any(counts(object) < 0, na.rm = TRUE) )
+    if ( (!is.null(counts(object))) && .checkedCall(cxx_negative_counts, counts(object)) )
         warning( "The count data contain negative values." )
     if( !(object@useForExprs %in% c("exprs", "tpm", "fpkm", "counts")) ) {
         valid <- FALSE

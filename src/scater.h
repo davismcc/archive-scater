@@ -25,6 +25,11 @@ struct matrix_info {
 
 matrix_info check_matrix(SEXP matrix);
 
+// Special function to check for NA'ness.
+
+bool isNA(int);
+bool isNA(double);
+
 // Functions to be called from R.
 
 extern "C" {
@@ -36,6 +41,10 @@ SEXP colsum_exprs_subset(SEXP, SEXP, SEXP);
 SEXP rowsum_exprs(SEXP, SEXP);
 
 SEXP calc_top_features(SEXP, SEXP);
+
+SEXP negative_counts(SEXP);
+
+SEXP missing_exprs(SEXP);
 
 SEXP calc_cpm(SEXP, SEXP, SEXP, SEXP);
 

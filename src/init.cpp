@@ -8,6 +8,8 @@ static const R_CallMethodDef all_call_entries[] = {
     REGISTER(colsum_subset, 2),
     REGISTER(colsum_exprs_subset, 3),
     REGISTER(rowsum_exprs, 2),
+    REGISTER(negative_counts, 1),
+    REGISTER(missing_exprs, 1),
     REGISTER(calc_top_features, 2),
     {NULL, NULL, 0}
 };
