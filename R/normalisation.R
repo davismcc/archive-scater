@@ -312,7 +312,7 @@ normalize.SCESet <- function(object, exprs_values = "counts",
         logExprsOffset <- object@logExprsOffset
     
     ## recompute cpm if desired
-    if ( recompute_cpm && isCount ) { 
+    if ( !is.null(cpm(object)) && recompute_cpm && isCount ) { 
         lib_size <- colSums(exprs_mat)
         new_cpm <- .recompute_cpm_fun(exprs_mat = exprs_mat, 
                         size_factors = size_factors, 
