@@ -263,7 +263,7 @@ setValidity("SCESet", function(object) {
                  "Row names and column names of featurePairwiseDistances must be equal to featureNames(SCESet)")
     }
     ## Check that we have sensible values for the counts
-    if( .checkedCall(cxx_missing_exprs, exprs(objects)) ) {
+    if( .checkedCall(cxx_missing_exprs, exprs(object)) ) {
         warning( "The exprs data contain NA values." )
     }
     if ( (!is.null(counts(object))) && .checkedCall(cxx_negative_counts, counts(object)) )
