@@ -258,13 +258,13 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
                 calc_top_features = TRUE, exprs_type = "fpkm")
             df_pdata_this <- cbind(df_pdata_this, df_pdata_fpkm)
         }
-        n_detected_feature_controls <- .is_exprs_colsum(
-            object, subset = is_feature_control) 
+        n_detected_feature_controls <- nexprs(object, 
+            subset.row = is_feature_control) 
         df_pdata_this$n_detected_feature_controls <- n_detected_feature_controls
         feature_controls_pdata <- cbind(feature_controls_pdata, df_pdata_this)
 
     ## Compute total_features and find outliers
-    total_features <-  .is_exprs_colsum(object, subset = !is_feature_control) 
+    total_features <-  nexprs(object, subset.row = !is_feature_control) 
     filter_on_total_features <- isOutlier(total_features, nmads, type = "lower")
     ## Compute total_counts if counts are present
     if ( !is.null(counts_mat) )
@@ -357,8 +357,7 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     new_pdata$total_features <- total_features
     new_pdata$log10_total_features <- log10(total_features)
     new_pdata$filter_on_total_features <- filter_on_total_features
-    new_pdata$pct_dropout <- 100 / nrow(object) * 
-        .is_exprs_colsum(object, subset=NULL)
+    new_pdata$pct_dropout <- 100 / nrow(object) * nexprs(object, subset.row = NULL)
     new_pdata <- cbind(new_pdata, qc_pdata, cell_controls_pdata)
     pData(object) <-  new("AnnotatedDataFrame", new_pdata)
 
@@ -380,7 +379,7 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     ### Add new QC information
     new_fdata$mean_exprs <- rowMeans(exprs(object))
     new_fdata$exprs_rank <- rank(rowMeans(exprs(object)))
-    new_fdata$n_cells_exprs <- .is_exprs_rowsum(object)
+    new_fdata$n_cells_exprs <- nexprs(object, byrow = TRUE)
     total_exprs <- sum(exprs_mat)
     new_fdata$total_feature_exprs <- rowSums(exprs_mat)
     if ( ! object@logged ) {
@@ -392,7 +391,7 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
   
 
     if ( !is.null(counts_mat) ) {
-        total_counts <- sum(counts_mat)
+        total_counts <- sum(as.double(colSums(counts_mat))) # avoid integer overflow
         new_fdata$total_feature_counts <- rowSums(counts_mat)
         new_fdata$log10_total_feature_counts <-
             log10(new_fdata$total_feature_counts + 1)
@@ -512,7 +511,7 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
         }
         is_feature_control[gc_set] <- TRUE
         ## Define number of feature controls expressed
-        n_detected_feature_controls <- .is_exprs_colsum(object, gc_set)
+        n_detected_feature_controls <- nexprs(object, subset.row = gc_set)
         df_pdata_this$n_detected_feature_controls <-
             n_detected_feature_controls
 #        if ( n_sets_feature_controls > 1 )
@@ -541,42 +540,65 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     object@featureControlInfo$name
 }
 
-.is_exprs_colsum <- function(object, subset)
+nexprs <- function(object, threshold = NULL, subset.row = NULL, byrow = FALSE)
 # An efficient internal function that avoids the need to construct 'is_exprs_mat'
 # by counting the number of expressed genes per cell on the fly.
 {
+    if (!is(object, "SCESet")) { 
+        stop("'object' must be a SCESet")
+    }
     is_exprs_mat <- is_exprs(object)
     counts_mat <- counts(object)
-    threshold <- object@lowerDetectionLimit
+    if (is.null(is_exprs_mat) && is.null(counts_mat)) {
+        stop("either 'is_exprs(object)' or 'counts(object)' must be non-NULL")
+    }
 
-    if (!is.null(is_exprs_mat)) {
-        if (is.null(subset)) {
-            return(colSums(is_exprs_mat)) 
+    # Setting the detection threshold properly.
+    if (is.null(threshold)) {
+        threshold <- object@lowerDetectionLimit
+    }
+    if (!is.null(counts_mat)) { 
+        storage.mode(threshold) <- storage.mode(counts_mat)
+    }
+
+    if (!byrow) {
+        if (!is.null(is_exprs_mat)) {
+            # Counting expressing genes per cell, using predefined 'is_exprs(object)'.
+            if (is.null(subset.row)) {
+               return(colSums(is_exprs_mat)) 
+            } else {
+                subset.row <- .subset2index(subset.row, names = rownames(counts_mat))
+                return(.checkedCall(cxx_colsum_subset, is_exprs_mat, subset.row))
+            }
         } else {
-            if (is.logical(subset)) { subset <- which(subset) }
-            return(.checkedCall(cxx_colsum_subset, is_exprs_mat, subset))
+            # Counting expressing genes per cell, using the counts to define 'expressing'.
+            if (is.null(subset.row)) { 
+                subset.row <- seq_len(nrow(counts_mat)) 
+            } else {
+                subset.row <- .subset2index(subset.row, names = rownames(counts_mat))
+            }
+            return(.checkedCall(cxx_colsum_exprs_subset, counts_mat, threshold, subset.row))
         }
     } else {
-        if (is.null(subset)) { subset <- seq_len(nrow(counts_mat)) }
-        else if (is.logical(subset)) { subset <- which(subset) }
-        storage.mode(threshold) <- storage.mode(counts_mat)
-        return(.checkedCall(cxx_colsum_exprs_subset, counts_mat, threshold, subset))
+        # Counting expressing cells per gene.
+        if (!is.null(is_exprs_mat)) {
+            return(rowSums(is_exprs_mat))
+        } else { 
+            return(.checkedCall(cxx_rowsum_exprs, counts_mat, threshold))
+        }
     }
 }
 
-.is_exprs_rowsum <- function(object)
-# Same again, for the number of cells expressing a gene, for each gene.
-{
-    is_exprs_mat <- is_exprs(object)
-    counts_mat <- counts(object)
-    threshold <- object@lowerDetectionLimit
-
-    if (!is.null(is_exprs_mat)) {
-        return(rowSums(is_exprs_mat))
-    } else {
-        storage.mode(threshold) <- storage.mode(counts_mat)
-        return(.checkedCall(cxx_rowsum_exprs, counts_mat, threshold))
+.subset2index <- function(subset, names) {
+    if (is.logical(subset)) { 
+        subset <- which(subset) 
+    } else if (is.character(subset)) { 
+        subset <- match(subset, names)
+        if (any(is.na(subset))) { 
+            stop('missing names in specified subsetting vector')
+        }
     }
+    as.integer(subset)
 }
 
 ################################################################################
