@@ -485,7 +485,7 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
         exprs_to_plot <- scale(fData(object)[, use_variable],
                                scale = scale_features)
     } else {
-        # Subsetting to the desired features
+        # Subsetting to the desired features (do NOT move below 'scale()')
         exprs_to_plot <- exprs_mat[feature_set,,drop=FALSE]
         ## Standardise expression if scale_features argument is TRUE
         exprs_to_plot <- scale(t(exprs_to_plot), scale = scale_features)

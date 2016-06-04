@@ -290,8 +290,10 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
             feature_controls_pdata$fpkm_feature_controls
     }
     ## Define log10 read counts from feature controls
-    cols_to_log <- grep("^counts_|^exprs_|^tpm_|^fpkm_",
-                        colnames(qc_pdata))
+    cols_to_log <- grep("^counts_|^tpm_|^fpkm_", colnames(qc_pdata))
+    if ( !object@logged ) {
+        cols_to_log <- c(cols_to_log, grep("^exprs_", colnames(qc_pdata)))
+    }
     log10_cols <- log10(qc_pdata[, cols_to_log, drop = FALSE] + 1)
     colnames(log10_cols) <- paste0("log10_", colnames(qc_pdata)[cols_to_log])
     ## Combine into a big pdata object
