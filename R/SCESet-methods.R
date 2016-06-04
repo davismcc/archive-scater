@@ -126,35 +126,8 @@ newSCESet <- function(exprsData = NULL,
                 }
             }
         }
-        ## Define isexprs if null
-        if ( is.null(is_exprsData) ) {
-            if ( !is.null(tpmData) ) {
-                isexprs <- tpmData > lowerDetectionLimit
-                rownames(isexprs) <- rownames(tpmData)
-                colnames(isexprs) <- colnames(tpmData)
-                # message(paste0("Defining 'is_exprs' using TPM data and a lower TPM threshold of ", lowerDetectionLimit))
-            } else {
-                if ( !is.null(fpkmData) ) {
-                    isexprs <- fpkmData > lowerDetectionLimit
-                    rownames(isexprs) <- rownames(fpkmData)
-                    colnames(isexprs) <- colnames(fpkmData)
-                    # message(paste0("Defining 'is_exprs' using FPKM data and a lower FPKM threshold of ", lowerDetectionLimit))
-                } else {
-                    isexprs <- countData > lowerDetectionLimit
-                    rownames(isexprs) <- rownames(countData)
-                    colnames(isexprs) <- colnames(countData)
-                    # message(paste0("Defining 'is_exprs' using count data and a lower count threshold of ", lowerDetectionLimit))
-                }
-            }
-        }
     } else {
         exprsData <- as.matrix(exprsData)
-        if ( is.null(is_exprsData) ) {
-            isexprs <- exprsData > lowerDetectionLimit
-            rownames(isexprs) <- rownames(exprsData)
-            colnames(isexprs) <- colnames(exprsData)
-            # message(paste0("Defining 'is_exprs' using exprsData and a lower exprs threshold of ", lowerDetectionLimit))
-        }
     }
 
     ## Generate valid phenoData and featureData if not provided
@@ -190,8 +163,7 @@ newSCESet <- function(exprsData = NULL,
     useForExprs <- match.arg(useForExprs, c("exprs","tpm","counts","fpkm"))
 
     ## Generate new SCESet object
-    assaydata <- assayDataNew("environment", exprs = exprsData,
-                              is_exprs = isexprs)
+    assaydata <- assayDataNew("environment", exprs = exprsData)
     sceset <- new( "SCESet",
                    assayData = assaydata,
                    phenoData = phenoData,

@@ -188,23 +188,13 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     ## Compute cell-level metrics
     if ( is.null(is_exprs(object)) ) {
         if (is.null(counts(object))) {
-            stop("Please define is_exprs(object).
-                 E.g. use is_exprs(object) <- exprs(object) > 0.1")
-        } else {
-            warning("is_exprs(object) is null.
-Defining 'is_exprs' using count data and
-a lower count threshold of 0.")
-            isexprs <- calcIsExprs(object, lowerDetectionLimit = 0)
-            rownames(isexprs) <- rownames(counts(object))
-            colnames(isexprs) <- colnames(counts(object))
-            is_exprs(object) <- isexprs
+            stop("need either is_exprs(object) or counts(object) to be defined,
+  e.g., use `is_exprs(object) <- exprs(object) > 0.1`")
         }
     }
 
     ## See what versions of the expression data are available in the object
     exprs_mat <- exprs(object)
-    if ( object@logged )
-        exprs_mat <- 2 ^ exprs_mat - object@logExprsOffset
     counts_mat <- counts(object)
     tpm_mat <- tpm(object)
     fpkm_mat <- fpkm(object)
@@ -268,13 +258,16 @@ a lower count threshold of 0.")
                 calc_top_features = TRUE, exprs_type = "fpkm")
             df_pdata_this <- cbind(df_pdata_this, df_pdata_fpkm)
         }
-        n_detected_feature_controls <- colSums(
-            is_exprs(object)[is_feature_control,])
+        n_detected_feature_controls <- .is_exprs_colsum(
+            is_exprs_mat = is_exprs(object), subset = is_feature_control, 
+            counts_mat = counts_mat, threshold = object@lowerDetectionLimit)
         df_pdata_this$n_detected_feature_controls <- n_detected_feature_controls
         feature_controls_pdata <- cbind(feature_controls_pdata, df_pdata_this)
 
     ## Compute total_features and find outliers
-    total_features <- colSums(is_exprs(object)[!is_feature_control,])
+    total_features <-  .is_exprs_colsum(
+       is_exprs_mat = is_exprs(object), subset = !is_feature_control, 
+       counts_mat = counts_mat, threshold = object@lowerDetectionLimit)
     filter_on_total_features <- isOutlier(total_features, nmads, type = "lower")
     ## Compute total_counts if counts are present
     if ( !is.null(counts_mat) )
@@ -367,7 +360,9 @@ a lower count threshold of 0.")
     new_pdata$total_features <- total_features
     new_pdata$log10_total_features <- log10(total_features)
     new_pdata$filter_on_total_features <- filter_on_total_features
-    new_pdata$pct_dropout <- 100 * colSums(!is_exprs(object)) / nrow(object)
+    new_pdata$pct_dropout <- 100 / nrow(object) * .is_exprs_colsum(
+       is_exprs_mat = is_exprs(object), subset = NULL,
+       counts_mat = counts_mat, threshold = object@lowerDetectionLimit)
     new_pdata <- cbind(new_pdata, qc_pdata, cell_controls_pdata)
     pData(object) <-  new("AnnotatedDataFrame", new_pdata)
 
@@ -389,15 +384,17 @@ a lower count threshold of 0.")
     ### Add new QC information
     new_fdata$mean_exprs <- rowMeans(exprs(object))
     new_fdata$exprs_rank <- rank(rowMeans(exprs(object)))
-    new_fdata$n_cells_exprs <- rowSums(is_exprs(object))
+    new_fdata$n_cells_exprs <- .is_exprs_rowsum(is_exprs_mat = is_exprs(object),
+        counts_mat = counts_mat, threshold = object@lowerDetectionLimit)                                                
     total_exprs <- sum(exprs_mat)
     new_fdata$total_feature_exprs <- rowSums(exprs_mat)
-    new_fdata$log10_total_feature_exprs <-
-        log10(new_fdata$total_feature_exprs + 1)
+    if ( ! object@logged ) {
+        new_fdata$log10_total_feature_exprs <-
+            log10(new_fdata$total_feature_exprs + 1)
+    }
     new_fdata$pct_total_exprs <- 100 * rowSums(exprs_mat) / total_exprs
-    new_fdata$pct_dropout <- 100 * rowSums(!is_exprs(object)) / ncol(object)
-   
- 
+    new_fdata$pct_dropout <- 100 * (1 - new_fdata$n_cells_exprs / ncol(object))
+  
 
     if ( !is.null(counts_mat) ) {
         total_counts <- sum(counts_mat)
@@ -517,7 +514,9 @@ a lower count threshold of 0.")
         }
         is_feature_control[gc_set] <- TRUE
         ## Define number of feature controls expressed
-        n_detected_feature_controls <- colSums(is_exprs(object)[gc_set,])
+        n_detected_feature_controls <- .is_exprs_colsum(
+            is_exprs_mat = is_exprs(object), subset = gc_set,
+            counts_mat = counts_mat, threshold = object@lowerDetectionLimit)
         df_pdata_this$n_detected_feature_controls <-
             n_detected_feature_controls
 #        if ( n_sets_feature_controls > 1 )
@@ -544,6 +543,36 @@ a lower count threshold of 0.")
 
 .get_feature_control_names <- function(object) {
     object@featureControlInfo$name
+}
+
+.is_exprs_colsum <- function(is_exprs_mat, subset, counts_mat, threshold) 
+# An efficient internal function that avoids the need to construct 'is_exprs_mat'
+# by counting the number of expressed genes per cell on the fly.
+{
+    if (!is.null(is_exprs_mat)) {
+        if (is.null(subset)) {
+            return(colSums(is_exprs_mat)) 
+        } else {
+            if (is.logical(subset)) { subset <- which(subset) }
+            return(.checkedCall(cxx_colsum_subset, is_exprs_mat, subset))
+        }
+    } else {
+        if (is.null(subset)) { subset <- seq_len(nrow(counts_mat)) }
+        else if (is.logical(subset)) { subset <- which(subset) }
+        storage.mode(threshold) <- storage.mode(counts_mat)
+        return(.checkedCall(cxx_colsum_exprs_subset, counts_mat, threshold, subset))
+    }
+}
+
+.is_exprs_rowsum <- function(is_exprs_mat, counts_mat, threshold) 
+# Same again, for the number of cells expressing a gene, for each gene.
+{
+    if (!is.null(is_exprs_mat)) {
+        return(rowSums(is_exprs_mat))
+    } else {
+        storage.mode(threshold) <- storage.mode(counts_mat)
+        return(.checkedCall(cxx_rowsum_exprs, counts_mat, threshold))
+    }
 }
 
 ################################################################################

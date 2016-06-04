@@ -6,6 +6,8 @@ extern "C" {
 static const R_CallMethodDef all_call_entries[] = {
     REGISTER(calc_cpm, 4),
     REGISTER(colsum_subset, 2),
+    REGISTER(colsum_exprs_subset, 3),
+    REGISTER(rowsum_exprs, 2),
     REGISTER(calc_top_features, 2),
     {NULL, NULL, 0}
 };

@@ -5,7 +5,7 @@
  speed or memory efficiency over a native R implementation. 
  **********************************************************/
 
-/* A function to get the proportion of reads in a subset. */
+/* A function to get the column sum in a subset of rows. */
 
 template <typename T>
 SEXP colsum_subset_internal (const T* ptr, const matrix_info& MAT, SEXP subset) {
@@ -53,8 +53,108 @@ SEXP colsum_subset(SEXP matrix, SEXP subset) try {
     return mkString(e.what());
 }
 
-/* A function to get the percentage of counts/expression 
-   taken up by the top set of genes. */
+/* A function to get the number of above-threshold values in each column, for a subset of rows. */
+
+template <typename T>
+SEXP colsum_exprs_subset_internal (const T* ptr, const matrix_info& MAT, T threshold, SEXP subset) {
+    if (!isInteger(subset)) { 
+        throw std::runtime_error("subset vector must be an integer vector");
+    }
+    const int slen=LENGTH(subset);
+    const int* sptr=INTEGER(subset);
+    for (int s=0; s<slen; ++s) {
+        if (sptr[s] < 1 || sptr[s] > MAT.nrow) { 
+            throw std::runtime_error("subset indices out of range");
+        }
+    }
+
+    SEXP output=PROTECT(allocVector(INTSXP, MAT.ncol));
+    try {
+        int* optr=INTEGER(output);
+        
+        // Summing across, using 1-indexed pointers.
+        --ptr;
+        int s;
+        for (size_t c=0; c<MAT.ncol; ++c) {
+            optr[c]=0;
+            for (s=0; s<slen; ++s) {
+                if (ptr[sptr[s]] > threshold) {
+                    ++(optr[c]);
+                }
+            }
+            ptr+=MAT.nrow;
+        }
+    } catch (std::exception& e) {
+        UNPROTECT(1);
+        throw;
+    }
+    UNPROTECT(1);
+    return output;
+}
+
+SEXP colsum_exprs_subset(SEXP matrix, SEXP threshold, SEXP subset) try {
+    matrix_info MAT=check_matrix(matrix);
+    if (MAT.is_integer){
+        if (!isInteger(threshold) || LENGTH(threshold)!=1) { 
+            throw std::runtime_error("threshold should be an integer scalar");
+        }
+        return colsum_exprs_subset_internal<int>(MAT.iptr, MAT, asInteger(threshold), subset);
+    } else {
+        if (!isReal(threshold) || LENGTH(threshold)!=1) { 
+            throw std::runtime_error("threshold should be a double-precision scalar");
+        }
+        return colsum_exprs_subset_internal<double>(MAT.dptr, MAT, asReal(threshold), subset);
+    }
+} catch (std::exception& e) {
+    return mkString(e.what());
+}
+
+/* A function to get the number of above-threshold values in each row. */
+
+template <typename T>
+SEXP rowsum_exprs_internal (const T* ptr, const matrix_info& MAT, T threshold) {
+    SEXP output=PROTECT(allocVector(INTSXP, MAT.nrow));
+    try {
+        int* optr=INTEGER(output);
+        for (size_t r=0; r<MAT.nrow; ++r) {
+            optr[r]=0;
+        }
+        
+        // Summing across, using 1-indexed pointers.
+        for (size_t c=0; c<MAT.ncol; ++c) {
+            for (size_t r=0; r<MAT.nrow; ++r) {
+                if (ptr[r] > threshold) {
+                    ++(optr[r]);
+                }
+            }
+            ptr+=MAT.nrow;
+        }
+    } catch (std::exception& e) {
+        UNPROTECT(1);
+        throw;
+    }
+    UNPROTECT(1);
+    return output;
+}
+
+SEXP rowsum_exprs(SEXP matrix, SEXP threshold) try {
+    matrix_info MAT=check_matrix(matrix);
+    if (MAT.is_integer){
+        if (!isInteger(threshold) || LENGTH(threshold)!=1) { 
+            throw std::runtime_error("threshold should be an integer scalar");
+        }
+        return rowsum_exprs_internal<int>(MAT.iptr, MAT, asInteger(threshold));
+    } else {
+        if (!isReal(threshold) || LENGTH(threshold)!=1) { 
+            throw std::runtime_error("threshold should be a double-precision scalar");
+        }
+        return rowsum_exprs_internal<double>(MAT.dptr, MAT, asReal(threshold));
+    }
+} catch (std::exception& e) {
+    return mkString(e.what());
+}
+
+/* A function to get the percentage of counts/expression taken up by the top set of genes. */
 
 template <typename T>
 SEXP calc_top_features_internal(const T* ptr, const matrix_info& MAT, SEXP top) {
