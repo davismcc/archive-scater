@@ -626,12 +626,12 @@ nexprs <- function(object, threshold = NULL, subset.row = NULL, byrow = FALSE)
 #' isOutlier(example_sceset$total_counts, nmads = 3)
 #' 
 isOutlier <- function(metric, nmads = 5, type = c("both", "lower", "higher"), 
-                      log = FALSE) {
+                      log = FALSE, na.rm = FALSE) {
     if (log) {
         metric <- log10(metric)
     }
-    cur.med <- median(metric)
-    cur.mad <- mad(metric, center = cur.med)
+    cur.med <- median(metric, na.rm = na.rm)
+    cur.mad <- mad(metric, center = cur.med, na.rm = na.rm)
 
     type <- match.arg(type)
     upper.limit <- cur.med + nmads * cur.mad
