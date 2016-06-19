@@ -70,6 +70,7 @@
 #'  \code{'exprs'} values are on the log2-scale, so this is recommended.
 #'
 #' @importFrom Biobase annotatedDataFrameFrom
+#' @importFrom Biobase AnnotatedDataFrame
 #' @importFrom Biobase assayDataNew
 #' @importFrom edgeR cpm.default
 #' @import methods
@@ -1191,10 +1192,10 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 #' TPM, etc.
 #'
 #' @usage
-#' \S4method{sizeFactors}{SCESet}(object)
+#' \S4method{sizeFactors}{SCESet}(object,type)
 #'
-#' \S4method{sizeFactors}{SCESet,numeric}(object)<-value
-#' \S4method{sizeFactors}{SCESet,NULL}(object)<-value
+#' \S4method{sizeFactors}{SCESet,numeric}(object,type)<-value
+#' \S4method{sizeFactors}{SCESet,NULL}(object,type)<-value
 #'
 #' @docType methods
 #' @name sizeFactors
@@ -1203,8 +1204,14 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 #'
 #' @param object a \code{SCESet} object.
 #' @param value a vector of class \code{"numeric"} or \code{NULL}
+#' @param type optional character argument providing the type or name of the 
+#' size factors to be accessed or assigned. 
 #'
-#' @author Davis McCarthy
+#' @details The size factors can alternatively be directly accessed from the 
+#' \code{SCESet} object with \code{object$size_factor_type} (where "type" in the
+#' preceding is replaced by the actual type name).
+#'
+#' @author Davis McCarthy and Aaron Lun
 #' @export
 #' 
 #' @importFrom BiocGenerics sizeFactors
@@ -1215,7 +1222,11 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 #' data("sc_example_cell_info")
 #' example_sceset <- newSCESet(countData = sc_example_counts)
 #' sizeFactors(example_sceset)
-#' sizeFactors(example_sceset) <- 2 ^ rnorm(ncol(example_sceset))
+#' sizeFactors(example_sceset, NULL) <- 2 ^ rnorm(ncol(example_sceset))
+#' 
+#' example_sceset <- calculateQCMetrics(example_sceset, 
+#'                                      feature_controls = list(set1 = 1:40))
+#' sizeFactors(example_sceset, "set1") <- 2 ^ rnorm(ncol(example_sceset))
 #' sizeFactors(example_sceset)
 #'
 sizeFactors.SCESet <- function(object, type=NULL) {
@@ -1237,7 +1248,7 @@ sizeFactors.SCESet <- function(object, type=NULL) {
     ofield <- "size_factor"
     if (!is.null(type)) {
         fc_available <- .get_feature_control_names(object)
-        if (length(fc_available)==0L) {
+        if (length(fc_available) == 0L) {
             stop("no named controls specified in the SCESet object")
         }
         type <- match.arg(type, fc_available)
@@ -1257,7 +1268,7 @@ setMethod("sizeFactors", signature(object = "SCESet"), sizeFactors.SCESet)
 #' @exportMethod "sizeFactors<-"
 #' @aliases sizeFactors<-,SCESet,numeric-method
 setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "numeric"),
-                 function(object, type=NULL, ..., value) {
+                 function(object, type = NULL, value) {
                      ofield <- .construct_sf_field(object, type)
                      pData(object)[[ofield]] <- value
                      validObject(object)
@@ -1269,7 +1280,7 @@ setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "numeric"),
 #' @exportMethod "sizeFactors<-"
 #' @aliases sizeFactors<-,SCESet,NULL-method
 setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "NULL"),
-                 function(object, type=NULL, ..., value) {
+                 function(object, type = NULL, value) {
                      ofield <- .construct_sf_field(object, type)
                      pData(object)[[ofield]] <- NULL
                      validObject(object)

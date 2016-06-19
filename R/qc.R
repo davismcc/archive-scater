@@ -16,18 +16,10 @@
 #'
 #' @param object an SCESet object containing expression values and
 #' experimental information. Must have been appropriately prepared.
-#' @param feature_controls a character vector of feature names, or a logical 
-#' vector, or a numeric vector of indices used to identify feature controls 
-#' (for example, ERCC spike-in genes, mitochondrial genes, etc). Treated as 
-#' technical feature controls and overridden if an argument to 
-#' \code{technical_feature_controls} is provided.
-#' @param technical_feature_controls a character vector of feature names, or a 
-#' logical vector, or a numeric vector of indices used to identify technical 
-#' feature controls (for example, ERCC spike-in genes). Overrides 
-#' \code{feature_controls} if both arguments are provided.
-#' @param biological_feature_controls a character vector of feature names, or a 
-#' logical vector, or a numeric vector of indices used to identify technical 
-#' feature controls (for example, mitochondrial genes)
+#' @param feature_controls a named list containing one or more vectors 
+#' (character vector of feature names, logical vector, or a numeric vector of
+#' indices are all acceptable) used to identify feature controls 
+#' (for example, ERCC spike-in genes, mitochondrial genes, etc). 
 #' @param cell_controls a character vector of cell (sample) names, or a logical
 #' vector, or a numeric vector of indices used to identify cell controls (for
 #' example, blank wells or bulk controls).
@@ -166,13 +158,12 @@
 #' example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #'
-#' ## with a set of feature controls define
+#' ## with a set of feature controls defined
 #' example_sceset <- calculateQCMetrics(example_sceset, feature_controls = 1:40)
 #' 
-#' ## with both technical and biological feature controls
+#' ## with a named set of feature controls defined
 #' example_sceset <- calculateQCMetrics(example_sceset, 
-#' technical_feature_controls = list(ERCC = 1:40), 
-#' biological_feature_controls = list(MT = 50:100))
+#'                                      feature_controls = list(ERCC = 1:40))
 #' 
 calculateQCMetrics <- function(object, feature_controls = NULL,
                                cell_controls = NULL, nmads = 5,
