@@ -1268,7 +1268,7 @@ setMethod("sizeFactors", signature(object = "SCESet"), sizeFactors.SCESet)
 #' @exportMethod "sizeFactors<-"
 #' @aliases sizeFactors<-,SCESet,numeric-method
 setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "numeric"),
-                 function(object, type = NULL, value) {
+                 function(object, type = NULL, ..., value) {
                      ofield <- .construct_sf_field(object, type)
                      pData(object)[[ofield]] <- value
                      validObject(object)
@@ -1280,7 +1280,7 @@ setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "numeric"),
 #' @exportMethod "sizeFactors<-"
 #' @aliases sizeFactors<-,SCESet,NULL-method
 setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "NULL"),
-                 function(object, type = NULL, value) {
+                 function(object, type = NULL, ..., value) {
                      ofield <- .construct_sf_field(object, type)
                      pData(object)[[ofield]] <- NULL
                      validObject(object)
