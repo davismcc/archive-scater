@@ -30,6 +30,6 @@ biocViews: RNASeq, QualityControl, Preprocessing, Normalization,
         GeneExpression, Sequencing, Software, DataImport,
         DataRepresentation, Infrastructure
 RoxygenNote: 5.0.1
-NeedsCompilation: no
+NeedsCompilation: yes
 URL: https://github.com/davismcc/scater
 BugReports: https://github.com/davismcc/scater/issues
