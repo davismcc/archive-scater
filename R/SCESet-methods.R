@@ -72,6 +72,7 @@
 #' @importFrom Biobase annotatedDataFrameFrom
 #' @importFrom Biobase AnnotatedDataFrame
 #' @importFrom Biobase assayDataNew
+#' @importFrom Biobase assayDataElement
 #' @importFrom edgeR cpm.default
 #' @import methods
 #' @export
@@ -194,7 +195,7 @@ newSCESet <- function(exprsData = NULL,
     useForExprs <- match.arg(useForExprs, c("exprs","tpm","counts","fpkm"))
 
     ## Generate new SCESet object
-    assaydata <- assayDataNew("environment", exprs = exprsData,
+    assaydata <- assayDataNew("lockedEnvironment", exprs = exprsData,
                               is_exprs = isexprs)
     sceset <- new( "SCESet",
                    assayData = assaydata,
@@ -611,7 +612,7 @@ setMethod("get_exprs", signature(object = "SCESet"),
 #' @exportMethod "set_exprs<-"
 setReplaceMethod("set_exprs", signature(object = "SCESet", value = "matrix"),
                  function(object, name, value) {
-                     object@assayData[[name]] <- value
+                     Biobase::assayDataElement(object, "name") <- value
                      validObject(object)
                      object
                  })
@@ -662,7 +663,7 @@ setMethod("counts", signature(object = "SCESet"), counts.SCESet)
 #' @exportMethod "counts<-"
 setReplaceMethod("counts", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
-                     object@assayData$counts <- value
+                     Biobase::assayDataElement(object, "counts") <- value
                      validObject(object)
                      object
                  })
@@ -710,7 +711,7 @@ setMethod("norm_counts", signature(object = "SCESet"), norm_counts.SCESet)
 #' @exportMethod "norm_counts<-"
 setReplaceMethod("norm_counts", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
-                     object@assayData$norm_counts <- value
+                     Biobase::assayDataElement(object, "norm_counts") <- value
                      validObject(object)
                      object
                  })
@@ -758,7 +759,7 @@ setMethod("is_exprs", signature(object = "SCESet"), is_exprs.SCESet)
 #' @exportMethod "is_exprs<-"
 setReplaceMethod("is_exprs", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
-                     object@assayData$is_exprs <- value
+                     Biobase::assayDataElement(object, "is_exprs") <- value
                      validObject(object)
                      object
                  })
@@ -816,7 +817,7 @@ setMethod("norm_exprs", signature(object = "SCESet"), norm_exprs.SCESet)
 #' @exportMethod "norm_exprs<-"
 setReplaceMethod("norm_exprs", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
-                     object@assayData$norm_exprs <- value
+                     Biobase::assayDataElement(object, "norm_exprs") <- value
                      validObject(object)
                      object
                  })
@@ -877,7 +878,7 @@ setMethod("stand_exprs", signature(object = "SCESet"), stand_exprs.SCESet)
 #' @exportMethod "stand_exprs<-"
 setReplaceMethod("stand_exprs", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
-                     object@assayData$stand_exprs <- value
+                     Biobase::assayDataElement(object, "stand_exprs") <- value
                      validObject(object)
                      object
                  })
@@ -933,7 +934,7 @@ setMethod("tpm", signature(object = "SCESet"), tpm.SCESet)
 #' @aliases tpm<-,SCESet,matrix-method
 setReplaceMethod("tpm", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
-                     object@assayData$tpm <- value
+                     Biobase::assayDataElement(object, "tpm") <- value
                      validObject(object)
                      object
                  })
@@ -988,7 +989,7 @@ setMethod("norm_tpm", signature(object = "SCESet"), norm_tpm.SCESet)
 #' @aliases norm_tpm<-,SCESet,matrix-method
 setReplaceMethod("norm_tpm", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
-                     object@assayData$norm_tpm <- value
+                     Biobase::assayDataElement(object, "norm_tpm") <- value
                      validObject(object)
                      object
                  })
@@ -1042,7 +1043,7 @@ setMethod("cpm", signature(object = "SCESet"), cpmSCESet)
 #' @aliases cpm<-,SCESet,matrix-method
 setReplaceMethod("cpm", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
-                     object@assayData$cpm <- value
+                     Biobase::assayDataElement(object, "cpm") <- value
                      validObject(object)
                      object
                  })
@@ -1097,7 +1098,7 @@ setMethod("norm_cpm", signature(object = "SCESet"), norm_cpm.SCESet)
 #' @aliases norm_cpm<-,SCESet,matrix-method
 setReplaceMethod("norm_cpm", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
-                     object@assayData$norm_cpm <- value
+                     Biobase::assayDataElement(object, "norm_cpm") <- value
                      validObject(object)
                      object
                  })
@@ -1152,7 +1153,7 @@ setMethod("fpkm", signature(object = "SCESet"), fpkm.SCESet)
 #' @aliases fpkm<-,SCESet,matrix-method
 setReplaceMethod("fpkm", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
-                     object@assayData$fpkm <- value
+                     Biobase::assayDataElement(object, "fpkm") <- value
                      validObject(object)
                      object
                  })
@@ -1207,7 +1208,7 @@ setMethod("norm_fpkm", signature(object = "SCESet"), norm_fpkm.SCESet)
 #' @aliases norm_fpkm<-,SCESet,matrix-method
 setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
                  function(object, value) {
-                     object@assayData$norm_fpkm <- value
+                     Biobase::assayDataElement(object, "norm_fpkm") <- value
                      validObject(object)
                      object
                  })
