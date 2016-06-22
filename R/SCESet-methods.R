@@ -58,12 +58,12 @@
 #'
 #'  An \code{SCESet} object has to have the \code{'exprs'} slot defined, so if
 #'  the \code{exprsData} argument is \code{NULL}, then this function will define
-#'  \code{'exprs'} with the following order of precedence: log2(TPM + 
-#'  logExprsOffset), if \code{tpmData} is defined; log2(FPKM + logExprsOffset) 
-#'  if \code{fpkmData} is defined; otherwise log2(counts-per-million + 
-#'  logExprsOffset) are used. The \code{\link[edgeR]{cpm}} function from the 
-#'  edgeR package is used to compte \code{cpm}. Note that for many analyses 
-#'  counts-per-million are not recommended, and if possible 
+#'  \code{'exprs'} with the following order of precedence: log2(TPM +
+#'  logExprsOffset), if \code{tpmData} is defined; log2(FPKM + logExprsOffset)
+#'  if \code{fpkmData} is defined; otherwise log2(counts-per-million +
+#'  logExprsOffset) are used. The \code{\link[edgeR]{cpm}} function from the
+#'  edgeR package is used to compte \code{cpm}. Note that for many analyses
+#'  counts-per-million are not recommended, and if possible
 #'  transcripts-per-million should be used.
 #'
 #'  In many downstream functions you will likely find it most convenient if the
@@ -123,43 +123,13 @@ newSCESet <- function(exprsData = NULL,
                     exprsData <- log2(cpmData + logExprsOffset)
                     logged <- TRUE
                 }  else {
-                    cpmData <- edgeR::cpm.default(countData,
-                                                  prior.count = logExprsOffset,
-                                                  log = FALSE)
-                    exprsData <- log2(cpmData + logExprsOffset)
+                    exprsData <- .cpm_default(countData, prior.count = logExprsOffset, log = TRUE)
                     logged <- TRUE
-                }
-            }
-        }
-        ## Define isexprs if null
-        if ( is.null(is_exprsData) ) {
-            if ( !is.null(tpmData) ) {
-                isexprs <- tpmData > lowerDetectionLimit
-                rownames(isexprs) <- rownames(tpmData)
-                colnames(isexprs) <- colnames(tpmData)
-                # message(paste0("Defining 'is_exprs' using TPM data and a lower TPM threshold of ", lowerDetectionLimit))
-            } else {
-                if ( !is.null(fpkmData) ) {
-                    isexprs <- fpkmData > lowerDetectionLimit
-                    rownames(isexprs) <- rownames(fpkmData)
-                    colnames(isexprs) <- colnames(fpkmData)
-                    # message(paste0("Defining 'is_exprs' using FPKM data and a lower FPKM threshold of ", lowerDetectionLimit))
-                } else {
-                    isexprs <- countData > lowerDetectionLimit
-                    rownames(isexprs) <- rownames(countData)
-                    colnames(isexprs) <- colnames(countData)
-                    # message(paste0("Defining 'is_exprs' using count data and a lower count threshold of ", lowerDetectionLimit))
                 }
             }
         }
     } else {
         exprsData <- as.matrix(exprsData)
-        if ( is.null(is_exprsData) ) {
-            isexprs <- exprsData > lowerDetectionLimit
-            rownames(isexprs) <- rownames(exprsData)
-            colnames(isexprs) <- colnames(exprsData)
-            # message(paste0("Defining 'is_exprs' using exprsData and a lower exprs threshold of ", lowerDetectionLimit))
-        }
     }
 
     ## Generate valid phenoData and featureData if not provided
@@ -296,10 +266,10 @@ setValidity("SCESet", function(object) {
                  "Row names and column names of featurePairwiseDistances must be equal to featureNames(SCESet)")
     }
     ## Check that we have sensible values for the counts
-    if( any(is.na(exprs(object))) ) {
+    if( .checkedCall(cxx_missing_exprs, exprs(object)) ) {
         warning( "The exprs data contain NA values." )
     }
-    if ( (!is.null(counts(object))) && any(counts(object) < 0, na.rm = TRUE) )
+    if ( (!is.null(counts(object))) && .checkedCall(cxx_negative_counts, counts(object)) )
         warning( "The count data contain negative values." )
     if( !(object@useForExprs %in% c("exprs", "tpm", "fpkm", "counts")) ) {
         valid <- FALSE
@@ -1219,8 +1189,8 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 
 #' Accessors size factors of an SCESet object.
 #'
-#' For normalisation, library-specific size factors can be defined. Raw values 
-#' can be divided by the appropriate size factors to obtain normalised counts, 
+#' For normalisation, library-specific size factors can be defined. Raw values
+#' can be divided by the appropriate size factors to obtain normalised counts,
 #' TPM, etc.
 #'
 #' @usage
@@ -1236,27 +1206,27 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 #'
 #' @param object a \code{SCESet} object.
 #' @param value a vector of class \code{"numeric"} or \code{NULL}
-#' @param type optional character argument providing the type or name of the 
-#' size factors to be accessed or assigned. 
+#' @param type optional character argument providing the type or name of the
+#' size factors to be accessed or assigned.
 #'
-#' @details The size factors can alternatively be directly accessed from the 
+#' @details The size factors can alternatively be directly accessed from the
 #' \code{SCESet} object with \code{object$size_factor_type} (where "type" in the
 #' preceding is replaced by the actual type name).
 #'
 #' @author Davis McCarthy and Aaron Lun
 #' @export
-#' 
+#'
 #' @importFrom BiocGenerics sizeFactors
 #' @importFrom BiocGenerics sizeFactors<-
-#' 
+#'
 #' @examples
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' example_sceset <- newSCESet(countData = sc_example_counts)
 #' sizeFactors(example_sceset)
 #' sizeFactors(example_sceset, NULL) <- 2 ^ rnorm(ncol(example_sceset))
-#' 
-#' example_sceset <- calculateQCMetrics(example_sceset, 
+#'
+#' example_sceset <- calculateQCMetrics(example_sceset,
 #'                                      feature_controls = list(set1 = 1:40))
 #' sizeFactors(example_sceset, "set1") <- 2 ^ rnorm(ncol(example_sceset))
 #' sizeFactors(example_sceset)
@@ -1266,13 +1236,13 @@ sizeFactors.SCESet <- function(object, type=NULL) {
     out <- pData(object)[[ofield]]
     if ( is.null(out) ) {
         wstring <- "'sizeFactors' have not been set"
-        if (!is.null(type)) { 
+        if (!is.null(type)) {
             wstring <- paste0(wstring, " for '", type, "'")
-        } 
-        warning(wstring) 
+        }
+        warning(wstring)
         return(NULL)
     }
-    names(out) <- colnames(object) 
+    names(out) <- colnames(object)
     return(out)
 }
 
@@ -1300,7 +1270,7 @@ setMethod("sizeFactors", signature(object = "SCESet"), sizeFactors.SCESet)
 #' @exportMethod "sizeFactors<-"
 #' @aliases sizeFactors<-,SCESet,numeric-method
 setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "numeric"),
-                 function(object, type = NULL, value) {
+                 function(object, type = NULL, ..., value) {
                      ofield <- .construct_sf_field(object, type)
                      pData(object)[[ofield]] <- value
                      validObject(object)
@@ -1312,7 +1282,7 @@ setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "numeric"),
 #' @exportMethod "sizeFactors<-"
 #' @aliases sizeFactors<-,SCESet,NULL-method
 setReplaceMethod("sizeFactors", signature(object = "SCESet", value = "NULL"),
-                 function(object, type = NULL, value) {
+                 function(object, type = NULL, ..., value) {
                      ofield <- .construct_sf_field(object, type)
                      pData(object)[[ofield]] <- NULL
                      validObject(object)
