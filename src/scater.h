@@ -48,6 +48,8 @@ SEXP missing_exprs(SEXP);
 
 SEXP calc_cpm(SEXP, SEXP, SEXP, SEXP);
 
+SEXP fun(SEXP);
+
 }
 
 #endif

@@ -533,10 +533,37 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     object@featureControlInfo$name
 }
 
-nexprs <- function(object, threshold = NULL, subset.row = NULL, byrow = FALSE)
-# An efficient internal function that avoids the need to construct 'is_exprs_mat'
-# by counting the number of expressed genes per cell on the fly.
-{
+
+#' Count the number of expressed genes per cell
+#' 
+#' 
+#' @param object an \code{SCESet} object
+#' @param threshold numeric scalar providing the value above which observations
+#' are deemed to be expressed. Defaults to \code{object@lowerDetectionLimit}.
+#' @param subset.row logical or character vector indicating which rows 
+#' (i.e. features/genes) to subset and calculate 'is_exprs_mat' for.
+#' @param byrow logical scalar indicating if \code{TRUE} to count expressing 
+#' cells per feature (i.e. gene) and if \code{FALSE} to count expressing 
+#' features (i.e. genes) per cell.
+#' 
+#' @description An efficient internal function that avoids the need to construct 
+#' 'is_exprs_mat' by counting the number of expressed genes per cell on the fly.
+#' 
+#' @return a numeric vector of the same length as the number of features if
+#' \code{byrow} argument is \code{TRUE} and the same length as the number of 
+#' cells if \code{byrow} is \code{FALSE}
+#' 
+#' @export
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
+#' rownames(pd) <- pd$Cell
+#' example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
+#' nexprs(example_sceset)[1:10]
+#' nexprs(example_sceset, byrow = TRUE)[1:10]
+#' 
+nexprs <- function(object, threshold = NULL, subset.row = NULL, byrow = FALSE) {
     if (!is(object, "SCESet")) { 
         stop("'object' must be a SCESet")
     }
@@ -568,9 +595,11 @@ nexprs <- function(object, threshold = NULL, subset.row = NULL, byrow = FALSE)
             if (is.null(subset.row)) { 
                 subset.row <- seq_len(nrow(counts_mat)) 
             } else {
-                subset.row <- .subset2index(subset.row, names = rownames(counts_mat))
+                subset.row <- .subset2index(subset.row, 
+                                            names = rownames(counts_mat))
             }
-            return(.checkedCall(cxx_colsum_exprs_subset, counts_mat, threshold, subset.row))
+            return(.checkedCall(cxx_colsum_exprs_subset, counts_mat, 
+                                threshold, subset.row))
         }
     } else {
         # Counting expressing cells per gene.
@@ -606,6 +635,9 @@ nexprs <- function(object, threshold = NULL, subset.row = NULL, byrow = FALSE)
 #' or the higher end ("higher")
 #' @param log logical, should the values of the metric be transformed to the 
 #' log10 scale before computing median-absolute-deviation for outlier detection?
+#' @param na.rm logical, should NA (missing) values be removed before computing
+#' median and median-absolute-deviation values? If \code{FALSE} then return 
+#' values for median and median-absolute-deviation will be NA if any value is NA.
 #' 
 #' @description Convenience function to determine which values for a metric are
 #' outliers based on median-absolute-deviation (MAD).

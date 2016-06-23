@@ -17,25 +17,27 @@
 
 \S4method{sizeFactors}{SCESet}(object, type = NULL)
 
-\S4method{sizeFactors}{SCESet,numeric}(object, type = NULL) <- value
+\S4method{sizeFactors}{SCESet,numeric}(object, type = NULL, ...) <- value
 
-\S4method{sizeFactors}{SCESet,`NULL`}(object, type = NULL) <- value
+\S4method{sizeFactors}{SCESet,`NULL`}(object, type = NULL, ...) <- value
 }
 \arguments{
 \item{object}{a \code{SCESet} object.}
 
-\item{type}{optional character argument providing the type or name of the 
+\item{type}{optional character argument providing the type or name of the
 size factors to be accessed or assigned.}
+
+\item{...}{further arguments passed to the function}
 
 \item{value}{a vector of class \code{"numeric"} or \code{NULL}}
 }
 \description{
-For normalisation, library-specific size factors can be defined. Raw values 
-can be divided by the appropriate size factors to obtain normalised counts, 
+For normalisation, library-specific size factors can be defined. Raw values
+can be divided by the appropriate size factors to obtain normalised counts,
 TPM, etc.
 }
 \details{
-The size factors can alternatively be directly accessed from the 
+The size factors can alternatively be directly accessed from the
 \code{SCESet} object with \code{object$size_factor_type} (where "type" in the
 preceding is replaced by the actual type name).
 }
@@ -46,7 +48,7 @@ example_sceset <- newSCESet(countData = sc_example_counts)
 sizeFactors(example_sceset)
 sizeFactors(example_sceset, NULL) <- 2 ^ rnorm(ncol(example_sceset))
 
-example_sceset <- calculateQCMetrics(example_sceset, 
+example_sceset <- calculateQCMetrics(example_sceset,
                                      feature_controls = list(set1 = 1:40))
 sizeFactors(example_sceset, "set1") <- 2 ^ rnorm(ncol(example_sceset))
 sizeFactors(example_sceset)

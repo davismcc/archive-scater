@@ -165,8 +165,11 @@ newSCESet <- function(exprsData = NULL,
     useForExprs <- match.arg(useForExprs, c("exprs","tpm","counts","fpkm"))
 
     ## Generate new SCESet object
-    assaydata <- assayDataNew("lockedEnvironment", exprs = exprsData,
-                              is_exprs = isexprs)
+    if ( !is.null(is_exprsData) )
+        assaydata <- assayDataNew("lockedEnvironment", exprs = exprsData,
+                                  is_exprs = isexprs)
+    else 
+        assaydata <- assayDataNew("lockedEnvironment", exprs = exprsData)
     sceset <- new( "SCESet",
                    assayData = assaydata,
                    phenoData = phenoData,
@@ -1192,6 +1195,7 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 #' For normalisation, library-specific size factors can be defined. Raw values
 #' can be divided by the appropriate size factors to obtain normalised counts,
 #' TPM, etc.
+#' 
 #'
 #' @usage
 #' \S4method{sizeFactors}{SCESet}(object,type)
@@ -1208,6 +1212,7 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 #' @param value a vector of class \code{"numeric"} or \code{NULL}
 #' @param type optional character argument providing the type or name of the
 #' size factors to be accessed or assigned.
+#' @param ... further arguments passed to the function
 #'
 #' @details The size factors can alternatively be directly accessed from the
 #' \code{SCESet} object with \code{object$size_factor_type} (where "type" in the
