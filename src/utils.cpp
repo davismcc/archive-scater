@@ -282,12 +282,3 @@ SEXP calc_top_features (SEXP matrix, SEXP top) try {
     return mkString(e.what());
 }
 
-/* An empty function just to register the name 'cxx_fun' so that R CMD check
- * doesn't complain
- */
-SEXP fun (SEXP whee) {
-    return whee; // Does absolutely nothing.
-}
-
-
-

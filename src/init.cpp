@@ -11,7 +11,6 @@ static const R_CallMethodDef all_call_entries[] = {
     REGISTER(negative_counts, 1),
     REGISTER(missing_exprs, 1),
     REGISTER(calc_top_features, 2),
-    REGISTER(fun, 1),
     {NULL, NULL, 0}
 };
 
