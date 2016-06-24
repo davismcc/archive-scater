@@ -585,7 +585,7 @@ setMethod("get_exprs", signature(object = "SCESet"),
 #' @exportMethod "set_exprs<-"
 setReplaceMethod("set_exprs", signature(object = "SCESet", value = "matrix"),
                  function(object, name, value) {
-                     Biobase::assayDataElement(object, "name") <- value
+                     Biobase::assayDataElement(object, name) <- value
                      validObject(object)
                      object
                  })
