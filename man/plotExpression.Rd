@@ -14,10 +14,12 @@ plotExpression(object, ...)
 plotExpressionSCESet(object, features, x, exprs_values = "exprs",
   colour_by = NULL, shape_by = NULL, size_by = NULL, ncol = 2,
   xlab = NULL, show_median = FALSE, show_violin = TRUE,
-  show_smooth = FALSE, theme_size = 10, log2_values = FALSE)
+  show_smooth = FALSE, theme_size = 10, log2_values = FALSE,
+  size = NULL)
 
 plotExpressionDefault(object, aesth, ncol = 2, xlab = NULL, ylab = NULL,
-  show_median = FALSE, show_violin = TRUE, show_smooth = FALSE)
+  show_median = FALSE, show_violin = TRUE, show_smooth = FALSE,
+  size = NULL)
 
 \S4method{plotExpression}{SCESet}(object, ...)
 
@@ -84,6 +86,10 @@ for each group on the plot}
 
 \item{log2_values}{should the expression values be transformed to the
 log2-scale for plotting (with an offset of 1 to avoid logging zeroes)?}
+
+\item{size}{numeric scalar optionally providing size for points if 
+\code{size_by} argument is not given. Default is \code{NULL}, in which case
+\pkg{ggplot2} default is used.}
 
 \item{aesth}{an \code{aes} object to use in the call to \code{\link{ggplot}}.}
 

@@ -1690,6 +1690,9 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' (default is 10)
 #' @param log2_values should the expression values be transformed to the
 #' log2-scale for plotting (with an offset of 1 to avoid logging zeroes)?
+#' @param size numeric scalar optionally providing size for points if 
+#' \code{size_by} argument is not given. Default is \code{NULL}, in which case
+#' \pkg{ggplot2} default is used.
 #' @param ... optional arguments (from those listed above) passed to
 #' \code{plotExpressionSCESet} or \code{plotExpressionDefault}
 #'
@@ -1730,7 +1733,7 @@ plotExpressionSCESet <- function(object, features, x, exprs_values = "exprs",
                                  size_by = NULL, ncol = 2, xlab = NULL,
                                  show_median = FALSE, show_violin = TRUE,
                                  show_smooth = FALSE, theme_size = 10,
-                                 log2_values = FALSE) {
+                                 log2_values = FALSE, size = NULL) {
     ## Check object is an SCESet object
     if ( !is(object, "SCESet") )
         stop("object must be an SCESet")
@@ -1813,7 +1816,8 @@ plotExpressionSCESet <- function(object, features, x, exprs_values = "exprs",
 
     ## Make the plot
     plot_out <- plotExpressionDefault(object, aesth, ncol, xlab, ylab,
-                                      show_median, show_violin, show_smooth)
+                                      show_median, show_violin, show_smooth,
+                                      size)
 
     ## Define plotting theme
     if ( requireNamespace("cowplot", quietly = TRUE) )
@@ -1833,7 +1837,8 @@ plotExpressionSCESet <- function(object, features, x, exprs_values = "exprs",
 #' @export
 plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
                                   ylab = NULL, show_median = FALSE,
-                                  show_violin = TRUE, show_smooth = FALSE) {
+                                  show_violin = TRUE, show_smooth = FALSE,
+                                  size = NULL) {
     if ( !("Feature" %in% names(object)) )
         stop("object needs a column named 'Feature' to define the feature(s) by which to plot expression.")
 
@@ -1850,12 +1855,19 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
                                           as.character(aesth$colour))
 
     ## if x axis variable is not numeric, then jitter points horizontally
-    if ( is.numeric(aesth$x) ) 
-        plot_out <- plot_out + geom_jitter(alpha = 0.6)
-    else 
-        plot_out <- plot_out + geom_jitter(alpha = 0.6, 
-                                           position = position_jitter(height = 0))
-    
+    if ( is.numeric(aesth$x) ) {
+        if ( is.null(aesth$size) & !is.null(size) )
+            plot_out <- plot_out + geom_point(size = size, alpha = 0.6)
+        else
+            plot_out <- plot_out + geom_point(alpha = 0.6)
+    } else {
+        if ( is.null(aesth$size) & !is.null(size) )
+            plot_out <- plot_out + geom_jitter(
+                alpha = 0.6, size = size, position = position_jitter(height = 0))
+        else
+            plot_out <- plot_out + geom_jitter(
+                alpha = 0.6, position = position_jitter(height = 0))
+    }    
     ## show optional decorations on plot if desired
     if (show_violin) {
         plot_out <- plot_out + geom_violin(colour = "gray60", alpha = 0.3,
@@ -1867,7 +1879,7 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
                          geom = "crossbar", width = 0.3, alpha = 0.8)
     }
     if (show_smooth) {
-        plot_out <- plot_out + stat_smooth()
+        plot_out <- plot_out + stat_smooth(colour = "firebrick", linetype = 2)
     }
     plot_out
 }
