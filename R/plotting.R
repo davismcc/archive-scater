@@ -1607,7 +1607,7 @@ plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
     ## Call default method to make the plot
     plot_out <- plotReducedDim.default(df_to_plot, ncomponents, colour_by,
                                        shape_by, size_by, percentVar = NULL,
-                                       theme_size, legend)
+                                       legend = legend)
 
     ## Define plotting theme
     if ( requireNamespace("cowplot", quietly = TRUE) )
@@ -1620,6 +1620,7 @@ plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
 
     ## return plot
     plot_out
+    
 }
 
 #' @rdname plotReducedDim
@@ -1627,9 +1628,9 @@ plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
 #' @export
 setMethod("plotReducedDim", signature("SCESet"),
           function(object, ncomponents=2, colour_by=NULL, shape_by=NULL,
-                   size_by=NULL, legend=TRUE) {
+                   size_by=NULL, theme_size = 10, legend="auto") {
               plotReducedDim.SCESet(object, ncomponents, colour_by, shape_by,
-                                    size_by, legend)
+                                    size_by, theme_size, legend)
           })
 
 #' @rdname plotReducedDim
@@ -1637,7 +1638,7 @@ setMethod("plotReducedDim", signature("SCESet"),
 #' @export
 setMethod("plotReducedDim", signature("data.frame"),
           function(object, ncomponents=2, colour_by=NULL, shape_by=NULL,
-                   size_by=NULL, percentVar=NULL, legend=TRUE) {
+                   size_by=NULL, percentVar=NULL, legend="auto") {
               plotReducedDim.default(object, ncomponents, colour_by, shape_by,
                                      size_by, percentVar, legend)
           })
