@@ -1718,6 +1718,7 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' @import ggplot2
 #' @importFrom Biobase varLabels
 #' @importFrom Biobase featureNames
+#' @importFrom ggbeeswarm geom_quasirandom
 #' @export
 #'
 #' @examples
@@ -1743,7 +1744,7 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' ## plot expression against expression values for Gene_0004
 #' plotExpression(example_sceset, 1:4, "Gene_0004")
 #' plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE)
-#'  plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE, se = FALSE)
+#' plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE, se = FALSE)
 #'
 plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exprs",
                                  colour_by = NULL, shape_by = NULL,
@@ -1908,11 +1909,12 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
             plot_out <- plot_out + geom_point(alpha = alpha)
     } else {
         if ( is.null(aesth$size) & !is.null(size) )
-            plot_out <- plot_out + geom_jitter(
-                alpha = alpha, size = size, position = position_jitter(height = 0))
+            plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
+                alpha = alpha, size = size)
         else
-            plot_out <- plot_out + geom_jitter(
-                alpha = alpha, position = position_jitter(height = 0))
+            plot_out <- plot_out + ggbeeswarm::geom_quasirandom(alpha = alpha)
+        # plot_out <- plot_out + geom_jitter(
+        #     alpha = alpha, position = position_jitter(height = 0))
     }    
     
     ## show optional decorations on plot if desired
@@ -2081,22 +2083,22 @@ plotMetadata <- function(object,
     }
     if (plot_type == "jitter") {
         if ( !show_shape_guide )
-            plot_out <- plot_out + geom_jitter(shape = shape)
+            plot_out <- plot_out +  ggbeeswarm::geom_quasirandom(shape = shape)
         else
-            plot_out <- plot_out + geom_jitter()
+            plot_out <- plot_out +  ggbeeswarm::geom_quasirandom()
     }
     if (plot_type == "scatter") {
         if ( !show_shape_guide )
-            plot_out <- plot_out + geom_point(shape = shape)
+            plot_out <- plot_out +  ggbeeswarm::geom_quasirandom(shape = shape)
         else
-            plot_out <- plot_out + geom_point()
+            plot_out <- plot_out +  ggbeeswarm::geom_quasirandom()
         plot_out <- plot_out + geom_rug(alpha = 0.5, size = 1)
     }
     if (plot_type == "violin") {
         if ( !show_shape_guide )
-            plot_out  <- plot_out + geom_jitter(shape = shape)
+            plot_out  <- plot_out +  ggbeeswarm::geom_quasirandom(shape = shape)
         else
-            plot_out  <- plot_out + geom_jitter()
+            plot_out  <- plot_out +  ggbeeswarm::geom_quasirandom()
         plot_out <- plot_out + geom_violin(size = 1, scale = "width")
 
     }

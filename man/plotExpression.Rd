@@ -147,7 +147,7 @@ colour_by="Cell_Cycle", show_violin=TRUE, show_median=TRUE)
 ## plot expression against expression values for Gene_0004
 plotExpression(example_sceset, 1:4, "Gene_0004")
 plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE)
- plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE, se = FALSE)
+plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE, se = FALSE)
 
 }
 
