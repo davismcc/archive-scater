@@ -1244,7 +1244,7 @@ This variable will not be plotted."))
             geom_vline(xintercept = 1, linetype = 2) +
             scale_x_log10(breaks = 10 ^ (-3:2), labels = c(0.001, 0.01, 0.1, 1, 10, 100)) +
             xlab(paste0("% variance explained (log10-scale)")) +
-            ylab("") +
+            ylab("Density") +
             coord_cartesian(xlim = c(10 ^ (-3), 100))
         plot_out <- .resolve_plot_colours(plot_out, df_to_plot$Expl_Var, "")
         if ( requireNamespace("cowplot", quietly = TRUE) )

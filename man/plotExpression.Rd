@@ -11,15 +11,15 @@
 \usage{
 plotExpression(object, ...)
 
-plotExpressionSCESet(object, features, x, exprs_values = "exprs",
+plotExpressionSCESet(object, features, x = NULL, exprs_values = "exprs",
   colour_by = NULL, shape_by = NULL, size_by = NULL, ncol = 2,
   xlab = NULL, show_median = FALSE, show_violin = TRUE,
-  show_smooth = FALSE, theme_size = 10, log2_values = FALSE,
-  size = NULL)
+  show_smooth = FALSE, show_points = TRUE, theme_size = 10,
+  log2_values = FALSE, size = NULL, scales = "fixed")
 
 plotExpressionDefault(object, aesth, ncol = 2, xlab = NULL, ylab = NULL,
   show_median = FALSE, show_violin = TRUE, show_smooth = FALSE,
-  size = NULL)
+  show_points = TRUE, size = NULL, scales = "fixed", one_facet = FALSE)
 
 \S4method{plotExpression}{SCESet}(object, ...)
 
@@ -79,7 +79,12 @@ used as the x-axis label}
 \item{show_violin}{logical, show a violin plot for the distribution
 for each group on the plot}
 
-\item{show_smooth}{show a smoothed fit through the data points?}
+\item{show_smooth}{logical, show a smoothed fit through the expression values
+on the plot}
+
+\item{show_points}{logical, should the individual points (cells) be shown? 
+Points are jittered horizontally if the x-axis value is categorical rather 
+than numeric to avoid overplotting.}
 
 \item{theme_size}{numeric scalar giving default font size for plotting theme
 (default is 10)}
@@ -91,10 +96,18 @@ log2-scale for plotting (with an offset of 1 to avoid logging zeroes)?}
 \code{size_by} argument is not given. Default is \code{NULL}, in which case
 \pkg{ggplot2} default is used.}
 
-\item{aesth}{an \code{aes} object to use in the call to \code{\link{ggplot}}.}
+\item{scales}{character scalar, should scales be fixed ("fixed"), 
+free ("free"), or free in one dimension ("free_x"; "free_y", the default). 
+Passed to the \code{scales} argument in the \code{\link[ggplot2]{facet_wrap}} function 
+from the \code{ggplot2} package.}
+
+\item{aesth}{an \code{aes} object to use in the call to \code{\link[ggplot2]{ggplot}}.}
 
 \item{ylab}{character string defining a label for the y-axis (y-axes) of the
 plot.}
+
+\item{one_facet}{logical, should expression values for features be plotted in one facet 
+instead of mutiple facets, one per feature? Default if \code{x = NULL}.}
 }
 \value{
 a ggplot plot object

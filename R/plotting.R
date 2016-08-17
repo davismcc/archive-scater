@@ -1687,6 +1687,11 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' @param show_median logical, show the median for each group on the plot
 #' @param show_violin logical, show a violin plot for the distribution
 #' for each group on the plot
+#' @param show_smooth logical, show a smoothed fit through the expression values
+#'  on the plot
+#' @param show_points logical, should the individual points (cells) be shown? 
+#' Points are jittered horizontally if the x-axis value is categorical rather 
+#' than numeric to avoid overplotting.
 #' @param theme_size numeric scalar giving default font size for plotting theme
 #' (default is 10)
 #' @param log2_values should the expression values be transformed to the
@@ -1694,6 +1699,10 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' @param size numeric scalar optionally providing size for points if 
 #' \code{size_by} argument is not given. Default is \code{NULL}, in which case
 #' \pkg{ggplot2} default is used.
+#' @param scales character scalar, should scales be fixed ("fixed"), 
+#' free ("free"), or free in one dimension ("free_x"; "free_y", the default). 
+#' Passed to the \code{scales} argument in the \code{\link[ggplot2]{facet_wrap}} function 
+#' from the \code{ggplot2} package.
 #' @param ... optional arguments (from those listed above) passed to
 #' \code{plotExpressionSCESet} or \code{plotExpressionDefault}
 #'
@@ -1729,12 +1738,13 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' plotExpression(example_sceset, 1:4, "Gene_0004")
 #' plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE)
 #'
-plotExpressionSCESet <- function(object, features, x, exprs_values = "exprs",
+plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exprs",
                                  colour_by = NULL, shape_by = NULL,
                                  size_by = NULL, ncol = 2, xlab = NULL,
                                  show_median = FALSE, show_violin = TRUE,
-                                 show_smooth = FALSE, theme_size = 10,
-                                 log2_values = FALSE, size = NULL) {
+                                 show_smooth = FALSE, show_points = TRUE, 
+                                 theme_size = 10,
+                                 log2_values = FALSE, size = NULL, scales = "fixed") {
     ## Check object is an SCESet object
     if ( !is(object, "SCESet") )
         stop("object must be an SCESet")
@@ -1746,14 +1756,18 @@ plotExpressionSCESet <- function(object, features, x, exprs_values = "exprs",
         nfeatures <- length(features)
 
     ## Check arguments are valid
-    if ( !(x %in% varLabels(object)) && !(x %in% featureNames(object)))
-        stop("the argument 'x' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)")
-    if ( x %in% featureNames(object) ) {
-        x_is_feature <- TRUE
-        show_violin <- FALSE
-        show_median <- FALSE
-    } else
+    if ( is.null(x) ) {
         x_is_feature <- FALSE
+    } else {
+        if ( !(x %in% varLabels(object)) && !(x %in% featureNames(object)))
+            stop("the argument 'x' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)")
+        if ( x %in% featureNames(object) ) {
+            x_is_feature <- TRUE
+            show_violin <- FALSE
+            show_median <- FALSE
+        } else
+            x_is_feature <- FALSE
+    }
     if ( !is.null(colour_by) ) {
         if ( !(colour_by %in% varLabels(object)) )
             stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)]")
@@ -1792,7 +1806,15 @@ plotExpressionSCESet <- function(object, features, x, exprs_values = "exprs",
 
     ## Construct a ggplot2 aesthetic for the plot
     aesth <- aes()
-    aesth$x <- as.symbol(x)
+    if ( is.null(x) ) {
+        # samples_long$dummy <- "dummy"
+        # aesth$x <- as.symbol("dummy")
+        aesth$x <- as.symbol("Feature")
+        one_facet <- TRUE
+    } else {
+        aesth$x <- as.symbol(x)
+        one_facet <- FALSE
+    }
     aesth$y <- as.symbol("evals")
     if ( !is.null(colour_by) )
         aesth$colour <- as.symbol(colour_by)
@@ -1818,36 +1840,48 @@ plotExpressionSCESet <- function(object, features, x, exprs_values = "exprs",
     ## Make the plot
     plot_out <- plotExpressionDefault(object, aesth, ncol, xlab, ylab,
                                       show_median, show_violin, show_smooth,
-                                      size)
+                                      show_points,
+                                      size, scales, one_facet)
 
     ## Define plotting theme
     if ( requireNamespace("cowplot", quietly = TRUE) )
         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
     else
         plot_out <- plot_out + theme_bw(theme_size)
+    if ( is.null(x) ) ## in this case, do not show x-axis ticks or labels
+        plot_out <- plot_out + theme(
+            axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1), 
+            axis.ticks.x = element_blank(),
+            plot.margin = unit(c(.03, .02, .05, .02), "npc"))
     plot_out
 }
 
 
-#' @param aesth an \code{aes} object to use in the call to \code{\link{ggplot}}.
+#' @param aesth an \code{aes} object to use in the call to \code{\link[ggplot2]{ggplot}}.
 #' @param ylab character string defining a label for the y-axis (y-axes) of the
 #' plot.
-#' @param show_smooth show a smoothed fit through the data points?
+#' @param one_facet logical, should expression values for features be plotted in one facet 
+#' instead of mutiple facets, one per feature? Default if \code{x = NULL}.
 #' @rdname plotExpression
 #' @aliases plotExpression
 #' @export
 plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
                                   ylab = NULL, show_median = FALSE,
-                                  show_violin = TRUE, show_smooth = FALSE,
-                                  size = NULL) {
+                                  show_violin = TRUE, show_smooth = FALSE, 
+                                  show_points = TRUE,
+                                  size = NULL, scales = "fixed", one_facet = FALSE) {
     if ( !("Feature" %in% names(object)) )
         stop("object needs a column named 'Feature' to define the feature(s) by which to plot expression.")
 
     ## Define the plot
-    plot_out <- ggplot(object, aesth) +
-        facet_wrap(~Feature, ncol = ncol, scales = 'free_y') +
-        xlab(xlab) +
-        ylab(ylab)
+    if (one_facet) {
+        plot_out <- ggplot(object, aesth) + xlab(xlab) + ylab(ylab)
+    } else {
+        plot_out <- ggplot(object, aesth) +
+            facet_wrap(~Feature, ncol = ncol, scales = scales) +
+            xlab(xlab) +
+            ylab(ylab)
+    }
     
     ## if colour aesthetic is defined, then choose sensible colour palette
     if ( !is.null(aesth$colour) )
@@ -1856,19 +1890,21 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
                                           as.character(aesth$colour))
 
     ## if x axis variable is not numeric, then jitter points horizontally
-    if ( is.numeric(aesth$x) ) {
-        if ( is.null(aesth$size) & !is.null(size) )
-            plot_out <- plot_out + geom_point(size = size, alpha = 0.6)
-        else
-            plot_out <- plot_out + geom_point(alpha = 0.6)
-    } else {
-        if ( is.null(aesth$size) & !is.null(size) )
-            plot_out <- plot_out + geom_jitter(
-                alpha = 0.6, size = size, position = position_jitter(height = 0))
-        else
-            plot_out <- plot_out + geom_jitter(
-                alpha = 0.6, position = position_jitter(height = 0))
-    }    
+    if (show_points) {
+        if ( is.numeric(aesth$x) ) {
+            if ( is.null(aesth$size) & !is.null(size) )
+                plot_out <- plot_out + geom_point(size = size, alpha = 0.6)
+            else
+                plot_out <- plot_out + geom_point(alpha = 0.6)
+        } else {
+            if ( is.null(aesth$size) & !is.null(size) )
+                plot_out <- plot_out + geom_jitter(
+                    alpha = 0.6, size = size, position = position_jitter(height = 0))
+            else
+                plot_out <- plot_out + geom_jitter(
+                    alpha = 0.6, position = position_jitter(height = 0))
+        }    
+    }
     ## show optional decorations on plot if desired
     if (show_violin) {
         plot_out <- plot_out + geom_violin(colour = "gray60", alpha = 0.3,
@@ -1885,18 +1921,6 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
     plot_out
 }
 
-# #' @rdname plotExpression
-# #' @aliases plotExpression
-# #' @export
-# setMethod("plotExpression", signature(object = "SCESet"),
-#           function(object, features, x, exprs_values = "exprs", colour_by = NULL,
-#                    shape_by = NULL, size_by = NULL, ncol = 2, xlab = NULL,
-#                    show_median=FALSE, show_violin=TRUE, show_smooth=FALSE) {
-#               plotExpressionSCESet(object, features, x, exprs_values,
-#                                         colour_by, shape_by, size_by, ncol,
-#                                         xlab, show_median, show_violin,
-#                                    show_smooth)
-#           })
 
 #' @rdname plotExpression
 #' @aliases plotExpression
