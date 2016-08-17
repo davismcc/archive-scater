@@ -14,12 +14,13 @@ plotExpression(object, ...)
 plotExpressionSCESet(object, features, x = NULL, exprs_values = "exprs",
   colour_by = NULL, shape_by = NULL, size_by = NULL, ncol = 2,
   xlab = NULL, show_median = FALSE, show_violin = TRUE,
-  show_smooth = FALSE, show_points = TRUE, theme_size = 10,
-  log2_values = FALSE, size = NULL, scales = "fixed")
+  show_smooth = FALSE, alpha = 0.6, theme_size = 10,
+  log2_values = FALSE, size = NULL, scales = "fixed", se = TRUE)
 
 plotExpressionDefault(object, aesth, ncol = 2, xlab = NULL, ylab = NULL,
   show_median = FALSE, show_violin = TRUE, show_smooth = FALSE,
-  show_points = TRUE, size = NULL, scales = "fixed", one_facet = FALSE)
+  alpha = 0.6, size = NULL, scales = "fixed", one_facet = FALSE,
+  se = TRUE)
 
 \S4method{plotExpression}{SCESet}(object, ...)
 
@@ -82,7 +83,8 @@ for each group on the plot}
 \item{show_smooth}{logical, show a smoothed fit through the expression values
 on the plot}
 
-\item{show_points}{logical, should the individual points (cells) be shown? 
+\item{alpha}{numeric value between 0 (completely transparent) and 1 (completely
+solid) defining how transparent plotted points (cells) should be. 
 Points are jittered horizontally if the x-axis value is categorical rather 
 than numeric to avoid overplotting.}
 
@@ -100,6 +102,9 @@ log2-scale for plotting (with an offset of 1 to avoid logging zeroes)?}
 free ("free"), or free in one dimension ("free_x"; "free_y", the default). 
 Passed to the \code{scales} argument in the \code{\link[ggplot2]{facet_wrap}} function 
 from the \code{ggplot2} package.}
+
+\item{se}{logical, should standard errors be shown (default \code{TRUE}) for
+the smoothed fit through the cells. (Ignored if \code{show_smooth} is \code{FALSE}).}
 
 \item{aesth}{an \code{aes} object to use in the call to \code{\link[ggplot2]{ggplot}}.}
 
@@ -128,6 +133,9 @@ example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 example_sceset <- calculateQCMetrics(example_sceset)
 
 ## default plot
+plotExpression(example_sceset, 1:10)
+
+## plot expression against an x-axis value
 plotExpression(example_sceset, 1:6, "Mutation_Status")
 
 ## explore options
@@ -139,6 +147,7 @@ colour_by="Cell_Cycle", show_violin=TRUE, show_median=TRUE)
 ## plot expression against expression values for Gene_0004
 plotExpression(example_sceset, 1:4, "Gene_0004")
 plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE)
+ plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE, se = FALSE)
 
 }
 

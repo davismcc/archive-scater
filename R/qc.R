@@ -1200,8 +1200,10 @@ This variable will not be plotted."))
                          nvars_to_plot)
 
     if ( method == "pairs" ) {
+        if (nvars_to_plot == 1) 
+            stop("Only one variable to plot, which does not make sense for a pairs plot.")
         ## Generate a larger data.frame for pairs plot
-        df_to_expand <- val_to_plot_mat[, oo_median[1:nvars_to_plot]]
+        df_to_expand <- val_to_plot_mat[, oo_median[1:nvars_to_plot], drop = FALSE]
         names(df_to_expand) <- colnames(df_to_expand)
         gg1 <- .makePairs(df_to_expand)
         diag_labs <-  paste0("Median R-sq = \n",
@@ -1232,7 +1234,7 @@ This variable will not be plotted."))
             theme(legend.position = "none")
     } else {
         df_to_plot <- suppressMessages(reshape2::melt(
-            rsquared_mat[, oo_median[1:nvars_to_plot]]))
+            rsquared_mat[, oo_median[1:nvars_to_plot], drop = FALSE]))
         colnames(df_to_plot) <- c("Feature", "Expl_Var", "R_squared")
         df_to_plot$Pct_Var_Explained <- 100 * df_to_plot$R_squared
         df_to_plot$Expl_Var <- factor(

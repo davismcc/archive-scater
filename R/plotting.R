@@ -1689,7 +1689,8 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' for each group on the plot
 #' @param show_smooth logical, show a smoothed fit through the expression values
 #'  on the plot
-#' @param show_points logical, should the individual points (cells) be shown? 
+#' @param alpha numeric value between 0 (completely transparent) and 1 (completely
+#' solid) defining how transparent plotted points (cells) should be. 
 #' Points are jittered horizontally if the x-axis value is categorical rather 
 #' than numeric to avoid overplotting.
 #' @param theme_size numeric scalar giving default font size for plotting theme
@@ -1703,6 +1704,8 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' free ("free"), or free in one dimension ("free_x"; "free_y", the default). 
 #' Passed to the \code{scales} argument in the \code{\link[ggplot2]{facet_wrap}} function 
 #' from the \code{ggplot2} package.
+#' @param se logical, should standard errors be shown (default \code{TRUE}) for
+#' the smoothed fit through the cells. (Ignored if \code{show_smooth} is \code{FALSE}).
 #' @param ... optional arguments (from those listed above) passed to
 #' \code{plotExpressionSCESet} or \code{plotExpressionDefault}
 #'
@@ -1726,6 +1729,9 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #'
 #' ## default plot
+#' plotExpression(example_sceset, 1:10)
+#' 
+#' ## plot expression against an x-axis value
 #' plotExpression(example_sceset, 1:6, "Mutation_Status")
 #'
 #' ## explore options
@@ -1737,14 +1743,15 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' ## plot expression against expression values for Gene_0004
 #' plotExpression(example_sceset, 1:4, "Gene_0004")
 #' plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE)
+#'  plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE, se = FALSE)
 #'
 plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exprs",
                                  colour_by = NULL, shape_by = NULL,
                                  size_by = NULL, ncol = 2, xlab = NULL,
                                  show_median = FALSE, show_violin = TRUE,
-                                 show_smooth = FALSE, show_points = TRUE, 
-                                 theme_size = 10,
-                                 log2_values = FALSE, size = NULL, scales = "fixed") {
+                                 show_smooth = FALSE, alpha = 0.6, 
+                                 theme_size = 10, log2_values = FALSE, size = NULL, 
+                                 scales = "fixed", se = TRUE) {
     ## Check object is an SCESet object
     if ( !is(object, "SCESet") )
         stop("object must be an SCESet")
@@ -1840,19 +1847,21 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
     ## Make the plot
     plot_out <- plotExpressionDefault(object, aesth, ncol, xlab, ylab,
                                       show_median, show_violin, show_smooth,
-                                      show_points,
-                                      size, scales, one_facet)
+                                      alpha, size, scales, one_facet, se)
 
     ## Define plotting theme
     if ( requireNamespace("cowplot", quietly = TRUE) )
         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
     else
         plot_out <- plot_out + theme_bw(theme_size)
-    if ( is.null(x) ) ## in this case, do not show x-axis ticks or labels
+    if ( is.null(x) ) { ## in this case, do not show x-axis ticks or labels
         plot_out <- plot_out + theme(
             axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1), 
             axis.ticks.x = element_blank(),
             plot.margin = unit(c(.03, .02, .05, .02), "npc"))
+        if (is.null(colour_by))
+            plot_out <- plot_out + guides(fill = "none", colour = "none")
+    }
     plot_out
 }
 
@@ -1868,13 +1877,15 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
 plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
                                   ylab = NULL, show_median = FALSE,
                                   show_violin = TRUE, show_smooth = FALSE, 
-                                  show_points = TRUE,
-                                  size = NULL, scales = "fixed", one_facet = FALSE) {
+                                  alpha = 0.6, size = NULL, scales = "fixed", 
+                                  one_facet = FALSE, se = TRUE) {
     if ( !("Feature" %in% names(object)) )
         stop("object needs a column named 'Feature' to define the feature(s) by which to plot expression.")
 
     ## Define the plot
     if (one_facet) {
+        if (is.null(aesth$colour))
+            aesth$colour <- as.symbol("Feature")
         plot_out <- ggplot(object, aesth) + xlab(xlab) + ylab(ylab)
     } else {
         plot_out <- ggplot(object, aesth) +
@@ -1890,25 +1901,33 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
                                           as.character(aesth$colour))
 
     ## if x axis variable is not numeric, then jitter points horizontally
-    if (show_points) {
-        if ( is.numeric(aesth$x) ) {
-            if ( is.null(aesth$size) & !is.null(size) )
-                plot_out <- plot_out + geom_point(size = size, alpha = 0.6)
-            else
-                plot_out <- plot_out + geom_point(alpha = 0.6)
-        } else {
-            if ( is.null(aesth$size) & !is.null(size) )
-                plot_out <- plot_out + geom_jitter(
-                    alpha = 0.6, size = size, position = position_jitter(height = 0))
-            else
-                plot_out <- plot_out + geom_jitter(
-                    alpha = 0.6, position = position_jitter(height = 0))
-        }    
-    }
+    if ( is.numeric(aesth$x) ) {
+        if ( is.null(aesth$size) & !is.null(size) )
+            plot_out <- plot_out + geom_point(size = size, alpha = alpha)
+        else
+            plot_out <- plot_out + geom_point(alpha = alpha)
+    } else {
+        if ( is.null(aesth$size) & !is.null(size) )
+            plot_out <- plot_out + geom_jitter(
+                alpha = alpha, size = size, position = position_jitter(height = 0))
+        else
+            plot_out <- plot_out + geom_jitter(
+                alpha = alpha, position = position_jitter(height = 0))
+    }    
+    
     ## show optional decorations on plot if desired
     if (show_violin) {
-        plot_out <- plot_out + geom_violin(colour = "gray60", alpha = 0.3,
-                                           fill = "gray80", scale = "width")
+        if (one_facet && (aesth$colour == as.symbol("Feature"))) {
+            plot_out <- plot_out + 
+                geom_violin(aes_string(fill = "Feature"), colour = "gray60", 
+                            alpha = 0.2, scale = "width")
+            plot_out <- .resolve_plot_colours(
+                plot_out, object[[as.character(aesth$colour)]],
+                as.character(aesth$colour), fill = TRUE)
+        }
+        else
+            plot_out <- plot_out + geom_violin(colour = "gray60", alpha = 0.3,
+                                               fill = "gray80", scale = "width")
     }
     if (show_median) {
         plot_out <- plot_out +
@@ -1916,7 +1935,7 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
                          geom = "crossbar", width = 0.3, alpha = 0.8)
     }
     if (show_smooth) {
-        plot_out <- plot_out + stat_smooth(colour = "firebrick", linetype = 2)
+        plot_out <- plot_out + stat_smooth(colour = "firebrick", linetype = 2, se = se)
     }
     plot_out
 }
