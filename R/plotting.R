@@ -1706,6 +1706,10 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' from the \code{ggplot2} package.
 #' @param se logical, should standard errors be shown (default \code{TRUE}) for
 #' the smoothed fit through the cells. (Ignored if \code{show_smooth} is \code{FALSE}).
+#' @param jitter character scalar to define whether points are to be jittered 
+#' (\code{"jitter"}) or presented in a "beeswarm" style (if \code{"swarm"}; default). 
+#' "Beeswarm" style usually looks more attractive, but for datasets with a large 
+#' number of cells, or for dense plots, the jitter option may work better.
 #' @param ... optional arguments (from those listed above) passed to
 #' \code{plotExpressionSCESet} or \code{plotExpressionDefault}
 #'
@@ -1730,7 +1734,8 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' example_sceset <- calculateQCMetrics(example_sceset)
 #'
 #' ## default plot
-#' plotExpression(example_sceset, 1:10)
+#' plotExpression(example_sceset, 1:15)
+#' plotExpression(example_sceset, 1:15, jitter = "jitter")
 #' 
 #' ## plot expression against an x-axis value
 #' plotExpression(example_sceset, 1:6, "Mutation_Status")
@@ -1752,7 +1757,7 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
                                  show_median = FALSE, show_violin = TRUE,
                                  show_smooth = FALSE, alpha = 0.6, 
                                  theme_size = 10, log2_values = FALSE, size = NULL, 
-                                 scales = "fixed", se = TRUE) {
+                                 scales = "fixed", se = TRUE, jitter = "swarm") {
     ## Check object is an SCESet object
     if ( !is(object, "SCESet") )
         stop("object must be an SCESet")
@@ -1848,7 +1853,7 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
     ## Make the plot
     plot_out <- plotExpressionDefault(object, aesth, ncol, xlab, ylab,
                                       show_median, show_violin, show_smooth,
-                                      alpha, size, scales, one_facet, se)
+                                      alpha, size, scales, one_facet, se, jitter)
 
     ## Define plotting theme
     if ( requireNamespace("cowplot", quietly = TRUE) )
@@ -1879,7 +1884,7 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
                                   ylab = NULL, show_median = FALSE,
                                   show_violin = TRUE, show_smooth = FALSE, 
                                   alpha = 0.6, size = NULL, scales = "fixed", 
-                                  one_facet = FALSE, se = TRUE) {
+                                  one_facet = FALSE, se = TRUE, jitter = "swarm") {
     if ( !("Feature" %in% names(object)) )
         stop("object needs a column named 'Feature' to define the feature(s) by which to plot expression.")
 
@@ -1908,13 +1913,22 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
         else
             plot_out <- plot_out + geom_point(alpha = alpha)
     } else {
-        if ( is.null(aesth$size) & !is.null(size) )
-            plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
-                alpha = alpha, size = size)
-        else
-            plot_out <- plot_out + ggbeeswarm::geom_quasirandom(alpha = alpha)
-        # plot_out <- plot_out + geom_jitter(
-        #     alpha = alpha, position = position_jitter(height = 0))
+        if ( is.null(aesth$size) & !is.null(size) ) {
+            if (jitter == "swarm")
+                plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
+                    alpha = alpha, size = size)
+            else
+                plot_out <- plot_out + geom_jitter(
+                    alpha = alpha, size = size, position = position_jitter(height = 0))
+        }
+        else {
+            if (jitter == "swarm")
+                plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
+                    alpha = alpha)
+            else
+                plot_out <- plot_out + geom_jitter(
+                    alpha = alpha, position = position_jitter(height = 0))
+        }
     }    
     
     ## show optional decorations on plot if desired

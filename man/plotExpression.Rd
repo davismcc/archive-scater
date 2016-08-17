@@ -15,12 +15,13 @@ plotExpressionSCESet(object, features, x = NULL, exprs_values = "exprs",
   colour_by = NULL, shape_by = NULL, size_by = NULL, ncol = 2,
   xlab = NULL, show_median = FALSE, show_violin = TRUE,
   show_smooth = FALSE, alpha = 0.6, theme_size = 10,
-  log2_values = FALSE, size = NULL, scales = "fixed", se = TRUE)
+  log2_values = FALSE, size = NULL, scales = "fixed", se = TRUE,
+  jitter = "swarm")
 
 plotExpressionDefault(object, aesth, ncol = 2, xlab = NULL, ylab = NULL,
   show_median = FALSE, show_violin = TRUE, show_smooth = FALSE,
   alpha = 0.6, size = NULL, scales = "fixed", one_facet = FALSE,
-  se = TRUE)
+  se = TRUE, jitter = "swarm")
 
 \S4method{plotExpression}{SCESet}(object, ...)
 
@@ -106,6 +107,11 @@ from the \code{ggplot2} package.}
 \item{se}{logical, should standard errors be shown (default \code{TRUE}) for
 the smoothed fit through the cells. (Ignored if \code{show_smooth} is \code{FALSE}).}
 
+\item{jitter}{character scalar to define whether points are to be jittered 
+(\code{"jitter"}) or presented in a "beeswarm" style (if \code{"swarm"}; default). 
+"Beeswarm" style usually looks more attractive, but for datasets with a large 
+number of cells, or for dense plots, the jitter option may work better.}
+
 \item{aesth}{an \code{aes} object to use in the call to \code{\link[ggplot2]{ggplot}}.}
 
 \item{ylab}{character string defining a label for the y-axis (y-axes) of the
@@ -133,7 +139,8 @@ example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 example_sceset <- calculateQCMetrics(example_sceset)
 
 ## default plot
-plotExpression(example_sceset, 1:10)
+plotExpression(example_sceset, 1:15)
+plotExpression(example_sceset, 1:15, jitter = "jitter")
 
 ## plot expression against an x-axis value
 plotExpression(example_sceset, 1:6, "Mutation_Status")
