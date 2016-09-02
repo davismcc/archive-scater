@@ -46,7 +46,6 @@ readSalmonResultsOneSample <- function(directory) {
         abundance <- data.table::fread(file_to_read, sep = "\t")
         abundance <- as.data.frame(abundance)
         colnames(abundance) <- c("target_id", "length", "eff_length", "tpm", "est_counts")
-        abundance <- abundance[, c(1, 2, 3, 5, 4)]
         
         ## extract run info
         json_file <- file.path(directory, "aux_info", "meta_info.json")
@@ -64,8 +63,10 @@ readSalmonResultsOneSample <- function(directory) {
         cmd_json_file <- file.path(directory, "cmd_info.json")
         if (!file.exists(cmd_json_file)) 
             stop(paste(cmd_json_file, "not found or does not exist."))
+        cnames <- c("salmon_version", "index", "libType", "mates1", "mates2", 
+                    "output", "auxDir")
         cmd_info <- as.data.frame(
-            rjson::fromJSON(file = cmd_json_file))
+            rjson::fromJSON(file = cmd_json_file)[cnames])
     }
     else
         stop(paste("File", file_to_read, "not found or does not exist. 
