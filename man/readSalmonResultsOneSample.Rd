@@ -11,12 +11,16 @@ readSalmonResultsOneSample(directory)
 the Salmon results for the sample.}
 }
 \value{
-A list with two elements: (1) a data.frame \code{abundance} with 
+A list with four elements: (1) a data.frame \code{abundance} with 
 columns for 'target_id' (feature, transcript, gene etc), 'length' (feature 
 length), 'est_counts' (estimated feature counts), 'tpm' (transcripts per 
-million) and possibly many columns containing bootstrap estimated counts; 
-and (2) a list \code{run_info} with details about the Salmon run that 
-generated the results.
+million); (2) a data.frame \code{run_info} with metadata about the Salmon run that 
+generated the results, including number of reads processed, mapping 
+percentage and so on; (3) a data.frame \code{libformat_info} with information about
+the library type used for the RNA-sequencing, including details about 
+number of reads that did not match the given or inferred library type; and 
+(4) a data.frame \code{cmd_info} with details about the Salmon command used
+to generate the results.
 }
 \description{
 Read Salmon results for a single sample into a list
@@ -29,7 +33,11 @@ files (with the default names given by Salmon) 'quant.sf',
 'stats.tsv', 'libFormatCounts.txt' and the sub-directories 'logs' (which 
 contains a log file) and 'libParams' (which contains a file detailing the 
 fragment length distribution). If these files are missing, or if results 
-files have different names, then this function will not find them.
+files have different names, then this function will not find them. 
+
+This function will work for Salmon v0.7.x and greater, as the name of one of
+the default output directories was changed from "aux" to "aux_info" in 
+Salmon v0.7.
 }
 \examples{
 \dontrun{
