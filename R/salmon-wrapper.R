@@ -20,16 +20,14 @@
 #' the default output directories was changed from "aux" to "aux_info" in 
 #' Salmon v0.7.
 #' 
-#' @return A list with four elements: (1) a data.frame \code{abundance} with 
+#' @return A list with two elements: (1) a data.frame \code{abundance} with 
 #' columns for 'target_id' (feature, transcript, gene etc), 'length' (feature 
 #' length), 'est_counts' (estimated feature counts), 'tpm' (transcripts per 
-#' million); (2) a data.frame \code{run_info} with metadata about the Salmon run that 
+#' million); (2) a list, \code{run_info}, with metadata about the Salmon run that 
 #' generated the results, including number of reads processed, mapping 
-#' percentage and so on; (3) a data.frame \code{libformat_info} with information about
-#' the library type used for the RNA-sequencing, including details about 
-#' number of reads that did not match the given or inferred library type; and 
-#' (4) a data.frame \code{cmd_info} with details about the Salmon command used
-#' to generate the results. 
+#' percentage, the library type used for the RNA-sequencing, including details about 
+#' number of reads that did not match the given or inferred library type,
+#' details about the Salmon command used to generate the results, and so on.
 #' 
 #' @export
 #' @examples
@@ -38,42 +36,77 @@
 #' readSalmonResultsOneSample("output")
 #' }
 readSalmonResultsOneSample <- function(directory) {
+    cat(directory, "\n")
     ## Read in abundance information for the sample
     file_to_read <- file.path(directory, "quant.sf")
-    abundance <- run_info <- libformat_info <- cmd_info <- NULL
+    abundance <- run_info <- NULL
     if ( file.exists(file_to_read) ) {
         ## read abundance values
         abundance <- data.table::fread(file_to_read, sep = "\t")
-        abundance <- as.data.frame(abundance)
+        abundance <- as.data.frame(abundance, stringsAsFactors = FALSE)
         colnames(abundance) <- c("target_id", "length", "eff_length", "tpm", "est_counts")
         
         ## extract run info
         json_file <- file.path(directory, "aux_info", "meta_info.json")
-        if (!file.exists(json_file)) stop(paste(json_file, "not found or does not exist."))
-        run_info <- as.data.frame(rjson::fromJSON(file = json_file))
+        jnames <- c("salmon_version", "samp_type", "num_libraries",
+                    "library_types", "frag_dist_length", "seq_bias_correct",
+                    "gc_bias_correct", "num_bias_bins", "mapping_type",
+                    "num_targets", "num_bootstraps", "num_processed",
+                    "num_mapped", "percent_mapped", "start_time")
+        if (!file.exists(json_file))
+            stop(paste(json_file, "not found or does not exist."))
+        run_info <- as.list(rep(NA, length(jnames)))
+        names(run_info) <- jnames
+                tryCatch({
+            tmp <- rjson::fromJSON(file = json_file)
+            for (x in jnames) {
+                if (x %in% names(tmp))
+                    run_info[[x]] <- tmp[[x]]
+            }
+        }, error = function(e) {
+            cat(paste("Reading aux_info/meta_info.json failed for", directory, "\n"))
+        }, finally = {})
         
         ## extract library format info
         libformat_json_file <- file.path(directory, "lib_format_counts.json")
         if (!file.exists(libformat_json_file)) 
             stop(paste(libformat_json_file, "not found or does not exist."))
-        libformat_info <- as.data.frame(
-            rjson::fromJSON(file = libformat_json_file))
+        lnames <- c("read_files", "expected_format", "compatible_fragment_ratio", 
+                    "num_compatible_fragments", "num_assigned_fragments", 
+                    "num_consistent_mappings", "num_inconsistent_mappings",
+                    "strand_mapping_bias")
+        libformat_info <- as.list(rep(NA, length(lnames)))
+        names(libformat_info) <- lnames
+        tryCatch({
+            tmp <- rjson::fromJSON(file = libformat_json_file)
+            for (x in lnames) {
+                if (x %in% names(tmp))
+                    libformat_info[[x]] <- tmp[[x]]
+            }
+        }, error = function(e) {
+            cat(paste("Reading lib_format_counts.json failed for", directory, "\n"))
+        }, finally = {})
         
         ## extract command info
         cmd_json_file <- file.path(directory, "cmd_info.json")
         if (!file.exists(cmd_json_file)) 
             stop(paste(cmd_json_file, "not found or does not exist."))
-        cnames <- c("salmon_version", "index", "libType", "mates1", "mates2", 
-                    "output", "auxDir")
-        cmd_info <- as.data.frame(
-            rjson::fromJSON(file = cmd_json_file)[cnames])
-    }
-    else
-        stop(paste("File", file_to_read, "not found or does not exist. 
-                   Please check directory is correct."))
+        cnames <- c("index", "libType", "mates1", "mates2", "output", "auxDir")
+        cmd_info <- as.list(rep(NA, length(cnames)))
+        names(cmd_info) <- cnames
+        tryCatch({
+            cmd_info <- rjson::fromJSON(file = cmd_json_file)[cnames]
+        }, error = function(e) {
+            cat(paste("Reading cmd_info.json failed for", directory, "\n"))
+        }, finally = {})
+
+        ## combine run info
+        info_out <- c(run_info, libformat_info, cmd_info)
+        
+    } else
+        stop(paste("File", file_to_read, "not found or does not exist. Please check directory is correct."))
     ## output list with abundances and run info
-    list(abundance = abundance, run_info = run_info, 
-         libformat_info = libformat_info, cmd_info = cmd_info)
+    list(abundance = abundance, run_info = info_out)
 }
 
 
@@ -146,16 +179,18 @@ readSalmonResults <- function(Salmon_log = NULL, samples = NULL,
     s1 <- readSalmonResultsOneSample(directories[1])
     nsamples <- length(samples)
     nfeatures <- nrow(s1$abundance)
-    ninfo_vars <- (ncol(s1$run_info) + ncol(s1$libformat_info) + 
-                       ncol(s1$cmd_info))
+    info_vars <- names(s1$run_info)
+    ninfo_vars <- length(info_vars)
+        
     ## Currently not reading in bootstrap results - to add in future
     
     ## Set up results objects
     pdata <- data.frame(matrix(NA, nrow = nsamples, ncol = ninfo_vars))
     rownames(pdata) <- samples
-    colnames(pdata) <- colnames(s1$run_info)
+    colnames(pdata) <- names(s1$run_info)
     fdata <- data.frame(feature_id = s1$abundance$target_id,
-                        feature_length = s1$abundance$length)
+                        feature_length = s1$abundance$length,
+                        stringsAsFactors = FALSE)
     rownames(fdata) <- s1$abundance$target_id
     est_counts <- tpm <- feat_eff_len <- 
         matrix(NA, nrow = nfeatures, ncol = nsamples)
@@ -181,8 +216,9 @@ readSalmonResults <- function(Salmon_log = NULL, samples = NULL,
         if ( length(tmp_samp$abundance$eff_length) == nfeatures )
             feat_eff_len[, i] <- tmp_samp$abundance$eff_length
         ## run info
-        pdata[i, ] <- cbind(tmp_samp$run_info, tmp_samp$libformat_info,
-                            tmp_samp$cmd_info)
+        for (x in info_vars)
+            if (x %in% names(tmp_samp$run_info))
+                pdata[[x]][i] <- tmp_samp$run_info[[x]]
         ## in future, add code to read in bootstraps
         if ( verbose ) {
             cat(".")
@@ -196,7 +232,9 @@ readSalmonResults <- function(Salmon_log = NULL, samples = NULL,
     if ( verbose )
         cat("\n")
     ## Produce SCESet object
+    pdata <- pdata[!duplicated(rownames(pdata)), !duplicated(colnames(pdata))]
     pdata <- new("AnnotatedDataFrame", pdata)
+    fdata <- fdata[!duplicated(rownames(fdata)), !duplicated(colnames(fdata))]
     fdata <- new("AnnotatedDataFrame", fdata)
     sce_out <- newSCESet(exprsData = log2(tpm + logExprsOffset), 
                          phenoData = pdata, featureData = fdata, 
@@ -206,7 +244,7 @@ readSalmonResults <- function(Salmon_log = NULL, samples = NULL,
     tpm(sce_out) <- tpm
     set_exprs(sce_out, "feature_effective_length") <- feat_eff_len
     if ( verbose )
-        cat("Using log2(TPM + 1) as 'exprs' values in output.")
+        cat("Using log2(TPM + 1) as 'exprs' values in output.\n")
     ## Return SCESet object
     sce_out
 }
