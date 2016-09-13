@@ -11,16 +11,14 @@ readSalmonResultsOneSample(directory)
 the Salmon results for the sample.}
 }
 \value{
-A list with four elements: (1) a data.frame \code{abundance} with 
+A list with two elements: (1) a data.frame \code{abundance} with 
 columns for 'target_id' (feature, transcript, gene etc), 'length' (feature 
 length), 'est_counts' (estimated feature counts), 'tpm' (transcripts per 
-million); (2) a data.frame \code{run_info} with metadata about the Salmon run that 
+million); (2) a list, \code{run_info}, with metadata about the Salmon run that 
 generated the results, including number of reads processed, mapping 
-percentage and so on; (3) a data.frame \code{libformat_info} with information about
-the library type used for the RNA-sequencing, including details about 
-number of reads that did not match the given or inferred library type; and 
-(4) a data.frame \code{cmd_info} with details about the Salmon command used
-to generate the results.
+percentage, the library type used for the RNA-sequencing, including details about 
+number of reads that did not match the given or inferred library type,
+details about the Salmon command used to generate the results, and so on.
 }
 \description{
 Read Salmon results for a single sample into a list
