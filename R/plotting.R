@@ -111,7 +111,8 @@
 #' in the plot.
 #' @param exprs_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
-#' (default; transcripts per million), \code{"fpkm"} (FPKM values),
+#' (default; transcripts per million), \code{"cpm"}
+#' (counts per million), \code{"fpkm"} (FPKM values),
 #' \code{"counts"} (counts for each feature) or \code{"exprs"} (whatever is in
 #' the \code{'exprs'} slot of the \code{SCESet} object; if already on the log2
 #' scale, as indicated by the \code{logged} slot of the object, then exprs
@@ -191,10 +192,12 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
     }
 
     ## Define an expression matrix depending on which values we're using
-    exprs_values <- match.arg(exprs_values, c("exprs", "tpm", "fpkm", "counts"))
+    exprs_values <- match.arg(exprs_values, c("exprs", "tpm", "fpkm", 
+                                              "cpm", "counts"))
     exprs_mat <- switch(exprs_values,
                         exprs = exprs(object),
                         tpm = tpm(object),
+                        cpm = cpm(object),
                         fpkm = fpkm(object),
                         counts = counts(object))
     if ( is.null(exprs_mat) ) {
