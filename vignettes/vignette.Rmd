@@ -112,6 +112,8 @@ cells.
 * `plotMDS`: produce a multi-dimensional scaling plot for the cells.
 * `plotReducedDim`: plot a reduced-dimension representation of the cells.
 * `plotExpression`: plot expression levels for a defined set of features.
+* `plotPlatePosition`: plot cells in their position on a plate, coloured by 
+cell metadata and QC metrics or feature expression level.
 * `plotPhenoData`: plot cell metadata and QC metrics.
 * `plotFeatureData`: plot feature metadata and QC metrics.
 

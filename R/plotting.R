@@ -1647,6 +1647,152 @@ setMethod("plotReducedDim", signature("data.frame"),
           })
 
 
+
+
+################################################################################
+### Plot cells in plate positions
+
+#' Plot cells in plate positions
+#' 
+#' Plots cells in their position on a plate, coloured by phenotype data or 
+#' feature expression.
+#' 
+#' @param object an \code{SCESet} object. If \code{object$plate_position} is not
+#' \code{NULL}, then this will be used to define each cell's position on the 
+#' plate, unless the \code{plate_position} argument is specified.
+#' @param plate_position optional character vector providing a position on the
+#' plate for each cell (e.g. A01, B12, etc, where letter indicates row and 
+#' number indicates column). Specifying this argument overrides any plate 
+#' position information extracted from the SCESet object.
+#' @param colour_by character string defining the column of \code{pData(object)} to
+#' be used as a factor by which to colour the points in the plot.
+#' @param x_position numeric vector providing x-axis positions for the cells
+#' (ignored if \code{plate_position} is not \code{NULL})
+#' @param y_position numeric vector providing y-axis positions for the cells
+#' (ignored if \code{plate_position} is not \code{NULL})
+#' @param theme_size numeric scalar giving default font size for plotting theme
+#' (default is 10).
+#' @param legend character, specifying how the legend(s) be shown? Default is 
+#' \code{"auto"}, which hides legends that have only one level and shows others. 
+#' Alternatives are "all" (show all legends) or "none" (hide all legends).
+#' 
+#' @details This function expects plate positions to be given in a charcter 
+#' format where a letter indicates the row on the plate and a numeric value 
+#' indicates the column. So each cell has a plate position such as "A01", "B12",
+#' "K24" and so on. From these plate positions, the row is extracted as the 
+#' letter, and the column as the numeric part. If \code{object$plate_position} 
+#' or the \code{plate_position} argument are used to define plate positions, 
+#' then positions should be provided in this format. Alternatively, numeric 
+#' values to be used as x- and y-coordinates by supplying both the 
+#' \code{x_position} and \code{y_position} arguments to the function.
+#' 
+#' @export
+#' 
+#' @examples 
+#' ## prepare data
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' example_sceset <- calculateQCMetrics(example_sceset)
+#'
+#' ## define plate positions
+#' example_sceset$plate_position <- paste0(
+#' rep(LETTERS[1:5], each = 8), rep(formatC(1:8, width = 2, flag = "0"), 5))
+#'
+#' ## plot plate positions
+#' plotPlatePosition(example_sceset, colour_by = "Mutation_Status")
+#' 
+#' plotPlatePosition(example_sceset, colour_by = "Gene_0004")
+#' 
+plotPlatePosition <- function(object, plate_position = NULL, 
+                              colour_by = NULL,
+                              x_position = NULL, y_position = NULL,
+                              theme_size = 24, legend = "auto") {
+    ## check object is SCESet object
+    if ( !is(object, "SCESet") )
+        stop("Object must be of class SCESet.")
+    ## check legend argument
+    legend <- match.arg(legend, c("auto", "none", "all"))
+    ## Set up indicator for whether to use pData or features
+    ## for colour_by
+    colour_by_use_pdata <- TRUE
+    ## Check arguments are valid
+    if ( !is.null(colour_by) ) {
+        if ( !(colour_by %in% varLabels(object)) &&
+             !(colour_by %in% featureNames(object)) )
+            stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
+        if ( !(colour_by %in% varLabels(object)) &&
+             (colour_by %in% featureNames(object)) )
+            colour_by_use_pdata <- FALSE
+    } else {
+        if ( "is_cell_control" %in% varLabels(object) )
+            colour_by <- "is_cell_control"
+    }
+    
+    ## obtain well positions
+    if ( !is.null(plate_position) ) {
+        if ( length(plate_position) != ncol(object) )
+            stop("Supplied plate_position argument must have same length as number of columns of SCESet object.")
+        plate_position_char <- plate_position
+        
+    } else 
+        plate_position_char <- object$plate_position
+
+    if ( is.null(plate_position_char) ) {
+        if ( is.null(x_position) || is.null(y_position) )
+            stop("If plate_position is NULL then both x_position and y_position must be supplied.")
+        plate_position_x <- x_position
+        plate_position_y <- y_position
+    } else {
+        plate_position_y <- gsub("[0-9]*", "", plate_position_char)
+        plate_position_y <- factor(plate_position_y, 
+                                   rev(sort(unique(plate_position_y))))
+        plate_position_x <- gsub("[A-Z]*", "", plate_position_char)
+        plate_position_x <- ordered(as.integer(plate_position_x))
+    }
+    ## Define data.frame for plotting
+    df_to_plot <- data.frame(plate_position_x, plate_position_y) 
+    if ( !is.null(plate_position_char) )
+        df_to_plot[["plate_position_char"]] <- plate_position_char
+        
+    if ( !is.null(colour_by) ) {
+        if ( colour_by_use_pdata )
+            colour_by_vals <- pData(object)[[colour_by]]
+        else
+            colour_by_vals <- exprs(object)[colour_by,]
+        df_to_plot <- data.frame(df_to_plot, colour_by = colour_by_vals)
+    }
+    
+    ## make the plot
+    aesth <- aes(x = plate_position_x, y = plate_position_y, fill = colour_by)
+    if ( !is.null(plate_position_char) )
+        aesth$label <- as.symbol("plate_position_char")
+    
+    plot_out <- ggplot(df_to_plot, aesth) +
+        geom_point(shape = 21, size = theme_size, colour = "gray50")
+    if ( !is.null(plate_position_char) )
+        plot_out <- plot_out + geom_text(colour = "gray90")
+    ## make sure colours are nice
+    plot_out <- .resolve_plot_colours(plot_out,
+                                      df_to_plot$colour_by,
+                                      colour_by, fill = TRUE)
+    
+    ## Define plotting theme
+    plot_out <- plot_out + theme_bw(theme_size) +
+        theme(axis.title = element_blank(), axis.ticks = element_blank(),
+              legend.text = element_text(size = theme_size / 2),
+              legend.title = element_text(size = theme_size / 2)) +
+        guides(fill = guide_legend(override.aes = list(size = theme_size / 2)))
+    ## remove legend if so desired
+    if ( legend == "none" )
+        plot_out <- plot_out + theme(legend.position = "none")
+        
+    ## return plot
+    plot_out
+}
+
+
 ################################################################################
 
 #' Plot expression values for a set of features (e.g. genes or transcripts)
@@ -1823,8 +1969,6 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
     ## Construct a ggplot2 aesthetic for the plot
     aesth <- aes()
     if ( is.null(x) ) {
-        # samples_long$dummy <- "dummy"
-        # aesth$x <- as.symbol("dummy")
         aesth$x <- as.symbol("Feature")
         one_facet <- TRUE
     } else {
@@ -2357,9 +2501,6 @@ multiplot <- function(..., plotlist = NULL, cols = 1, layout = NULL) {
         }
     }
 }
-
-
-
 
 
 
