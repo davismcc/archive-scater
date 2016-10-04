@@ -1857,7 +1857,7 @@ fromCellDataSet <- function(cds, exprs_values = "tpm", logged = FALSE) {
 #' not defined, this method returns \code{NULL}.
 #'
 #' @param object An object of type \code{SCESet}
-#' @return A matrix representation of expression corresponding to \code{object@@useForExprs}.
+#' @return A matrix representation of expression corresponding to \code{object@useForExprs}.
 #'
 #' @export
 #' @examples
@@ -1882,3 +1882,111 @@ getExprs <- function(object) {
 
     return( x )
 }
+
+
+################################################################################
+
+#' Merge SCESet objects
+#' 
+#' Merge two SCESet objects that have the same features but contain different cells/samples.
+#' 
+#' @param x an \code{\link{SCESet}} object
+#' @param y an \code{\link{SCESet}} object
+#' @param fdata_cols_x a logical or numeric vector indicating which columns of featureData 
+#' for \code{x} are shared between \code{x} and \code{y} and should feature in the 
+#' returned merged \code{SCESet}. Default is all columns of \code{fData(x)}.
+#' @param fdata_cols_y a logical or numeric vector indicating which columns of featureData 
+#' for \code{y} are shared between \code{x} and \code{y} and should feature in the 
+#' returned merged \code{SCESet}. Default is \code{fdata_cols_x}.
+#' @param pdata_cols_x a logical or numeric vector indicating which columns of phenoData 
+#' of \code{x} should be retained.
+#' @param pdata_cols_y a logical or numeric vector indicating which columns of phenoData 
+#' of \code{y} should be retained.
+#' 
+#' @details Existing cell-cell pairwise distances and feature-feature pairwise distances will not be valid for a merged SCESet so these are set to \code{NULL} in the returned object. Similarly \code{experimentData} will need to be added anew to the merged SCESet returned.
+#' 
+#' @return a merged \code{SCESet} object combining data and metadata from \code{x} and \code{y}
+#' 
+#' @export
+#' 
+#' @examples 
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' mergeSCESet(example_sceset[, 1:20], example_sceset[, 21:40])
+#' 
+#' ## with specification of columns of fData
+#' example_sceset <- calculateQCMetrics(example_sceset)
+#' mergeSCESet(example_sceset[, 1:20], example_sceset[, 21:40], fdata_cols_x = c(1, 7))
+#' 
+#' ## with specification of columns of pData
+#' mergeSCESet(example_sceset[, 1:20], example_sceset[, 21:40], pdata_cols_x = 1:6)
+#' 
+#' 
+mergeSCESet <- function(x, y, fdata_cols_x = 1:ncol(fData(x)), fdata_cols_y = fdata_cols_x,
+                        pdata_cols_x = NULL, pdata_cols_y = NULL) {
+    if (!is(x,'SCESet')) stop('x must be of type SCESet')
+    if (!is(y,'SCESet')) stop('y must be of type SCESet')
+    if (!identical(featureNames(x), featureNames(y))) stop("feature names of x and y must be identical")
+   
+    if (x@logged != y@logged)
+        stop("x and y do not have the same value for the 'logged' slot.")
+    if (x@lowerDetectionLimit != y@lowerDetectionLimit)
+        stop("x and y do not have the same lowerDetectionLimit.")
+    if (x@logExprsOffset != y@logExprsOffset)
+        stop("x and y do not have the same logExprsOffset.")
+    
+    ## combine fData
+    if (ncol(fData(x)) == 0) {
+        if (!identical(fData(x), fData(y)))
+            stop("featureData do not match for x and y.")
+        new_fdata <- as(fData(x), "AnnotatedDataFrame")
+    } else {
+        fdata1 <- fData(x)[, fdata_cols_x, drop = FALSE]
+        fdata2 <- fData(y)[, fdata_cols_y, drop = FALSE]
+        if (!identical(fdata1, fdata2))
+            stop("featureData columns specified are not identical for x and y.")
+        new_fdata <- as(fdata1, "AnnotatedDataFrame")
+    }
+    ## combine pData
+    if (ncol(pData(x)) == 0 || pData(y) == 0)
+        stop("phenoData slot is empty for x or y.")
+    pdata_x <- pData(x)
+    pdata_y <- pData(y)
+    if (is.null(pdata_cols_x)) {
+        if (is.null(pdata_cols_y)) {
+            pdata_cols_x <- which(colnames(pdata_x) %in% colnames(pdata_y))
+            pdata_cols_y <- which(colnames(pdata_y) %in% colnames(pdata_x))
+        } else
+            pdata_cols_x <- which(colnames(pdata_x) %in% colnames(pdata_y)[pdata_cols_y])
+    } else {
+        if (is.null(pdata_cols_y))
+            pdata_cols_y <- which(colnames(pdata_y) %in% colnames(pdata_x)[pdata_cols_x])
+    }
+    if (length(pdata_cols_x) == 0 | length(pdata_cols_y) == 0)
+        stop("no phenoData column names found in common between x and y.")
+    ## make sure ordering of columns is correct
+    pdata_x <- pdata_x[, pdata_cols_x, drop = FALSE]
+    pdata_y <- pdata_y[, pdata_cols_y, drop = FALSE]
+    mm <- match(colnames(pdata_x), colnames(pdata_y))
+    pdata_y <- pdata_y[, mm]
+    if (!identical(colnames(pdata_x), colnames(pdata_y)))
+        stop("phenoData columns specified are not identical for x and y.")
+    new_pdata <- rbind(pdata_x, pdata_y)
+    new_pdata <- as(new_pdata, "AnnotatedDataFrame")
+    ## combine exprsData
+    new_exprs <- Biobase::combine(exprs(x), exprs(y))
+    ## new SCESet
+    merged_sceset <- newSCESet(exprsData = new_exprs, featureData = new_fdata,
+                            phenoData = new_pdata)
+    ## add remaining assayData to merged SCESet
+    for (assaydat in names(Biobase::assayData(merged_sceset))) {
+        new_dat <- Biobase::combine(get_exprs(x, assaydat), get_exprs(y, assaydat))
+        set_exprs(merged_sceset, assaydat) <- new_dat
+    }
+    merged_sceset
+}
+
+
+

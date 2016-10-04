@@ -350,7 +350,7 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     new_pdata$total_features <- total_features
     new_pdata$log10_total_features <- log10(total_features)
     new_pdata$filter_on_total_features <- filter_on_total_features
-    new_pdata$pct_dropout <- 100 / nrow(object) * nexprs(object, subset.row = NULL)
+    new_pdata$pct_dropout <- 100 * (1 - nexprs(object, subset.row = NULL) / nrow(object) )
     new_pdata <- cbind(new_pdata, qc_pdata, cell_controls_pdata)
     pData(object) <-  new("AnnotatedDataFrame", new_pdata)
 
