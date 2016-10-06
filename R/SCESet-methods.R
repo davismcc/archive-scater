@@ -438,9 +438,9 @@ setMethod('[', 'SCESet', function(x, i, j, ..., drop=FALSE) {
 ################################################################################
 ## cellNames
 
-#' Get cell names from an SCESet object
+#' Get or set cell names from an SCESet object
 #'
-#' @param object An SCESet object.
+#' @param object An \code{\link{SCESet}} object.
 #'
 #' @return A vector of cell names.
 #'
@@ -457,6 +457,33 @@ setMethod('[', 'SCESet', function(x, i, j, ..., drop=FALSE) {
 cellNames <- function(object) {
     sampleNames(object)
 }
+
+
+#' @usage
+#' \S4method{cellNames}{SCESet,vector}(object)<-value
+#'
+#' @docType methods
+#' @name cellNames
+#' @rdname cellNames
+#' @aliases cellNames cellNames<-,SCESet,vector-method
+#'
+#' @param value a vector of cell names to apply to the \code{SCESet} object.
+#' @author Davis McCarthy
+#' 
+#' @exportMethod "cellNames<-"
+#' 
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' example_sceset <- newSCESet(countData = sc_example_counts)
+#' cellNames(example_sceset) <- 1:ncol(example_sceset)
+#' 
+setReplaceMethod("cellNames", signature(object = "SCESet", value = "vector"),
+                 function(object, value) {
+                     sampleNames(object) <- value
+                     validObject(object)
+                     object
+                 })
 
 
 ################################################################################

@@ -125,4 +125,13 @@ test_that("writeSCESet works as expected", {
 })
 
 
+test_that("cellNames works as expected", {
+    data("sc_example_counts")
+    data("sc_example_cell_info")
+    pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+    example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+    expect_true(is.vector(cellNames(example_sceset)))
+    cellNames(example_sceset) <- 1:ncol(example_sceset)
+    expect_true(is.vector(cellNames(example_sceset)))
+})
 
