@@ -9,6 +9,19 @@ test_that("newSCESet works as expected", {
     expect_that(example_sceset, is_a("SCESet"))
 })
 
+
+test_that("subsetting SCESet works as expected", {
+    data("sc_example_counts")
+    data("sc_example_cell_info")
+    pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+    example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+    
+    expect_that(example_sceset[1:500,], is_a("SCESet"))
+    expect_that(example_sceset[, 10:35], is_a("SCESet"))
+    expect_that(example_sceset[500:1000, 7:27], is_a("SCESet"))
+})
+
+
 test_that("sizeFactors() works as expected", {
     data("sc_example_counts")
     data("sc_example_cell_info")
@@ -94,4 +107,22 @@ test_that("mergeSCESet works as expected", {
                  "not identical")
 
 })
+
+
+test_that("writeSCESet works as expected", {
+    data("sc_example_counts")
+    data("sc_example_cell_info")
+    pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+    example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+    
+    expect_error(writeSCESet(example_sceset, "test.h5", type = "nope",
+                             overwrite_existing = TRUE), 
+                             "HDF5 is the only format")
+    
+    # writeSCESet(example_sceset, "test.h5", overwrite_existing = TRUE)
+    # expect_true(file.exists("test.h5"))
+    # file.remove("test.h5")
+})
+
+
 

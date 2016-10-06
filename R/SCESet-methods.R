@@ -1979,13 +1979,85 @@ mergeSCESet <- function(x, y, fdata_cols_x = 1:ncol(fData(x)), fdata_cols_y = fd
     new_exprs <- Biobase::combine(exprs(x), exprs(y))
     ## new SCESet
     merged_sceset <- newSCESet(exprsData = new_exprs, featureData = new_fdata,
-                            phenoData = new_pdata)
+                            phenoData = new_pdata, logged = x@logged,
+                            logExprsOffset = x@logExprsOffset)
     ## add remaining assayData to merged SCESet
-    for (assaydat in names(Biobase::assayData(merged_sceset))) {
+    assay_names <- intersect(names(Biobase::assayData(x)), 
+                             names(Biobase::assayData(y)))
+    for (assaydat in assay_names) {
         new_dat <- Biobase::combine(get_exprs(x, assaydat), get_exprs(y, assaydat))
         set_exprs(merged_sceset, assaydat) <- new_dat
     }
     merged_sceset
+}
+
+
+
+################################################################################
+## writeSCESet
+
+#' Write an SCESet object to an HDF5 file 
+#'
+#' @param object \code{\link{SCESet}} object to be writted to file
+#' @param file_path path to written file containing data from SCESet object
+#' @param type character string indicating type of output file. Default is "HDF5".
+#' @param overwrite_existing logical, if a file of the same name already exists
+#' should it be overwritten? Default is \code{FALSE}.
+#'
+#' @details Currently writing to HDF5 files is supported. The \pkg{\link{rhdf5}}
+#' package is used to write data to file and can be used to read data from HDF5
+#' files into R. For further details about the HDF5 data format see 
+#' \url{https://support.hdfgroup.org/HDF5/}.
+#'
+#' @return Return is \code{NULL}, having written the \code{SCESet} object to file.
+#' @export
+#'
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' 
+#' \dontrun{
+#' writeSCESet(example_sceset, "test.h5")
+#' file.remove("test.h5")
+#' }
+#' 
+writeSCESet <- function(object, file_path, type = "HDF5", overwrite_existing = FALSE) {
+    if (!is(object,'SCESet')) stop('object must be of type SCESet')
+    if (file.exists(file_path) && !overwrite_existing)
+        stop("To overwrite an existing file use argument overwrite_existing=TRUE")
+    if (file.exists(file_path))
+        file.remove(file_path)
+    if (type == "HDF5") {
+        rhdf5::H5close()
+        rhdf5::h5createFile(file_path)
+        tryCatch({
+            rhdf5::h5write(featureNames(object), file = file_path, 
+                           name = "featureNames")
+            rhdf5::h5write(cellNames(object), file = file_path, name = "cellNames")
+            rhdf5::h5write(object@logged, file = file_path, name = "logged")
+            rhdf5::h5write(object@logExprsOffset, file = file_path, 
+                           name = "logExprsOffset")
+            rhdf5::h5write(object@lowerDetectionLimit, file = file_path, 
+                           name = "lowerDetectionLimit")
+            if (ncol(pData(object)) > 0)
+                rhdf5::h5write(pData(object), file = file_path, name = "phenoData", 
+                               write.attributes = FALSE)
+            if (ncol(fData(object)) > 0)
+                rhdf5::h5write(fData(object), file = file_path, name = "featureData", 
+                               write.attributes = FALSE)
+            rhdf5::h5createGroup(file_path, "assayData")
+            for (assay in names(Biobase::assayData(object))) {
+                group_set <- paste0("assayData/", assay)
+                rhdf5::h5write(get_exprs(object, assay), file = file_path, 
+                               name = group_set, 
+                               write.attributes = FALSE)
+            }
+            rhdf5::H5close()
+        }, finally = rhdf5::H5close())
+    } else
+        stop("HDF5 is the only format currently supported. See also saveRDS() to write to an object readable with R.")
 }
 
 
