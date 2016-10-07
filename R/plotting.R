@@ -2503,8 +2503,212 @@ multiplot <- function(..., plotlist = NULL, cols = 1, layout = NULL) {
 }
 
 
+################################################################################
+### Plot expression against transcript length
 
 
+#' Plot expression against transcript length
+#' 
+#' Plot expression values from an SCESet object against transcript length values
+#' defined in the SCESet object or supplied as an argument.
+#'
+#' @param object an \code{\link{SCESet}} object
+#' @param tx_length transcript lengths to plot on the x-axis. Can be one of: (1) 
+#' the name of a column of \code{fData(object)} containing the transcript length 
+#' values, or (2) the name of an element of \code{assayData(object)} containing 
+#' a matrix of transcript length values, or (3) a numeric vector of length equal
+#' to the number of rows of \code{object} (number of features).
+#' @param exprs_values character string indicating which values should be used
+#' as the expression values for this plot. Valid arguments are \code{"tpm"}
+#' (default; transcripts per million), \code{"norm_tpm"} (normalised TPM
+#' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
+#' values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
+#' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
+#' counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot
+#' of the \code{SCESet} object; default), \code{"norm_exprs"} (normalised
+#' expression values) or \code{"stand_exprs"} (standardised expression values)
+#' or any other slots that have been added to the \code{"assayData"} slot by
+#' the user.
+#' @param colour_by optional character string supplying name of a column of
+#' \code{fData(object)} which will be used as a variable by which to colour
+#' expression values on the plot.
+#' @param shape_by optional character string supplying name of a column of
+#' \code{fData(object)} which will be used as a variable to define the shape of
+#' points for expression values on the plot.
+#' @param size_by optional character string supplying name of a column of
+#' \code{fData(object)} which will be used as a variable to define the size of
+#' points for expression values on the plot.
+#' @param xlab label for x-axis; if \code{NULL} (default), then \code{x} will be
+#' used as the x-axis label
+#' @param show_exprs_sd logical, show the standard deviation of expression 
+#' values for each feature on the plot
+#' @param show_smooth logical, show a smoothed fit through the expression values
+#'  on the plot
+#' @param alpha numeric value between 0 (completely transparent) and 1 (completely
+#' solid) defining how transparent plotted points (cells) should be. 
+#' Points are jittered horizontally if the x-axis value is categorical rather 
+#' than numeric to avoid overplotting.
+#' @param theme_size numeric scalar giving default font size for plotting theme
+#' (default is 10)
+#' @param log2_values should the expression values be transformed to the
+#' log2-scale for plotting (with an offset of 1 to avoid logging zeroes)?
+#' @param size numeric scalar optionally providing size for points if 
+#' \code{size_by} argument is not given. Default is \code{NULL}, in which case
+#' \pkg{ggplot2} default is used.
+#' @param se logical, should standard errors be shown (default \code{TRUE}) for
+#' the smoothed fit through the cells. (Ignored if \code{show_smooth} is \code{FALSE}).
+#'
+#' @return a ggplot object
+#' @export
+#'
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' fd <- new("AnnotatedDataFrame", data = 
+#' data.frame(gene_id = rownames(sc_example_counts), 
+#'         feature_id = paste("feature", rep(1:500, each = 4), sep = "_"),
+#'      median_tx_length = rnorm(2000, mean = 5000, sd = 500)))
+#' rownames(fd) <- rownames(sc_example_counts)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd,
+#' featureData = fd)
+#' 
+#' plotExprsVsTxLength(example_sceset, "median_tx_length")
+#' plotExprsVsTxLength(example_sceset, "median_tx_length", show_smooth = TRUE)
+#' plotExprsVsTxLength(example_sceset, "median_tx_length", show_smooth = TRUE,
+#' show_exprs_sd = TRUE)
+#' 
+#' ## using matrix of tx length values in assayData(object)
+#' set_exprs(example_sceset, "tx_len") <- 
+#' matrix(rnorm(ncol(example_sceset) * nrow(example_sceset), mean = 5000, sd = 500),
+#' nrow = nrow(example_sceset))
+#' plotExprsVsTxLength(example_sceset, "tx_len", show_smooth = TRUE,
+#' show_exprs_sd = TRUE)
+#' 
+#' ## using a vector of tx length values
+#' plotExprsVsTxLength(example_sceset, rnorm(2000, mean = 5000, sd = 500))
+#' 
+plotExprsVsTxLength <- function(object, tx_length = "median_feat_eff_len", 
+                                exprs_values = "exprs",
+                                colour_by = NULL, shape_by = NULL,
+                                size_by = NULL, xlab = NULL, 
+                                show_exprs_sd = FALSE,
+                                show_smooth = FALSE, alpha = 0.6, 
+                                theme_size = 10, log2_values = FALSE, size = NULL, 
+                                se = TRUE) {
+    ## Check object is an SCESet object
+    if ( !is(object, "SCESet") )
+        stop("object must be an SCESet")
+    
+    tx_length_values <- rep(NA, nrow(object))
+    ## Check arguments are valid
+    if ( length(tx_length) == 1 ) {
+        if ( tx_length %in% Biobase::fvarLabels(object) )
+            tx_length_values <- fData(object)[[tx_length]]
+        else {
+            if ( tx_length %in% names(Biobase::assayData(object)) ) {
+                tx_length_mat <- Biobase::assayData(object)[[tx_length]]
+                tx_length_values <- matrixStats::rowMedians(tx_length_mat)
+            } else
+                stop("the argument 'tx_length' should specify a column of fData(object) [see Biobase::fvarLabels(object)] or an element of assayData(object) [see names(assayData(object))")
+        }
+    } else {
+        if ( length(tx_length) != nrow(object) )
+            stop("If tx_length is a vector it must have length equal to nrow(object).")
+        else {
+            if ( !is.numeric(tx_length) )
+                stop("If a vector, tx_length must contain numeric values.")
+            tx_length_values <- tx_length
+        }
+    }        
+    
+    exprs_mat <- get_exprs(object, exprs_values)
+    if ( log2_values ) {
+        exprs_mat <- log2(exprs_mat + 1)
+        ylab <- paste0("Expression (", exprs_values, "; log2-scale)")
+    } else
+        ylab <- paste0("Expression (", exprs_values, ")")
+    
+    ## compute mean expression and sd of expression values
+    exprs_mean <- rowMeans(exprs_mat)
+    exprs_sd <- matrixStats::rowSds(exprs_mat)
+    
+    df_to_plot <- data.frame(tx_length_values, exprs_mean, exprs_sd,
+                             ymin = exprs_mean - exprs_sd, 
+                             ymax = exprs_mean + exprs_sd)
+    
+    ## check colour, size, shape arguments
+    if ( !is.null(colour_by) ) {
+        if ( !(colour_by %in% Biobase::fvarLabels(object)) )
+            stop("the argument 'colour_by' should specify a column of fData(object) [see fvarLabels(object)]")
+        df_to_plot[[colour_by]] <- fData(object)[[colour_by]]
+    }
+    if ( !is.null(shape_by) ) {
+        if ( !(shape_by %in% Biobase::fvarLabels(object)) )
+            stop("the argument 'shape_by' should specify a column of fData(object) [see fvarLabels(object)]")
+        if ( nlevels(as.factor(pData(object)[[shape_by]])) > 10 )
+            stop("when coerced to a factor, 'shape_by' should have fewer than 10 levels")
+        df_to_plot[[shape_by]] <- fData(object)[[shape_by]]
+    }
+    if ( !is.null(size_by) ) {
+        if ( !(size_by %in% Biobase::fvarLabels(object)) )
+            stop("the argument 'size_by' should specify a column of fData(object) [see fvarLabels(object)]")
+        df_to_plot[[size_by]] <- fData(object)[[size_by]]
+    }
+    
+    ## Construct a ggplot2 aesthetic for the plot
+    aesth <- aes()
+    aesth$x <- as.symbol("tx_length_values")
+    aesth$y <- as.symbol("exprs_mean")
+    aesth$ymin <- as.symbol("ymin")
+    aesth$ymax <- as.symbol("ymax")
+
+    if ( !is.null(colour_by) )
+        aesth$colour <- as.symbol(colour_by)
+    if ( !is.null(shape_by) )
+        aesth$shape <- as.symbol(shape_by)
+    if ( !is.null(size_by) )
+        aesth$size <- as.symbol(size_by)
+    ## Define sensible x-axis label if NULL
+    if ( is.null(xlab) )
+        xlab <- "Median transcript length"
+
+    ## Make the plot
+    plot_out <- ggplot2::ggplot(df_to_plot, aesth) + xlab(xlab) + ylab(ylab)
+    
+    ## if colour aesthetic is defined, then choose sensible colour palette
+    if ( !is.null(aesth$colour) )
+        plot_out <- .resolve_plot_colours(plot_out,
+                                          df_to_plot[[as.character(aesth$colour)]],
+                                          as.character(aesth$colour))
+    
+    if ( is.null(aesth$size) & !is.null(size) ) {
+        ## add SDs
+        if ( show_exprs_sd )
+            plot_out <- plot_out + geom_pointrange(size = size, alpha = 0.9 * alpha)
+        ## add points to plot
+        plot_out <- plot_out + geom_point(size = size, alpha = alpha)
+    }  else {
+        ## add SDs
+        if ( show_exprs_sd )
+            plot_out <- plot_out + geom_pointrange(alpha = 0.9 * alpha)
+        ## add points to plot
+        plot_out <- plot_out + geom_point(alpha = alpha)
+    }
+    
+    ## show optional decorations on plot if desired
+    if (show_smooth) {
+        plot_out <- plot_out + stat_smooth(colour = "firebrick", linetype = 2, 
+                                           se = se)
+    }
+    
+    ## Define plotting theme
+    if ( requireNamespace("cowplot", quietly = TRUE) )
+        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+    else
+        plot_out <- plot_out + theme_bw(theme_size)
+    plot_out
+}
 
 
 
