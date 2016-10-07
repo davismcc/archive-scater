@@ -224,7 +224,8 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     } else {
         is_feature_control <- logical(nrow(object))
         feature_controls_fdata <- data.frame(is_feature_control)
-        feature_controls_pdata <- data.frame(matrix(0, nrow=ncol(object), ncol=0))
+        feature_controls_pdata <- data.frame(
+            matrix(0, nrow = ncol(object), ncol = 0))
     }
 
         ## Compute metrics using all feature controls
@@ -234,19 +235,22 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
         if ( !is.null(counts_mat) ) {
             df_pdata_counts <- .get_qc_metrics_exprs_mat(
                 counts_mat, is_feature_control, pct_feature_controls_threshold,
-                calc_top_features = TRUE, exprs_type = "counts")
+                calc_top_features = TRUE, exprs_type = "counts",
+                compute_endog = TRUE)
             df_pdata_this <- cbind(df_pdata_this, df_pdata_counts)
         }
         if ( !is.null(tpm_mat) ) {
             df_pdata_tpm <- .get_qc_metrics_exprs_mat(
                 tpm_mat, is_feature_control, pct_feature_controls_threshold,
-                calc_top_features = TRUE, exprs_type = "tpm")
+                calc_top_features = TRUE, exprs_type = "tpm", 
+                compute_endog = TRUE)
             df_pdata_this <- cbind(df_pdata_this, df_pdata_tpm)
         }
         if ( !is.null(fpkm_mat) ) {
             df_pdata_fpkm <- .get_qc_metrics_exprs_mat(
                 fpkm_mat, is_feature_control, pct_feature_controls_threshold,
-                calc_top_features = TRUE, exprs_type = "fpkm")
+                calc_top_features = TRUE, exprs_type = "fpkm",
+                compute_endog = TRUE)
             df_pdata_this <- cbind(df_pdata_this, df_pdata_fpkm)
         }
         n_detected_feature_controls <- nexprs(object, 
@@ -375,7 +379,7 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     new_fdata$n_cells_exprs <- nexprs(object, byrow = TRUE)
     total_exprs <- sum(exprs_mat)
     new_fdata$total_feature_exprs <- rowSums(exprs_mat)
-    if ( ! object@logged ) {
+    if ( !object@logged ) {
         new_fdata$log10_total_feature_exprs <-
             log10(new_fdata$total_feature_exprs + 1)
     }
@@ -415,9 +419,10 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
 
 
 .get_qc_metrics_exprs_mat <- function(exprs_mat, is_feature_control,
-                                           pct_feature_controls_threshold,
-                                           calc_top_features = FALSE,
-                                           exprs_type = "exprs") {
+                                      pct_feature_controls_threshold,
+                                      calc_top_features = FALSE,
+                                      exprs_type = "exprs",
+                                      compute_endog = FALSE) {
     ## Many thanks to Aaron Lun for suggesting efficiency improvements
     ## for this function.
     ## Get total expression from feature controls
@@ -439,7 +444,7 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     if (calc_top_features) { ## Do we want to calculate exprs accounted for by
         ## top features?
         ## Determine percentage of counts for top features by cell
-        top.number <- c(50L, 100L, 200L)
+        top.number <- c(50L, 100L, 200L, 500L)
         can.calculate <- top.number <= nrow(exprs_mat)
         if (any(can.calculate)) { 
             top.number <- top.number[can.calculate]
@@ -449,7 +454,22 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
             pct_exprs_top_out <- 100 * pct_exprs_top_out
             colnames(pct_exprs_top_out) <- paste0("pct_exprs_top_",
                                                   top.number, "_features")
-            df_pdata_this <- cbind(df_pdata_this, pct_exprs_top_out)
+            if ( compute_endog ) {
+                if ( length(is_feature_control) < 1L )
+                    pct_exprs_top_endog_out <- pct_exprs_top_out
+                else {
+                    pct_exprs_top_endog_out <- .checkedCall(
+                        cxx_calc_top_features, exprs_mat[-is_feature_control,], 
+                        top.number)
+                    ## this call returns proportions, not percentages, so adjust
+                    pct_exprs_top_endog_out <- 100 * pct_exprs_top_endog_out
+                }
+                colnames(pct_exprs_top_endog_out) <- paste0(
+                    "pct_exprs_top_", top.number, "_endogenous_features")
+                df_pdata_this <- cbind(df_pdata_this, pct_exprs_top_out, 
+                                       pct_exprs_top_endog_out)
+            } else
+                df_pdata_this <- cbind(df_pdata_this, pct_exprs_top_out)
         }
     }
     colnames(df_pdata_this) <- gsub("exprs", exprs_type, colnames(df_pdata_this))
@@ -1272,35 +1292,6 @@ This variable will not be plotted."))
     }
 }
 
-
-# ### Emergency test code
-# rsq <- fData(sce_simmons_filt_strict)[, grep("^Rsq", names(fData(sce_simmons_filt_strict)))]
-# head(rsq)
-# colSums(rsq > 0.99)
-#
-# rsq[rsq$Rsq_batch > 0.99,]
-#
-# plotExpression(sce_simmons_filt_strict, rownames(rsq)[rsq$Rsq_batch > 0.99], x = "batch",
-#                ncol = 6, colour_by = "tissue_type", exprs_values = "norm_exprs")
-#
-# design <- model.matrix(~sce_simmons_filt_strict$batch)
-# lm.first <- lm(norm_exprs(sce_simmons_filt_strict)["ERCC-00002",] ~ -1 + design)
-# summary(lm.first)$r.squared
-# summary(lm.first)$residuals
-# plot(lm.first)
-# lm2 <- lm(norm_exprs(sce_simmons_filt_strict)["ERCC-00002",] ~ sce_simmons_filt_strict$batch)
-# summary(lm2)$r.squared
-#
-# rsq_limma <- .getRSquared(norm_exprs(sce_simmons_filt_strict), design)
-#
-# rsq_base2 <- apply(norm_exprs(sce_simmons_filt_strict), 1, function(y) {
-#     lm.first <- lm(y ~ sce_simmons_filt_strict$batch); summary(lm.first)$r.squared})
-#
-# all(abs(rsq_base2 - rsq_limma) < 0.00000000000001)
-#
-# rsq_base <- apply(norm_exprs(sce_simmons_filt_strict), 1, function(y) {
-#     lm.first <- lm(y ~ -1 + design); summary(lm.first)$r.squared})
-# all(abs(rsq_base - rsq$Rsq_batch) < 0.000000000001)
 
 
 ################################################################################
