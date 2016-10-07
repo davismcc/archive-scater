@@ -273,15 +273,22 @@ readSalmonResults <- function(Salmon_log = NULL, samples = NULL,
 #' underscore).
 #' @param lib_type scalar, indicating RNA-seq library type. See Salmon 
 #' documentation for details. Default is "A", for automatic detection.
-#' @param n_cores integer giving the number of cores (nodes/threads) to use for
-#' the Salmon jobs. The package \code{parallel} is used. Default is 2 cores.
+#' @param n_processes integer giving the number of processes to use for
+#' parallel Salmon jobs across samples. The package \code{parallel} is used. 
+#' Default is 2 concurrent processes.
+#' @param n_thread_per_process integer giving the number of threads for Salmon
+#' to use per process (to parallelize Salmon for a given sample). Default is 4.
 #' @param n_bootstrap_samples integer giving the number of bootstrap samples
 #' that Salmon should use (default is 0). With bootstrap samples, uncertainty
 #' in abundance can be quantified.
 #' @param seqBias logical, should Salmon's option be used to model and correct
-#' abundances for sequence specific bias?
+#' abundances for sequence specific bias? Default is \code{TRUE}.
 #' @param gcBias logical, should Salmon's option be used to model and correct
-#' abundances for GC content bias? Requires Salmon version 0.7.2 or higher.
+#' abundances for GC content bias? Requires Salmon version 0.7.2 or higher. 
+#' Default is \code{TRUE}.
+#' @param posBias logical, should Salmon's option be used to model and correct
+#' abundances for positional biases? Requires Salmon version 0.7.3 or higher.
+#' Default is \code{FALSE}.
 #' @param allowOrphans logical, Consider orphaned reads as valid hits when 
 #' performing lightweight-alignment. This option will increase sensitivity 
 #' (allow more reads to map and more transcripts to be detected), but may 
@@ -329,12 +336,14 @@ readSalmonResults <- function(Salmon_log = NULL, samples = NULL,
 #'          dry_run = FALSE)
 #' }
 runSalmon <- function(targets_file, transcript_index, single_end = FALSE,
-                      output_prefix = "output", lib_type = NULL,
-                      n_cores = 2, n_bootstrap_samples = 0,
-                      seqBias = TRUE, gcBias = TRUE, allowOrphans = FALSE,
+                      output_prefix = "output", lib_type = "A",
+                      n_processes = 2, n_thread_per_process = 4,
+                      n_bootstrap_samples = 0,
+                      seqBias = TRUE, gcBias = TRUE, posBias = FALSE, 
+                      allowOrphans = FALSE,
                       advanced_opts = NULL,
                       verbose = TRUE, dry_run = FALSE,
-                      salmon_cmd = "Salmon") {
+                      salmon_cmd = "salmon") {
     targets_dir <- paste0(dirname(targets_file), "/")
     targets <- read.delim(targets_file, stringsAsFactors = FALSE, header = TRUE)
     if ( !(ncol(targets) == 2 || ncol(targets) == 3) )
@@ -359,13 +368,16 @@ runSalmon <- function(targets_file, transcript_index, single_end = FALSE,
     ## Generate calls to Salmon
     output_dirs <- paste(output_prefix, samples, sep = "_")
     salmon_args <- paste("quant -i", transcript_index, "-o", output_dirs, 
-                         "-l", lib_type,
+                         "-l", lib_type, 
+                         "--threads", n_thread_per_process,
                          "--numBootstraps", n_bootstrap_samples)
     names(salmon_args) <- samples
     if ( seqBias )
         salmon_args <- paste0(salmon_args, " --seqBias")
     if ( gcBias )
         salmon_args <- paste0(salmon_args, " --gcBias")
+    if ( posBias )
+        salmon_args <- paste0(salmon_args, " --posBias")
     if ( single_end )
         salmon_args <- paste(salmon_args, "-r", targets[, 2])
     else
@@ -373,11 +385,13 @@ runSalmon <- function(targets_file, transcript_index, single_end = FALSE,
                              "-2", targets[, 3])
     if ( allowOrphans )
         salmon_args <- paste(salmon_args, "--allowOrphans")
+    if ( !is.null(advanced_opts) )
+        salmon_args <- paste(salmon_args, advanced_opts)
     ##
     if ( dry_run ) {
         salmon_log <- vector("list", length(samples))
         names(salmon_log) <- samples
-        Salmon_calls <- paste("Salmon", salmon_args)
+        Salmon_calls <- paste("salmon", salmon_args)
         for (i in seq_len(length(Salmon_calls))) {
             salmon_log[[i]]$output_dir <- output_dirs[i]
             salmon_log[[i]]$Salmon_call <- Salmon_calls[i]
@@ -387,7 +401,7 @@ runSalmon <- function(targets_file, transcript_index, single_end = FALSE,
     } else {
         if (verbose)
             print(paste("Analysis started: ", Sys.time()))
-        cl <- parallel::makeCluster(n_cores)
+        cl <- parallel::makeCluster(n_processes)
         # one or more parLapply calls to Salmon
         salmon_log <- parallel::parLapply(cl, salmon_args, .call_Salmon,
                                           salmon_cmd, verbose)
@@ -405,11 +419,11 @@ runSalmon <- function(targets_file, transcript_index, single_end = FALSE,
     salmon_log
 }
 
-.call_Salmon <- function(scall, Salmon_cmd, verbose=TRUE) {
-    out <- tryCatch(ex <- system2(Salmon_cmd, scall, stdout = TRUE,
+.call_Salmon <- function(scall, salmon_cmd, verbose=TRUE) {
+    out <- tryCatch(ex <- system2(salmon_cmd, scall, stdout = TRUE,
                                   stderr = TRUE),
                     warning = function(w){w}, error = function(e){e})
-    list(Salmon_call = paste(Salmon_cmd, scall), salmon_log = out)
+    list(Salmon_call = paste(salmon_cmd, scall), salmon_log = out)
 }
 
 

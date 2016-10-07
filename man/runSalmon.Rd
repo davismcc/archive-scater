@@ -5,10 +5,11 @@
 \title{Run Salmon on FASTQ files to quantify feature abundance}
 \usage{
 runSalmon(targets_file, transcript_index, single_end = FALSE,
-  output_prefix = "output", lib_type = NULL, n_cores = 2,
-  n_bootstrap_samples = 0, seqBias = TRUE, gcBias = TRUE,
-  allowOrphans = FALSE, advanced_opts = NULL, verbose = TRUE,
-  dry_run = FALSE, salmon_cmd = "Salmon")
+  output_prefix = "output", lib_type = "A", n_processes = 2,
+  n_thread_per_process = 4, n_bootstrap_samples = 0, seqBias = TRUE,
+  gcBias = TRUE, posBias = FALSE, allowOrphans = FALSE,
+  advanced_opts = NULL, verbose = TRUE, dry_run = FALSE,
+  salmon_cmd = "salmon")
 }
 \arguments{
 \item{targets_file}{character string giving the path to a tab-delimited text
@@ -30,18 +31,27 @@ underscore).}
 \item{lib_type}{scalar, indicating RNA-seq library type. See Salmon 
 documentation for details. Default is "A", for automatic detection.}
 
-\item{n_cores}{integer giving the number of cores (nodes/threads) to use for
-the Salmon jobs. The package \code{parallel} is used. Default is 2 cores.}
+\item{n_processes}{integer giving the number of processes to use for
+parallel Salmon jobs across samples. The package \code{parallel} is used. 
+Default is 2 concurrent processes.}
+
+\item{n_thread_per_process}{integer giving the number of threads for Salmon
+to use per process (to parallelize Salmon for a given sample). Default is 4.}
 
 \item{n_bootstrap_samples}{integer giving the number of bootstrap samples
 that Salmon should use (default is 0). With bootstrap samples, uncertainty
 in abundance can be quantified.}
 
 \item{seqBias}{logical, should Salmon's option be used to model and correct
-abundances for sequence specific bias?}
+abundances for sequence specific bias? Default is \code{TRUE}.}
 
 \item{gcBias}{logical, should Salmon's option be used to model and correct
-abundances for GC content bias? Requires Salmon version 0.7.2 or higher.}
+abundances for GC content bias? Requires Salmon version 0.7.2 or higher. 
+Default is \code{TRUE}.}
+
+\item{posBias}{logical, should Salmon's option be used to model and correct
+abundances for positional biases? Requires Salmon version 0.7.3 or higher.
+Default is \code{FALSE}.}
 
 \item{allowOrphans}{logical, Consider orphaned reads as valid hits when 
 performing lightweight-alignment. This option will increase sensitivity 
