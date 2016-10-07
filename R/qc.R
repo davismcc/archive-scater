@@ -1317,6 +1317,12 @@ This variable will not be plotted."))
 #' @param shape (optional) numeric scalar to define the plotting shape.
 #' @param alpha (optional) numeric scalar (in the interval 0 to 1) to define the
 #'  alpha level (transparency) of plotted points.
+#' @param show_smooth logical, should a smoothed fit through feature controls
+#' (if available; all features if not) be shown on the plot? Lowess used if a 
+#' small number of feature controls. For details see 
+#' \code{\link[ggplot2]{geom_smooth}}.
+#' @param se logical, should standard error (confidence interval) be shown for 
+#' smoothed fit?
 #' @param ... further arguments passed to \code{\link{plotMetadata}} (should
 #' only be \code{size}, if anythin).
 #'
@@ -1341,9 +1347,16 @@ This variable will not be plotted."))
 #' ex_sceset <- calculateQCMetrics(ex_sceset)
 #' plotExprsFreqVsMean(ex_sceset)
 #'
+#' ex_sceset <- calculateQCMetrics(
+#' ex_sceset, feature_controls = list(controls1 = 1:20, 
+#'                                       controls2 = 500:1000),
+#'                                       cell_controls = list(set_1 = 1:5, 
+#'                                       set_2 = 31:40))
+#' plotExprsFreqVsMean(ex_sceset)
+#'
 plotExprsFreqVsMean <- function(object, feature_set = NULL,
                                 feature_controls = NULL, shape = 1, alpha = 0.7,
-                                ...) {
+                                show_smooth = TRUE, se = TRUE, ...) {
     if ( !is(object, "SCESet") )
         stop("Object must be an SCESet")
     if ( is.null(fData(object)$n_cells_exprs) ||
@@ -1422,35 +1435,52 @@ plotExprsFreqVsMean <- function(object, feature_set = NULL,
             xlab(x_lab)
     }
 
-    ## add dropout information if feature controls are present
+    ## data frame with expression mean and frequency for feature controls
+    mn_vs_fq <- data.frame(
+        mn = fData(object)$mean_exprs,
+        fq = fData(object)$pct_cells_exprs / 100,
+        is_feature_control = feature_controls_logical)
+    text_x_loc <- min(mn_vs_fq$mn) + 0.6 * diff(range(mn_vs_fq$mn))
+    
+    if ( show_smooth ) {
+        if ( any(feature_controls_logical) )
+            plot_out <- plot_out +
+                geom_smooth(aes_string(x = "mn", y = "100 * fq"), 
+                            data = mn_vs_fq[feature_controls_logical,], 
+                            colour = "firebrick", size = 1, se = se)
+        else
+            plot_out <- plot_out +
+                geom_smooth(aes_string(x = "mn", y = "100 * fq"), data = mn_vs_fq, 
+                            colour = "firebrick", size = 1, se = se)
+    }        
+    
+    ## estimate 50% spike-in dropout
     if ( any(feature_controls_logical) ) {
-        ## data frame with expression mean and frequency for feature controls
-        mn_vs_fq <- data.frame(
-            mn = fData(object)$mean_exprs,
-            fq = fData(object)$pct_cells_exprs / 100)
-
-        ## estimate 50% spike-in dropout
         dropout <- nls(fq ~ (1 / (1 + exp(-(-i + 1 * mn)))),
                        start = list(i = 5),
                        data = mn_vs_fq[feature_controls_logical,])
-        text_x_loc <- min(mn_vs_fq$mn) + 0.6 * diff(range(mn_vs_fq$mn))
-
-        ## add annotations to existing plot
-        plot_out <- plot_out +
-            geom_hline(yintercept = 50, linetype = 2) + # 50% dropout
+        # nl_fit_df <- data.frame(
+        #     x = quantile(mn_vs_fq$mn, probs = seq(0.01, 0.999, by = 0.001)))
+        # nl_fit_df$y <- 100 * (1/(1 + exp(-(-coef(dropout) + 1 * nl_fit_df$x))))
+        # nl_fit_df$is_feature_control <- FALSE
+        ## annotate plot
+        plot_out <- plot_out + 
             geom_vline(xintercept = coef(dropout), linetype = 2) +
-            # expression at 50% dropout
             annotate("text", x = text_x_loc, y = 60, label = paste(
                 sum(mn_vs_fq[!feature_controls_logical, "mn"] > coef(dropout)),
-                " genes with\nhigh technical dropout", sep = "")) +
-            annotate("text", x = text_x_loc, y = 40, label =  paste(
-                sum(mn_vs_fq$fq >= 0.5),
-                " genes are expressed\nin at least 50% of cells", sep = "" )) +
-            annotate("text", x = text_x_loc, y = 20, label =  paste(
-                sum(mn_vs_fq$fq >= 0.25),
-                " genes are expressed\nin at least 25% of cells", sep = "" ))
+                " genes with mean expression\nhigher than value for 50% dropout of feature controls", sep = ""))
     }
-
+    
+    ## add annotations to existing plot
+    plot_out <- plot_out +
+        geom_hline(yintercept = 50, linetype = 2) + # 50% dropout
+        annotate("text", x = text_x_loc, y = 40, label =  paste(
+            sum(mn_vs_fq$fq >= 0.5),
+            " genes are expressed\nin at least 50% of cells", sep = "" )) +
+        annotate("text", x = text_x_loc, y = 20, label =  paste(
+            sum(mn_vs_fq$fq >= 0.25),
+            " genes are expressed\nin at least 25% of cells", sep = "" ))
+    
     ## return the plot object
     plot_out
 }
