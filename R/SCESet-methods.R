@@ -640,7 +640,7 @@ setMethod("get_exprs", signature(object = "SCESet"),
 #' @docType methods
 #' @name set_exprs
 #' @rdname set_exprs
-#' @aliases set_exprs set_exprs<-,SCESet,ANY,matrix-method
+#' @aliases set_exprs set_exprs<-,SCESet,ANY,matrix-method set_exprs<-,SCESet,ANY,NULL-method
 #'
 #' @param object a \code{SCESet} object.
 #' @param name character string giving the name of the slot to which the data
@@ -656,10 +656,24 @@ setMethod("get_exprs", signature(object = "SCESet"),
 #' set_exprs(example_sceset, "scaled_counts") <- t(t(counts(example_sceset)) /
 #' colSums(counts(example_sceset)))
 #' get_exprs(example_sceset, "scaled_counts")[1:6, 1:6]
+#' 
+#' ## get rid of scaled counts
+#' set_exprs(example_sceset, "scaled_counts") <- NULL
+#' 
 #' @name set_exprs
 #' @rdname set_exprs
 #' @exportMethod "set_exprs<-"
 setReplaceMethod("set_exprs", signature(object = "SCESet", value = "matrix"),
+                 function(object, name, value) {
+                     Biobase::assayDataElement(object, name) <- value
+                     validObject(object)
+                     object
+                 })
+
+#' @name set_exprs
+#' @rdname set_exprs
+#' @exportMethod "set_exprs<-"
+setReplaceMethod("set_exprs", signature(object = "SCESet", value = "NULL"),
                  function(object, name, value) {
                      Biobase::assayDataElement(object, name) <- value
                      validObject(object)

@@ -72,7 +72,9 @@ test_that("set_exprs and get_exprs work as expected", {
     expect_that(example_sceset, is_a("SCESet"))
     expect_that(example_sceset@assayData[["new_exprs"]], is_a("matrix"))
     expect_that(get_exprs(example_sceset, "new_exprs"), is_a("matrix"))
-    
+    set_exprs(example_sceset, "counts") <- NULL
+    expect_that(example_sceset, is_a("SCESet"))
+    expect_null(counts(example_sceset))
 })
 
 
