@@ -4,6 +4,7 @@
 \section{Changes in version 1.1.26, Bioconductor 3.4 Release (October 2016)}{
   \itemize{
     \item Key code ported to C++ for greater computational and memory efficiency
+    \item Added support/integration for SC3 package for single-cell clustering
     \item writeSCESet() function added to write SCESets to HDF5 format on disk
     \item mergeSCESet() function to merge two SCESet objects that share features
     \item plotPlatePosition() function to visualise gene expression and cell metadata for cells in their position on a plate
