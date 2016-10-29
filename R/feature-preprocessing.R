@@ -54,7 +54,7 @@
 #' 
 getBMFeatureAnnos <- function(object, filters="ensembl_transcript_id", 
                               attributes=c("ensembl_transcript_id", 
-                                           "ensembl_gene_id", "mgi_symbol", 
+                                           "ensembl_gene_id", feature_symbol, 
                                            "chromosome_name", "transcript_biotype",
                                            "transcript_start", "transcript_end", 
                                            "transcript_count"), 
