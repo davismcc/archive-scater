@@ -670,9 +670,9 @@ nexprs <- function(object, threshold = NULL, subset.row = NULL, byrow = FALSE) {
 #' or the higher end ("higher")
 #' @param log logical, should the values of the metric be transformed to the 
 #' log10 scale before computing median-absolute-deviation for outlier detection?
-#' @param na.rm logical, should NA (missing) values be removed before computing
-#' median and median-absolute-deviation values? If \code{FALSE} then return 
-#' values for median and median-absolute-deviation will be NA if any value is NA.
+#' @param subset logical or integer vector, which subset of values should be 
+#' used to calculate the median/MAD? If \code{NULL}, all values are used.
+#' Missing values will trigger a warning and will be automatically ignored. 
 #' 
 #' @description Convenience function to determine which values for a metric are
 #' outliers based on median-absolute-deviation (MAD).
@@ -693,12 +693,20 @@ nexprs <- function(object, threshold = NULL, subset.row = NULL, byrow = FALSE) {
 #' isOutlier(example_sceset$total_counts, nmads = 3)
 #' 
 isOutlier <- function(metric, nmads = 5, type = c("both", "lower", "higher"), 
-                      log = FALSE, na.rm = FALSE) {
+                      log = FALSE, subset = NULL) {
     if (log) {
         metric <- log10(metric)
     }
-    cur.med <- median(metric, na.rm = na.rm)
-    cur.mad <- mad(metric, center = cur.med, na.rm = na.rm)
+    if (any(is.na(metric))) { 
+        warning("missing values ignored during outlier detection")
+    }
+    if (!is.null(subset)) {
+        submetric <- metric[subset]
+    } else {
+        submetric <- metric
+    }
+    cur.med <- median(submetric, na.rm = TRUE)
+    cur.mad <- mad(submetric, center = cur.med, na.rm = TRUE)
 
     type <- match.arg(type)
     upper.limit <- cur.med + nmads * cur.mad
