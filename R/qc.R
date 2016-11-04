@@ -673,6 +673,9 @@ nexprs <- function(object, threshold = NULL, subset.row = NULL, byrow = FALSE) {
 #' @param subset logical or integer vector, which subset of values should be 
 #' used to calculate the median/MAD? If \code{NULL}, all values are used.
 #' Missing values will trigger a warning and will be automatically ignored. 
+#' @param batch factor of length equal to \code{metric}, specifying the batch
+#' to which each observation belongs. A median/MAD is calculated for each batch,
+#' and outliers are then identified within each batch.
 #' 
 #' @description Convenience function to determine which values for a metric are
 #' outliers based on median-absolute-deviation (MAD).
@@ -693,15 +696,44 @@ nexprs <- function(object, threshold = NULL, subset.row = NULL, byrow = FALSE) {
 #' isOutlier(example_sceset$total_counts, nmads = 3)
 #' 
 isOutlier <- function(metric, nmads = 5, type = c("both", "lower", "higher"), 
-                      log = FALSE, subset = NULL) {
+                      log = FALSE, subset = NULL, batch = NULL) {
     if (log) {
         metric <- log10(metric)
     }
     if (any(is.na(metric))) { 
         warning("missing values ignored during outlier detection")
     }
+
+    if (!is.null(batch)) {
+        N <- length(metric)
+        if (length(batch)!=N) { 
+            stop("length of 'batch' must equal length of 'metric'")
+        }
+
+        # Coercing non-NULL subset into a logical vector.
+        if (!is.null(subset)) { 
+            new.subset <- logical(N)
+            names(new.subset) <- names(metric)
+            new.subset[subset] <- TRUE
+            subset <- new.subset
+        }
+   
+        # Computing QC metrics for each batch. 
+        by.batch <- split(seq_len(N), batch)
+        collected <- logical(N)
+        for (b in by.batch) {
+            collected[b] <- Recall(metric[b], nmads=nmads, type=type,
+                                   log=FALSE, subset=subset[b], batch=NULL)
+        }
+        return(collected)
+    }
+
+    # Computing median/MAD based on subsets.
     if (!is.null(subset)) {
         submetric <- metric[subset]
+        if (length(submetric)==0L) {
+            warning("no observations remaining after subsetting")
+        }
     } else {
         submetric <- metric
     }
