@@ -388,7 +388,7 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
         new_fdata[[paste0("total_feature_", ex)]] <- cur_feature_totals
         new_fdata[[paste0("log10_total_feature_", ex)]] <-
             log10(cur_feature_totals + 1)
-        new_fdata$pct_total_counts <- 100 * cur_feature_totals/cur_totals
+        new_fdata[[paste0("pct_total_", ex)]] <- 100 * cur_feature_totals/cur_totals
     }
 
     ## Add new fdata to object
@@ -431,41 +431,24 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     if (calc_top_features) { ## Do we want to calculate exprs accounted for by
         ## top features?
         ## Determine percentage of counts for top features by cell
-        top.number <- c(50L, 100L, 200L, 500L)
-        can.calculate <- top.number <= nrow(exprs_mat)
-        if (any(can.calculate)) { 
-            top.number <- top.number[can.calculate]
-            pct_exprs_top_out <- .checkedCall(cxx_calc_top_features, exprs_mat,
-                                              top.number, NULL)
-            ## this call returns proportions, not percentages, so adjust
-            pct_exprs_top_out <- 100 * pct_exprs_top_out
-            colnames(pct_exprs_top_out) <- paste0("pct_exprs_top_",
-                                                  top.number, "_features")
-            df_pdata_this <- cbind(df_pdata_this, pct_exprs_top_out)
+        pct_top <- .calc_top_prop(exprs_mat, suffix="features")
+        if (!is.null(pct_top)) {
+            df_pdata_this <- cbind(df_pdata_this, pct_top)
             
             if ( compute_endog ) {
-                if ( length(is_feature_control) < 1L ) {
-                    pct_exprs_top_endog_out <- pct_exprs_top_out
-                    colnames(pct_exprs_top_endog_out) <- paste0(
-                        "pct_exprs_top_", top.number, "_endogenous_features")
-                    df_pdata_this <- cbind(df_pdata_this, pct_exprs_top_endog_out)
+                if ( length(is_feature_control) == 0L ) {
+                    pct_top_endog <- pct_top
+                    colnames(pct_top_endog) <- sub("features$", 
+                                                   "endogenous_features", 
+                                                   colnames(pct_top))
+                    df_pdata_this <- cbind(df_pdata_this, pct_top_endog)
                 } else {
-                    ## Getting the non-control features in the matrix.
-                    not_feature_control <- seq_len(nrow(exprs_mat))
-                    not_feature_control <- not_feature_control[-is_feature_control]
-                    not_feature_control <- not_feature_control - 1L
-
-                    can.calculate.endog <- top.number <= length(not_feature_control)
-                    if (any(can.calculate.endog)) { 
-                        top.number.endog <- top.number[can.calculate.endog]
-                        pct_exprs_top_endog_out <- .checkedCall(
-                            cxx_calc_top_features, exprs_mat, top.number.endog,
-                            not_feature_control)
-                        ## this call returns proportions, not percentages, so adjust
-                        pct_exprs_top_endog_out <- 100 * pct_exprs_top_endog_out
-                        colnames(pct_exprs_top_endog_out) <- paste0(
-                                "pct_exprs_top_", top.number.endog, "_endogenous_features")
-                        df_pdata_this <- cbind(df_pdata_this, pct_exprs_top_endog_out)
+                    ## Repeating for the non-control features in the matrix.
+                    pct_top_endog <- .calc_top_prop(exprs_mat, 
+                                                    subset.row=-is_feature_control,
+                                                    suffix="endogenous_features")
+                    if (!is.null(pct_top_endog)) { 
+                        df_pdata_this <- cbind(df_pdata_this, pct_top_endog)
                     }
                 }
             } 
@@ -474,6 +457,35 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     colnames(df_pdata_this) <- gsub("exprs", exprs_type, colnames(df_pdata_this))
     df_pdata_this
 }
+
+
+.calc_top_prop <- function(exprs_mat, top.number = c(50L, 100L, 200L, 500L),
+                           subset.row = NULL, suffix="features") {
+    ## Calculate the proportion of expression belonging to the top set of genes.
+    ## Produces a matrix of proportions for each top number.
+    
+    if (is.null(subset.row)) { 
+        total_nrows <- nrow(exprs_mat)
+    } else {
+        subset.row <- .subset2index(subset.row, exprs_mat) 
+        subset.row <- subset.row - 1L # zero indexing needed for this C++ code.
+        total_nrows <- length(subset.row)
+    }
+
+    can.calculate <- top.number <= total_nrows
+    if (any(can.calculate)) { 
+        top.number <- top.number[can.calculate]
+        pct_exprs_top_out <- .checkedCall(cxx_calc_top_features, exprs_mat,
+                                          top.number, subset.row)
+        ## this call returns proportions, not percentages, so adjust
+        pct_exprs_top_out <- 100 * pct_exprs_top_out
+        colnames(pct_exprs_top_out) <- paste0("pct_exprs_top_",
+                                              top.number, "_", suffix)
+        return(pct_exprs_top_out)
+    }
+    return(NULL)
+}
+
 
 .process_feature_controls <- function(object, feature_controls, 
                                       pct_feature_controls_threshold,
@@ -503,27 +515,21 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
         }
         if (is.character(gc_set))
             gc_set <- which(rownames(object) %in% gc_set)
+        
         df_pdata_this <- .get_qc_metrics_exprs_mat(
             exprs_mat, gc_set, pct_feature_controls_threshold,
             calc_top_features = FALSE, exprs_type = "exprs")
-        if ( !is.null(counts_mat) ) {
-            df_pdata_counts <- .get_qc_metrics_exprs_mat(
-                counts_mat, gc_set, pct_feature_controls_threshold,
-                calc_top_features = FALSE, exprs_type = "counts")
-            df_pdata_this <- cbind(df_pdata_this, df_pdata_counts)
+
+        for (ex in c("counts", "tpm", "fpkm")) {
+            cur_mat <- switch(ex, counts = counts_mat, 
+                              tpm = tpm_mat, fpkm = fpkm_mat)
+            if (is.null(cur_mat)) { next }
+            cur_df_pdata <- .get_qc_metrics_exprs_mat(
+                cur_mat, gc_set, pct_feature_controls_threshold,
+                calc_top_features = FALSE, exprs_type = ex)
+            df_pdata_this <- cbind(df_pdata_this, cur_df_pdata)
         }
-        if ( !is.null(tpm_mat) ) {
-            df_pdata_tpm <- .get_qc_metrics_exprs_mat(
-                tpm_mat, gc_set, pct_feature_controls_threshold,
-                calc_top_features = FALSE, exprs_type = "tpm")
-            df_pdata_this <- cbind(df_pdata_this, df_pdata_tpm)
-        }
-        if ( !is.null(fpkm_mat) ) {
-            df_pdata_fpkm <- .get_qc_metrics_exprs_mat(
-                fpkm_mat, gc_set, pct_feature_controls_threshold,
-                calc_top_features = FALSE, exprs_type = "fpkm")
-            df_pdata_this <- cbind(df_pdata_this, df_pdata_fpkm)
-        }
+
         is_feature_control[gc_set] <- TRUE
         ## Define number of feature controls expressed
         n_detected_feature_controls <- nexprs(object, subset.row = gc_set)
@@ -609,7 +615,7 @@ nexprs <- function(object, threshold = NULL, subset.row = NULL, byrow = FALSE) {
             if (is.null(subset.row)) {
                return(colSums(is_exprs_mat)) 
             } else {
-                subset.row <- .subset2index(subset.row, names = rownames(counts_mat))
+                subset.row <- .subset2index(subset.row, counts_mat)
                 return(.checkedCall(cxx_colsum_subset, is_exprs_mat, subset.row))
             }
         } else {
@@ -617,8 +623,7 @@ nexprs <- function(object, threshold = NULL, subset.row = NULL, byrow = FALSE) {
             if (is.null(subset.row)) { 
                 subset.row <- seq_len(nrow(counts_mat)) 
             } else {
-                subset.row <- .subset2index(subset.row, 
-                                            names = rownames(counts_mat))
+                subset.row <- .subset2index(subset.row, counts_mat)
             }
             return(.checkedCall(cxx_colsum_exprs_subset, counts_mat, 
                                 threshold, subset.row))
@@ -633,16 +638,26 @@ nexprs <- function(object, threshold = NULL, subset.row = NULL, byrow = FALSE) {
     }
 }
 
-.subset2index <- function(subset, names) {
-    if (is.logical(subset)) { 
-        subset <- which(subset) 
-    } else if (is.character(subset)) { 
-        subset <- match(subset, names)
-        if (any(is.na(subset))) { 
-            stop('missing names in specified subsetting vector')
-        }
+.subset2index <- function(subset, target, byrow=TRUE) {
+    ## Converts a subsetting vector into a integer equivalent.
+    ## Requires some care to handle logical/character vectors.
+
+    if (is.na(byrow)) { 
+        dummy <- seq_along(target)
+        names(dummy) <- names(target)
+    } else if (byrow) {
+        dummy <- seq_len(nrow(target))
+        names(dummy) <- rownames(target)
+    } else {
+        dummy <- seq_len(ncol(target))
+        names(dummy) <- colnames(target)
     }
-    as.integer(subset)
+    
+    subset <- dummy[subset]
+    if (any(is.na(subset))) { 
+        stop("invalid subset indices specified")
+    }
+    return(unname(subset))
 }
 
 ################################################################################
