@@ -58,7 +58,7 @@
 }
 
 ## contains the hierarchy of expression values.
-.exprs_hierarchy <- c("tpm", "counts", "cpm", "fpkm", "exprs")
+.exprs_hierarchy <- c("counts", "tpm", "cpm", "fpkm", "exprs")
 
 .exprs_hunter <- function(object, proposed=NULL) {
     ## Finds the highest ranking expression category that is not NULL.

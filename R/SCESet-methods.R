@@ -604,6 +604,9 @@ setReplaceMethod("pData", signature(object = "SCESet", value = "data.frame"),
 #' expression values) or \code{"stand_exprs"} (standardised expression values)
 #' or any other slots that have been added to the \code{"assayData"} slot by
 #' the user.
+#' @param warning a logical scalar specifying whether a warning should be 
+#' raised, and \code{NULL} returned, if the requested expression values are 
+#' not present in \code{object}. Otherwise, an error will be thrown.
 #' @author Davis McCarthy
 #' @export
 #' @examples
@@ -617,10 +620,18 @@ setReplaceMethod("pData", signature(object = "SCESet", value = "data.frame"),
 #' colSums(counts(example_sceset)))
 #' get_exprs(example_sceset, "scaled_counts")[1:6, 1:6]
 #'
-get_exprs.SCESet <- function(object, exprs_values = "exprs") {
+get_exprs.SCESet <- function(object, exprs_values = "exprs", warning=TRUE) {
     exprs_mat <- object@assayData[[exprs_values]]
-    if ( is.null(exprs_mat) )
-        warning(paste0("The object does not contain ", exprs_values, " expression values. Returning NULL."))
+
+    if ( is.null(exprs_mat) ) {
+        msg <- sprintf("'object' does not contain '%s'", exprs_values)
+        if (warning) {
+            warning(paste0(msg, ", returning NULL"))
+        } else {
+            stop(msg)
+        }
+    }
+
     exprs_mat
 }
 

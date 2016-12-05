@@ -14,10 +14,10 @@
 #' normalised expression values. If not \code{NULL}, then the residuals of this
 #' linear model fit are used as the normalised expression values.
 #' @param feature_set character, numeric or logical vector indicating a set of
-#' features to use for the PCA. If character, entries must all be in
-#' \code{featureNames(object)}. If numeric, values are taken to be indices for
-#' features. If logical, vector is used to index features and should have length
-#' equal to \code{nrow(object)}.
+#' features to use for calculating normalisation factors. If character, entries 
+#' must all be in \code{featureNames(object)}. If numeric, values are taken to 
+#' be indices for features. If logical, vector is used to index features and should 
+#' have length equal to \code{nrow(object)}.
 #' @param exprs_values character string indicating which slot of the
 #' assayData from the \code{SCESet} object should be used as expression values.
 #' Valid options are \code{'counts'}, the count values, \code{'exprs'} the
@@ -92,114 +92,62 @@
 #' feature_set = 1:100)
 #'
 normaliseExprs <- function(object, method = "none", design = NULL, feature_set = NULL,
-                           exprs_values = "counts", return_norm_as_exprs = TRUE,
+                           exprs_values = NULL, return_norm_as_exprs = TRUE,
                            ...) {
     if ( !is(object, "SCESet") )
-        stop("object must be an SCESet.")
+        stop("'object' must be an SCESet")
+
     ## Define expression values to be used
-    exprs_values <- match.arg(exprs_values, c("exprs", "tpm", "fpkm", "counts"))
-    exprs_mat <- get_exprs(object, exprs_values)
-    ## exit if any features have zero variance as this causes problem downstream
-    if ( any(matrixStats::rowVars(exprs_mat) == 0) )
-        stop("Some features have zero variance.
-             Please filter out features with zero variance (e.g. all zeros).")
+    exprs_values <- .exprs_hunter(object, exprs_values)
 
-    if ( exprs_values == "exprs" && object@logged ) {
-        exprs_mat <- 2 ^ exprs_mat - object@logExprsOffset
-    }
-    ## Check feature_set
-    if ( !is.null(feature_set) && typeof(feature_set) == "character" ) {
-        if ( !(all(feature_set %in% featureNames(object))) )
-            stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
-    }
-    if ( !is.null(feature_set) )
-        exprs_mat_for_norm <- exprs_mat[feature_set,]
-    else
-        exprs_mat_for_norm <- exprs_mat
+    ## If counts, we can compute size factors.
+    if (exprs_values=="counts") {
+        exprs_mat <- get_exprs(object, exprs_values, warning=FALSE)
+             
+        ## Check feature_set
+        if (is.character(feature_set)) { 
+            if ( !(all(feature_set %in% featureNames(object))) )
+                stop("not all 'feature_set' in 'featureNames(object)'")
+        }
+        if ( !is.null(feature_set) )
+            exprs_mat_for_norm <- exprs_mat[feature_set,]
+        else
+            exprs_mat_for_norm <- exprs_mat
 
-    ## Compute normalisation factors with calcNormFactors from edgeR
-    norm_factors <- edgeR::calcNormFactors.default(exprs_mat_for_norm,
-                                                   method = method, ...)
-    lib_size <- colSums(exprs_mat_for_norm)
+        ## Compute normalisation factors with calcNormFactors from edgeR
+        norm_factors <- edgeR::calcNormFactors.default(exprs_mat_for_norm,
+                                                       method = method, ...)
+        lib_size <- colSums(exprs_mat_for_norm)
+        
+        if ( any(is.na(norm_factors)) ) {
+            norm_factors[is.na(norm_factors)] <- 1
+            warning("normalization factors with NA values replaced with unity")
+        }
 
-    if ( any(is.na(norm_factors)) ) {
-        norm_factors[is.na(norm_factors)] <- 1
-        warning("One or more normalisation factors were computed to be NA. NA values have been replaced with 1.")
-    }
-
-    ## define size factors from norm factors
-    if ( exprs_values == "exprs" )
-        ## if 'exprs' is used as expression values, then do not adjust by library size
-        size_factors <- rep(1, length(norm_factors))
-    else {
         size_factors <- norm_factors * lib_size
         size_factors <- size_factors / mean(size_factors)
+        sizeFactors(object) <- size_factors
+        
+        ## Computing (normalized) CPMs is also possible.
+        norm_cpm(object) <- calculateCPM(object, use.size.factors=TRUE)
     }
 
-    if ( exprs_values == "exprs" && method == "none")
-        ## in this case "norm" values are the same as original
-        norm_exprs_mat <- get_exprs(object, exprs_values)
-    else {
-        if ( !is.null(feature_set) ) {
-            ## Divide expression values by the normalisation factors
-            norm_exprs_mat <- t(t(exprs_mat_for_norm) / size_factors)
-        } else {
-            ## Divide expression values by the normalisation factors
-            norm_exprs_mat <- t(t(exprs_mat) / size_factors)
-        }
+    ## Computing normalized expression values, if we're not working with 'exprs'.
+    if (exprs_values!="exprs") {
+        object <- normalize.SCESet(object, exprs_values=exprs_values,
+                                   return_norm_as_exprs=return_norm_as_exprs)
     }
+    
+#    ## exit if any features have zero variance as this causes problem downstream
+#    if ( any(matrixStats::rowVars(exprs_mat) == 0) )
+#        stop("Some features have zero variance.
+#             Please filter out features with zero variance (e.g. all zeros).")
 
-    ## Assign normalised expression values
-    if ( exprs_values == "counts" ) {
-        ## Divide expression values by the normalisation factors
-        norm_exprs_mat <- t(t(exprs_mat) / size_factors)
-        norm_counts(object) <- norm_exprs_mat
-        # object$size_factor_counts <- size_factors
-        norm_cpm(object) <-
-            edgeR::cpm.default(exprs_mat,
-                       lib.size = (size_factors * mean(lib_size) /
-                                       mean(size_factors)),
-                       prior.count = object@logExprsOffset, log = FALSE)
-        if ( object@logged )
-            norm_exprs(object) <- .recompute_expr_fun(exprs_mat = exprs_mat,
-                                                      size_factors = size_factors,
-                                                      logExprsOffset = object@logExprsOffset)
-    } else {
-        ## Add tpm if relevant
-        if ( exprs_values == "tpm" ) {
-            # object$size_factor_tpm <- size_factors
-            if ( !is.null(feature_set) )
-                norm_exprs_mat <- norm_exprs_mat * 1e06
-            norm_tpm(object) <- norm_exprs_mat
-        }
-        ## Add fpkm if relevant
-        if ( exprs_values == "fpkm" ) {
-            # object$size_factor_fpkm <- size_factors
-            if ( !is.null(feature_set) )
-                norm_exprs_mat <- norm_exprs_mat * 1e06
-            norm_fpkm(object) <- norm_exprs_mat
-        }
-        ## Add exprs norm factors if relevant
-        if ( exprs_values == "exprs" ) {
-            # object$size_factor_exprs <- size_factors
-        }
-        if ( exprs_values == "exprs" && method == "none" )
-            norm_exprs(object) <- get_exprs(object, exprs_values)
-        else {
-            ## Add norm_exprs values, logged if appropriate
-            if ( object@logged )
-                norm_exprs(object) <- log2(norm_exprs_mat + object@logExprsOffset)
-            else
-                norm_exprs(object) <- norm_exprs_mat
-        }
-    }
-
-    ## save size factors to matrix under that name
-    object$size_factor <- size_factors
-
+   
     ## If a design matrix is provided, then normalised expression values are
     ## residuals of a linear model fit to norm_exprs values with that design
     if ( !is.null(design) ) {
+        norm_exprs_mat <- norm_exprs(object)
         limma_fit <- limma::lmFit(norm_exprs_mat, design)
         norm_exprs(object) <- limma::residuals.MArrayLM(limma_fit,
                                                         norm_exprs_mat)
@@ -287,7 +235,7 @@ normalize.SCESet <- function(object, exprs_values = NULL,
     if (exprs_values=="exprs") {
         stop("cannot compute normalized values from 'exprs'")
     }
-    exprs_mat <- get_exprs(object, exprs_values)
+    exprs_mat <- get_exprs(object, exprs_values, warning=FALSE)
 
     ## extract existing size factors
     size_factors <- sizeFactors(object)
