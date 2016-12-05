@@ -163,8 +163,7 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
         if ( object@logged )
             norm_exprs(object) <- .recompute_expr_fun(exprs_mat = exprs_mat,
                                                       size_factors = size_factors,
-                                                      logExprsOffset = object@logExprsOffset,
-                                                      isCount = TRUE)
+                                                      logExprsOffset = object@logExprsOffset)
     } else {
         ## Add tpm if relevant
         if ( exprs_values == "tpm" ) {
@@ -240,9 +239,6 @@ normalizeExprs <- function(...) {
 #' @param logExprsOffset scalar numeric value giving the offset to add when
 #' taking log2 of normalised values to return as expression values. If NULL
 #' (default), then the value from \code{object@logExprsOffset} is used.
-#' @param recompute_cpm logical, should the counts-per-million values be
-#' recomputed after normalising with the stored size factors in the object and
-#' stored in \code{cpm(object)} in the returned object?
 #' @param return_norm_as_exprs logical, should the normalised expression values
 #' be returned to the \code{exprs} slot of the object? Default is TRUE. If
 #' FALSE, values in the \code{exprs} slot will be left untouched. Regardless,
@@ -281,23 +277,25 @@ normalizeExprs <- function(...) {
 #' ## normalize the object using the saved size factors
 #' example_sceset <- normalize(example_sceset)
 #'
-normalize.SCESet <- function(object, exprs_values = "counts",
-                             logExprsOffset = NULL, recompute_cpm = TRUE,
-                             return_norm_as_exprs = TRUE) {
+normalize.SCESet <- function(object, exprs_values = NULL,
+                             logExprsOffset = NULL, return_norm_as_exprs = TRUE) {
     if ( !is(object, "SCESet") )
-        stop("object must be an SCESet.")
+        stop("'object' must be an SCESet")
   
     ## Define expression values to be used
-    exprs_values <- match.arg(exprs_values, c("tpm", "fpkm", "counts"))
-    isCount <- exprs_values == "counts"
+    exprs_values <- .exprs_hunter(object, exprs_values)
+    if (exprs_values=="exprs") {
+        stop("cannot compute normalized values from 'exprs'")
+    }
     exprs_mat <- get_exprs(object, exprs_values)
 
     ## extract existing size factors
     size_factors <- sizeFactors(object)
-    if ( is.null(size_factors) ) {
-        message("No size factors defined in object$size_factor so returning
-                original object")
+    if ( is.null(size_factors) && exprs_values=="counts") {
+        warning("skipping normalization of counts as size factors were not defined")
         return(object)
+    } else {
+        size_factors <- rep(1, ncol(object)) # ignoring size factors for non-count data.
     }
     
     ## figuring out how many controls have their own size factors
@@ -307,30 +305,15 @@ normalize.SCESet <- function(object, exprs_values = "counts",
     if ( is.null(logExprsOffset) )
         logExprsOffset <- object@logExprsOffset
 
-    ## recompute cpm if desired
-    if ( !is.null(cpm(object)) && recompute_cpm && isCount ) {
-        lib_size <- colSums(exprs_mat)
-        new_cpm <- .recompute_cpm_fun(exprs_mat = exprs_mat,
-                        size_factors = size_factors,
-                        lib_size = lib_size, logExprsOffset = logExprsOffset)
-        for (alt in control_list) {
-            new_cpm[alt$ID,] <- .recompute_cpm_fun(
-                                    exprs_mat = exprs_mat[alt$ID,,drop=FALSE],
-                                    size_factors = alt$SF, lib_size = lib_size,
-                                    logExprsOffset = logExprsOffset)
-        }
-        cpm(object) <- new_cpm
-    }
-
     ## compute normalised expression values
     norm_exprs_mat <- .recompute_expr_fun(exprs_mat = exprs_mat,
                         size_factors = size_factors,
-                        logExprsOffset = logExprsOffset, isCount = isCount)
+                        logExprsOffset = logExprsOffset)
     for (alt in control_list) {
         norm_exprs_mat[alt$ID,] <- .recompute_expr_fun(
                                         exprs_mat, size_factors = alt$SF,
                                         logExprsOffset = logExprsOffset,
-                                        isCount = isCount, subset.row=alt$ID)
+                                        subset.row=alt$ID)
     }
 
     ## add normalised values to object
@@ -350,21 +333,12 @@ normalize.SCESet <- function(object, exprs_values = "counts",
        log = FALSE, prior.count = logExprsOffset)
 }
 
-.recompute_expr_fun <- function(exprs_mat, size_factors,
-                                logExprsOffset, 
-                                isCount = TRUE,
+.recompute_expr_fun <- function(exprs_mat, size_factors, logExprsOffset, 
                                 subset.row = NULL) {
-    if (isCount) { 
-        out <- .compute_exprs(exprs_mat, size_factors,
-                              log = TRUE, sum = FALSE,
-                              logExprsOffset = logExprsOffset,
-                              subset.row = subset.row)
-    } else {
-        size_factors <- size_factors / mean(size_factors)
-        if (!is.null(subset.row)) exprs_mat <- exprs_mat[subset.row,]
-        out <- log2(t(t(exprs_mat) / size_factors) + logExprsOffset)
-    }
-    return(out)
+    .compute_exprs(exprs_mat, size_factors,
+                   log = TRUE, sum = FALSE,
+                   logExprsOffset = logExprsOffset,
+                   subset.row = subset.row)
 }
 
 #' @rdname normalize
