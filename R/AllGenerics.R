@@ -234,6 +234,22 @@ setGeneric("featDist<-", function(object, value) {
     standardGeneric("featDist<-")
 })
 
+#' @name featureControlInfo
+#' @export
+#' @docType methods
+#' @rdname featureControlInfo 
+setGeneric("featureControlInfo", function(object) {
+    standardGeneric("featureControlInfo")
+})
+
+#' @name featureControlInfo<-
+#' @export
+#' @docType methods
+#' @rdname featureControlInfo
+setGeneric("featureControlInfo<-", function(object, value) {
+    standardGeneric("featureControlInfo<-")
+})
+
 
 #' @name reducedDimension
 #' @export

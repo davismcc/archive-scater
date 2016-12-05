@@ -1788,6 +1788,57 @@ setReplaceMethod("featDist", signature(object = "SCESet", value = "dist"),
 
 
 ################################################################################
+### featureControlInfo
+
+#' featureControlInfo in an SCESet object
+#'
+#' Each SCESet object stores optional information about the controls in the 
+#' \code{featureControlInfo} slot. These functions can be used to access,
+#' replace or modify this information.
+#'
+#' @param object a \code{SCESet} object.
+#' @param value an AnnotatedDataFrame object, where each row contains 
+#' information for a single set of control features.
+#'
+#' @docType methods
+#' @name featureControlInfo
+#' @rdname featureControlInfo
+#' @aliases featureControlInfo featureControlInfo,SCESet-method featureControlInfo<-,SCESet,AnnotatedDataFrame-method featureControlInfo<- 
+#'
+#' @author Aaron Lun 
+#'
+#' @return An SCESet object containing new feature control information.
+#' @export
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' example_sceset <- calculateQCMetrics(example_sceset, feature_controls = list(ERCC = 1:40, Mito=41:50))
+#' featureControlInfo(example_sceset) 
+#' featureControlInfo(example_sceset)$IsSpike <- c(TRUE, FALSE)
+featureControlInfo.SCESet <- function(object) {
+    object@featureControlInfo
+}
+
+#' @rdname featureControlInfo
+#' @aliases featureControlInfo
+#' @export
+setMethod("featureControlInfo", signature(object = "SCESet"),
+          featureControlInfo.SCESet)
+
+#' @name featureControlInfo<-
+#' @aliases featureControlInfo
+#' @rdname featureControlInfo
+#' @export "featureControlInfo<-"
+setReplaceMethod("featureControlInfo", signature(object = "SCESet",
+                                                 value = "AnnotatedDataFrame"),
+                 function(object, value) {
+                     object@featureControlInfo <- value
+                     return(object)
+                 })
+
+################################################################################
 ### Convert to and from Monocle CellDataSet objects
 
 #' Convert an \code{SCESet} to a \code{CellDataSet}
