@@ -585,7 +585,7 @@ setReplaceMethod("pData", signature(object = "SCESet", value = "data.frame"),
 #' assayData slot of the SCESet object.
 #'
 #' @usage
-#' \S4method{get_exprs}{SCESet}(object, exprs_values)
+#' \S4method{get_exprs}{SCESet}(object, exprs_values, warning = TRUE)
 #'
 #' @docType methods
 #' @name get_exprs
@@ -620,11 +620,11 @@ setReplaceMethod("pData", signature(object = "SCESet", value = "data.frame"),
 #' colSums(counts(example_sceset)))
 #' get_exprs(example_sceset, "scaled_counts")[1:6, 1:6]
 #'
-get_exprs.SCESet <- function(object, exprs_values = "exprs", warning=TRUE) {
+get_exprs.SCESet <- function(object, exprs_values = "exprs", warning = TRUE) {
     exprs_mat <- object@assayData[[exprs_values]]
 
     if ( is.null(exprs_mat) ) {
-        msg <- sprintf("'object' does not contain '%s'", exprs_values)
+        msg <- sprintf("'object' does not contain '%s' values", exprs_values)
         if (warning) {
             warning(paste0(msg, ", returning NULL"))
         } else {
@@ -638,8 +638,8 @@ get_exprs.SCESet <- function(object, exprs_values = "exprs", warning=TRUE) {
 #' @rdname get_exprs
 #' @export
 setMethod("get_exprs", signature(object = "SCESet"),
-          function(object, exprs_values = "exprs") {
-              get_exprs.SCESet(object, exprs_values)
+          function(object, exprs_values = "exprs", warning = TRUE) {
+              get_exprs.SCESet(object, exprs_values, warning = warning)
           })
 
 

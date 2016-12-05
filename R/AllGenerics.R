@@ -11,7 +11,7 @@ setGeneric("cellNames<-", function(object, value) {standardGeneric("cellNames<-"
 #' @docType methods
 #' @return a matrix of expression values
 #' @rdname get_exprs
-setGeneric("get_exprs", function(object, exprs_values) {
+setGeneric("get_exprs", function(object, exprs_values, ...) {
     standardGeneric("get_exprs")})
 
 #' @name set_exprs<-

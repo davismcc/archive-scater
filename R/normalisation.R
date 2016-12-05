@@ -8,7 +8,7 @@
 #' object with the normalised expression values added.
 #'
 #' @param object an \code{SCESet} object.
-#' @param method character string giving method to be used to calculate
+#' @param method character string specified the method of calculating 
 #' normalisation factors. Passed to \code{\link[edgeR]{calcNormFactors}}.
 #' @param design design matrix defining the linear model to be fitted to the
 #' normalised expression values. If not \code{NULL}, then the residuals of this
@@ -19,10 +19,10 @@
 #' be indices for features. If logical, vector is used to index features and should 
 #' have length equal to \code{nrow(object)}.
 #' @param exprs_values character string indicating which slot of the
-#' assayData from the \code{SCESet} object should be used as expression values.
-#' Valid options are \code{'counts'}, the count values, \code{'exprs'} the
-#' expression slot, \code{'tpm'} the transcripts-per-million slot or
-#' \code{'fpkm'} the FPKM slot.
+#' assayData from the \code{SCESet} object should be used for the calculations.
+#' Valid options are \code{'counts'}, \code{'tpm'}, \code{'cpm'}, \code{'fpkm'}
+#' and \code{'exprs'}. Defaults to the first available value of these options in 
+#' in order shown.
 #' @param return_norm_as_exprs logical, should the normalised expression values
 #' be returned to the \code{exprs} slot of the object? Default is TRUE. If
 #' FALSE, values in the \code{exprs} slot will be left untouched. Regardless,
@@ -33,25 +33,20 @@
 #'
 #' @details This function allows the user to compute normalised expression
 #' values from an SCESet object. The 'raw' values used can be the values in the
-#' \code{'counts'} (default), \code{'exprs'}, \code{'tpm'} or \code{'fpkm'} slot
-#' of the SCESet. Normalised expression values are added to the
-#' \code{'norm_exprs'} slot of the object. Normalised expression values are on
-#' the log2-scale, with an offset defined by the \code{logExprsOffset}
-#' slot of the SCESet object. If the \code{'exprs_values'} argument is one of
-#' \code{'counts'}, \code{'tpm'} or \code{'fpkm'}, then a corresponding slot
-#' with normalised values is added: \code{'norm_counts'},
-#' \code{'norm_tpm'} or \code{'norm_fpkm'}, as appropriate. If
-#' \code{'exprs_values'} argument is \code{'counts'} a \code{'norm_cpm'} slot is
-#' also added, containing normalised counts-per-million values.
+#' \code{'counts'} (default), \code{'tpm'}, \code{'cpm'} or \code{'fpkm'} slot
+#' of the SCESet. Normalised expression values are computed through
+#' \code{\link{normalize.SCESet}} and are on the log2-scale, with an offset 
+#' defined by the \code{logExprsOffset} slot of the SCESet object. These are
+#' dded to the \code{'norm_exprs'} slot of the returned object. If 
+#' \code{'exprs_values'} argument is \code{'counts'}, a \code{'norm_cpm'} slot 
+#' is also added, containing normalised counts-per-million values.
 #'
-#' Normalisation is done relative to a defined feature set, if desired, which
-#' defines the 'library size' by which expression values are divided. If no
-#' feature set is defined, then all features are used. A normalisation size
-#' factor can be computed (optionally), which internally uses
-#' \code{\link[edgeR]{calcNormFactors}}. Thus, any of the methods available for
-#' \code{\link[edgeR]{calcNormFactors}} can be used: "TMM", "RLE", "upperquartile"
-#' or "none". See that function for further details. Library sizes are multiplied
-#' by size factors to obtain a "normalised library size" before normalisation.
+#' If the raw values are counts, this function will compute size factors using
+#' methods in \code{\link[edgeR]{calcNormFactors}}. Library sizes are multiplied
+#' by size factors to obtain an "effective library size" before calculation of 
+#' the aforementioned normalized expression values. If \code{feature_set} is 
+#' specified, only the specified features will be used to calculate the 
+#' size factors.
 #'
 #' If the user wishes to remove the effects of certain explanatory variables,
 #' then the \code{'design'} argument can be defined. The \code{design} argument
@@ -59,7 +54,7 @@
 #' \code{\link[stats]{model.matrix}}, with the relevant variables. A linear
 #' model is then fitted using \code{\link[limma]{lmFit}} on expression values
 #' after any size-factor and library size normalisation as descrived above. The
-#' returned normalised expression values are then the residuals from the linear
+#' returned values in \code{'norm_exprs'} are the residuals from the linear
 #' model fit.
 #'
 #' After normalisation, normalised expression values can be accessed with the
@@ -180,10 +175,10 @@ normalizeExprs <- function(...) {
 #'
 #' @param object an \code{SCESet} object.
 #' @param exprs_values character string indicating which slot of the
-#' assayData from the \code{SCESet} object should be used as expression values.
-#' Valid options are \code{'counts'}, the count values, \code{'exprs'} the
-#' expression slot, \code{'tpm'} the transcripts-per-million slot or
-#' \code{'fpkm'} the FPKM slot.
+#' assayData from the \code{SCESet} object should be used to compute 
+#' log-transformed expression values. Valid options are \code{'counts'}, 
+#' \code{'tpm'}, \code{'cpm'} and \code{'fpkm'}. Defaults to the first
+#' available value of the options in the order shown.
 #' @param logExprsOffset scalar numeric value giving the offset to add when
 #' taking log2 of normalised values to return as expression values. If NULL
 #' (default), then the value from \code{object@logExprsOffset} is used.

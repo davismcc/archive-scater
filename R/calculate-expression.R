@@ -28,26 +28,7 @@ calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_data = NULL)
     
     ## Check that args are appropriate
     exprs_data <- .exprs_hunter(object, exprs_data)
-    dat_matrix <- switch(exprs_data,
-                         counts = counts(object),
-                         exprs = exprs(object),
-                         tpm = tpm(object),
-                         cpm = cpm(object),
-                         fpkm = fpkm(object))   
-    if ( is.null(dat_matrix) )
-        stop(paste0("Tried to use ", exprs_data, " as expression data, but ", 
-                    exprs_data, "(object) is null."))
-
-    #     
-    #     if ( exprs_data == "counts" ) {
-    #         dat_matrix <- counts(object)
-    #     }
-    #     else {
-    #         if ( exprs_data == "exprs" )
-    #             dat_matrix <- exprs(object)
-    #         else
-    #             
-    #     }
+    dat_matrix <- get_exprs(object, exprs_data, warning=FALSE)
 
     ## Extract lowerDetectionLimit if not provided
     if ( is.null(lowerDetectionLimit) )
@@ -102,12 +83,7 @@ nexprs <- function(object, lowerDetectionLimit = NULL, exprs_data = "counts", su
     is_exprs_mat <- is_exprs(object)
 
     exprs_data <- .exprs_hunter(object, exprs_data)
-    exprs_mat <- switch(exprs_data,
-                        counts = counts(object),
-                        exprs = exprs(object),
-                        tpm = tpm(object),
-                        cpm = cpm(object),
-                        fpkm = fpkm(object))   
+    exprs_mat <- suppressWarnings(get_exprs(object, exprs_data))
     if (is.null(is_exprs_mat) && is.null(exprs_mat)) {
         stop(sprintf("either 'is_exprs(object)' or '%s(object)' must be non-NULL", exprs_data))
     }
@@ -236,7 +212,24 @@ calculateTPM <- function(object, effective_length = NULL, calc_from = "counts") 
     counts * (len / eff_len)
 }
 
-
+#' Calculate counts per million (CPM)
+#' 
+#' Calculate count-per-million (CPM) values from the count data.
+#' 
+#' @param object an \code{SCESet} object
+#' @param use.size.factors a logical scalar specifying whether 
+#' the size factors should be used to construct effective library 
+#' sizes, or if the library size should be directly defined as
+#' the sum of counts for each cell.
+#' 
+#' @return Matrix of CPM values.
+#' @export
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' example_sceset <- newSCESet(countData = sc_example_counts)
+#' cpm(example_sceset) <- calculateCPM(example_sceset)
+#' 
 calculateCPM <- function(object, use.size.factors = TRUE) {
     counts_mat <- counts(object)
     if (use.size.factors) { 
@@ -277,6 +270,7 @@ calculateCPM <- function(object, use.size.factors = TRUE) {
 #' @param object an \code{SCESet} object
 #' @param effective_length vector of class \code{"numeric"} providing the 
 #' effective length for each feature in the \code{SCESet} object
+#' @param use.size.factors a logical scalar, see \code{\link{calculateCPM}}
 #' 
 #' @return Matrix of FPKM values.
 #' @export
