@@ -291,6 +291,7 @@ calculateFPKM <- function(object, effective_length, use.size.factors=TRUE) {
     if ( !is(object, "SCESet"))
         stop("object must be an SCESet")
     cpms <- calculateCPM(object, use.size.factors=use.size.factors)
+    effective_length <- effective_length/1e3
     cpms/effective_length
 }
 
