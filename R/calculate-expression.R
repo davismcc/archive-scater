@@ -202,38 +202,6 @@ calculateTPM <- function(object, effective_length = NULL, calc_from = "counts") 
     tpm_to_add
 }
 
-
-#' Calculate fragments per kilobase of exon per million reads mapped (FPKM)
-#' 
-#' Calculate fragments per kilobase of exon per million reads mapped (FPKM) 
-#' values for expression from counts for a set of features.
-#' 
-#' @param object an \code{SCESet} object
-#' @param effective_length vector of class \code{"numeric"} providing the 
-#' effective length for each feature in the \code{SCESet} object
-#' 
-#' @return Matrix of FPKM values.
-#' @export
-#' @examples
-#' data("sc_example_counts")
-#' data("sc_example_cell_info")
-#' example_sceset <- newSCESet(countData = sc_example_counts)
-#' effective_length <- rep(1000, 2000)
-#' fpkm(example_sceset) <- calculateFPKM(example_sceset, effective_length)
-#' 
-calculateFPKM <- function(object, effective_length) {
-    if ( !is(object, "SCESet"))
-        stop("object must be an SCESet")
-    ## Compute values to add
-    fpkm_to_add <- .countToFpkm(counts(object), effective_length)
-    ## Return matrix of FPKM values
-    rownames(fpkm_to_add) <- featureNames(object)
-    colnames(fpkm_to_add) <- colnames(object)
-    fpkm_to_add
-}
-
-
-
 .countToTpm <- function(counts, eff_len) {
     ## Expecting a count matrix of nfeatures x ncells
     ## can't have any zero counts, so expect to apply offset
@@ -267,6 +235,65 @@ calculateFPKM <- function(object, effective_length) {
 .countToEffCounts <- function(counts, len, eff_len) {
     counts * (len / eff_len)
 }
+
+
+calculateCPM <- function(object, use.size.factors = TRUE) {
+    counts_mat <- counts(object)
+    if (use.size.factors) { 
+        sf <- sizeFactors(object)
+        control_list <- .find_control_SF(object)
+        if (is.null(sf)) {
+            warning("size factors requested but not specified, using library sizes instead")
+            sf <- colSums(counts_mat)
+            control_list <- list()            
+        }
+    } else {
+        sf <- colSums(counts_mat)
+        control_list <- list()
+    }
+
+    # Scaling the size factors to the library size.
+    lib.size <- colSums(counts_mat)
+    scaled.sf <- sf/mean(sf) * mean(lib.size)
+    cpm_mat <- edgeR::cpm(counts_mat, lib.size=scaled.sf)
+
+    for (alt in control_list) {
+        scaled.sf <- alt$SF/mean(alt$SF) * mean(lib.size)
+        cpm_mat[alt$ID,] <- edgeR::cpm(counts_mat[alt$ID,,drop=FALSE], 
+                                       lib.size=scaled.sf)
+    }
+
+    # Restoring attributes.
+    rownames(cpm_mat) <- featureNames(object)
+    colnames(cpm_mat) <- colnames(object)
+    return(cpm_mat)
+}
+
+#' Calculate fragments per kilobase of exon per million reads mapped (FPKM)
+#' 
+#' Calculate fragments per kilobase of exon per million reads mapped (FPKM) 
+#' values for expression from counts for a set of features.
+#' 
+#' @param object an \code{SCESet} object
+#' @param effective_length vector of class \code{"numeric"} providing the 
+#' effective length for each feature in the \code{SCESet} object
+#' 
+#' @return Matrix of FPKM values.
+#' @export
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' example_sceset <- newSCESet(countData = sc_example_counts)
+#' effective_length <- rep(1000, 2000)
+#' fpkm(example_sceset) <- calculateFPKM(example_sceset, effective_length)
+#' 
+calculateFPKM <- function(object, effective_length, use.size.factors=TRUE) {
+    if ( !is(object, "SCESet"))
+        stop("object must be an SCESet")
+    cpms <- calculateCPM(object, use.size.factors=use.size.factors)
+    cpms/effective_length
+}
+
 
 calcAverage <- function(object) { 
     # Computes the average count, adjusting for size factors or library size.

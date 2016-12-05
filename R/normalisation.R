@@ -325,14 +325,6 @@ normalize.SCESet <- function(object, exprs_values = NULL,
     return(object)
 }
 
-.recompute_cpm_fun <- function(exprs_mat, size_factors,
-                               lib_size, logExprsOffset) {
-    edgeR::cpm.default(exprs_mat,
-       # centering size factors on the average library size:
-       lib.size = (size_factors * mean(lib_size) / mean(size_factors)),
-       log = FALSE, prior.count = logExprsOffset)
-}
-
 .recompute_expr_fun <- function(exprs_mat, size_factors, logExprsOffset, 
                                 subset.row = NULL) {
     .compute_exprs(exprs_mat, size_factors,
