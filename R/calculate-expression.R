@@ -11,7 +11,8 @@
 #' (\code{"counts"}), the transformed expression data (\code{"exprs"}), 
 #' transcript-per-million (\code{"tpm"}), counts-per-million (\code{"cpm"}) or 
 #' FPKM (\code{"fpkm"}) should be used to define if an observation is expressed 
-#' or not.
+#' or not. Defaults to the first available value of those options in the
+#' order shown.
 #' @return a logical matrix indicating whether or not a feature in a particular 
 #' cell is expressed.
 #' @export
@@ -51,8 +52,9 @@ calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_data = NULL)
 #' (\code{"counts"}), the transformed expression data (\code{"exprs"}), 
 #' transcript-per-million (\code{"tpm"}), counts-per-million (\code{"cpm"}) or 
 #' FPKM (\code{"fpkm"}) should be used to define if an observation is expressed 
-#' or not. However, if \code{is_exprs(object)} is present, it will be used directly 
-#' such that \code{exprs_data} and \code{lowerDetectionLimit} are ignored.
+#' or not. Defaults to the first available value of those options in the
+#' order shown. However, if \code{is_exprs(object)} is present, it will be 
+#' used directly; \code{exprs_data} and \code{lowerDetectionLimit} are ignored.
 #' @param subset.row logical or character vector indicating which rows 
 #' (i.e. features/genes) to subset and calculate 'is_exprs_mat' for.
 #' @param byrow logical scalar indicating if \code{TRUE} to count expressing 
@@ -76,7 +78,7 @@ calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_data = NULL)
 #' nexprs(example_sceset)[1:10]
 #' nexprs(example_sceset, byrow = TRUE)[1:10]
 #' 
-nexprs <- function(object, lowerDetectionLimit = NULL, exprs_data = "counts", subset.row = NULL, byrow = FALSE) {
+nexprs <- function(object, lowerDetectionLimit = NULL, exprs_data = NULL, subset.row = NULL, byrow = FALSE) {
     if (!is(object, "SCESet")) { 
         stop("'object' must be a SCESet")
     }
