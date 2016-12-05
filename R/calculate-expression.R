@@ -56,7 +56,93 @@ calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_data = "counts
     isexprs
 }
 
+#' Count the number of expressed genes per cell
+#' 
+#' 
+#' @param object an \code{SCESet} object
+#' @param lowerDetectionLimit numeric scalar providing the value above which observations
+#' are deemed to be expressed. Defaults to \code{object@lowerDetectionLimit}.
+#' @param exprs_data character scalar indicating whether the count data 
+#' (\code{"counts"}), the transformed expression data (\code{"exprs"}), 
+#' transcript-per-million (\code{"tpm"}), counts-per-million (\code{"cpm"}) or 
+#' FPKM (\code{"fpkm"}) should be used to define if an observation is expressed 
+#' or not. However, if \code{is_exprs(object)} is present, it will be used directly 
+#' such that \code{exprs_data} and \code{lowerDetectionLimit} are ignored.
+#' @param subset.row logical or character vector indicating which rows 
+#' (i.e. features/genes) to subset and calculate 'is_exprs_mat' for.
+#' @param byrow logical scalar indicating if \code{TRUE} to count expressing 
+#' cells per feature (i.e. gene) and if \code{FALSE} to count expressing 
+#' features (i.e. genes) per cell.
+#' 
+#' @description An efficient internal function that avoids the need to construct 
+#' 'is_exprs_mat' by counting the number of expressed genes per cell on the fly.
+#' 
+#' @return a numeric vector of the same length as the number of features if
+#' \code{byrow} argument is \code{TRUE} and the same length as the number of 
+#' cells if \code{byrow} is \code{FALSE}
+#' 
+#' @export
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
+#' rownames(pd) <- pd$Cell
+#' example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
+#' nexprs(example_sceset)[1:10]
+#' nexprs(example_sceset, byrow = TRUE)[1:10]
+#' 
+nexprs <- function(object, lowerDetectionLimit = NULL, exprs_data = "counts", subset.row = NULL, byrow = FALSE) {
+    if (!is(object, "SCESet")) { 
+        stop("'object' must be a SCESet")
+    }
+    is_exprs_mat <- is_exprs(object)
+    exprs_data <- match.arg(exprs_data, c("counts", "exprs", "tpm", "cpm", "fpkm"))
+    exprs_mat <- switch(exprs_data,
+                        counts = counts(object),
+                        exprs = exprs(object),
+                        tpm = tpm(object),
+                        cpm = cpm(object),
+                        fpkm = fpkm(object))   
+    if (is.null(is_exprs_mat) && is.null(exprs_mat)) {
+        stop(sprintf("either 'is_exprs(object)' or '%s(object)' must be non-NULL", exprs_data))
+    }
 
+    # Setting the detection lowerDetectionLimit properly.
+    if (is.null(lowerDetectionLimit)) {
+        lowerDetectionLimit <- object@lowerDetectionLimit
+    }
+    if (!is.null(exprs_mat)) { 
+        storage.mode(lowerDetectionLimit) <- storage.mode(exprs_mat)
+    }
+
+    if (!byrow) {
+        if (!is.null(is_exprs_mat)) {
+            # Counting expressing genes per cell, using predefined 'is_exprs(object)'.
+            if (is.null(subset.row)) {
+               return(colSums(is_exprs_mat)) 
+            } else {
+                subset.row <- .subset2index(subset.row, is_exprs_mat)
+                return(.checkedCall(cxx_colsum_subset, is_exprs_mat, subset.row - 1L))
+            }
+        } else {
+            # Counting expressing genes per cell, using the counts to define 'expressing'.
+            if (is.null(subset.row)) { 
+                subset.row <- seq_len(nrow(exprs_mat)) 
+            } else {
+                subset.row <- .subset2index(subset.row, exprs_mat)
+            }
+            return(.checkedCall(cxx_colsum_exprs_subset, exprs_mat, 
+                                lowerDetectionLimit, subset.row - 1L))
+        }
+    } else {
+        # Counting expressing cells per gene.
+        if (!is.null(is_exprs_mat)) {
+            return(rowSums(is_exprs_mat))
+        } else { 
+            return(.checkedCall(cxx_rowsum_exprs, exprs_mat, lowerDetectionLimit))
+        }
+    }
+}
 
 #' Calculate transcripts-per-million (TPM)
 #' 
@@ -177,8 +263,23 @@ calculateFPKM <- function(object, effective_length) {
     counts * (len / eff_len)
 }
 
+calcAverage <- function(object) { 
+    # Computes the average count, adjusting for size factors or library size.
+    control.list <- .find_control_SF(object)
+    sf <- suppressWarnings(sizeFactors(object))
+    if (is.null(sf)) sf <- colSums(counts(object))
+    control_list <- .find_control_SF(object)
 
+    all.ave <- .compute_ave_count(counts(object), size_factors = sf)
+    for (alt in control_list) {
+        all.ave[alt$ID,] <- .compute_ave_count(counts(object), size_factors = alt$SF,
+                                               subset.row=alt$ID)
+    }
+    return(all.ave/ncol(object))
+}
 
-
-
+.compute_ave_count <- function(counts_mat, size_factors, subset.row = NULL) {
+    .compute_exprs(counts_mat, size_factors, log = FALSE, sum = TRUE, 
+                   logExprsOffset = 0, subset.row = subset.row)
+}
 

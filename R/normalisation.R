@@ -161,10 +161,10 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
                                        mean(size_factors)),
                        prior.count = object@logExprsOffset, log = FALSE)
         if ( object@logged )
-            norm_exprs(object) <-
-            edgeR::cpm.default(exprs_mat,
-                       lib.size = (1e06 * size_factors),
-                       prior.count = object@logExprsOffset, log = object@logged)
+            norm_exprs(object) <- .recompute_expr_fun(exprs_mat = exprs_mat,
+                                                      size_factors = size_factors,
+                                                      logExprsOffset = object@logExprsOffset,
+                                                      isCount = TRUE)
     } else {
         ## Add tpm if relevant
         if ( exprs_values == "tpm" ) {
@@ -286,10 +286,12 @@ normalize.SCESet <- function(object, exprs_values = "counts",
                              return_norm_as_exprs = TRUE) {
     if ( !is(object, "SCESet") )
         stop("object must be an SCESet.")
+  
     ## Define expression values to be used
     exprs_values <- match.arg(exprs_values, c("tpm", "fpkm", "counts"))
     isCount <- exprs_values == "counts"
     exprs_mat <- get_exprs(object, exprs_values)
+
     ## extract existing size factors
     size_factors <- sizeFactors(object)
     if ( is.null(size_factors) ) {
@@ -297,15 +299,9 @@ normalize.SCESet <- function(object, exprs_values = "counts",
                 original object")
         return(object)
     }
+    
     ## figuring out how many controls have their own size factors
-    control_list <- list()
-    for (fc in .get_feature_control_names(object)) {
-        specific_sf <- suppressWarnings(sizeFactors(object, type=fc))
-        if (!is.null(specific_sf)) {
-            which.current <- fData(object)[[paste0("is_feature_control_", fc)]]
-            control_list[[fc]] <- list(SF=specific_sf, ID=which.current)
-        }
-    }
+    control_list <- .find_control_SF(object)
 
     ## extract logExprsOffset if argument is NULL
     if ( is.null(logExprsOffset) )
@@ -332,10 +328,9 @@ normalize.SCESet <- function(object, exprs_values = "counts",
                         logExprsOffset = logExprsOffset, isCount = isCount)
     for (alt in control_list) {
         norm_exprs_mat[alt$ID,] <- .recompute_expr_fun(
-                                        exprs_mat[alt$ID,,drop=FALSE],
-                                        size_factors = alt$SF,
+                                        exprs_mat, size_factors = alt$SF,
                                         logExprsOffset = logExprsOffset,
-                                        isCount = isCount)
+                                        isCount = isCount, subset.row=alt$ID)
     }
 
     ## add normalised values to object
@@ -347,7 +342,6 @@ normalize.SCESet <- function(object, exprs_values = "counts",
     return(object)
 }
 
-
 .recompute_cpm_fun <- function(exprs_mat, size_factors,
                                lib_size, logExprsOffset) {
     edgeR::cpm.default(exprs_mat,
@@ -357,14 +351,17 @@ normalize.SCESet <- function(object, exprs_values = "counts",
 }
 
 .recompute_expr_fun <- function(exprs_mat, size_factors,
-                                logExprsOffset, isCount) {
-    size_factors <- size_factors / mean(size_factors)
-    if (isCount) {
-        out <- edgeR::cpm.default(
-                   exprs_mat, prior.count = logExprsOffset,
-                   # 1e6 multiplication, so CPM *is* the "normalized" count:
-                   lib.size = size_factors * 1e6, log = TRUE)
+                                logExprsOffset, 
+                                isCount = TRUE,
+                                subset.row = NULL) {
+    if (isCount) { 
+        out <- .compute_exprs(exprs_mat, size_factors,
+                              log = TRUE, sum = FALSE,
+                              logExprsOffset = logExprsOffset,
+                              subset.row = subset.row)
     } else {
+        size_factors <- size_factors / mean(size_factors)
+        if (!is.null(subset.row)) exprs_mat <- exprs_mat[subset.row,]
         out <- log2(t(t(exprs_mat) / size_factors) + logExprsOffset)
     }
     return(out)
