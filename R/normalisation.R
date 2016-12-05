@@ -233,10 +233,12 @@ normalize.SCESet <- function(object, exprs_values = NULL,
     exprs_mat <- get_exprs(object, exprs_values, warning=FALSE)
 
     ## extract existing size factors
-    size_factors <- sizeFactors(object)
-    if ( is.null(size_factors) && exprs_values=="counts") {
-        warning("skipping normalization of counts as size factors were not defined")
-        return(object)
+    if (exprs_values=="counts") {
+        size_factors <- suppressWarnings(sizeFactors(object))
+        if ( is.null(size_factors) ) {
+            warning("skipping normalization of counts as size factors were not defined")
+            return(object)
+        }
     } else {
         size_factors <- rep(1, ncol(object)) # ignoring size factors for non-count data.
     }
