@@ -21,12 +21,13 @@
 #' example_sceset <- newSCESet(countData=sc_example_counts)
 #' is_exprs(example_sceset) <- calcIsExprs(example_sceset, lowerDetectionLimit = 1,
 #' exprs_data = "exprs")
-calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_data = "counts")
+calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_data = NULL)
 {
     if ( !is(object, "SCESet") )
         stop("Object must be an SCESet.")
+    
     ## Check that args are appropriate
-    exprs_data <- match.arg(exprs_data, c("counts", "exprs", "tpm", "cpm", "fpkm"))
+    exprs_data <- .exprs_hunter(object, exprs_data)
     dat_matrix <- switch(exprs_data,
                          counts = counts(object),
                          exprs = exprs(object),
@@ -36,6 +37,7 @@ calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_data = "counts
     if ( is.null(dat_matrix) )
         stop(paste0("Tried to use ", exprs_data, " as expression data, but ", 
                     exprs_data, "(object) is null."))
+
     #     
     #     if ( exprs_data == "counts" ) {
     #         dat_matrix <- counts(object)
@@ -46,9 +48,11 @@ calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_data = "counts
     #         else
     #             
     #     }
+
     ## Extract lowerDetectionLimit if not provided
     if ( is.null(lowerDetectionLimit) )
         lowerDetectionLimit <- object@lowerDetectionLimit
+
     ## Decide which observations are above detection limit and return matrix
     isexprs <- dat_matrix > lowerDetectionLimit
     rownames(isexprs) <- rownames(dat_matrix)
@@ -96,7 +100,8 @@ nexprs <- function(object, lowerDetectionLimit = NULL, exprs_data = "counts", su
         stop("'object' must be a SCESet")
     }
     is_exprs_mat <- is_exprs(object)
-    exprs_data <- match.arg(exprs_data, c("counts", "exprs", "tpm", "cpm", "fpkm"))
+
+    exprs_data <- .exprs_hunter(object, exprs_data)
     exprs_mat <- switch(exprs_data,
                         counts = counts(object),
                         exprs = exprs(object),

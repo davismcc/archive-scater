@@ -176,13 +176,6 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
         stop("object must have at least one sample (column)")
     if ( nrow(object) < 1 )
         stop("object must have at least one feature (row)")
-    ## Compute cell-level metrics
-    if ( is.null(is_exprs(object)) ) {
-        if (is.null(counts(object))) {
-            stop("need either is_exprs(object) or counts(object) to be defined,
-  e.g., use `is_exprs(object) <- exprs(object) > 0.1`")
-        }
-    }
 
     ## See what versions of the expression data are available in the object
     exprs_mat <- exprs(object)
