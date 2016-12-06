@@ -585,7 +585,7 @@ setReplaceMethod("pData", signature(object = "SCESet", value = "data.frame"),
 #' assayData slot of the SCESet object.
 #'
 #' @usage
-#' \S4method{get_exprs}{SCESet}(object, exprs_values)
+#' \S4method{get_exprs}{SCESet}(object, exprs_values, warning = TRUE)
 #'
 #' @docType methods
 #' @name get_exprs
@@ -604,6 +604,9 @@ setReplaceMethod("pData", signature(object = "SCESet", value = "data.frame"),
 #' expression values) or \code{"stand_exprs"} (standardised expression values)
 #' or any other slots that have been added to the \code{"assayData"} slot by
 #' the user.
+#' @param warning a logical scalar specifying whether a warning should be 
+#' raised, and \code{NULL} returned, if the requested expression values are 
+#' not present in \code{object}. Otherwise, an error will be thrown.
 #' @author Davis McCarthy
 #' @export
 #' @examples
@@ -617,18 +620,26 @@ setReplaceMethod("pData", signature(object = "SCESet", value = "data.frame"),
 #' colSums(counts(example_sceset)))
 #' get_exprs(example_sceset, "scaled_counts")[1:6, 1:6]
 #'
-get_exprs.SCESet <- function(object, exprs_values = "exprs") {
+get_exprs.SCESet <- function(object, exprs_values = "exprs", warning = TRUE) {
     exprs_mat <- object@assayData[[exprs_values]]
-    if ( is.null(exprs_mat) )
-        warning(paste0("The object does not contain ", exprs_values, " expression values. Returning NULL."))
+
+    if ( is.null(exprs_mat) ) {
+        msg <- sprintf("'object' does not contain '%s' values", exprs_values)
+        if (warning) {
+            warning(paste0(msg, ", returning NULL"))
+        } else {
+            stop(msg)
+        }
+    }
+
     exprs_mat
 }
 
 #' @rdname get_exprs
 #' @export
 setMethod("get_exprs", signature(object = "SCESet"),
-          function(object, exprs_values = "exprs") {
-              get_exprs.SCESet(object, exprs_values)
+          function(object, exprs_values = "exprs", warning = TRUE) {
+              get_exprs.SCESet(object, exprs_values, warning = warning)
           })
 
 
@@ -1775,6 +1786,57 @@ setReplaceMethod("featDist", signature(object = "SCESet", value = "dist"),
                          stop("Feature pairwise distance matrix supplied is of incorrect size.")
                  } )
 
+
+################################################################################
+### featureControlInfo
+
+#' featureControlInfo in an SCESet object
+#'
+#' Each SCESet object stores optional information about the controls in the 
+#' \code{featureControlInfo} slot. These functions can be used to access,
+#' replace or modify this information.
+#'
+#' @param object a \code{SCESet} object.
+#' @param value an AnnotatedDataFrame object, where each row contains 
+#' information for a single set of control features.
+#'
+#' @docType methods
+#' @name featureControlInfo
+#' @rdname featureControlInfo
+#' @aliases featureControlInfo featureControlInfo,SCESet-method featureControlInfo<-,SCESet,AnnotatedDataFrame-method featureControlInfo<- 
+#'
+#' @author Aaron Lun 
+#'
+#' @return An SCESet object containing new feature control information.
+#' @export
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' example_sceset <- calculateQCMetrics(example_sceset, feature_controls = list(ERCC = 1:40, Mito=41:50))
+#' featureControlInfo(example_sceset) 
+#' featureControlInfo(example_sceset)$IsSpike <- c(TRUE, FALSE)
+featureControlInfo.SCESet <- function(object) {
+    object@featureControlInfo
+}
+
+#' @rdname featureControlInfo
+#' @aliases featureControlInfo
+#' @export
+setMethod("featureControlInfo", signature(object = "SCESet"),
+          featureControlInfo.SCESet)
+
+#' @name featureControlInfo<-
+#' @aliases featureControlInfo
+#' @rdname featureControlInfo
+#' @export "featureControlInfo<-"
+setReplaceMethod("featureControlInfo", signature(object = "SCESet",
+                                                 value = "AnnotatedDataFrame"),
+                 function(object, value) {
+                     object@featureControlInfo <- value
+                     return(object)
+                 })
 
 ################################################################################
 ### Convert to and from Monocle CellDataSet objects
