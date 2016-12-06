@@ -263,6 +263,26 @@ calculateFPKM <- function(object, effective_length) {
     counts * (len / eff_len)
 }
 
+
+#' Calculate average counts, adjusting for size factors or library size
+#' 
+#' Calculate average counts per feature, adjusting them as appropriate to take 
+#' into account for size factors for normalization or library sizes (total 
+#' counts).
+#' 
+#' @param object an \code{SCESet} object
+#' 
+#' @return Vector of average count values with same length as number of features.
+#' @export
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#'     
+#' ## calculate average counts
+#' ave_counts <- calcAverage(example_sceset)
+#' 
 calcAverage <- function(object) { 
     # Computes the average count, adjusting for size factors or library size.
     control.list <- .find_control_SF(object)
