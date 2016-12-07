@@ -4,13 +4,15 @@
 \alias{calculateFPKM}
 \title{Calculate fragments per kilobase of exon per million reads mapped (FPKM)}
 \usage{
-calculateFPKM(object, effective_length)
+calculateFPKM(object, effective_length, use.size.factors = TRUE)
 }
 \arguments{
 \item{object}{an \code{SCESet} object}
 
 \item{effective_length}{vector of class \code{"numeric"} providing the 
 effective length for each feature in the \code{SCESet} object}
+
+\item{use.size.factors}{a logical scalar, see \code{\link{calculateCPM}}}
 }
 \value{
 Matrix of FPKM values.

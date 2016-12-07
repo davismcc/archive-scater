@@ -64,7 +64,7 @@ test_that("set_exprs and get_exprs work as expected", {
         
     ## expect NULL is returned if an assayData element hasn't been defined
     expect_warning(tmp <- get_exprs(example_sceset, "norm_exprs"), 
-                   "The object does not contain")
+                   "'object' does not contain")
     expect_null(tmp)
     
     ## expect we still get an SCESet after using set_exprs

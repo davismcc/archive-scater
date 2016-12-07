@@ -6,7 +6,7 @@
 observed counts, transcripts-per-million, counts-per-million, FPKM, or 
 defined expression levels.}
 \usage{
-calcIsExprs(object, lowerDetectionLimit = NULL, exprs_data = "counts")
+calcIsExprs(object, lowerDetectionLimit = NULL, exprs_data = NULL)
 }
 \arguments{
 \item{object}{an SCESet object with expression and/or count data.}
@@ -18,7 +18,8 @@ for an expression observation in a cell for it to qualify as expressed.}
 (\code{"counts"}), the transformed expression data (\code{"exprs"}), 
 transcript-per-million (\code{"tpm"}), counts-per-million (\code{"cpm"}) or 
 FPKM (\code{"fpkm"}) should be used to define if an observation is expressed 
-or not.}
+or not. Defaults to the first available value of those options in the
+order shown.}
 }
 \value{
 a logical matrix indicating whether or not a feature in a particular 

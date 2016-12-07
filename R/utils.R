@@ -65,12 +65,12 @@
     if (!is.null(proposed)) { 
         proposed <- match.arg(proposed, .exprs_hierarchy)
     } else {
-        m <- match(.exprs_hierarchy, assayDataElementNames(object))
+        m <- match(.exprs_hierarchy, Biobase::assayDataElementNames(object))
         failed <- is.na(m)
         if (all(failed)) {
             stop("no expression values present in 'object'")
         }
-        proposed <- assayDataElementNames(object)[m[!failed][1]]
+        proposed <- Biobase::assayDataElementNames(object)[m[!failed][1]]
     }
     return(proposed)
 }

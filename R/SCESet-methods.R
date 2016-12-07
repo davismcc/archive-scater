@@ -607,6 +607,7 @@ setReplaceMethod("pData", signature(object = "SCESet", value = "data.frame"),
 #' @param warning a logical scalar specifying whether a warning should be 
 #' raised, and \code{NULL} returned, if the requested expression values are 
 #' not present in \code{object}. Otherwise, an error will be thrown.
+#' @param ... further arguments passed to \code{get_exprs.SCESet}
 #' @author Davis McCarthy
 #' @export
 #' @examples
@@ -1814,7 +1815,8 @@ setReplaceMethod("featDist", signature(object = "SCESet", value = "dist"),
 #' data("sc_example_cell_info")
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
-#' example_sceset <- calculateQCMetrics(example_sceset, feature_controls = list(ERCC = 1:40, Mito=41:50))
+#' example_sceset <- calculateQCMetrics(example_sceset, 
+#'                             feature_controls = list(ERCC = 1:40, Mito=41:50))
 #' featureControlInfo(example_sceset) 
 #' featureControlInfo(example_sceset)$IsSpike <- c(TRUE, FALSE)
 featureControlInfo.SCESet <- function(object) {
