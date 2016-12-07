@@ -1221,7 +1221,7 @@ This variable will not be plotted."))
             labelDescription = paste("Median marginal R-squared =",
                                      median_rsquared))
         fdata <- fData(object)
-        rsq_out <- rsquared_mat[, oo_median[1:nvars_to_plot]]
+        rsq_out <- rsquared_mat[, oo_median[1:nvars_to_plot], drop = FALSE]
         colnames(rsq_out) <- paste0("Rsq_", colnames(rsq_out))
         fdata_new <- new("AnnotatedDataFrame", cbind(fdata, rsq_out))
         fData(object) <- fdata_new
