@@ -98,49 +98,59 @@ newSCESet <- function(exprsData = NULL,
                       is_exprsData = NULL,
                       cellPairwiseDistances = dist(vector()),
                       featurePairwiseDistances = dist(vector()),
-                      lowerDetectionLimit = 0,
-                      logExprsOffset = 1,
-                      logged = FALSE,
-                      useForExprs = "exprs")
+                      lowerDetectionLimit = NULL,
+                      logExprsOffset = NULL)
 {
-    ## Check that we have some expression data
-    if ( is.null(exprsData) && is.null(countData) && is.null(tpmData) &
-         is.null(fpkmData) && is.null(cpmData))
-        stop("Require at least one of exprsData, tpmData, fpkmData or countData arguments.")
-    ## Check dimensions of data matrices
-
-    ## Check counts are a matrix; renames is_exprsData if not null
-    if ( !is.null(countData) )
-        countData <- as.matrix(countData)
-    if ( !is.null(is_exprsData) )
-        isexprs <- is_exprsData
-
-    ## If no exprsData provided define is_exprs from tpmData, fpkmData or countData
-    if ( is.null(exprsData) ) {
-        ## Define exprs data if null
-        if ( !is.null(tpmData) ) {
-            exprsData <- log2(tpmData + logExprsOffset)
-            logged <- TRUE
-        } else {
-            if ( !is.null(fpkmData) ) {
-                exprsData <- log2(fpkmData + logExprsOffset)
-                logged <- TRUE
+    ## Checking which value to use, in the hierarchy specified.
+    have.data <- NULL
+    for (dataname in c("countData", "tpmData", "cpmData", "fpkmData", "exprsData")) { 
+        eData <- get(dataname)
+        if (!is.null(eData)) { 
+            if (!is.null(have.data)) {
+                warning(sprintf("'%s' provided, '%s' will be ignored", have.data, dataname))
+                assign(dataname, NULL)
             } else {
-                if ( !is.null(cpmData) ) {
-                    exprsData <- log2(cpmData + logExprsOffset)
-                    logged <- TRUE
-                }  else {
-                    exprsData <- .compute_exprs(countData,
-                                                size_factors = colSums(countData),
-                                                log = TRUE, sum = FALSE,
-                                                logExprsOffset = logExprsOffset) 
-                    dimnames(exprsData) <- dimnames(countData)
-                    logged <- TRUE
-                }
+                assign(dataname, as.matrix(eData))
+                have.data <- dataname
             }
         }
-    } else {
-        exprsData <- as.matrix(exprsData)
+    }
+
+    if (is.null(have.data)) {
+        stop("one set of expression values should be supplied")
+    }
+
+    if (!is.null(is_exprsData)) { 
+        if (have.data!="exprsData") {
+            warning(sprintf("'%s' provided, 'is_exprsData' will be ignored", have.data))
+            is_exprsData <- NULL
+        } else {
+            is_exprsData <- as.matrix(is_exprsData)
+        }
+    }
+
+    ## Setting logExprsOffset and lowerDetectionLimit.
+    if (is.null(logExprsOffset)) { 
+        logExprsOffset <- 1
+        if (have.data!="countData") {
+            warning("'logExprsOffset' should be set manually for non-count data")
+        }
+    }
+
+    if (is.null(lowerDetectionLimit)) {
+        lowerDetectionLimit <- 0
+        if (have.data=="exprsData") { 
+            warning("'lowerDetectionLimit' should be set manually for log-expression values")
+        }
+    }
+
+    ## If no exprsData provided, define it from counts or T/C/FPKMs
+    if (have.data=="countData") {
+        exprsData <- .compute_exprs(countData, size_factors = colSums(countData),
+                                    log = TRUE, sum = FALSE, logExprsOffset = logExprsOffset)
+        dimnames(exprsData) <- dimnames(countData)
+    } else if (have.data!="exprsData") {
+        exprsData <- log2(get(have.data) + logExprsOffset)
     }
 
     ## Generate valid phenoData and featureData if not provided
@@ -166,21 +176,14 @@ newSCESet <- function(exprsData = NULL,
             expData <- experimentData
         else {
             expData <- expData_null
-            warning("experimentData supplied is not an 'MIAME' object. Thus, experimentData is being set to an empty MIAME object.\n Please supply a valid 'MIAME' class object containing experiment data to experimentData(object).")
+            warning("'experimentData' is not an 'MIAME' object, setting to an empty object")
         }
     } else {
         expData <- expData_null
     }
 
-    ## Check valid useForExprs
-    useForExprs <- match.arg(useForExprs, c("exprs","tpm","counts","fpkm"))
-
     ## Generate new SCESet object
-    if ( !is.null(is_exprsData) )
-        assaydata <- assayDataNew("lockedEnvironment", exprs = exprsData,
-                                  is_exprs = isexprs)
-    else 
-        assaydata <- assayDataNew("lockedEnvironment", exprs = exprsData)
+    assaydata <- assayDataNew("lockedEnvironment", exprs = exprsData)
     sceset <- new( "SCESet",
                    assayData = assaydata,
                    phenoData = phenoData,
@@ -190,11 +193,13 @@ newSCESet <- function(exprsData = NULL,
                    featurePairwiseDistances = featurePairwiseDistances,
                    lowerDetectionLimit = lowerDetectionLimit,
                    logExprsOffset = logExprsOffset,
-                   logged = logged,
+                   logged = TRUE,
                    featureControlInfo = AnnotatedDataFrame(),
-                   useForExprs = useForExprs)
+                   useForExprs = "exprs")
 
     ## Add non-null slots to assayData for SCESet object, omitting null slots
+    if ( !is.null(is_exprsData) ) 
+        is_exprs(sceset) <- is_exprsData
     if ( !is.null(tpmData) )
         tpm(sceset) <- tpmData
     if ( !is.null(fpkmData) )
@@ -203,7 +208,6 @@ newSCESet <- function(exprsData = NULL,
         counts(sceset) <- countData
     if ( !is.null(cpmData) )
         cpm(sceset) <- cpmData
-
 
     ## Check validity of object
     validObject(sceset)
