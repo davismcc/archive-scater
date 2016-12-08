@@ -5,16 +5,12 @@
 
 #' Create a new SCESet object.
 #'
-#' Scater requires that all data be housed in SCESet objects. SCESet extends
-#' Bioconductor's ExpressionSet class, and the same basic interface is
-#' supported. newSCESet() expects a matrix of expression values as its first
-#' argument, with rows as features (usually genes) and columns as cells.
-#' Per-feature and per-cell metadata can be supplied with the featureData and
-#' phenoData arguments, respectively. Use of these optional arguments is
-#' strongly encouraged. The SCESet also includes a slot 'counts' to store an
-#' object containing raw count data.
+#' Create a new SCESet object (the basic data container class in scater) from a
+#' supplied matrix of expression values, plus cell and feature metadata. The 
+#' expression matrix have rows representing features (usually genes) and columns
+#' representing cells.
 #'
-#' @param exprsData expression data matrix for an experiment
+#' @param exprsData expression data matrix for an experiment (features x cells)
 #' @param countData data matrix containing raw count expression values
 #' @param tpmData matrix of class \code{"numeric"} containing
 #' transcripts-per-million (TPM) expression values
@@ -38,41 +34,46 @@
 #' @param logExprsOffset numeric scalar, providing the offset used when doing
 #' log2-transformations of expression data to avoid trying to take logs of zero.
 #' Default offset value is \code{1}.
-#' @param logged logical, if a value is supplied for the exprsData argument, are
-#'  the expression values already on the log2 scale, or not?
-
-#' @param useForExprs character string, either 'exprs' (default),'tpm','counts' or
-#'    'fpkm' indicating which expression representation both internal methods and
-#'    external packages should use when performing analyses.
+#' 
 #' @return a new SCESet object
 #'
 #' @details
-#' SCESet objects store a matrix of expression values. These values are
-#' typically transcripts-per-million (tpm), counts-per-million (cpm), fragments
-#' per kilobase per million mapped (FPKM) or some other output from a program
-#' that calculates expression values from RNA-Seq reads. We recommend that
-#' expression values on the log2 scale are used for the 'exprs' slot in the
-#' SCESet. For example, you may wish to store raw tpm values in the 'tpm' slot
-#' and \code{log2(tpm + 1)} values in the 'exprs' slot. However, expression
-#' values could also be values from a single cell qPCR run or some other type of
-#'  assay. The newSCESet function can also accept raw count values. In this case
-#'  see \code{\link{calculateTPM}} and \code{\link{calculateFPKM}} for computing
-#'  TPM and FPKM expression values, respectively, from counts. The function
-#'  \code{\link[edgeR]{cpm}} from the package edgeR to can be used to compute
-#'  log2(counts-per-million), if desired.
+#' Scater requires that all data be housed in SCESet objects. SCESet extends
+#' Bioconductor's ExpressionSet class, and the same basic interface is
+#' supported. newSCESet() expects a single matrix of expression values of a 
+#' nominated type to be provided, for example a matrix of counts or a matrix of 
+#' transcripts-per-million values. There is a hierarchy applied to the 
+#' expression data: counts > transcripts-per-million (tpm) > counts-per-million 
+#' (cpm) > fragments-per-kilobase-per-million-mapped (fpkm) > generic expression
+#' values on the log2 scale (exprs). Data types higher in the higher are 
+#' preferred. Data types lower in the hierarchy will be computed from values 
+#' higher in the hierarchy - e.g. counts-per-million and expression values 
+#' (as log2(cpm + offset)) will be computed from counts. Data types higher in 
+#' the hierarchy will never be computed from types lower in the hierarchy (e.g. 
+#' counts will never be computed from exprs values). At a 
+#' minimum, an SCESet object will contain exprs values; these will be computed
+#' as log2(*pm + offset) values if a data type higher in the hierarchy is 
+#' supplied as the expression matrix.
+#' 
+#' Per-feature and per-cell metadata can be supplied with the featureData and
+#' phenoData arguments, respectively. Use of these optional arguments is strongly encouraged.
+#' 
+#' Many methods are provided in the package that operate on SCESet objects.
+#' 
+#' Aside from the hierarchy of data types described above, scater is relatively
+#' agnostic with respect to data the nature of the expression values. Most 
+#' frequently used values are feature counts or transcripts-per-million (tpm), 
+#' but any valid output from a program that calculates expression values from 
+#' RNA-Seq reads is supported. For example, expression values could also be 
+#' values from a single cell qPCR run or some other type of assay. 
+#' 
+#' In some cases it may be desirable to have both tpm and counts in an SCESet
+#' object. In such cases, expression matrices can be added to an SCESet object
+#' after it has been produced by using the \code{\link{set_exprs}} function to
+#' add the expression matrix to the SCESet object.
 #'
-#'  An \code{SCESet} object has to have the \code{'exprs'} slot defined, so if
-#'  the \code{exprsData} argument is \code{NULL}, then this function will define
-#'  \code{'exprs'} with the following order of precedence: log2(TPM +
-#'  logExprsOffset), if \code{tpmData} is defined; log2(FPKM + logExprsOffset)
-#'  if \code{fpkmData} is defined; otherwise log2(counts-per-million +
-#'  logExprsOffset) are used. The \code{\link[edgeR]{cpm}} function from the
-#'  edgeR package is used to compte \code{cpm}. Note that for many analyses
-#'  counts-per-million are not recommended, and if possible
-#'  transcripts-per-million should be used.
-#'
-#'  In many downstream functions you will likely find it most convenient if the
-#'  \code{'exprs'} values are on the log2-scale, so this is recommended.
+#' In many downstream functions it is most convenient if the
+#' \code{'exprs'} values are on the log2-scale, so this is done by default.
 #'
 #' @importFrom Biobase annotatedDataFrameFrom
 #' @importFrom Biobase AnnotatedDataFrame
@@ -103,11 +104,13 @@ newSCESet <- function(exprsData = NULL,
 {
     ## Checking which value to use, in the hierarchy specified.
     have.data <- NULL
-    for (dataname in c("countData", "tpmData", "cpmData", "fpkmData", "exprsData")) { 
+    for (dataname in c("countData", "tpmData", "cpmData", "fpkmData", 
+                       "exprsData")) { 
         eData <- get(dataname)
         if (!is.null(eData)) { 
             if (!is.null(have.data)) {
-                warning(sprintf("'%s' provided, '%s' will be ignored", have.data, dataname))
+                warning(sprintf("'%s' provided, '%s' will be ignored", 
+                                have.data, dataname))
                 assign(dataname, NULL)
             } else {
                 assign(dataname, as.matrix(eData))
@@ -121,8 +124,9 @@ newSCESet <- function(exprsData = NULL,
     }
 
     if (!is.null(is_exprsData)) { 
-        if (have.data!="exprsData") {
-            warning(sprintf("'%s' provided, 'is_exprsData' will be ignored", have.data))
+        if (have.data != "exprsData") {
+            warning(sprintf("'%s' provided, 'is_exprsData' will be ignored", 
+                            have.data))
             is_exprsData <- NULL
         } else {
             is_exprsData <- as.matrix(is_exprsData)
@@ -132,24 +136,25 @@ newSCESet <- function(exprsData = NULL,
     ## Setting logExprsOffset and lowerDetectionLimit.
     if (is.null(logExprsOffset)) { 
         logExprsOffset <- 1
-        if (have.data!="countData") {
+        if (have.data != "countData") {
             warning("'logExprsOffset' should be set manually for non-count data")
         }
     }
 
     if (is.null(lowerDetectionLimit)) {
         lowerDetectionLimit <- 0
-        if (have.data=="exprsData") { 
+        if (have.data == "exprsData") { 
             warning("'lowerDetectionLimit' should be set manually for log-expression values")
         }
     }
 
     ## If no exprsData provided, define it from counts or T/C/FPKMs
-    if (have.data=="countData") {
+    if (have.data == "countData") {
         exprsData <- .compute_exprs(countData, size_factors = colSums(countData),
-                                    log = TRUE, sum = FALSE, logExprsOffset = logExprsOffset)
+                                    log = TRUE, sum = FALSE, 
+                                    logExprsOffset = logExprsOffset)
         dimnames(exprsData) <- dimnames(countData)
-    } else if (have.data!="exprsData") {
+    } else if (have.data != "exprsData") {
         exprsData <- log2(get(have.data) + logExprsOffset)
     }
 
@@ -685,6 +690,9 @@ setMethod("get_exprs", signature(object = "SCESet"),
 #' @exportMethod "set_exprs<-"
 setReplaceMethod("set_exprs", signature(object = "SCESet", value = "matrix"),
                  function(object, name, value) {
+                     if (!identical(dimnames(object), dimnames(value)))
+                         stop("dimnames for new expression matrix must be 
+                              identical to dimnames for object")
                      Biobase::assayDataElement(object, name) <- value
                      validObject(object)
                      object
@@ -1934,8 +1942,7 @@ fromCellDataSet <- function(cds, exprs_values = "tpm", logged = FALSE) {
                          fpkmData = fpkmData, countData = countData,
                          phenoData = phenoData(cds),
                          featureData = featureData(cds),
-                         lowerDetectionLimit = cds@lowerDetectionLimit,
-                         logged = logged)
+                         lowerDetectionLimit = cds@lowerDetectionLimit)
 
         ## now try and preserve a reduced dimension representation
         ## this is really not elegant - KC
@@ -1961,39 +1968,13 @@ fromCellDataSet <- function(cds, exprs_values = "tpm", logged = FALSE) {
 
 #' Retrieve a representation of gene expression
 #'
-#' Gene expression can be summarised in a variety of ways, e.g. as TPM, FPKM or
-#' as raw counts. Many internal methods and external packages rely on accessing
-#' a generic representation of expression without worrying about the particulars.
-#' Scater allows the user to set \code{object@@useForExprs} to the preferred
-#' type (either "exprs", "TPM", "fpkm" or "counts") and that particular representation
-#' will be returned by calls to \code{getExprs}. Note if such representation is
-#' not defined, this method returns \code{NULL}.
+#' Deprecated from scater version 1.3.29.
 #'
 #' @param object An object of type \code{SCESet}
 #' @return A matrix representation of expression corresponding to \code{object@useForExprs}.
 #'
-#' @export
-#' @examples
-#' data("sc_example_counts")
-#' data("sc_example_cell_info")
-#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
-#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd, useForExprs = "exprs")
-#' all(exprs(example_sceset) == getExprs(example_sceset)) # TRUE
-#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd, useForExprs = "counts")
-#' all(exprs(example_sceset) == getExprs(example_sceset)) # FALSE
-#' all(counts(example_sceset) == getExprs(example_sceset)) # TRUE
 getExprs <- function(object) {
-    if (!is(object,'SCESet')) stop('object must be of type SCESet')
-
-    x <- switch(object@useForExprs,
-                exprs = exprs(object),
-                tpm = tpm(object),
-                fpkm = fpkm(object),
-                counts = counts(object))
-
-    if(is.null(x)) warning(paste("Slot for", object@useForExprs, "is empty; returning NULL"))
-
-    return( x )
+    stop("Deprecated from scater 1.3.29")
 }
 
 
@@ -2092,8 +2073,8 @@ mergeSCESet <- function(x, y, fdata_cols_x = 1:ncol(fData(x)), fdata_cols_y = fd
     new_exprs <- Biobase::combine(exprs(x), exprs(y))
     ## new SCESet
     merged_sceset <- newSCESet(exprsData = new_exprs, featureData = new_fdata,
-                            phenoData = new_pdata, logged = x@logged,
-                            logExprsOffset = x@logExprsOffset)
+                               phenoData = new_pdata,
+                               logExprsOffset = x@logExprsOffset)
     ## add remaining assayData to merged SCESet
     assay_names <- intersect(names(Biobase::assayData(x)), 
                              names(Biobase::assayData(y)))
