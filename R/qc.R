@@ -226,7 +226,8 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
         exprs_mat, is_feature_control, pct_feature_controls_threshold,
         calc_top_features = TRUE, exprs_type = "exprs", compute_endog = FALSE)
 
-    for (ex in c("counts", "tpm", "fpkm")) { 
+    okay.expr.vals <- c("counts", "cpm", "tpm", "fpkm")
+    for (ex in okay.expr.vals) { 
         cur_mat <- switch(ex, counts=counts_mat, tpm=tpm_mat, fpkm=fpkm_mat)
         if (is.null(cur_mat)) { next }
         df_pdata_current <- .get_qc_metrics_exprs_mat(
@@ -257,7 +258,7 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     qc_pdata$exprs_endogenous_features <- colSums(exprs_mat) -
         feature_controls_pdata$exprs_feature_controls
 
-    for (ex in c("counts", "tpm", "fpkm")) { 
+    for (ex in okay.expr.vals) {
         cur_mat <- switch(ex, counts=counts_mat, tpm=tpm_mat, fpkm=fpkm_mat)
         if (is.null(cur_mat)) { next }
         cur_totals <- switch(ex, counts=total_counts, colSums(cur_mat))
@@ -266,15 +267,18 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     }
 
     ## Define log10 read counts from feature controls
-    cols_to_log <- grep("^counts_|^tpm_|^fpkm_", colnames(qc_pdata))
+    stat.cols <- sub("_.*", "", colnames(qc_pdata))
+    cols_to_log <- which(stat.cols %in% okay.expr.vals)
     if ( !object@logged ) {
-        cols_to_log <- c(cols_to_log, grep("^exprs_", colnames(qc_pdata)))
+        cols_to_log <- c(cols_to_log, which(stat.cols=="exprs"))
     }
-    log10_cols <- log10(qc_pdata[, cols_to_log, drop = FALSE] + 1)
-    colnames(log10_cols) <- paste0("log10_", colnames(qc_pdata)[cols_to_log])
-
-    ## Combine into a big pdata object
-    qc_pdata <- cbind(qc_pdata, log10_cols)
+    if (length(cols_to_log)) { 
+        log10_cols <- log10(qc_pdata[, cols_to_log, drop = FALSE] + 1)
+        colnames(log10_cols) <- paste0("log10_", colnames(qc_pdata)[cols_to_log])
+        
+        ## Combine into a big pdata object
+        qc_pdata <- cbind(qc_pdata, log10_cols)
+    }
     
     ## Define cell controls
     ### Determine if vector or list
@@ -372,7 +376,7 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     new_fdata$pct_total_exprs <- 100 * rowSums(exprs_mat) / total_exprs
     new_fdata$pct_dropout <- 100 * (1 - new_fdata$n_cells_exprs / ncol(object))
   
-    for (ex in c("counts", "tpm", "fpkm")) { 
+    for (ex in okay.expr.vals) {
         cur_mat <- switch(ex, counts=counts_mat, tpm=tpm_mat, fpkm=fpkm_mat)
         if (is.null(cur_mat)) { next }
         cur_totals <- sum(as.double(colSums(cur_mat))) # avoid integer overflow
@@ -1221,7 +1225,7 @@ This variable will not be plotted."))
             labelDescription = paste("Median marginal R-squared =",
                                      median_rsquared))
         fdata <- fData(object)
-        rsq_out <- rsquared_mat[, oo_median[1:nvars_to_plot]]
+        rsq_out <- rsquared_mat[, oo_median[1:nvars_to_plot], drop = FALSE]
         colnames(rsq_out) <- paste0("Rsq_", colnames(rsq_out))
         fdata_new <- new("AnnotatedDataFrame", cbind(fdata, rsq_out))
         fData(object) <- fdata_new
