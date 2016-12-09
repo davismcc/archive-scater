@@ -30,8 +30,8 @@ the user.}
 
 \item{...}{further arguments passed to \code{get_exprs.SCESet}}
 
-\item{warning}{a logical scalar specifying whether a warning should be 
-raised, and \code{NULL} returned, if the requested expression values are 
+\item{warning}{a logical scalar specifying whether a warning should be
+raised, and \code{NULL} returned, if the requested expression values are
 not present in \code{object}. Otherwise, an error will be thrown.}
 }
 \value{

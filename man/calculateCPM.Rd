@@ -9,8 +9,8 @@ calculateCPM(object, use.size.factors = TRUE)
 \arguments{
 \item{object}{an \code{SCESet} object}
 
-\item{use.size.factors}{a logical scalar specifying whether 
-the size factors should be used to construct effective library 
+\item{use.size.factors}{a logical scalar specifying whether
+the size factors should be used to construct effective library
 sizes, or if the library size should be directly defined as
 the sum of counts for each cell.}
 }

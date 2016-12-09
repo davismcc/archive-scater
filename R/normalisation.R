@@ -8,20 +8,20 @@
 #' object with the normalised expression values added.
 #'
 #' @param object an \code{SCESet} object.
-#' @param method character string specified the method of calculating 
+#' @param method character string specified the method of calculating
 #' normalisation factors. Passed to \code{\link[edgeR]{calcNormFactors}}.
 #' @param design design matrix defining the linear model to be fitted to the
 #' normalised expression values. If not \code{NULL}, then the residuals of this
 #' linear model fit are used as the normalised expression values.
 #' @param feature_set character, numeric or logical vector indicating a set of
-#' features to use for calculating normalisation factors. If character, entries 
-#' must all be in \code{featureNames(object)}. If numeric, values are taken to 
-#' be indices for features. If logical, vector is used to index features and should 
+#' features to use for calculating normalisation factors. If character, entries
+#' must all be in \code{featureNames(object)}. If numeric, values are taken to
+#' be indices for features. If logical, vector is used to index features and should
 #' have length equal to \code{nrow(object)}.
 #' @param exprs_values character string indicating which slot of the
 #' assayData from the \code{SCESet} object should be used for the calculations.
 #' Valid options are \code{'counts'}, \code{'tpm'}, \code{'cpm'}, \code{'fpkm'}
-#' and \code{'exprs'}. Defaults to the first available value of these options in 
+#' and \code{'exprs'}. Defaults to the first available value of these options in
 #' in order shown.
 #' @param return_norm_as_exprs logical, should the normalised expression values
 #' be returned to the \code{exprs} slot of the object? Default is TRUE. If
@@ -35,17 +35,17 @@
 #' values from an SCESet object. The 'raw' values used can be the values in the
 #' \code{'counts'} (default), \code{'tpm'}, \code{'cpm'} or \code{'fpkm'} slot
 #' of the SCESet. Normalised expression values are computed through
-#' \code{\link{normalize.SCESet}} and are on the log2-scale, with an offset 
+#' \code{\link{normalize.SCESet}} and are on the log2-scale, with an offset
 #' defined by the \code{logExprsOffset} slot of the SCESet object. These are
-#' dded to the \code{'norm_exprs'} slot of the returned object. If 
-#' \code{'exprs_values'} argument is \code{'counts'}, a \code{'norm_cpm'} slot 
+#' dded to the \code{'norm_exprs'} slot of the returned object. If
+#' \code{'exprs_values'} argument is \code{'counts'}, a \code{'norm_cpm'} slot
 #' is also added, containing normalised counts-per-million values.
 #'
 #' If the raw values are counts, this function will compute size factors using
 #' methods in \code{\link[edgeR]{calcNormFactors}}. Library sizes are multiplied
-#' by size factors to obtain an "effective library size" before calculation of 
-#' the aforementioned normalized expression values. If \code{feature_set} is 
-#' specified, only the specified features will be used to calculate the 
+#' by size factors to obtain an "effective library size" before calculation of
+#' the aforementioned normalized expression values. If \code{feature_set} is
+#' specified, only the specified features will be used to calculate the
 #' size factors.
 #'
 #' If the user wishes to remove the effects of certain explanatory variables,
@@ -98,9 +98,9 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
     ## If counts, we can compute size factors.
     if (exprs_values=="counts") {
         exprs_mat <- get_exprs(object, exprs_values, warning=FALSE)
-             
+
         ## Check feature_set
-        if (is.character(feature_set)) { 
+        if (is.character(feature_set)) {
             if ( !(all(feature_set %in% featureNames(object))) )
                 stop("not all 'feature_set' in 'featureNames(object)'")
         }
@@ -113,7 +113,7 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
         norm_factors <- edgeR::calcNormFactors.default(exprs_mat_for_norm,
                                                        method = method, ...)
         lib_size <- colSums(exprs_mat_for_norm)
-        
+
         if ( any(is.na(norm_factors)) ) {
             norm_factors[is.na(norm_factors)] <- 1
             warning("normalization factors with NA values replaced with unity")
@@ -122,7 +122,7 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
         size_factors <- norm_factors * lib_size
         size_factors <- size_factors / mean(size_factors)
         sizeFactors(object) <- size_factors
-        
+
         ## Computing (normalized) CPMs is also possible.
         norm_cpm(object) <- calculateCPM(object, use.size.factors=TRUE)
     }
@@ -132,13 +132,13 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
         object <- normalize.SCESet(object, exprs_values=exprs_values,
                                    return_norm_as_exprs=return_norm_as_exprs)
     }
-    
+
 #    ## exit if any features have zero variance as this causes problem downstream
 #    if ( any(matrixStats::rowVars(exprs_mat) == 0) )
 #        stop("Some features have zero variance.
 #             Please filter out features with zero variance (e.g. all zeros).")
 
-   
+
     ## If a design matrix is provided, then normalised expression values are
     ## residuals of a linear model fit to norm_exprs values with that design
     if ( !is.null(design) ) {
@@ -175,8 +175,8 @@ normalizeExprs <- function(...) {
 #'
 #' @param object an \code{SCESet} object.
 #' @param exprs_values character string indicating which slot of the
-#' assayData from the \code{SCESet} object should be used to compute 
-#' log-transformed expression values. Valid options are \code{'counts'}, 
+#' assayData from the \code{SCESet} object should be used to compute
+#' log-transformed expression values. Valid options are \code{'counts'},
 #' \code{'tpm'}, \code{'cpm'} and \code{'fpkm'}. Defaults to the first
 #' available value of the options in the order shown.
 #' @param logExprsOffset scalar numeric value giving the offset to add when
@@ -224,7 +224,7 @@ normalize.SCESet <- function(object, exprs_values = NULL,
                              logExprsOffset = NULL, return_norm_as_exprs = TRUE) {
     if ( !is(object, "SCESet") )
         stop("'object' must be an SCESet")
-  
+
     ## Define expression values to be used
     exprs_values <- .exprs_hunter(object, exprs_values)
     if (exprs_values=="exprs") {
@@ -242,7 +242,7 @@ normalize.SCESet <- function(object, exprs_values = NULL,
     } else {
         size_factors <- rep(1, ncol(object)) # ignoring size factors for non-count data.
     }
-    
+
     ## figuring out how many controls have their own size factors
     control_list <- .find_control_SF(object)
 
@@ -270,7 +270,8 @@ normalize.SCESet <- function(object, exprs_values = NULL,
     return(object)
 }
 
-.recompute_expr_fun <- function(exprs_mat, size_factors, logExprsOffset, 
+
+.recompute_expr_fun <- function(exprs_mat, size_factors, logExprsOffset,
                                 subset.row = NULL) {
     .compute_exprs(exprs_mat, size_factors,
                    log = TRUE, sum = FALSE,
@@ -291,5 +292,3 @@ setMethod("normalize", signature(object = "SCESet"),
 normalise <- function(...) {
     normalize(...)
 }
-
-

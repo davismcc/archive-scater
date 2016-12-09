@@ -1,19 +1,19 @@
 ## A set of functions for calculating and summarising expression values
 
-#' Calculate which features are expressed in which cells using a threshold on 
-#' observed counts, transcripts-per-million, counts-per-million, FPKM, or 
+#' Calculate which features are expressed in which cells using a threshold on
+#' observed counts, transcripts-per-million, counts-per-million, FPKM, or
 #' defined expression levels.
 #'
 #' @param object an SCESet object with expression and/or count data.
 #' @param lowerDetectionLimit numeric scalar giving the minimum expression level
 #' for an expression observation in a cell for it to qualify as expressed.
-#' @param exprs_data character scalar indicating whether the count data 
-#' (\code{"counts"}), the transformed expression data (\code{"exprs"}), 
-#' transcript-per-million (\code{"tpm"}), counts-per-million (\code{"cpm"}) or 
-#' FPKM (\code{"fpkm"}) should be used to define if an observation is expressed 
+#' @param exprs_data character scalar indicating whether the count data
+#' (\code{"counts"}), the transformed expression data (\code{"exprs"}),
+#' transcript-per-million (\code{"tpm"}), counts-per-million (\code{"cpm"}) or
+#' FPKM (\code{"fpkm"}) should be used to define if an observation is expressed
 #' or not. Defaults to the first available value of those options in the
 #' order shown.
-#' @return a logical matrix indicating whether or not a feature in a particular 
+#' @return a logical matrix indicating whether or not a feature in a particular
 #' cell is expressed.
 #' @export
 #' @examples
@@ -26,7 +26,7 @@ calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_data = NULL)
 {
     if ( !is(object, "SCESet") )
         stop("Object must be an SCESet.")
-    
+
     ## Check that args are appropriate
     exprs_data <- .exprs_hunter(object, exprs_data)
     dat_matrix <- get_exprs(object, exprs_data, warning = FALSE)
@@ -43,31 +43,31 @@ calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_data = NULL)
 }
 
 #' Count the number of expressed genes per cell
-#' 
-#' 
+#'
+#'
 #' @param object an \code{SCESet} object
 #' @param lowerDetectionLimit numeric scalar providing the value above which observations
 #' are deemed to be expressed. Defaults to \code{object@lowerDetectionLimit}.
-#' @param exprs_data character scalar indicating whether the count data 
-#' (\code{"counts"}), the transformed expression data (\code{"exprs"}), 
-#' transcript-per-million (\code{"tpm"}), counts-per-million (\code{"cpm"}) or 
-#' FPKM (\code{"fpkm"}) should be used to define if an observation is expressed 
+#' @param exprs_data character scalar indicating whether the count data
+#' (\code{"counts"}), the transformed expression data (\code{"exprs"}),
+#' transcript-per-million (\code{"tpm"}), counts-per-million (\code{"cpm"}) or
+#' FPKM (\code{"fpkm"}) should be used to define if an observation is expressed
 #' or not. Defaults to the first available value of those options in the
-#' order shown. However, if \code{is_exprs(object)} is present, it will be 
+#' order shown. However, if \code{is_exprs(object)} is present, it will be
 #' used directly; \code{exprs_data} and \code{lowerDetectionLimit} are ignored.
-#' @param subset.row logical or character vector indicating which rows 
+#' @param subset.row logical or character vector indicating which rows
 #' (i.e. features/genes) to subset and calculate 'is_exprs_mat' for.
-#' @param byrow logical scalar indicating if \code{TRUE} to count expressing 
-#' cells per feature (i.e. gene) and if \code{FALSE} to count expressing 
+#' @param byrow logical scalar indicating if \code{TRUE} to count expressing
+#' cells per feature (i.e. gene) and if \code{FALSE} to count expressing
 #' features (i.e. genes) per cell.
-#' 
-#' @description An efficient internal function that avoids the need to construct 
+#'
+#' @description An efficient internal function that avoids the need to construct
 #' 'is_exprs_mat' by counting the number of expressed genes per cell on the fly.
-#' 
+#'
 #' @return a numeric vector of the same length as the number of features if
-#' \code{byrow} argument is \code{TRUE} and the same length as the number of 
+#' \code{byrow} argument is \code{TRUE} and the same length as the number of
 #' cells if \code{byrow} is \code{FALSE}
-#' 
+#'
 #' @export
 #' @examples
 #' data("sc_example_counts")
@@ -77,9 +77,9 @@ calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_data = NULL)
 #' example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
 #' nexprs(example_sceset)[1:10]
 #' nexprs(example_sceset, byrow = TRUE)[1:10]
-#' 
+#'
 nexprs <- function(object, lowerDetectionLimit = NULL, exprs_data = NULL, subset.row = NULL, byrow = FALSE) {
-    if (!is(object, "SCESet")) { 
+    if (!is(object, "SCESet")) {
         stop("'object' must be a SCESet")
     }
     is_exprs_mat <- is_exprs(object)
@@ -94,7 +94,7 @@ nexprs <- function(object, lowerDetectionLimit = NULL, exprs_data = NULL, subset
     if (is.null(lowerDetectionLimit)) {
         lowerDetectionLimit <- object@lowerDetectionLimit
     }
-    if (!is.null(exprs_mat)) { 
+    if (!is.null(exprs_mat)) {
         storage.mode(lowerDetectionLimit) <- storage.mode(exprs_mat)
     }
 
@@ -102,44 +102,44 @@ nexprs <- function(object, lowerDetectionLimit = NULL, exprs_data = NULL, subset
         if (!is.null(is_exprs_mat)) {
             # Counting expressing genes per cell, using predefined 'is_exprs(object)'.
             if (is.null(subset.row)) {
-               return(colSums(is_exprs_mat)) 
+               return(colSums(is_exprs_mat))
             } else {
                 subset.row <- .subset2index(subset.row, is_exprs_mat)
                 return(.checkedCall(cxx_colsum_subset, is_exprs_mat, subset.row - 1L))
             }
         } else {
             # Counting expressing genes per cell, using the counts to define 'expressing'.
-            if (is.null(subset.row)) { 
-                subset.row <- seq_len(nrow(exprs_mat)) 
+            if (is.null(subset.row)) {
+                subset.row <- seq_len(nrow(exprs_mat))
             } else {
                 subset.row <- .subset2index(subset.row, exprs_mat)
             }
-            return(.checkedCall(cxx_colsum_exprs_subset, exprs_mat, 
+            return(.checkedCall(cxx_colsum_exprs_subset, exprs_mat,
                                 lowerDetectionLimit, subset.row - 1L))
         }
     } else {
         # Counting expressing cells per gene.
         if (!is.null(is_exprs_mat)) {
             return(rowSums(is_exprs_mat))
-        } else { 
+        } else {
             return(.checkedCall(cxx_rowsum_exprs, exprs_mat, lowerDetectionLimit))
         }
     }
 }
 
 #' Calculate transcripts-per-million (TPM)
-#' 
+#'
 #' Calculate transcripts-per-million (TPM) values for expression from counts for
 #' a set of features.
-#' 
+#'
 #' @param object an \code{SCESet} object
-#' @param effective_length vector of class \code{"numeric"} providing the 
+#' @param effective_length vector of class \code{"numeric"} providing the
 #' effective length for each feature in the \code{SCESet} object
-#' @param calc_from character string indicating whether to compute TPM from 
-#' \code{"counts"}, \code{"norm_counts"}, \code{"fpkm"} or \code{"norm_fpkm"}. 
-#' Default is to use \code{"counts"}, in which case the \code{effective_length} 
+#' @param calc_from character string indicating whether to compute TPM from
+#' \code{"counts"}, \code{"norm_counts"}, \code{"fpkm"} or \code{"norm_fpkm"}.
+#' Default is to use \code{"counts"}, in which case the \code{effective_length}
 #' argument must be supplied.
-#' 
+#'
 #' @return Matrix of TPM values.
 #' @export
 #' @examples
@@ -148,19 +148,19 @@ nexprs <- function(object, lowerDetectionLimit = NULL, exprs_data = NULL, subset
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' effective_length <- rep(1000, 2000)
-#' tpm(example_sceset) <- calculateTPM(example_sceset, effective_length, 
+#' tpm(example_sceset) <- calculateTPM(example_sceset, effective_length,
 #'     calc_from = "counts")
-#'     
+#'
 #' ## calculate from FPKM
 #' fpkm(example_sceset) <- calculateFPKM(example_sceset, effective_length)
-#' tpm(example_sceset) <- calculateTPM(example_sceset, effective_length, 
+#' tpm(example_sceset) <- calculateTPM(example_sceset, effective_length,
 #'                                     calc_from = "fpkm")
-#' 
+#'
 calculateTPM <- function(object, effective_length = NULL, calc_from = "counts") {
     if ( !is(object, "SCESet"))
         stop("object must be an SCESet")
     ## Check that arguments are correct
-    calc_from <- match.arg(calc_from, c("counts", "norm_counts", "fpkm", 
+    calc_from <- match.arg(calc_from, c("counts", "norm_counts", "fpkm",
                                         "norm_fpkm"), several.ok = FALSE)
     if ( calc_from == "counts" || calc_from == "norm_counts" ) {
         if ( is.null(effective_length) )
@@ -169,11 +169,11 @@ calculateTPM <- function(object, effective_length = NULL, calc_from = "counts") 
     ## Compute values to return
     tpm_to_add <- switch(calc_from,
                          counts = .countToTpm(counts(object), effective_length),
-                         norm_counts = .countToTpm(norm_counts(object), 
+                         norm_counts = .countToTpm(norm_counts(object),
                                                     effective_length),
                          fpkm = .fpkmToTpm(fpkm(object)),
                          norm_fpkm = .fpkmToTpm(norm_fpkm(object)))
-    
+
     ## Return TPM values
     rownames(tpm_to_add) <- featureNames(object)
     colnames(tpm_to_add) <- colnames(object)
@@ -216,15 +216,15 @@ calculateTPM <- function(object, effective_length = NULL, calc_from = "counts") 
 
 
 #' Calculate counts per million (CPM)
-#' 
+#'
 #' Calculate count-per-million (CPM) values from the count data.
-#' 
+#'
 #' @param object an \code{SCESet} object
-#' @param use.size.factors a logical scalar specifying whether 
-#' the size factors should be used to construct effective library 
+#' @param use.size.factors a logical scalar specifying whether
+#' the size factors should be used to construct effective library
 #' sizes, or if the library size should be directly defined as
 #' the sum of counts for each cell.
-#' 
+#'
 #' @return Matrix of CPM values.
 #' @export
 #' @examples
@@ -232,16 +232,16 @@ calculateTPM <- function(object, effective_length = NULL, calc_from = "counts") 
 #' data("sc_example_cell_info")
 #' example_sceset <- newSCESet(countData = sc_example_counts)
 #' cpm(example_sceset) <- calculateCPM(example_sceset)
-#' 
+#'
 calculateCPM <- function(object, use.size.factors = TRUE) {
     counts_mat <- counts(object)
-    if (use.size.factors) { 
+    if (use.size.factors) {
         sf <- sizeFactors(object)
         control_list <- .find_control_SF(object)
         if (is.null(sf)) {
             warning("size factors requested but not specified, using library sizes instead")
             sf <- colSums(counts_mat)
-            control_list <- list()            
+            control_list <- list()
         }
     } else {
         sf <- colSums(counts_mat)
@@ -255,7 +255,7 @@ calculateCPM <- function(object, use.size.factors = TRUE) {
 
     for (alt in control_list) {
         scaled.sf <- alt$SF/mean(alt$SF) * mean(lib.size)
-        cpm_mat[alt$ID,] <- edgeR::cpm(counts_mat[alt$ID,,drop = FALSE], 
+        cpm_mat[alt$ID,] <- edgeR::cpm(counts_mat[alt$ID,,drop = FALSE],
                                        lib.size = scaled.sf)
     }
 
@@ -266,15 +266,15 @@ calculateCPM <- function(object, use.size.factors = TRUE) {
 }
 
 #' Calculate fragments per kilobase of exon per million reads mapped (FPKM)
-#' 
-#' Calculate fragments per kilobase of exon per million reads mapped (FPKM) 
+#'
+#' Calculate fragments per kilobase of exon per million reads mapped (FPKM)
 #' values for expression from counts for a set of features.
-#' 
+#'
 #' @param object an \code{SCESet} object
-#' @param effective_length vector of class \code{"numeric"} providing the 
+#' @param effective_length vector of class \code{"numeric"} providing the
 #' effective length for each feature in the \code{SCESet} object
 #' @param use.size.factors a logical scalar, see \code{\link{calculateCPM}}
-#' 
+#'
 #' @return Matrix of FPKM values.
 #' @export
 #' @examples
@@ -283,7 +283,7 @@ calculateCPM <- function(object, use.size.factors = TRUE) {
 #' example_sceset <- newSCESet(countData = sc_example_counts)
 #' effective_length <- rep(1000, 2000)
 #' fpkm(example_sceset) <- calculateFPKM(example_sceset, effective_length)
-#' 
+#'
 calculateFPKM <- function(object, effective_length, use.size.factors=TRUE) {
     if ( !is(object, "SCESet") )
         stop("object must be an SCESet")
@@ -294,13 +294,13 @@ calculateFPKM <- function(object, effective_length, use.size.factors=TRUE) {
 
 
 #' Calculate average counts, adjusting for size factors or library size
-#' 
-#' Calculate average counts per feature, adjusting them as appropriate to take 
-#' into account for size factors for normalization or library sizes (total 
+#'
+#' Calculate average counts per feature, adjusting them as appropriate to take
+#' into account for size factors for normalization or library sizes (total
 #' counts).
-#' 
+#'
 #' @param object an \code{SCESet} object
-#' 
+#'
 #' @return Vector of average count values with same length as number of features.
 #' @export
 #' @examples
@@ -308,11 +308,11 @@ calculateFPKM <- function(object, effective_length, use.size.factors=TRUE) {
 #' data("sc_example_cell_info")
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
-#'     
+#'
 #' ## calculate average counts
 #' ave_counts <- calcAverage(example_sceset)
-#' 
-calcAverage <- function(object) { 
+#'
+calcAverage <- function(object) {
     # Computes the average count, adjusting for size factors or library size.
     control_list <- .find_control_SF(object)
     sf <- suppressWarnings(sizeFactors(object))
@@ -328,8 +328,8 @@ calcAverage <- function(object) {
     return(all.ave / ncol(object))
 }
 
+
 .compute_ave_count <- function(counts_mat, size_factors, subset.row = NULL) {
-    .compute_exprs(counts_mat, size_factors, log = FALSE, sum = TRUE, 
+    .compute_exprs(counts_mat, size_factors, log = FALSE, sum = TRUE,
                    logExprsOffset = 0, subset.row = subset.row)
 }
-

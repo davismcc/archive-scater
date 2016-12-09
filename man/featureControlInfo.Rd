@@ -22,14 +22,14 @@ featureControlInfo.SCESet(object)
 \arguments{
 \item{object}{a \code{SCESet} object.}
 
-\item{value}{an AnnotatedDataFrame object, where each row contains 
+\item{value}{an AnnotatedDataFrame object, where each row contains
 information for a single set of control features.}
 }
 \value{
 An SCESet object containing new feature control information.
 }
 \description{
-Each SCESet object stores optional information about the controls in the 
+Each SCESet object stores optional information about the controls in the
 \code{featureControlInfo} slot. These functions can be used to access,
 replace or modify this information.
 }
@@ -38,9 +38,9 @@ data("sc_example_counts")
 data("sc_example_cell_info")
 pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
-example_sceset <- calculateQCMetrics(example_sceset, 
+example_sceset <- calculateQCMetrics(example_sceset,
                             feature_controls = list(ERCC = 1:40, Mito=41:50))
-featureControlInfo(example_sceset) 
+featureControlInfo(example_sceset)
 featureControlInfo(example_sceset)$IsSpike <- c(TRUE, FALSE)
 }
 \author{

@@ -14,7 +14,7 @@ normalizeExprs(...)
 \arguments{
 \item{object}{an \code{SCESet} object.}
 
-\item{method}{character string specified the method of calculating 
+\item{method}{character string specified the method of calculating
 normalisation factors. Passed to \code{\link[edgeR]{calcNormFactors}}.}
 
 \item{design}{design matrix defining the linear model to be fitted to the
@@ -22,15 +22,15 @@ normalised expression values. If not \code{NULL}, then the residuals of this
 linear model fit are used as the normalised expression values.}
 
 \item{feature_set}{character, numeric or logical vector indicating a set of
-features to use for calculating normalisation factors. If character, entries 
-must all be in \code{featureNames(object)}. If numeric, values are taken to 
-be indices for features. If logical, vector is used to index features and should 
+features to use for calculating normalisation factors. If character, entries
+must all be in \code{featureNames(object)}. If numeric, values are taken to
+be indices for features. If logical, vector is used to index features and should
 have length equal to \code{nrow(object)}.}
 
 \item{exprs_values}{character string indicating which slot of the
 assayData from the \code{SCESet} object should be used for the calculations.
 Valid options are \code{'counts'}, \code{'tpm'}, \code{'cpm'}, \code{'fpkm'}
-and \code{'exprs'}. Defaults to the first available value of these options in 
+and \code{'exprs'}. Defaults to the first available value of these options in
 in order shown.}
 
 \item{return_norm_as_exprs}{logical, should the normalised expression values
@@ -54,17 +54,17 @@ This function allows the user to compute normalised expression
 values from an SCESet object. The 'raw' values used can be the values in the
 \code{'counts'} (default), \code{'tpm'}, \code{'cpm'} or \code{'fpkm'} slot
 of the SCESet. Normalised expression values are computed through
-\code{\link{normalize.SCESet}} and are on the log2-scale, with an offset 
+\code{\link{normalize.SCESet}} and are on the log2-scale, with an offset
 defined by the \code{logExprsOffset} slot of the SCESet object. These are
-dded to the \code{'norm_exprs'} slot of the returned object. If 
-\code{'exprs_values'} argument is \code{'counts'}, a \code{'norm_cpm'} slot 
+dded to the \code{'norm_exprs'} slot of the returned object. If
+\code{'exprs_values'} argument is \code{'counts'}, a \code{'norm_cpm'} slot
 is also added, containing normalised counts-per-million values.
 
 If the raw values are counts, this function will compute size factors using
 methods in \code{\link[edgeR]{calcNormFactors}}. Library sizes are multiplied
-by size factors to obtain an "effective library size" before calculation of 
-the aforementioned normalized expression values. If \code{feature_set} is 
-specified, only the specified features will be used to calculate the 
+by size factors to obtain an "effective library size" before calculation of
+the aforementioned normalized expression values. If \code{feature_set} is
+specified, only the specified features will be used to calculate the
 size factors.
 
 If the user wishes to remove the effects of certain explanatory variables,

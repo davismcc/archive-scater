@@ -13,28 +13,28 @@ nexprs(object, lowerDetectionLimit = NULL, exprs_data = NULL,
 \item{lowerDetectionLimit}{numeric scalar providing the value above which observations
 are deemed to be expressed. Defaults to \code{object@lowerDetectionLimit}.}
 
-\item{exprs_data}{character scalar indicating whether the count data 
-(\code{"counts"}), the transformed expression data (\code{"exprs"}), 
-transcript-per-million (\code{"tpm"}), counts-per-million (\code{"cpm"}) or 
-FPKM (\code{"fpkm"}) should be used to define if an observation is expressed 
+\item{exprs_data}{character scalar indicating whether the count data
+(\code{"counts"}), the transformed expression data (\code{"exprs"}),
+transcript-per-million (\code{"tpm"}), counts-per-million (\code{"cpm"}) or
+FPKM (\code{"fpkm"}) should be used to define if an observation is expressed
 or not. Defaults to the first available value of those options in the
-order shown. However, if \code{is_exprs(object)} is present, it will be 
+order shown. However, if \code{is_exprs(object)} is present, it will be
 used directly; \code{exprs_data} and \code{lowerDetectionLimit} are ignored.}
 
-\item{subset.row}{logical or character vector indicating which rows 
+\item{subset.row}{logical or character vector indicating which rows
 (i.e. features/genes) to subset and calculate 'is_exprs_mat' for.}
 
-\item{byrow}{logical scalar indicating if \code{TRUE} to count expressing 
-cells per feature (i.e. gene) and if \code{FALSE} to count expressing 
+\item{byrow}{logical scalar indicating if \code{TRUE} to count expressing
+cells per feature (i.e. gene) and if \code{FALSE} to count expressing
 features (i.e. genes) per cell.}
 }
 \value{
 a numeric vector of the same length as the number of features if
-\code{byrow} argument is \code{TRUE} and the same length as the number of 
+\code{byrow} argument is \code{TRUE} and the same length as the number of
 cells if \code{byrow} is \code{FALSE}
 }
 \description{
-An efficient internal function that avoids the need to construct 
+An efficient internal function that avoids the need to construct
 'is_exprs_mat' by counting the number of expressed genes per cell on the fly.
 }
 \examples{

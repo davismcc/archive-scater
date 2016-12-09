@@ -21,8 +21,8 @@ normalise(...)
 \item{object}{an \code{SCESet} object.}
 
 \item{exprs_values}{character string indicating which slot of the
-assayData from the \code{SCESet} object should be used to compute 
-log-transformed expression values. Valid options are \code{'counts'}, 
+assayData from the \code{SCESet} object should be used to compute
+log-transformed expression values. Valid options are \code{'counts'},
 \code{'tpm'}, \code{'cpm'} and \code{'fpkm'}. Defaults to the first
 available value of the options in the order shown.}
 
