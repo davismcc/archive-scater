@@ -106,10 +106,11 @@ nexprs <- function(object, lowerDetectionLimit = NULL, exprs_values = NULL, byro
         if (!is.null(is_exprs_mat)) {
             # Counting expressing genes per cell, using predefined 'is_exprs(object)'.
             if (is.null(subset_row)) {
-               return(colSums(is_exprs_mat))
+                out <- colSums(is_exprs_mat)
             } else {
                 subset_row <- .subset2index(subset_row, is_exprs_mat)
-                return(.checkedCall(cxx_colsum_subset, is_exprs_mat, subset_row - 1L))
+                out <- .checkedCall(cxx_colsum_subset, is_exprs_mat, subset_row - 1L)
+                names(out) <- colnames(is_exprs_mat)
             }
         } else {
             # Counting expressing genes per cell, using the counts to define 'expressing'.
@@ -118,17 +119,19 @@ nexprs <- function(object, lowerDetectionLimit = NULL, exprs_values = NULL, byro
             } else {
                 subset_row <- .subset2index(subset_row, exprs_mat)
             }
-            return(.checkedCall(cxx_colsum_exprs_subset, exprs_mat,
-                                lowerDetectionLimit, subset_row - 1L))
+            out <- .checkedCall(cxx_colsum_exprs_subset, exprs_mat,
+                                lowerDetectionLimit, subset_row - 1L)
+            names(out) <- colnames(exprs_mat)
         }
     } else {
         if (!is.null(is_exprs_mat)) {
             # Counting expressing cells per gene, using predefined 'is_exprs(object)'.
             if (is.null(subset_col)) { 
-                return(rowSums(is_exprs_mat))
+                out <- rowSums(is_exprs_mat)
             } else {
                 subset_col <- .subset2index(subset_col, is_exprs_mat, byrow = FALSE)
-                return(.checkedCall(cxx_rowsum_subset, is_exprs_mat, subset_col - 1L))
+                out <- .checkedCall(cxx_rowsum_subset, is_exprs_mat, subset_col - 1L)
+                names(out) <- rownames(is_exprs_mat)
             }
         } else {
             # Counting expressing cells per gene, using the counts to define 'expressing'.
@@ -137,10 +140,12 @@ nexprs <- function(object, lowerDetectionLimit = NULL, exprs_values = NULL, byro
             } else {
                 subset_col <- .subset2index(subset_col, exprs_mat, byrow = FALSE)
             } 
-            return(.checkedCall(cxx_rowsum_exprs_subset, exprs_mat, 
-                                lowerDetectionLimit, subset_col - 1L))
+            out <- .checkedCall(cxx_rowsum_exprs_subset, exprs_mat, 
+                                lowerDetectionLimit, subset_col - 1L)
+            names(out) <- rownames(exprs_mat)
         }
     }
+    return(out)
 }
 
 #' Calculate transcripts-per-million (TPM)
@@ -341,6 +346,8 @@ calcAverage <- function(object) {
                                               size_factors = alt$SF,
                                               subset.row = alt$ID)
     }
+
+    names(all.ave) <- rownames(object)
     return(all.ave / ncol(object))
 }
 
