@@ -344,7 +344,7 @@ calcAverage <- function(object) {
     for (alt in control_list) {
         all.ave[alt$ID] <- .compute_ave_count(counts(object), 
                                               size_factors = alt$SF,
-                                              subset.row = alt$ID)
+                                              subset_row = alt$ID)
     }
 
     names(all.ave) <- rownames(object)
@@ -352,7 +352,7 @@ calcAverage <- function(object) {
 }
 
 
-.compute_ave_count <- function(counts_mat, size_factors, subset.row = NULL) {
+.compute_ave_count <- function(counts_mat, size_factors, subset_row = NULL) {
     .compute_exprs(counts_mat, size_factors, log = FALSE, sum = TRUE,
-                   logExprsOffset = 0, subset.row = subset.row)
+                   logExprsOffset = 0, subset_row = subset_row)
 }
