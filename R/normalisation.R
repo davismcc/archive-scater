@@ -182,7 +182,9 @@ normalizeExprs <- function(...) {
 #' @param logExprsOffset scalar numeric value giving the offset to add when
 #' taking log2 of normalised values to return as expression values. If NULL
 #' (default), then the value from \code{object@logExprsOffset} is used.
-#' @param return_norm_as_exprs logical, should the normalised expression values
+#' @param centre_size_factors logical, should size factors centred
+#' at unity be stored in the returned object? Default is TRUE. Regardless, 
+#' centred size factors will be used to calculate \code{exprs}.
 #' be returned to the \code{exprs} slot of the object? Default is TRUE. If
 #' FALSE, values in the \code{exprs} slot will be left untouched. Regardless,
 #' normalised expression values will be returned in the
@@ -221,7 +223,9 @@ normalizeExprs <- function(...) {
 #' example_sceset <- normalize(example_sceset)
 #'
 normalize.SCESet <- function(object, exprs_values = NULL,
-                             logExprsOffset = NULL, return_norm_as_exprs = TRUE) {
+                             logExprsOffset = NULL, 
+                             centre_size_factors = TRUE,
+                             return_norm_as_exprs = TRUE) {
     if ( !is(object, "SCESet") )
         stop("'object' must be an SCESet")
 
@@ -264,7 +268,7 @@ normalize.SCESet <- function(object, exprs_values = NULL,
         norm_exprs_mat[alt$ID,] <- .recompute_expr_fun(
                                         exprs_mat, size_factors = alt$SF,
                                         logExprsOffset = logExprsOffset,
-                                        subset.row=alt$ID)
+                                        subset_row=alt$ID)
     }
 
     ## add normalised values to object
@@ -272,17 +276,28 @@ normalize.SCESet <- function(object, exprs_values = NULL,
     if ( return_norm_as_exprs )
         exprs(object) <- norm_exprs_mat
 
+    ## centering all existing size factors if requested
+    if (centre_size_factors) {
+        all.sf.fields <- c("size_factor", paste0("size_factor_", .fcontrol_names(object)))
+        all.sf.fields <- intersect(all.sf.fields, colnames(pData(object)))
+        for (sf in all.sf.fields) {
+            cur.sf <- pData(object)[[sf]]
+            cur.sf <- cur.sf/mean(cur.sf)
+            pData(object)[[sf]] <- cur.sf
+        }
+    }
+
     ## return object
     return(object)
 }
 
 
 .recompute_expr_fun <- function(exprs_mat, size_factors, logExprsOffset,
-                                subset.row = NULL) {
+                                subset_row = NULL) {
     .compute_exprs(exprs_mat, size_factors,
                    log = TRUE, sum = FALSE,
                    logExprsOffset = logExprsOffset,
-                   subset.row = subset.row)
+                   subset_row = subset_row)
 }
 
 #' @rdname normalize
