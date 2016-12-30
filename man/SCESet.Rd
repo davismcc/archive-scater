@@ -39,9 +39,6 @@ Methods that operate on SCESet objects constitute the basic scater workflow.
    \code{"AnnotatedDataFrame"} that can contain information/metadata about 
    sets of control features defined for the \code{SCESet} object.
    bootstrap estimates of the expression or count values.}
-   \item{\code{useForExprs}:}{Character string (one of 'exprs','tpm','counts' or 'fpkm') indicating 
-   which expression representation both internal methods and external packages should use. 
-   Defaults to 'exprs'.}
 }
 }
 \references{

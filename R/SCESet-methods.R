@@ -199,8 +199,7 @@ newSCESet <- function(exprsData = NULL,
                    lowerDetectionLimit = lowerDetectionLimit,
                    logExprsOffset = logExprsOffset,
                    logged = TRUE,
-                   featureControlInfo = AnnotatedDataFrame(),
-                   useForExprs = "exprs")
+                   featureControlInfo = AnnotatedDataFrame())
 
     ## Add non-null slots to assayData for SCESet object, omitting null slots
     if ( !is.null(is_exprsData) )
@@ -289,10 +288,6 @@ setValidity("SCESet", function(object) {
     }
     if ( (!is.null(counts(object))) && .checkedCall(cxx_negative_counts, counts(object)) )
         warning( "'counts' contains negative values" )
-    if ( !(object@useForExprs %in% c("exprs", "tpm", "fpkm", "counts")) ) {
-        valid <- FALSE
-        msg <- c(msg, "object@useForExprs must be one of 'exprs', 'tpm', 'fpkm', 'counts'")
-    }
 
     if (valid) TRUE else msg
 })
@@ -332,8 +327,7 @@ updateSCESet <- function(object) {
                    lowerDetectionLimit = object@lowerDetectionLimit,
                    logExprsOffset = object@logExprsOffset,
                    logged = object@logged,
-                   featureControlInfo = object@featureControlInfo,
-                   useForExprs = object@useForExprs)
+                   featureControlInfo = object@featureControlInfo)
 
     ## Check validity of object
     validObject(sceset)
@@ -2195,7 +2189,7 @@ fromCellDataSet <- function(cds, exprs_values = "tpm", logged = FALSE) {
 #' Deprecated from scater version 1.3.29.
 #'
 #' @param object An object of type \code{SCESet}
-#' @return A matrix representation of expression corresponding to \code{object@useForExprs}.
+#' @return A matrix representation of expression values.
 #'
 getExprs <- function(object) {
     stop("Deprecated from scater 1.3.29")

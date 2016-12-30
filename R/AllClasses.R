@@ -36,9 +36,6 @@
 #'    \code{"AnnotatedDataFrame"} that can contain information/metadata about 
 #'    sets of control features defined for the \code{SCESet} object.
 #'    bootstrap estimates of the expression or count values.}
-#'    \item{\code{useForExprs}:}{Character string (one of 'exprs','tpm','counts' or 'fpkm') indicating 
-#'    which expression representation both internal methods and external packages should use. 
-#'    Defaults to 'exprs'.}
 #'}
 #' @name SCESet
 #' @rdname SCESet
@@ -58,8 +55,7 @@ setClass("SCESet",
                    reducedDimension = "matrix",
                    bootstraps = "array",
                    sc3 = "list",
-                   featureControlInfo = "AnnotatedDataFrame",
-                   useForExprs = "character"),
+                   featureControlInfo = "AnnotatedDataFrame"),
          prototype = prototype(new("VersionedBiobase",
                                    versions = c(classVersion("ExpressionSet"),
                                                 SCESet = "1.1.9")))
