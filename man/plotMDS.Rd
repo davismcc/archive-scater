@@ -11,11 +11,12 @@ plotMDS(object, ...)
 
 plotMDSSCESet(object, ncomponents = 2, colour_by = NULL, shape_by = NULL,
   size_by = NULL, return_SCESet = FALSE, draw_plot = TRUE,
-  theme_size = 10, legend = "auto")
+  exprs_values = "exprs", theme_size = 10, legend = "auto")
 
 \S4method{plotMDS}{SCESet}(object, ncomponents = 2, colour_by = NULL,
   shape_by = NULL, size_by = NULL, return_SCESet = FALSE,
-  draw_plot = TRUE, theme_size = 10, legend = "auto")
+  draw_plot = TRUE, exprs_values = "exprs", theme_size = 10,
+  legend = "auto")
 }
 \arguments{
 \item{object}{an \code{SCESet} object}
@@ -46,6 +47,9 @@ object with principal component values for cells in the
 \item{draw_plot}{logical, should the plot be drawn on the current graphics
 device? Only used if \code{return_SCESet} is \code{TRUE}, otherwise the plot
 is always produced.}
+
+\item{exprs_values}{a string specifying the expression values to use for
+colouring the points, if \code{colour_by} or \code{size_by} are set as feature names.}
 
 \item{theme_size}{numeric scalar giving default font size for plotting theme
 (default is 10).}
