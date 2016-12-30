@@ -171,6 +171,15 @@ test_that("mergeSCESet works as expected", {
     expect_error(mergeSCESet(example_sceset[, 1:20], tmp_sceset),
                  "not identical")
 
+    # Checking that featureControlInfo is handled properly.
+    new_example_sceset <- calculateQCMetrics(example_sceset, 
+                                         feature_controls = list(ERCC = 1:40))
+    merged_sceset <- mergeSCESet(new_example_sceset[, 1:20],
+                                 new_example_sceset[, 21:40])
+    expect_identical(featureControlInfo(new_example_sceset), featureControlInfo(merged_sceset))
+    expect_warning(merged_sceset <- mergeSCESet(new_example_sceset[, 1:20],
+                                                new_example_sceset[, 21:40], fdata_cols=0),
+                   "removing undefined feature control set 'ERCC'")
 })
 
 
