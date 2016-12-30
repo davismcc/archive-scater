@@ -17,9 +17,6 @@ Methods that operate on SCESet objects constitute the basic scater workflow.
 \section{Slots}{
 
  \describe{
-   \item{\code{logged}:}{Scalar of class \code{"logical"}, indicating whether 
-   or not the expression data in the `exprs` slot have been log2-transformed
-   or not.}
    \item{\code{logExprsOffset}:}{Scalar of class \code{"numeric"}, providing an offset 
    applied to expression data in the `exprs` slot when undergoing log2-transformation
    to avoid trying to take logs of zero.}

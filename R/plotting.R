@@ -113,11 +113,8 @@
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
 #' (default; transcripts per million), \code{"cpm"}
 #' (counts per million), \code{"fpkm"} (FPKM values),
-#' \code{"counts"} (counts for each feature) or \code{"exprs"} (whatever is in
-#' the \code{'exprs'} slot of the \code{SCESet} object; if already on the log2
-#' scale, as indicated by the \code{logged} slot of the object, then exprs
-#' values are set to the power of 2 (so they are back on the raw scale they were
-#'  on) before making the plot).
+#' \code{"counts"} (counts for each feature) or \code{"exprs"} (which are 
+#' assumed to be on the log2 scale and are un-logged prior to plotting).
 #' @param linewidth numeric scalar giving the "size" parameter (in ggplot2
 #' parlance) for the lines plotted. Default is 1.5.
 #' @param y optional argument for generic \code{plot} functions, not used for
@@ -205,8 +202,8 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
         exprs_mat <- exprs(object)
         exprs_values <- "exprs"
     }
-    if ( exprs_values == "exprs" && object@logged )
-        exprs_mat <- 2 ^ (exprs_mat) - object@logExprsOffset
+    if ( exprs_values == "exprs" )
+        exprs_mat <- 2 ^ exprs_mat - object@logExprsOffset
 
     ## Use plyr to get the sequencing real estate accounted for by features
     nfeatures_total <- nrow(exprs_mat)

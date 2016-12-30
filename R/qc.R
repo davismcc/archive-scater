@@ -269,9 +269,6 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     ## Define log10 read counts from feature controls
     stat.cols <- sub("_.*", "", colnames(qc_pdata))
     cols_to_log <- which(stat.cols %in% okay.expr.vals)
-    if ( !object@logged ) {
-        cols_to_log <- c(cols_to_log, which(stat.cols=="exprs"))
-    }
     if (length(cols_to_log)) { 
         log10_cols <- log10(qc_pdata[, cols_to_log, drop = FALSE] + 1)
         colnames(log10_cols) <- paste0("log10_", colnames(qc_pdata)[cols_to_log])
@@ -369,10 +366,6 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     new_fdata$n_cells_exprs <- nexprs(object, byrow = TRUE)
     total_exprs <- sum(exprs_mat)
     new_fdata$total_feature_exprs <- rowSums(exprs_mat)
-    if ( !object@logged ) {
-        new_fdata$log10_total_feature_exprs <-
-            log10(new_fdata$total_feature_exprs + 1)
-    }
     new_fdata$pct_total_exprs <- 100 * rowSums(exprs_mat) / total_exprs
     new_fdata$pct_dropout <- 100 * (1 - new_fdata$n_cells_exprs / ncol(object))
   
@@ -908,8 +901,8 @@ plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
         message("Using exprs(object) values as expression values.")
         exprs_values <- "exprs"
     }
-    if ( exprs_values == "exprs" && object@logged )
-        exprs_mat <- 2 ^ (exprs_mat) - object@logExprsOffset
+    if ( exprs_values == "exprs" ) 
+        exprs_mat <- 2 ^ exprs_mat - object@logExprsOffset
 
     ## Find the most highly expressed features in this dataset
     ### Order by total feature counts across whole dataset

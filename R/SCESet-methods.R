@@ -198,7 +198,6 @@ newSCESet <- function(exprsData = NULL,
                    featurePairwiseDistances = featurePairwiseDistances,
                    lowerDetectionLimit = lowerDetectionLimit,
                    logExprsOffset = logExprsOffset,
-                   logged = TRUE,
                    featureControlInfo = AnnotatedDataFrame())
 
     ## Add non-null slots to assayData for SCESet object, omitting null slots
@@ -326,7 +325,6 @@ updateSCESet <- function(object) {
                                       object@consensus, list()),
                    lowerDetectionLimit = object@lowerDetectionLimit,
                    logExprsOffset = object@logExprsOffset,
-                   logged = object@logged,
                    featureControlInfo = object@featureControlInfo)
 
     ## Check validity of object
@@ -2102,7 +2100,7 @@ toCellDataSet <- function(sce, exprs_values = "exprs") {
                             tpm = tpm(sce),
                             fpkm = fpkm(sce),
                             counts = counts(sce))
-        if ( exprs_values == "exprs" && sce@logged )
+        if ( exprs_values == "exprs" ) 
             exprsData <- 2 ^ exprsData - sce@logExprsOffset
         celldataset <- monocle::newCellDataSet(
             exprsData, phenoData = phenoData(sce),
@@ -2120,8 +2118,9 @@ toCellDataSet <- function(sce, exprs_values = "exprs") {
 #' @param cds A \code{CellDataSet} from the \code{monocle} package
 #' @param exprs_values What should \code{exprs(cds)} be mapped to in the \code{SCESet}? Should be
 #' one of "exprs", "tpm", "fpkm", "counts"
-#' @param logged logical, if a value is supplied for the exprsData argument, are
+#' @param logged logical, if \code{exprs_values="exprs"}, are
 #'  the expression values already on the log2 scale, or not?
+#' @param logExprsOffset numeric, value to add prior to log-transformation.
 #'
 #' @export
 #' @importFrom Biobase featureData
@@ -2138,7 +2137,7 @@ toCellDataSet <- function(sce, exprs_values = "exprs") {
 #'     # cds <- toCellDataSet(example_sceset) # not run
 #'     # sceset <- fromCellDataSet(cds) # not run
 #' }
-fromCellDataSet <- function(cds, exprs_values = "tpm", logged = FALSE) {
+fromCellDataSet <- function(cds, exprs_values = "tpm", logged = FALSE, logExprsOffset = 1) {
     pkgAvail <- requireNamespace("monocle")
     if (pkgAvail) {
         if (!is(cds,'CellDataSet')) stop('cds must be of type CellDataSet from package monocle')
@@ -2148,6 +2147,7 @@ fromCellDataSet <- function(cds, exprs_values = "tpm", logged = FALSE) {
         exprsData <- countData <- tpmData <- fpkmData <- NULL
         if (exprs_values == "exprs") {
             exprsData <- exprs(cds)
+            if (!logged) exprsData <- log2(exprsData + logExprsOffset)
         } else if (exprs_values == "tpm") {
             tpmData <- exprs(cds)
         } else if (exprs_values == "fpkm") {
@@ -2160,7 +2160,8 @@ fromCellDataSet <- function(cds, exprs_values = "tpm", logged = FALSE) {
                          fpkmData = fpkmData, countData = countData,
                          phenoData = phenoData(cds),
                          featureData = featureData(cds),
-                         lowerDetectionLimit = cds@lowerDetectionLimit)
+                         lowerDetectionLimit = cds@lowerDetectionLimit,
+                         logExprsOffset = logExprsOffset)
 
         ## now try and preserve a reduced dimension representation
         ## this is really not elegant - KC
@@ -2248,7 +2249,7 @@ mergeSCESet <- function(x, y, fdata_cols = NULL, pdata_cols = NULL) {
     if (!is(y,'SCESet')) stop('y must be of type SCESet')
     if (!identical(featureNames(x), featureNames(y))) stop("feature names of x and y must be identical")
 
-    for (sl in c("logged", "lowerDetectionLimit", "logExprsOffset", "featureControlInfo")) { 
+    for (sl in c("lowerDetectionLimit", "logExprsOffset", "featureControlInfo")) { 
         if (!identical(slot(x, sl), slot(y, sl))) 
             stop(sprintf("x and y do not have the same %s", sl))
     }
@@ -2355,7 +2356,6 @@ writeSCESet <- function(object, file_path, type = "HDF5", overwrite_existing = F
             rhdf5::h5write(featureNames(object), file = file_path,
                            name = "featureNames")
             rhdf5::h5write(cellNames(object), file = file_path, name = "cellNames")
-            rhdf5::h5write(object@logged, file = file_path, name = "logged")
             rhdf5::h5write(object@logExprsOffset, file = file_path,
                            name = "logExprsOffset")
             rhdf5::h5write(object@lowerDetectionLimit, file = file_path,

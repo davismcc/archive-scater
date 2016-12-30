@@ -42,11 +42,8 @@ in the plot.}
 as the expression values for this plot. Valid arguments are \code{"tpm"}
 (default; transcripts per million), \code{"cpm"}
 (counts per million), \code{"fpkm"} (FPKM values),
-\code{"counts"} (counts for each feature) or \code{"exprs"} (whatever is in
-the \code{'exprs'} slot of the \code{SCESet} object; if already on the log2
-scale, as indicated by the \code{logged} slot of the object, then exprs
-values are set to the power of 2 (so they are back on the raw scale they were
- on) before making the plot).}
+\code{"counts"} (counts for each feature) or \code{"exprs"} (which are 
+assumed to be on the log2 scale and are un-logged prior to plotting).}
 
 \item{ncol}{number of columns to use for \code{facet_wrap} if only one block is
 defined.}

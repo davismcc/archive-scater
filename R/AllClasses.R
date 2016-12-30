@@ -14,9 +14,6 @@
 #'
 #'@section Slots:
 #'  \describe{
-#'    \item{\code{logged}:}{Scalar of class \code{"logical"}, indicating whether 
-#'    or not the expression data in the `exprs` slot have been log2-transformed
-#'    or not.}
 #'    \item{\code{logExprsOffset}:}{Scalar of class \code{"numeric"}, providing an offset 
 #'    applied to expression data in the `exprs` slot when undergoing log2-transformation
 #'    to avoid trying to take logs of zero.}
@@ -47,8 +44,7 @@
 #' @exportClass SCESet
 setClass("SCESet",
          contains = "ExpressionSet",
-         slots = c(logged = "logical",
-                   logExprsOffset = "numeric",
+         slots = c(logExprsOffset = "numeric",
                    lowerDetectionLimit = "numeric",
                    cellPairwiseDistances = "dist",
                    featurePairwiseDistances = "dist",
