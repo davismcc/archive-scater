@@ -33,7 +33,9 @@ panels) in the plot. Default is \code{NULL}, in which case there is no
 blocking.}
 
 \item{colour_by}{character string defining the column of \code{pData(object)} to
-be used as a factor by which to colour the points in the plot.}
+be used as a factor by which to colour the points in the plot. Alternatively, 
+a data frame with one column containing a value for each cell, which will be 
+mapped to a corresponding colour.}
 
 \item{nfeatures}{numeric scalar indicating the number of features to include
 in the plot.}

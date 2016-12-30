@@ -19,7 +19,8 @@ number indicates column). Specifying this argument overrides any plate
 position information extracted from the SCESet object.}
 
 \item{colour_by}{character string defining the column of \code{pData(object)} to
-be used as a factor by which to colour the points in the plot.}
+be used as a factor by which to colour the points in the plot. Alternatively, a 
+data frame with one column containing values to map to colours for all cells.}
 
 \item{x_position}{numeric vector providing x-axis positions for the cells
 (ignored if \code{plate_position} is not \code{NULL})}

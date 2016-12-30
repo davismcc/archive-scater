@@ -52,7 +52,8 @@ or any other named element of the \code{assayData} slot of the \code{SCESet}
 object that can be accessed with the \code{get_exprs} function.}
 
 \item{colour_by}{character string defining the column of \code{pData(object)} to
-be used as a factor by which to colour the points in the plot.}
+be used as a factor by which to colour the points in the plot. Alternatively, a
+data frame with one column containing values to map to colours for all cells.}
 
 \item{shape_by}{character string defining the column of \code{pData(object)} to
 be used as a factor by which to define the shape of the points in the plot.}
