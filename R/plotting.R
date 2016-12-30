@@ -1782,18 +1782,32 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
     else
         nfeatures <- length(features)
 
-    ## Check arguments are valid
-    if ( is.null(x) ) {
-        x_is_feature <- FALSE
-    } else {
-        if ( !(x %in% varLabels(object)) && !(x %in% featureNames(object)))
-            stop("the argument 'x' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)")
+    ## Picking the expression values
+    if ( typeof(features) == "character" ) {
+        if ( !(all(features %in% featureNames(object))) )
+            stop("when the argument 'features' is of type character, all features must be in featureNames(object)")
+    }
+
+    exprs_mat <- get_exprs(object, exprs_values)
+    if ( log2_values ) {
+        exprs_mat <- log2(exprs_mat + 1)
+        ylab <- paste0("Expression (", exprs_values, "; log2-scale)")
+    } else
+        ylab <- paste0("Expression (", exprs_values, ")")
+    to_melt <- as.matrix(exprs_mat[features, , drop = FALSE])
+
+    ## check x-coordinates are valid
+    xcoord <- NULL
+    if ( !is.null(x) ) {
         if ( x %in% featureNames(object) ) {
-            x_is_feature <- TRUE
+            xcoord <- exprs_mat[x,]
             show_violin <- FALSE
             show_median <- FALSE
-        } else
-            x_is_feature <- FALSE
+        } else if (x %in% varLabels(object)) { 
+            xcoord <- pData(object)[,x]
+        } else {
+            stop("'x' should be a column of pData(object) or in featureNames(object)")
+        }
     }
 
     ## checking visualization arguments
@@ -1809,28 +1823,21 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
     size_by <- size_by_out$name
     size_by_vals <- size_by_out$val 
 
-    if ( typeof(features) == "character" ) {
-        if ( !(all(features %in% featureNames(object))) )
-            stop("when the argument 'features' is of type character, all features must be in featureNames(object)")
+    ## Colour by is_exprs if we can (i.e. is_exprs is not NULL)
+    if ( is.null(colour_by) && !is.null(is_exprs(object)) ) {
+        colour_by <- "Is_Expressed"
+        colour_by_vals <- reshape2::melt(is_exprs(object)[features,],
+                                         value.name = "is_exprs")
+        colour_by_vals <- as.vector(colour_by_vals)
     }
-
-    exprs_mat <- get_exprs(object, exprs_values)
-    if ( log2_values ) {
-        exprs_mat <- log2(exprs_mat + 1)
-        ylab <- paste0("Expression (", exprs_values, "; log2-scale)")
-    } else
-        ylab <- paste0("Expression (", exprs_values, ")")
-    to_melt <- as.matrix(exprs_mat[features, , drop = FALSE])
 
     ## Melt the expression data and metadata into a convenient form
     evals_long <- reshape2::melt(to_melt, value.name = "evals")
     colnames(evals_long) <- c("Feature", "Cell", "evals")
 
-    ## Extend the samples information
-    samps <-  pData(object)
-    if ( x_is_feature )
-        samps[[x]] <- exprs_mat[x, ]
-    samples_long <- samps[rep(seq_len(ncol(object)), each = nfeatures),]
+    ## Prepare the samples information
+    samps <- data.frame(row.names=colnames(object))
+    if ( !is.null(xcoord) ) samps[[x]] <- xcoord
 
     ## Construct a ggplot2 aesthetic for the plot
     aesth <- aes()
@@ -1842,25 +1849,26 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
         one_facet <- FALSE
     }
     aesth$y <- as.symbol("evals")
-    if ( !is.null(colour_by) )
+    
+    if ( !is.null(colour_by) ) {
         aesth$colour <- as.symbol(colour_by)
-    else {
-        if ( !is.null(is_exprs(object)) ) {
-            ## Colour by is_exprs if we can (i.e. is_exprs is not NULL)
-            isexpr_long <- reshape2::melt(is_exprs(object)[features,],
-                                          value.name = "is_exprs")
-            evals_long <- dplyr::mutate(
-                evals_long, Is_Expressed = as.vector(isexpr_long$is_exprs))
-            aesth$colour <- as.symbol("Is_Expressed")
-        }
+        samps[[colour_by]] <- colour_by_vals
     }
-    if ( !is.null(shape_by) )
+    if ( !is.null(shape_by) ) {
         aesth$shape <- as.symbol(shape_by)
+        samps[[shape_by]] <- shape_by_vals
+    }
+    if ( !is.null(size_by) ) {
+        aesth$size <- as.symbol(size_by)
+        samps[[size_by]] <- size_by_vals
+    }
+
     ## Define sensible x-axis label if NULL
     if ( is.null(xlab) )
         xlab <- x
 
-    ## Combine the expression values and sample information
+    ## Extend the sample information, combine with the expression values
+    samples_long <- samps[rep(seq_len(ncol(object)), each = nfeatures), , drop=FALSE]
     object <- cbind(evals_long, samples_long)
 
     ## Make the plot
