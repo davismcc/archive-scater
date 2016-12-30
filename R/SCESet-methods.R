@@ -2210,18 +2210,25 @@ getExprs <- function(object) {
 #'
 #' @param x an \code{\link{SCESet}} object
 #' @param y an \code{\link{SCESet}} object
-#' @param fdata_cols_x a logical or numeric vector indicating which columns of featureData
-#' for \code{x} are shared between \code{x} and \code{y} and should feature in the
-#' returned merged \code{SCESet}. Default is all columns of \code{fData(x)}.
-#' @param fdata_cols_y a logical or numeric vector indicating which columns of featureData
-#' for \code{y} are shared between \code{x} and \code{y} and should feature in the
-#' returned merged \code{SCESet}. Default is \code{fdata_cols_x}.
-#' @param pdata_cols_x a logical or numeric vector indicating which columns of phenoData
-#' of \code{x} should be retained.
-#' @param pdata_cols_y a logical or numeric vector indicating which columns of phenoData
-#' of \code{y} should be retained.
+#' @param fdata_cols a character vector indicating which columns of featureData
+#' of \code{x} and \code{y} should be retained. Alternatively, an integer or 
+#' logical vector can be supplied to subset the column names of \code{fData(x)},
+#' such that the subsetted character vector contains the columns to be retained.
+#' Defaults to all shared columns between \code{fData(x)} and \code{fData(y)}.
+#' @param pdata_cols a character vector indicating which columns of phenoData
+#' of \code{x} and \code{y} should be retained. Alternatively, an integer or
+#' logical vector to subset the column names of \code{pData(x)}. Defaults to
+#' all shared columns between \code{pData(x)} and \code{pData(y)}.
 #'
-#' @details Existing cell-cell pairwise distances and feature-feature pairwise distances will not be valid for a merged SCESet so these are set to \code{NULL} in the returned object. Similarly \code{experimentData} will need to be added anew to the merged SCESet returned.
+#' @details Existing cell-cell pairwise distances and feature-feature pairwise distances will not be valid for a merged \code{SCESet} object.
+#' These entries are subsequently set to \code{NULL} in the returned object. 
+#' Similarly, new \code{experimentData} will need to be added to the merged object.
+#' 
+#' If \code{fdata_cols} does not include the definition of feature controls, the control sets may not be defined in the output object.
+#' In such cases, a warning is issued and the undefined control sets are removed from the \code{featureControlInfo} of the merged object.
+#'
+#' It is also \emph{strongly} recommended to recompute all size factors using the merged object, and re-run \code{\link{normalize}} before using \code{exprs}.
+#' For arbitrary \code{x} and \code{y}, there is no guarantee that the size factors (and thus \code{exprs}) are comparable across objects.
 #'
 #' @return a merged \code{SCESet} object combining data and metadata from \code{x} and \code{y}
 #'
@@ -2236,69 +2243,69 @@ getExprs <- function(object) {
 #'
 #' ## with specification of columns of fData
 #' example_sceset <- calculateQCMetrics(example_sceset)
-#' mergeSCESet(example_sceset[, 1:20], example_sceset[, 21:40], fdata_cols_x = c(1, 7))
+#' mergeSCESet(example_sceset[, 1:20], example_sceset[, 21:40], fdata_cols = c(1, 7))
 #'
 #' ## with specification of columns of pData
-#' mergeSCESet(example_sceset[, 1:20], example_sceset[, 21:40], pdata_cols_x = 1:6)
+#' mergeSCESet(example_sceset[, 1:20], example_sceset[, 21:40], pdata_cols = 1:6)
 #'
 #'
-mergeSCESet <- function(x, y, fdata_cols_x = 1:ncol(fData(x)), fdata_cols_y = fdata_cols_x,
-                        pdata_cols_x = NULL, pdata_cols_y = NULL) {
+mergeSCESet <- function(x, y, fdata_cols = NULL, pdata_cols = NULL) {
     if (!is(x,'SCESet')) stop('x must be of type SCESet')
     if (!is(y,'SCESet')) stop('y must be of type SCESet')
     if (!identical(featureNames(x), featureNames(y))) stop("feature names of x and y must be identical")
 
-    if (x@logged != y@logged)
-        stop("x and y do not have the same value for the 'logged' slot.")
-    if (x@lowerDetectionLimit != y@lowerDetectionLimit)
-        stop("x and y do not have the same lowerDetectionLimit.")
-    if (x@logExprsOffset != y@logExprsOffset)
-        stop("x and y do not have the same logExprsOffset.")
+    for (sl in c("logged", "lowerDetectionLimit", "logExprsOffset", "featureControlInfo")) { 
+        if (!identical(slot(x, sl), slot(y, sl))) 
+            stop(sprintf("x and y do not have the same %s", sl))
+    }
 
-    ## combine fData
-    if (ncol(fData(x)) == 0) {
-        if (!identical(fData(x), fData(y)))
-            stop("featureData do not match for x and y.")
-        new_fdata <- as(fData(x), "AnnotatedDataFrame")
-    } else {
-        fdata1 <- fData(x)[, fdata_cols_x, drop = FALSE]
-        fdata2 <- fData(y)[, fdata_cols_y, drop = FALSE]
-        if (!identical(fdata1, fdata2))
-            stop("featureData columns specified are not identical for x and y.")
-        new_fdata <- as(fdata1, "AnnotatedDataFrame")
+    ## check consistent fData
+    if (is.null(fdata_cols)) { 
+        fdata_cols <- intersect(colnames(fData(x)), colnames(fData(y)))
+    } else if (!is.character(fdata_cols)) {
+        fdata_cols <- colnames(fData(x))[fdata_cols]
     }
+    fdata1 <- fData(x)[, fdata_cols, drop = FALSE]
+    fdata2 <- fData(y)[, fdata_cols, drop = FALSE]
+    if (!identical(fdata1, fdata2))
+        stop("specified featureData columns are not identical for x and y")
+    new_fdata <- as(fdata1, "AnnotatedDataFrame")
+
     ## combine pData
-    if (ncol(pData(x)) == 0 || pData(y) == 0)
-        stop("phenoData slot is empty for x or y.")
-    pdata_x <- pData(x)
-    pdata_y <- pData(y)
-    if (is.null(pdata_cols_x)) {
-        if (is.null(pdata_cols_y)) {
-            pdata_cols_x <- which(colnames(pdata_x) %in% colnames(pdata_y))
-            pdata_cols_y <- which(colnames(pdata_y) %in% colnames(pdata_x))
-        } else
-            pdata_cols_x <- which(colnames(pdata_x) %in% colnames(pdata_y)[pdata_cols_y])
-    } else {
-        if (is.null(pdata_cols_y))
-            pdata_cols_y <- which(colnames(pdata_y) %in% colnames(pdata_x)[pdata_cols_x])
+    if (is.null(pdata_cols)) { 
+        pdata_cols <- intersect(colnames(pData(x)), colnames(pData(y)))
+    } else if (!is.character(pdata_cols)) {
+        pdata_cols <- colnames(pData(x))[pdata_cols]
     }
-    if (length(pdata_cols_x) == 0 | length(pdata_cols_y) == 0)
-        stop("no phenoData column names found in common between x and y.")
-    ## make sure ordering of columns is correct
-    pdata_x <- pdata_x[, pdata_cols_x, drop = FALSE]
-    pdata_y <- pdata_y[, pdata_cols_y, drop = FALSE]
-    mm <- match(colnames(pdata_x), colnames(pdata_y))
-    pdata_y <- pdata_y[, mm]
-    if (!identical(colnames(pdata_x), colnames(pdata_y)))
-        stop("phenoData columns specified are not identical for x and y.")
+    pdata_x <- pData(x)[, pdata_cols, drop = FALSE]
+    pdata_y <- pData(y)[, pdata_cols, drop = FALSE]
+    if (!identical(colnames(pdata_x), colnames(pdata_y))) 
+        stop("phenoData column names are not identical for x and y")
     new_pdata <- rbind(pdata_x, pdata_y)
     new_pdata <- as(new_pdata, "AnnotatedDataFrame")
+
     ## combine exprsData
     new_exprs <- Biobase::combine(exprs(x), exprs(y))
+
     ## new SCESet
     merged_sceset <- newSCESet(exprsData = new_exprs, featureData = new_fdata,
                                phenoData = new_pdata,
+                               lowerDetectionLimit = x@lowerDetectionLimit,
                                logExprsOffset = x@logExprsOffset)
+
+    ## checking that the controls actually exist in the merged object
+    all.fnames <- .fcontrol_names(x)
+    discard <- logical(length(all.fnames))
+    for (f in seq_along(all.fnames)) {
+        fc <- all.fnames[f]
+        which.current <- fData(merged_sceset)[[paste0("is_feature_control_", fc)]]
+        if (is.null(which.current)) {
+            warning(sprintf("removing undefined feature control set '%s'", fc))
+            discard[f] <- TRUE
+        }
+    }
+    featureControlInfo(merged_sceset) <- featureControlInfo(x)[!discard,]
+
     ## add remaining assayData to merged SCESet
     assay_names <- intersect(names(Biobase::assayData(x)),
                              names(Biobase::assayData(y)))
