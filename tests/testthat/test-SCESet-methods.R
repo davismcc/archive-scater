@@ -151,14 +151,15 @@ test_that("mergeSCESet works as expected", {
                                 row.names = rownames(sc_example_counts)))
     example_sceset <- newSCESet(countData = sc_example_counts)
     
-    err_string <- "phenoData slot is empty"
-    expect_error(mergeSCESet(example_sceset[, 1:20], example_sceset[, 21:40]), 
-                 err_string)
+    merged_sceset <- mergeSCESet(example_sceset[, 1:20], example_sceset[, 21:40])
+    expect_that(merged_sceset, is_a("SCESet"))
+    expect_identical(pData(merged_sceset), pData(example_sceset))
     
     example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
     merged_sceset <- mergeSCESet(example_sceset[, 1:20],
                                  example_sceset[, 21:40])
     expect_that(merged_sceset, is_a("SCESet"))
+    expect_identical(pData(merged_sceset), pData(example_sceset))
 
     example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd,
                                 featureData = fd)

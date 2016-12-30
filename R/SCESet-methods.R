@@ -2276,7 +2276,11 @@ mergeSCESet <- function(x, y, fdata_cols = NULL, pdata_cols = NULL) {
     pdata_y <- pData(y)[, pdata_cols, drop = FALSE]
     if (!identical(colnames(pdata_x), colnames(pdata_y))) 
         stop("phenoData column names are not identical for x and y")
-    new_pdata <- rbind(pdata_x, pdata_y)
+    if (ncol(pdata_x)) { 
+        new_pdata <- rbind(pdata_x, pdata_y)
+    } else {
+        new_pdata <- data.frame(row.names=c(rownames(pdata_x), rownames(pdata_y)))
+    }
     new_pdata <- as(new_pdata, "AnnotatedDataFrame")
 
     ## combine exprsData
