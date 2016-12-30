@@ -132,7 +132,7 @@
 
     } else if (is.data.frame(by)) {
         if (ncol(by)!=1L) {
-            stop("'by' should be a dta frame with one column")
+            stop("'by' should be a data frame with one column")
         } else if (nrow(by)!=ncol(x)) {
             stop("'nrow(by)' should be equal to number of columns in 'x'")
         }
@@ -190,10 +190,10 @@
 #' in the plot.
 #' @param exprs_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
-#' (default; transcripts per million), \code{"cpm"}
-#' (counts per million), \code{"fpkm"} (FPKM values),
-#' \code{"counts"} (counts for each feature) or \code{"exprs"} (which are 
-#' assumed to be on the log2 scale and are un-logged prior to plotting).
+#' (transcripts per million), \code{"counts"} (raw counts), \code{"cpm"} 
+#' (counts per million), \code{"fpkm"} (FPKM values), or \code{"exprs"} (which are 
+#' assumed to be on the log2 scale and are un-logged prior to plotting). If
+#' not specified, the function will search for values in the order given above.
 #' @param linewidth numeric scalar giving the "size" parameter (in ggplot2
 #' parlance) for the lines plotted. Default is 1.5.
 #' @param y optional argument for generic \code{plot} functions, not used for
@@ -249,7 +249,7 @@ setMethod("plot", signature("SCESet"),
 #' @importFrom reshape2 melt
 #' @export
 plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
-                        nfeatures = 500, exprs_values = "tpm", ncol = 3,
+                       nfeatures = 500, exprs_values = NULL, ncol = 3,
                        linewidth = 1.5, theme_size = 10) {
     object <- x
     if ( !is(object, "SCESet") )
@@ -269,19 +269,8 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
     colour_by_vals <- colour_by_out$val 
 
     ## Define an expression matrix depending on which values we're using
-    exprs_values <- match.arg(exprs_values, c("exprs", "tpm", "fpkm", 
-                                              "cpm", "counts"))
-    exprs_mat <- switch(exprs_values,
-                        exprs = exprs(object),
-                        tpm = tpm(object),
-                        cpm = cpm(object),
-                        fpkm = fpkm(object),
-                        counts = counts(object))
-    if ( is.null(exprs_mat) ) {
-        warning(paste0("The object does not contain ", exprs_values, " expression values. Using exprs(object) values instead."))
-        exprs_mat <- exprs(object)
-        exprs_values <- "exprs"
-    }
+    exprs_values <- .exprs_hunter(x, exprs_values)
+    exprs_mat <- get_exprs(x, exprs_values)
     if ( exprs_values == "exprs" )
         exprs_mat <- 2 ^ exprs_mat - object@logExprsOffset
 
@@ -290,13 +279,14 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
     seq_real_estate <- t(plyr::aaply(exprs_mat, 2, .fun = function(x) {
         cumsum(sort(x, decreasing = TRUE))
     }))
-    rownames(seq_real_estate) <- 1:nfeatures_total
+    rownames(seq_real_estate) <- seq_len(nfeatures_total)
     nfeatures_to_plot <- nfeatures
-    seq_real_estate_long <- reshape2::melt(seq_real_estate[1:nfeatures_to_plot, ],
+    to_plot <- seq_len(nfeatures_to_plot)
+    seq_real_estate_long <- reshape2::melt(seq_real_estate[to_plot, ],
                                            value.name = "exprs")
 
     ## Get the proportion of the library accounted for by the top features
-    prop_library <- reshape2::melt(t(t(seq_real_estate[1:nfeatures_to_plot, ]) /
+    prop_library <- reshape2::melt(t(t(seq_real_estate[to_plot, ]) /
                                          colSums(exprs_mat)),
                                    value.name = "prop_library")
     colnames(seq_real_estate_long) <- c("Feature", "Cell", "exprs")
@@ -517,12 +507,9 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
 #     exprs_values <- match.arg(
 #         exprs_values, c("exprs", "tpm", "fpkm", "counts", "cpm", "norm_exprs",
 #                         "stand_exprs"))
-    exprs_mat <- get_exprs(object, exprs_values)
-    if ( is.null(exprs_mat) ) {
-        warning(paste0("The object does not contain ", exprs_values, " expression values. Using exprs(object) values instead."))
-        exprs_mat <- exprs(object)
-        exprs_values <- "exprs"
-    }
+    exprs_mat <- get_exprs(object, exprs_values, warning=FALSE)
+    if ( is.null(exprs_mat) ) 
+        stop(sprintf("object does not contain '%s'", exprs_values))
 
     ## Define features to use: either ntop, or if a set of features is defined,
     ## then those
@@ -835,12 +822,9 @@ setMethod("plotTSNE", signature("SCESet"),
 
               ## Define an expression matrix depending on which values we're
               ## using
-              exprs_mat <- get_exprs(object, exprs_values)
-              if ( is.null(exprs_mat) ) {
-                  warning(paste0("The object does not contain ", exprs_values, " expression values. Using exprs(object) values instead."))
-                  exprs_mat <- exprs(object)
-                  exprs_values <- "exprs"
-              }
+              exprs_mat <- get_exprs(object, exprs_values, warning=FALSE)
+              if ( is.null(exprs_mat) ) 
+                  stop(sprintf("object does not contain '%s'", exprs_values))
 
               ## Define features to use: either ntop, or if a set of features is
               ## defined, then those
@@ -1040,13 +1024,9 @@ plotDiffusionMapSCESet <- function(object, ntop = 500, ncomponents = 2,
 
     ## Define an expression matrix depending on which values we're
     ## using
-    exprs_mat <- get_exprs(object, exprs_values)
-    if ( is.null(exprs_mat) ) {
-        warning(paste0("The object does not contain ", exprs_values,
-                       " expression values. Using exprs(object) values instead."))
-        exprs_mat <- exprs(object)
-        exprs_values <- "exprs"
-    }
+    exprs_mat <- get_exprs(object, exprs_values, warning = FALSE)
+    if ( is.null(exprs_mat) ) 
+        stop(sprintf("object does not contain '%s'", exprs_values))
 
     ## Define features to use: either ntop, or if a set of features is
     ## defined, then those
