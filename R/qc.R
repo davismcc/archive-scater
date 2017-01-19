@@ -343,16 +343,6 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     new_pdata <- cbind(new_pdata, qc_pdata, cell_controls_pdata)
     pData(object) <-  new("AnnotatedDataFrame", new_pdata)
 
-    ## indicate if feature is feature control across any set
-    ## here use technical feature controls
-    if ( is.list(feature_controls) ) {
-        feat_controls_cols <- grep("^is_feature_control",
-                                   colnames(feature_controls_fdata))
-        feature_controls_fdata$is_feature_control <- (
-            rowSums(feature_controls_fdata[, feat_controls_cols, drop = FALSE])
-            > 0)
-    }
-    
     ## Add feature-level QC metrics to fData
     new_fdata <- as.data.frame(fData(object))
 
@@ -487,14 +477,12 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     ## determine if vector or list
     if ( is.list(feature_controls) ) {
         feature_controls_list <- feature_controls
-        n_sets_feature_controls <- length(feature_controls)
-    }
-    else {
+    } else {
         feature_controls_list <- list(feature_controls)
-        n_sets_feature_controls <- 1
     }
+
     ## Cycle through the feature_controls list and add QC info
-    for (i in seq_len(length(feature_controls_list)) ) {
+    for (i in seq_along(feature_controls_list)) {
         gc_set <- feature_controls_list[[i]]
         set_name <- names(feature_controls_list)[i]
         if ( is.logical(gc_set) ) {
@@ -521,11 +509,12 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
         }
 
         is_feature_control[gc_set] <- TRUE
+
         ## Define number of feature controls expressed
         n_detected_feature_controls <- nexprs(object, subset_row = gc_set)
         df_pdata_this$n_detected_feature_controls <-
             n_detected_feature_controls
-        #        if ( n_sets_feature_controls > 1 )
+        
         colnames(df_pdata_this) <- paste(colnames(df_pdata_this),
                                          set_name, sep = "_")
         if ( i > 1L )  
@@ -533,6 +522,7 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
                                             df_pdata_this)
         else
             feature_controls_pdata <- df_pdata_this
+        
         ## Construct data.frame for fData from this feature control set
         df_fdata_this <- data.frame(is_feature_control)
         colnames(df_fdata_this) <- paste(colnames(df_fdata_this), set_name,
