@@ -2288,7 +2288,7 @@ mergeSCESet <- function(x, y, fdata_cols_x = 1:ncol(fData(x)), fdata_cols_y = fd
     pdata_x <- pdata_x[, pdata_cols_x, drop = FALSE]
     pdata_y <- pdata_y[, pdata_cols_y, drop = FALSE]
     mm <- match(colnames(pdata_x), colnames(pdata_y))
-    pdata_y <- pdata_y[, mm]
+    pdata_y <- pdata_y[, mm, drop = FALSE]
     if (!identical(colnames(pdata_x), colnames(pdata_y)))
         stop("phenoData columns specified are not identical for x and y.")
     new_pdata <- rbind(pdata_x, pdata_y)
