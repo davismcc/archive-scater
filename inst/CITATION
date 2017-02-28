@@ -1,0 +1,10 @@
+citEntry(
+    entry = "article",
+    author ="Davis J McCarthy and Kieran R Campbell and Aaron T L Lun and Quin F Wills",
+    title="scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R",
+    journal="Bioinformatics",
+    year="2016",
+    volume="in press",
+    textVersion = "McCarthy DJ, Campbell KR, Lun ATL and Wills QF (2016). scater: pre-processing, quality control, normalisation and visualisation of single-cell RNA-seq data in R. Bioinformatics, in press"
+)
+

@@ -17,10 +17,12 @@ plotReducedDim.default(df_to_plot, ncomponents = 2, colour_by = NULL,
   legend = "auto")
 
 plotReducedDim.SCESet(object, ncomponents = 2, colour_by = NULL,
-  shape_by = NULL, size_by = NULL, theme_size = 10, legend = "auto")
+  shape_by = NULL, size_by = NULL, exprs_values = "exprs",
+  theme_size = 10, legend = "auto")
 
 \S4method{plotReducedDim}{SCESet}(object, ncomponents = 2, colour_by = NULL,
-  shape_by = NULL, size_by = NULL, theme_size = 10, legend = "auto")
+  shape_by = NULL, size_by = NULL, exprs_values = "exprs",
+  theme_size = 10, legend = "auto")
 
 \S4method{plotReducedDim}{data.frame}(object, ncomponents = 2,
   colour_by = NULL, shape_by = NULL, size_by = NULL, percentVar = NULL,
@@ -43,7 +45,8 @@ components to plot, starting from the first principal component. Default is
  top dimensions is produced.}
 
 \item{colour_by}{character string defining the column of \code{pData(object)} to
-be used as a factor by which to colour the points in the plot.}
+be used as a factor by which to colour the points in the plot. Alternatively, a 
+data frame with one column containing values to map to colours for all cells.}
 
 \item{shape_by}{character string defining the column of \code{pData(object)} to
 be used as a factor by which to define the shape of the points in the plot.}
@@ -61,6 +64,9 @@ internally in the \code{\link[scater]{plotPCA}} function.}
 \item{legend}{character, specifying how the legend(s) be shown? Default is 
 \code{"auto"}, which hides legends that have only one level and shows others. 
 Alternatives are "all" (show all legends) or "none" (hide all legends).}
+
+\item{exprs_values}{a string specifying the expression values to use for
+colouring the points, if \code{colour_by} or \code{size_by} are set as feature names.}
 }
 \value{
 a ggplot plot object
