@@ -414,8 +414,8 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' is \code{FALSE}.
 #' @param theme_size numeric scalar giving default font size for plotting theme
 #' (default is 10).
-#' @param legend character, specifying how the legend(s) be shown? Default is 
-#' \code{"auto"}, which hides legends that have only one level and shows others. 
+#' @param legend character, specifying how the legend(s) be shown? Default is
+#' \code{"auto"}, which hides legends that have only one level and shows others.
 #' Alternatives are "all" (show all legends) or "none" (hide all legends).
 #'
 #' @details The function \code{\link{prcomp}} is used internally to do the PCA.
@@ -426,13 +426,13 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' feature-wise unit variances or not according to the \code{scale_features}
 #' argument), added to the object and PCA is done using these new standardised
 #' expression values.
-#' 
-#' If the arguments \code{detect_outliers} and \code{return_SCESet} are both 
-#' \code{TRUE}, then the element \code{$outlier} is added to the pData 
+#'
+#' If the arguments \code{detect_outliers} and \code{return_SCESet} are both
+#' \code{TRUE}, then the element \code{$outlier} is added to the pData
 #' (phenotype data) slot of the \code{SCESet} object. This element contains
 #' indicator values about whether or not each cell has been designated as an
-#' outlier based on the PCA. These values can be accessed for filtering 
-#' low quality cells with, foe example, \code{example_sceset$outlier}. 
+#' outlier based on the PCA. These values can be accessed for filtering
+#' low quality cells with, foe example, \code{example_sceset$outlier}.
 #'
 #' @return either a ggplot plot object or an SCESet object
 #'
@@ -461,7 +461,7 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' plotPCA(example_sceset, shape_by = "Treatment", size_by = "Mutation_Status")
 #' plotPCA(example_sceset, feature_set = 1:100, colour_by = "Treatment",
 #' shape_by = "Mutation_Status")
-#' 
+#'
 #' ## experiment with legend
 #' example_subset <- example_sceset[, example_sceset$Treatment == "treat1"]
 #' plotPCA(example_subset, colour_by = "Cell_Cycle", shape_by = "Treatment", legend = "all")
@@ -535,7 +535,7 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
         if ( any(vars_not_found) )
             message(paste("The following selected_variables were not found in pData(object):", selected_variables[vars_not_found]))
         ## scale double variables
-        exprs_to_plot <- scale(pData(object)[, use_variable], 
+        exprs_to_plot <- scale(pData(object)[, use_variable],
                                scale = scale_features)
     } else if ( pca_data_input == "fdata" ) {
         use_variable <- sapply(fData(object), is.double)
@@ -619,7 +619,7 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
     ## remove legend if so desired
     if ( legend == "none" )
         plot_out <- plot_out + theme(legend.position = "none")
-    
+
     ## Plot PCA and return appropriate object
     if (return_SCESet) {
         ncomp_out <- max(ncomponents, 10)
@@ -708,7 +708,7 @@ setMethod("plotPCA", signature("SCESet"),
 #' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
 #' counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot
 #' of the \code{SCESet} object; default), \code{"norm_exprs"} (normalised
-#' expression values) or \code{"stand_exprs"} (standardised expression values), 
+#' expression values) or \code{"stand_exprs"} (standardised expression values),
 #' or any other named element of the \code{assayData} slot of the \code{SCESet}
 #' object that can be accessed with the \code{get_exprs} function.
 #' @param colour_by character string defining the column of \code{pData(object)} to
@@ -721,7 +721,7 @@ setMethod("plotPCA", signature("SCESet"),
 #' be used as a factor by which to define the size of points in the plot.
 #' Alternatively, a data frame with one column containing values to map to sizes.
 #' @param feature_set character, numeric or logical vector indicating a set of
-#' features to use for the t-SNE calculation. If character, entries must all be 
+#' features to use for the t-SNE calculation. If character, entries must all be
 #' in \code{featureNames(object)}. If numeric, values are taken to be indices for
 #' features. If logical, vector is used to index features and should have length
 #' equal to \code{nrow(object)}.
@@ -741,8 +741,8 @@ setMethod("plotPCA", signature("SCESet"),
 #' @param perplexity numeric scalar value defining the "perplexity parameter"
 #' for the t-SNE plot. Passed to \code{\link[Rtsne]{Rtsne}} - see documentation
 #' for that package for more details.
-#' @param legend character, specifying how the legend(s) be shown? Default is 
-#' \code{"auto"}, which hides legends that have only one level and shows others. 
+#' @param legend character, specifying how the legend(s) be shown? Default is
+#' \code{"auto"}, which hides legends that have only one level and shows others.
 #' Alternatives are "all" (show all legends) or "none" (hide all legends).
 #' @param ... further arguments passed to \code{\link[Rtsne]{Rtsne}}
 #'
@@ -791,7 +791,7 @@ setMethod("plotTSNE", signature("SCESet"),
                    colour_by = NULL, shape_by = NULL, size_by = NULL,
                    feature_set = NULL, return_SCESet = FALSE,
                    scale_features = TRUE, draw_plot = TRUE, theme_size = 10,
-                   rand_seed = NULL, perplexity = floor(ncol(object) / 5), 
+                   rand_seed = NULL, perplexity = floor(ncol(object) / 5),
                    legend = "auto", ...) {
               ##
               if ( !requireNamespace("Rtsne", quietly = TRUE) )
@@ -839,7 +839,7 @@ setMethod("plotTSNE", signature("SCESet"),
               keep_feature <- (matrixStats::rowVars(exprs_to_plot) > 0.001)
               keep_feature[is.na(keep_feature)] <- FALSE
               exprs_to_plot <- exprs_to_plot[keep_feature, ]
-              
+
               ## Standardise expression if stand_exprs(object) is null
               exprs_to_plot <- t(scale(t(exprs_to_plot), scale = scale_features))
 
@@ -848,8 +848,8 @@ setMethod("plotTSNE", signature("SCESet"),
                   set.seed(rand_seed)
               tsne_out <- Rtsne::Rtsne(t(exprs_to_plot),
                                        initial_dims = max(50, ncol(object)),
-                                       perplexity = perplexity, ...)
-
+                                       perplexity = perplexity,
+                                       dims = ncomponents,...)
 
               ## Define data.frame for plotting
               df_to_plot <- data.frame(tsne_out$Y[, 1:ncomponents],
@@ -871,7 +871,7 @@ setMethod("plotTSNE", signature("SCESet"),
               ## remove legend if so desired
               if ( legend == "none" )
                   plot_out <- plot_out + theme(legend.position = "none")
-              
+
               ## Plot t-SNE and return appropriate object
               if (return_SCESet) {
                   df_out <- tsne_out$Y[, 1:ncomponents]
@@ -895,13 +895,13 @@ setMethod("plotTSNE", signature("SCESet"),
 #'
 #' @param object an \code{SCESet} object
 #' @param ntop numeric scalar indicating the number of most variable features to
-#' use for the diffusion map. Default is \code{500}, but any \code{ntop} 
+#' use for the diffusion map. Default is \code{500}, but any \code{ntop}
 #' argument is overrided if the \code{feature_set} argument is non-NULL.
 #' @param ncomponents numeric scalar indicating the number of principal
-#' components to plot, starting from the first diffusion map component. Default 
-#' is 2. If \code{ncomponents} is 2, then a scatterplot of component 1 vs 
-#' component 2 is produced. If \code{ncomponents} is greater than 2, a pairs 
-#' plots for the top components is produced. NB: computing many components for 
+#' components to plot, starting from the first diffusion map component. Default
+#' is 2. If \code{ncomponents} is 2, then a scatterplot of component 1 vs
+#' component 2 is produced. If \code{ncomponents} is greater than 2, a pairs
+#' plots for the top components is produced. NB: computing many components for
 #' the diffusion map can become time consuming.
 #' @param exprs_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
@@ -941,12 +941,12 @@ setMethod("plotTSNE", signature("SCESet"),
 #' \code{set.seed} to make plots reproducible.
 #' @param sigma argument passed to \code{\link[destiny]{DiffusionMap}}
 #' @param distance argument passed to \code{\link[destiny]{DiffusionMap}}
-#' @param legend character, specifying how the legend(s) be shown? Default is 
-#' \code{"auto"}, which hides legends that have only one level and shows others. 
+#' @param legend character, specifying how the legend(s) be shown? Default is
+#' \code{"auto"}, which hides legends that have only one level and shows others.
 #' Alternatives are "all" (show all legends) or "none" (hide all legends).
 #' @param ... further arguments passed to \code{\link[destiny]{DiffusionMap}}
 #'
-#' @details The function \code{\link[destiny]{DiffusionMap}} is used internally 
+#' @details The function \code{\link[destiny]{DiffusionMap}} is used internally
 #' to compute the diffusion map.
 #'
 #' @return If \code{return_SCESet} is \code{TRUE}, then the function returns an
@@ -1042,7 +1042,7 @@ plotDiffusionMapSCESet <- function(object, ntop = 500, ncomponents = 2,
     keep_feature <- (matrixStats::rowVars(exprs_to_plot) > 0.001)
     keep_feature[is.na(keep_feature)] <- FALSE
     exprs_to_plot <- exprs_to_plot[keep_feature, ]
-    
+
     ## Standardise expression if indicated by scale_features argument
     exprs_to_plot <- t(scale(t(exprs_to_plot), scale = scale_features))
 
@@ -1062,7 +1062,7 @@ plotDiffusionMapSCESet <- function(object, ntop = 500, ncomponents = 2,
 
     ## Make reduced-dimension plot
     plot_out <- plotReducedDim.default(df_to_plot, ncomponents,
-                                       colour_by, shape_by, size_by, 
+                                       colour_by, shape_by, size_by,
                                        legend = legend)
 
     ## Define plotting theme
@@ -1073,7 +1073,7 @@ plotDiffusionMapSCESet <- function(object, ntop = 500, ncomponents = 2,
     ## remove legend if so desired
     if ( legend == "none" )
         plot_out <- plot_out + theme(legend.position = "none")
-    
+
     ## Plot PCA and return appropriate object
     if (return_SCESet) {
         df_out <- difmap_out@eigenvectors[, 1:ncomponents]
@@ -1139,8 +1139,8 @@ setMethod("plotDiffusionMap", signature("SCESet"),
 #' colouring the points, if \code{colour_by} or \code{size_by} are set as feature names.
 #' @param theme_size numeric scalar giving default font size for plotting theme
 #' (default is 10).
-#' @param legend character, specifying how the legend(s) be shown? Default is 
-#' \code{"auto"}, which hides legends that have only one level and shows others. 
+#' @param legend character, specifying how the legend(s) be shown? Default is
+#' \code{"auto"}, which hides legends that have only one level and shows others.
 #' Alternatives are "all" (show all legends) or "none" (hide all legends).
 #' @param ... arguments passed to S4 plotMDS method
 #'
@@ -1221,7 +1221,7 @@ plotMDSSCESet <- function(object, ncomponents = 2, colour_by = NULL,
 
     ## Make reduced-dimension plot
     plot_out <- plotReducedDim.default(df_to_plot, ncomponents,
-                                       colour_by, shape_by, size_by, 
+                                       colour_by, shape_by, size_by,
                                        legend = legend)
 
     ## Define plotting theme
@@ -1232,7 +1232,7 @@ plotMDSSCESet <- function(object, ncomponents = 2, colour_by = NULL,
     ## remove legend if so desired
     if ( legend == "none" )
         plot_out <- plot_out + theme(legend.position = "none")
-    
+
     ## Plot PCA and return appropriate object
     if (return_SCESet) {
         df_out <- mds_out[, 1:ncomponents]
@@ -1288,8 +1288,8 @@ setMethod("plotMDS", signature("SCESet"),
 #' colouring the points, if \code{colour_by} or \code{size_by} are set as feature names.
 #' @param theme_size numeric scalar giving default font size for plotting theme
 #' (default is 10).
-#' @param legend character, specifying how the legend(s) be shown? Default is 
-#' \code{"auto"}, which hides legends that have only one level and shows others. 
+#' @param legend character, specifying how the legend(s) be shown? Default is
+#' \code{"auto"}, which hides legends that have only one level and shows others.
 #' Alternatives are "all" (show all legends) or "none" (hide all legends).
 #' @param ... optional arguments (from those listed above) passed to
 #' \code{plotReducedDim.SCESet} or \code{plotReducedDim.default}
@@ -1508,7 +1508,7 @@ plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
 
     ## return plot
     plot_out
-    
+
 }
 
 #' @rdname plotReducedDim
@@ -1539,16 +1539,16 @@ setMethod("plotReducedDim", signature("data.frame"),
 ### Plot cells in plate positions
 
 #' Plot cells in plate positions
-#' 
-#' Plots cells in their position on a plate, coloured by phenotype data or 
+#'
+#' Plots cells in their position on a plate, coloured by phenotype data or
 #' feature expression.
-#' 
+#'
 #' @param object an \code{SCESet} object. If \code{object$plate_position} is not
-#' \code{NULL}, then this will be used to define each cell's position on the 
+#' \code{NULL}, then this will be used to define each cell's position on the
 #' plate, unless the \code{plate_position} argument is specified.
 #' @param plate_position optional character vector providing a position on the
-#' plate for each cell (e.g. A01, B12, etc, where letter indicates row and 
-#' number indicates column). Specifying this argument overrides any plate 
+#' plate for each cell (e.g. A01, B12, etc, where letter indicates row and
+#' number indicates column). Specifying this argument overrides any plate
 #' position information extracted from the SCESet object.
 #' @param colour_by character string defining the column of \code{pData(object)} to
 #' be used as a factor by which to colour the points in the plot. Alternatively, a 
@@ -1561,26 +1561,26 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' colouring the points, if \code{colour_by} is set as a feature name.
 #' @param theme_size numeric scalar giving default font size for plotting theme
 #' (default is 10).
-#' @param legend character, specifying how the legend(s) be shown? Default is 
-#' \code{"auto"}, which hides legends that have only one level and shows others. 
+#' @param legend character, specifying how the legend(s) be shown? Default is
+#' \code{"auto"}, which hides legends that have only one level and shows others.
 #' Alternatives are "all" (show all legends) or "none" (hide all legends).
-#' 
-#' @details This function expects plate positions to be given in a charcter 
-#' format where a letter indicates the row on the plate and a numeric value 
+#'
+#' @details This function expects plate positions to be given in a charcter
+#' format where a letter indicates the row on the plate and a numeric value
 #' indicates the column. So each cell has a plate position such as "A01", "B12",
-#' "K24" and so on. From these plate positions, the row is extracted as the 
-#' letter, and the column as the numeric part. If \code{object$plate_position} 
-#' or the \code{plate_position} argument are used to define plate positions, 
-#' then positions should be provided in this format. Alternatively, numeric 
-#' values to be used as x- and y-coordinates by supplying both the 
+#' "K24" and so on. From these plate positions, the row is extracted as the
+#' letter, and the column as the numeric part. If \code{object$plate_position}
+#' or the \code{plate_position} argument are used to define plate positions,
+#' then positions should be provided in this format. Alternatively, numeric
+#' values to be used as x- and y-coordinates by supplying both the
 #' \code{x_position} and \code{y_position} arguments to the function.
 #' 
 #' @return 
 #' A ggplot object.
 #' 
 #' @export
-#' 
-#' @examples 
+#'
+#' @examples
 #' ## prepare data
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
@@ -1594,10 +1594,10 @@ setMethod("plotReducedDim", signature("data.frame"),
 #'
 #' ## plot plate positions
 #' plotPlatePosition(example_sceset, colour_by = "Mutation_Status")
-#' 
+#'
 #' plotPlatePosition(example_sceset, colour_by = "Gene_0004")
-#' 
-plotPlatePosition <- function(object, plate_position = NULL, 
+#'
+plotPlatePosition <- function(object, plate_position = NULL,
                               colour_by = NULL,
                               x_position = NULL, y_position = NULL,
                               exprs_values = "exprs", theme_size = 24, legend = "auto") {
@@ -1607,20 +1607,19 @@ plotPlatePosition <- function(object, plate_position = NULL,
 
     ## check legend argument
     legend <- match.arg(legend, c("auto", "none", "all"))
-
     ## Checking colour validity
     colour_by_out <- .choose_vis_values(object, colour_by, cell_control_default = TRUE,
                                         check_features = TRUE, exprs_values = exprs_values)
     colour_by <- colour_by_out$name
     colour_by_vals <- colour_by_out$val 
-    
+
     ## obtain well positions
     if ( !is.null(plate_position) ) {
         if ( length(plate_position) != ncol(object) )
             stop("Supplied plate_position argument must have same length as number of columns of SCESet object.")
         plate_position_char <- plate_position
-        
-    } else 
+
+    } else
         plate_position_char <- object$plate_position
 
     if ( is.null(plate_position_char) ) {
@@ -1630,23 +1629,23 @@ plotPlatePosition <- function(object, plate_position = NULL,
         plate_position_y <- y_position
     } else {
         plate_position_y <- gsub("[0-9]*", "", plate_position_char)
-        plate_position_y <- factor(plate_position_y, 
+        plate_position_y <- factor(plate_position_y,
                                    rev(sort(unique(plate_position_y))))
         plate_position_x <- gsub("[A-Z]*", "", plate_position_char)
         plate_position_x <- ordered(as.integer(plate_position_x))
     }
 
     ## Define data.frame for plotting
-    df_to_plot <- data.frame(plate_position_x, plate_position_y) 
+    df_to_plot <- data.frame(plate_position_x, plate_position_y)
     if ( !is.null(plate_position_char) )
         df_to_plot[["plate_position_char"]] <- plate_position_char      
     df_to_plot$colour_by <- colour_by_vals
-    
+
     ## make the plot
     aesth <- aes(x = plate_position_x, y = plate_position_y, fill = colour_by)
     if ( !is.null(plate_position_char) )
         aesth$label <- as.symbol("plate_position_char")
-    
+
     plot_out <- ggplot(df_to_plot, aesth) +
         geom_point(shape = 21, size = theme_size, colour = "gray50")
     if ( !is.null(plate_position_char) )
@@ -1655,7 +1654,7 @@ plotPlatePosition <- function(object, plate_position = NULL,
     plot_out <- .resolve_plot_colours(plot_out,
                                       df_to_plot$colour_by,
                                       colour_by, fill = TRUE)
-    
+
     ## Define plotting theme
     plot_out <- plot_out + theme_bw(theme_size) +
         theme(axis.title = element_blank(), axis.ticks = element_blank(),
@@ -1665,7 +1664,7 @@ plotPlatePosition <- function(object, plate_position = NULL,
     ## remove legend if so desired
     if ( legend == "none" )
         plot_out <- plot_out + theme(legend.position = "none")
-        
+
     ## return plot
     plot_out
 }
@@ -1720,25 +1719,25 @@ plotPlatePosition <- function(object, plate_position = NULL,
 #' @param show_smooth logical, show a smoothed fit through the expression values
 #'  on the plot
 #' @param alpha numeric value between 0 (completely transparent) and 1 (completely
-#' solid) defining how transparent plotted points (cells) should be. 
-#' Points are jittered horizontally if the x-axis value is categorical rather 
+#' solid) defining how transparent plotted points (cells) should be.
+#' Points are jittered horizontally if the x-axis value is categorical rather
 #' than numeric to avoid overplotting.
 #' @param theme_size numeric scalar giving default font size for plotting theme
 #' (default is 10)
 #' @param log2_values should the expression values be transformed to the
 #' log2-scale for plotting (with an offset of 1 to avoid logging zeroes)?
-#' @param size numeric scalar optionally providing size for points if 
+#' @param size numeric scalar optionally providing size for points if
 #' \code{size_by} argument is not given. Default is \code{NULL}, in which case
 #' \pkg{ggplot2} default is used.
-#' @param scales character scalar, should scales be fixed ("fixed"), 
-#' free ("free"), or free in one dimension ("free_x"; "free_y", the default). 
-#' Passed to the \code{scales} argument in the \code{\link[ggplot2]{facet_wrap}} function 
+#' @param scales character scalar, should scales be fixed ("fixed"),
+#' free ("free"), or free in one dimension ("free_x"; "free_y", the default).
+#' Passed to the \code{scales} argument in the \code{\link[ggplot2]{facet_wrap}} function
 #' from the \code{ggplot2} package.
 #' @param se logical, should standard errors be shown (default \code{TRUE}) for
 #' the smoothed fit through the cells. (Ignored if \code{show_smooth} is \code{FALSE}).
-#' @param jitter character scalar to define whether points are to be jittered 
-#' (\code{"jitter"}) or presented in a "beeswarm" style (if \code{"swarm"}; default). 
-#' "Beeswarm" style usually looks more attractive, but for datasets with a large 
+#' @param jitter character scalar to define whether points are to be jittered
+#' (\code{"jitter"}) or presented in a "beeswarm" style (if \code{"swarm"}; default).
+#' "Beeswarm" style usually looks more attractive, but for datasets with a large
 #' number of cells, or for dense plots, the jitter option may work better.
 #' @param ... optional arguments (from those listed above) passed to
 #' \code{plotExpressionSCESet} or \code{plotExpressionDefault}
@@ -1766,7 +1765,7 @@ plotPlatePosition <- function(object, plate_position = NULL,
 #' ## default plot
 #' plotExpression(example_sceset, 1:15)
 #' plotExpression(example_sceset, 1:15, jitter = "jitter")
-#' 
+#'
 #' ## plot expression against an x-axis value
 #' plotExpression(example_sceset, 1:6, "Mutation_Status")
 #'
@@ -1785,8 +1784,8 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
                                  colour_by = NULL, shape_by = NULL,
                                  size_by = NULL, ncol = 2, xlab = NULL,
                                  show_median = FALSE, show_violin = TRUE,
-                                 show_smooth = FALSE, alpha = 0.6, 
-                                 theme_size = 10, log2_values = FALSE, size = NULL, 
+                                 show_smooth = FALSE, alpha = 0.6,
+                                 theme_size = 10, log2_values = FALSE, size = NULL,
                                  scales = "fixed", se = TRUE, jitter = "swarm") {
     ## Check object is an SCESet object
     if ( !is(object, "SCESet") )
@@ -1899,7 +1898,7 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
         plot_out <- plot_out + theme_bw(theme_size)
     if ( is.null(x) ) { ## in this case, do not show x-axis ticks or labels
         plot_out <- plot_out + theme(
-            axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1), 
+            axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1),
             axis.ticks.x = element_blank(),
             plot.margin = unit(c(.03, .02, .05, .02), "npc"))
         if (is.null(colour_by))
@@ -1912,15 +1911,15 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
 #' @param aesth an \code{aes} object to use in the call to \code{\link[ggplot2]{ggplot}}.
 #' @param ylab character string defining a label for the y-axis (y-axes) of the
 #' plot.
-#' @param one_facet logical, should expression values for features be plotted in one facet 
+#' @param one_facet logical, should expression values for features be plotted in one facet
 #' instead of mutiple facets, one per feature? Default if \code{x = NULL}.
 #' @rdname plotExpression
 #' @aliases plotExpression
 #' @export
 plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
                                   ylab = NULL, show_median = FALSE,
-                                  show_violin = TRUE, show_smooth = FALSE, 
-                                  alpha = 0.6, size = NULL, scales = "fixed", 
+                                  show_violin = TRUE, show_smooth = FALSE,
+                                  alpha = 0.6, size = NULL, scales = "fixed",
                                   one_facet = FALSE, se = TRUE, jitter = "swarm") {
     if ( !("Feature" %in% names(object)) )
         stop("object needs a column named 'Feature' to define the feature(s) by which to plot expression.")
@@ -1936,7 +1935,7 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
             xlab(xlab) +
             ylab(ylab)
     }
-    
+
     ## if colour aesthetic is defined, then choose sensible colour palette
     if ( !is.null(aesth$colour) )
         plot_out <- .resolve_plot_colours(plot_out,
@@ -1966,13 +1965,13 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
                 plot_out <- plot_out + geom_jitter(
                     alpha = alpha, position = position_jitter(height = 0))
         }
-    }    
-    
+    }
+
     ## show optional decorations on plot if desired
     if (show_violin) {
         if (one_facet && (aesth$colour == as.symbol("Feature"))) {
-            plot_out <- plot_out + 
-                geom_violin(aes_string(fill = "Feature"), colour = "gray60", 
+            plot_out <- plot_out +
+                geom_violin(aes_string(fill = "Feature"), colour = "gray60",
                             alpha = 0.2, scale = "width")
             plot_out <- .resolve_plot_colours(
                 plot_out, object[[as.character(aesth$colour)]],
@@ -2398,14 +2397,14 @@ multiplot <- function(..., plotlist = NULL, cols = 1, layout = NULL) {
 
 
 #' Plot expression against transcript length
-#' 
+#'
 #' Plot expression values from an SCESet object against transcript length values
 #' defined in the SCESet object or supplied as an argument.
 #'
 #' @param object an \code{\link{SCESet}} object
-#' @param tx_length transcript lengths to plot on the x-axis. Can be one of: (1) 
-#' the name of a column of \code{fData(object)} containing the transcript length 
-#' values, or (2) the name of an element of \code{assayData(object)} containing 
+#' @param tx_length transcript lengths to plot on the x-axis. Can be one of: (1)
+#' the name of a column of \code{fData(object)} containing the transcript length
+#' values, or (2) the name of an element of \code{assayData(object)} containing
 #' a matrix of transcript length values, or (3) a numeric vector of length equal
 #' to the number of rows of \code{object} (number of features).
 #' @param exprs_values character string indicating which values should be used
@@ -2433,19 +2432,19 @@ multiplot <- function(..., plotlist = NULL, cols = 1, layout = NULL) {
 #' with one column containing values to map to sizes.
 #' @param xlab label for x-axis; if \code{NULL} (default), then \code{x} will be
 #' used as the x-axis label
-#' @param show_exprs_sd logical, show the standard deviation of expression 
+#' @param show_exprs_sd logical, show the standard deviation of expression
 #' values for each feature on the plot
 #' @param show_smooth logical, show a smoothed fit through the expression values
 #'  on the plot
 #' @param alpha numeric value between 0 (completely transparent) and 1 (completely
-#' solid) defining how transparent plotted points (cells) should be. 
-#' Points are jittered horizontally if the x-axis value is categorical rather 
+#' solid) defining how transparent plotted points (cells) should be.
+#' Points are jittered horizontally if the x-axis value is categorical rather
 #' than numeric to avoid overplotting.
 #' @param theme_size numeric scalar giving default font size for plotting theme
 #' (default is 10)
 #' @param log2_values should the expression values be transformed to the
 #' log2-scale for plotting (with an offset of 1 to avoid logging zeroes)?
-#' @param size numeric scalar optionally providing size for points if 
+#' @param size numeric scalar optionally providing size for points if
 #' \code{size_by} argument is not given. Default is \code{NULL}, in which case
 #' \pkg{ggplot2} default is used.
 #' @param se logical, should standard errors be shown (default \code{TRUE}) for
@@ -2458,43 +2457,43 @@ multiplot <- function(..., plotlist = NULL, cols = 1, layout = NULL) {
 #' data("sc_example_counts")
 #' data("sc_example_cell_info")
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
-#' fd <- new("AnnotatedDataFrame", data = 
-#' data.frame(gene_id = rownames(sc_example_counts), 
+#' fd <- new("AnnotatedDataFrame", data =
+#' data.frame(gene_id = rownames(sc_example_counts),
 #'         feature_id = paste("feature", rep(1:500, each = 4), sep = "_"),
 #'      median_tx_length = rnorm(2000, mean = 5000, sd = 500)))
 #' rownames(fd) <- rownames(sc_example_counts)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd,
 #' featureData = fd)
-#' 
+#'
 #' plotExprsVsTxLength(example_sceset, "median_tx_length")
 #' plotExprsVsTxLength(example_sceset, "median_tx_length", show_smooth = TRUE)
 #' plotExprsVsTxLength(example_sceset, "median_tx_length", show_smooth = TRUE,
 #' show_exprs_sd = TRUE)
-#' 
+#'
 #' ## using matrix of tx length values in assayData(object)
 #' mat <- matrix(rnorm(ncol(example_sceset) * nrow(example_sceset), mean = 5000,
 #'  sd = 500), nrow = nrow(example_sceset))
 #' dimnames(mat) <- dimnames(example_sceset)
 #' set_exprs(example_sceset, "tx_len") <- mat
-#' 
+#'
 #' plotExprsVsTxLength(example_sceset, "tx_len", show_smooth = TRUE,
 #' show_exprs_sd = TRUE)
-#' 
+#'
 #' ## using a vector of tx length values
 #' plotExprsVsTxLength(example_sceset, rnorm(2000, mean = 5000, sd = 500))
-#' 
-plotExprsVsTxLength <- function(object, tx_length = "median_feat_eff_len", 
+#'
+plotExprsVsTxLength <- function(object, tx_length = "median_feat_eff_len",
                                 exprs_values = "exprs",
                                 colour_by = NULL, shape_by = NULL,
-                                size_by = NULL, xlab = NULL, 
+                                size_by = NULL, xlab = NULL,
                                 show_exprs_sd = FALSE,
-                                show_smooth = FALSE, alpha = 0.6, 
-                                theme_size = 10, log2_values = FALSE, size = NULL, 
+                                show_smooth = FALSE, alpha = 0.6,
+                                theme_size = 10, log2_values = FALSE, size = NULL,
                                 se = TRUE) {
     ## Check object is an SCESet object
     if ( !is(object, "SCESet") )
         stop("object must be an SCESet")
-    
+
     tx_length_values <- rep(NA, nrow(object))
     ## Check arguments are valid
     if ( length(tx_length) == 1 ) {
@@ -2515,23 +2514,23 @@ plotExprsVsTxLength <- function(object, tx_length = "median_feat_eff_len",
                 stop("If a vector, tx_length must contain numeric values.")
             tx_length_values <- tx_length
         }
-    }        
-    
+    }
+
     exprs_mat <- get_exprs(object, exprs_values)
     if ( log2_values ) {
         exprs_mat <- log2(exprs_mat + 1)
         ylab <- paste0("Expression (", exprs_values, "; log2-scale)")
     } else
         ylab <- paste0("Expression (", exprs_values, ")")
-    
+
     ## compute mean expression and sd of expression values
     exprs_mean <- rowMeans(exprs_mat)
     exprs_sd <- matrixStats::rowSds(exprs_mat)
-    
+
     df_to_plot <- data.frame(tx_length_values, exprs_mean, exprs_sd,
-                             ymin = exprs_mean - exprs_sd, 
+                             ymin = exprs_mean - exprs_sd,
                              ymax = exprs_mean + exprs_sd)
-    
+
     ## check colour, size, shape arguments
     colour_by_out <- .choose_vis_values(object, colour_by, check_pdata = FALSE) 
     colour_by <- colour_by_out$name
@@ -2566,13 +2565,13 @@ plotExprsVsTxLength <- function(object, tx_length = "median_feat_eff_len",
 
     ## Make the plot
     plot_out <- ggplot2::ggplot(df_to_plot, aesth) + xlab(xlab) + ylab(ylab)
-    
+
     ## if colour aesthetic is defined, then choose sensible colour palette
     if ( !is.null(aesth$colour) )
         plot_out <- .resolve_plot_colours(plot_out,
                                           df_to_plot[[as.character(aesth$colour)]],
                                           as.character(aesth$colour))
-    
+
     if ( is.null(aesth$size) & !is.null(size) ) {
         ## add SDs
         if ( show_exprs_sd )
@@ -2586,13 +2585,13 @@ plotExprsVsTxLength <- function(object, tx_length = "median_feat_eff_len",
         ## add points to plot
         plot_out <- plot_out + geom_point(alpha = alpha)
     }
-    
+
     ## show optional decorations on plot if desired
     if (show_smooth) {
-        plot_out <- plot_out + stat_smooth(colour = "firebrick", linetype = 2, 
+        plot_out <- plot_out + stat_smooth(colour = "firebrick", linetype = 2,
                                            se = se)
     }
-    
+
     ## Define plotting theme
     if ( requireNamespace("cowplot", quietly = TRUE) )
         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
