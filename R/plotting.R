@@ -219,7 +219,7 @@
 #' @name plot
 #' @aliases plot plot,SCESet-method plot,SCESet,ANY-method
 #' @export
-#' @method plot
+#' @method plot plot,SCESet-method
 #'
 #' @examples
 #' ## Set up an example SCESet
