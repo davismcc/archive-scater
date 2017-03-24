@@ -65,4 +65,3 @@ example_sceset <- calculateQCMetrics(example_sceset)
 findImportantPCs(example_sceset, variable="total_features")
 
 }
-

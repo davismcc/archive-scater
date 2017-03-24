@@ -88,6 +88,83 @@
     plot_out
 }
 
+.choose_vis_values <- function(x, by, check_pdata = TRUE, 
+                               cell_control_default = FALSE,
+                               check_features = FALSE, 
+                               exprs_values = "exprs",
+                               coerce_factor = FALSE, level_limit = NA) {
+    ## This function looks through the visualization data and returns the 
+    ## values to be visualized. Either 'by' itself, or a column of pData,
+    ## or a column of fData, or the expression values of a feature.
+
+    if (is.character(by)) {
+        if (length(by)!=1L) {
+            stop("'by' should be a character vector of length 1")
+        }
+        
+        ## checking if it refers to a field in pData/fData.
+        vals <- NULL
+        if (check_pdata) {
+            if (by %in% varLabels(x)) {
+                vals <- x[[by]]
+            } 
+            unfound <- "colnames(pData(x))"
+        } else {
+            if (by %in% Biobase::fvarLabels(x)) {
+                vals <- fData(x)[[by]]
+            }
+            unfound <- "colnames(fData(x))"
+        }
+
+        ## checking if it refers to a feature
+        if (check_features) {
+            if (is.null(vals) && by %in% featureNames(x)) { 
+                vals <- get_exprs(x, exprs_values)[by,]
+            } 
+            unfound <- append(unfound, "featureNames(x)")
+        }
+
+        ## throwing an error if still unfound
+        if (is.null(vals)) {
+            stop(sprintf("'%s' not found %s", by,
+                         paste(sprintf("in '%s'", unfound), collapse=" or ")))
+        }
+
+    } else if (is.data.frame(by)) {
+        if (ncol(by)!=1L) {
+            stop("'by' should be a data frame with one column")
+        } else if (nrow(by)!=ncol(x)) {
+            stop("'nrow(by)' should be equal to number of columns in 'x'")
+        }
+
+        ## Allow arbitrary values to be specified.
+        vals <- by[,1]
+        by <- colnames(by)
+
+    } else {
+        if (!is.null(by)) stop("invalid value of 'by' supplied")
+        vals <- NULL
+
+        ##  Switching to cell controls if desired.
+        if (cell_control_default) {
+            if ( "is_cell_control" %in% varLabels(x) ) {
+                by <- "is_cell_control"
+                vals <- x[[by]]
+            }
+        }
+    }
+
+    # Checking the level limit.
+    if (coerce_factor && !is.null(vals)) { 
+        vals <- factor(vals)
+        if (level_limit < nlevels(vals)) 
+            stop(sprintf("number of unique levels exceeds %i", level_limit))
+    }
+
+    return(list(name=by, val=vals))
+}
+
+
 ################################################################################
 ### Generic plot function for SCESet
 
@@ -106,18 +183,17 @@
 #' panels) in the plot. Default is \code{NULL}, in which case there is no
 #' blocking.
 #' @param colour_by character string defining the column of \code{pData(object)} to
-#' be used as a factor by which to colour the points in the plot.
+#' be used as a factor by which to colour the points in the plot. Alternatively, 
+#' a data frame with one column containing a value for each cell, which will be 
+#' mapped to a corresponding colour.
 #' @param nfeatures numeric scalar indicating the number of features to include
 #' in the plot.
 #' @param exprs_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
-#' (default; transcripts per million), \code{"cpm"}
-#' (counts per million), \code{"fpkm"} (FPKM values),
-#' \code{"counts"} (counts for each feature) or \code{"exprs"} (whatever is in
-#' the \code{'exprs'} slot of the \code{SCESet} object; if already on the log2
-#' scale, as indicated by the \code{logged} slot of the object, then exprs
-#' values are set to the power of 2 (so they are back on the raw scale they were
-#'  on) before making the plot).
+#' (transcripts per million), \code{"counts"} (raw counts), \code{"cpm"} 
+#' (counts per million), \code{"fpkm"} (FPKM values), or \code{"exprs"} (which are 
+#' assumed to be on the log2 scale and are un-logged prior to plotting). If
+#' not specified, the function will search for values in the order given above.
 #' @param linewidth numeric scalar giving the "size" parameter (in ggplot2
 #' parlance) for the lines plotted. Default is 1.5.
 #' @param y optional argument for generic \code{plot} functions, not used for
@@ -143,7 +219,7 @@
 #' @name plot
 #' @aliases plot plot,SCESet-method plot,SCESet,ANY-method
 #' @export
-#' @method plot
+#' @method plot plot,SCESet-method
 #'
 #' @examples
 #' ## Set up an example SCESet
@@ -173,7 +249,7 @@ setMethod("plot", signature("SCESet"),
 #' @importFrom reshape2 melt
 #' @export
 plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
-                        nfeatures = 500, exprs_values = "tpm", ncol = 3,
+                       nfeatures = 500, exprs_values = NULL, ncol = 3,
                        linewidth = 1.5, theme_size = 10) {
     object <- x
     if ( !is(object, "SCESet") )
@@ -186,40 +262,31 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
         if ( !(block2 %in% colnames(pData(object))) )
             stop("The block2 argument must either be NULL or a column of pData(object).")
     }
-    if ( !is.null(colour_by) ) {
-        if ( !(colour_by %in% colnames(pData(object))) )
-            stop("The colour_by argument must either be NULL or a column of pData(object).")
-    }
+
+    ## Setting values to colour by.
+    colour_by_out <- .choose_vis_values(object, colour_by)
+    colour_by <- colour_by_out$name
+    colour_by_vals <- colour_by_out$val 
 
     ## Define an expression matrix depending on which values we're using
-    exprs_values <- match.arg(exprs_values, c("exprs", "tpm", "fpkm",
-                                              "cpm", "counts"))
-    exprs_mat <- switch(exprs_values,
-                        exprs = exprs(object),
-                        tpm = tpm(object),
-                        cpm = cpm(object),
-                        fpkm = fpkm(object),
-                        counts = counts(object))
-    if ( is.null(exprs_mat) ) {
-        warning(paste0("The object does not contain ", exprs_values, " expression values. Using exprs(object) values instead."))
-        exprs_mat <- exprs(object)
-        exprs_values <- "exprs"
-    }
-    if ( exprs_values == "exprs" && object@logged )
-        exprs_mat <- 2 ^ (exprs_mat) - object@logExprsOffset
+    exprs_values <- .exprs_hunter(x, exprs_values)
+    exprs_mat <- get_exprs(x, exprs_values)
+    if ( exprs_values == "exprs" )
+        exprs_mat <- 2 ^ exprs_mat - object@logExprsOffset
 
     ## Use plyr to get the sequencing real estate accounted for by features
     nfeatures_total <- nrow(exprs_mat)
     seq_real_estate <- t(plyr::aaply(exprs_mat, 2, .fun = function(x) {
         cumsum(sort(x, decreasing = TRUE))
     }))
-    rownames(seq_real_estate) <- 1:nfeatures_total
+    rownames(seq_real_estate) <- seq_len(nfeatures_total)
     nfeatures_to_plot <- nfeatures
-    seq_real_estate_long <- reshape2::melt(seq_real_estate[1:nfeatures_to_plot, ],
+    to_plot <- seq_len(nfeatures_to_plot)
+    seq_real_estate_long <- reshape2::melt(seq_real_estate[to_plot, ],
                                            value.name = "exprs")
 
     ## Get the proportion of the library accounted for by the top features
-    prop_library <- reshape2::melt(t(t(seq_real_estate[1:nfeatures_to_plot, ]) /
+    prop_library <- reshape2::melt(t(t(seq_real_estate[to_plot, ]) /
                                          colSums(exprs_mat)),
                                    value.name = "prop_library")
     colnames(seq_real_estate_long) <- c("Feature", "Cell", "exprs")
@@ -236,8 +303,9 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
                                                        each = nfeatures_to_plot)))
     if ( !is.null(colour_by) )
         seq_real_estate_long <- dplyr::mutate(
-            seq_real_estate_long, colour_by = rep(object[[colour_by]],
+            seq_real_estate_long, colour_by = rep(colour_by_vals,
                                              each = nfeatures_to_plot))
+
     ## Set up plot
     if ( is.null(colour_by) ) {
         plot_out <- ggplot(seq_real_estate_long,
@@ -310,11 +378,14 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' or any other named element of the \code{assayData} slot of the \code{SCESet}
 #' object that can be accessed with the \code{get_exprs} function.
 #' @param colour_by character string defining the column of \code{pData(object)} to
-#' be used as a factor by which to colour the points in the plot.
+#' be used as a factor by which to colour the points in the plot. Alternatively, 
+#' a data frame with one column, containing values to map to colours for all cells.
 #' @param shape_by character string defining the column of \code{pData(object)} to
 #' be used as a factor by which to define the shape of the points in the plot.
+#' Alternatively, a data frame with one column containing values to map to shapes.
 #' @param size_by character string defining the column of \code{pData(object)} to
 #' be used as a factor by which to define the size of points in the plot.
+#' Alternatively, a data frame with one column containing values to map to sizes.
 #' @param feature_set character, numeric or logical vector indicating a set of
 #' features to use for the PCA. If character, entries must all be in
 #' \code{featureNames(object)}. If numeric, values are taken to be indices for
@@ -411,40 +482,23 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
                           theme_size = 10, legend = "auto") {
     ## check legend argument
     legend <- match.arg(legend, c("auto", "none", "all"))
-    ## Set up indicator for whether to use pData or features for size_by and
-    ## colour_by
-    colour_by_use_pdata <- TRUE
-    size_by_use_pdata <- TRUE
+
     ## Check arguments are valid
-    if ( !is.null(colour_by) ) {
-        if ( !(colour_by %in% varLabels(object)) &&
-             !(colour_by %in% featureNames(object)) )
-            stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
-        if ( !(colour_by %in% varLabels(object)) &&
-             (colour_by %in% featureNames(object)) )
-            colour_by_use_pdata <- FALSE
-    } else {
-        if ( "is_cell_control" %in% varLabels(object) )
-            colour_by <- "is_cell_control"
-    }
-    if ( !is.null(shape_by) ) {
-        if ( !(shape_by %in% varLabels(object)) )
-            stop("the argument 'shape_by' should specify a column of pData(object) [see varLabels(object)]")
-        if ( nlevels(as.factor(pData(object)[[shape_by]])) > 10 )
-            stop("when coerced to a factor, 'shape_by' should have fewer than 10 levels")
-    } else {
-        if ( "is_cell_control" %in% varLabels(object) )
-            shape_by <- "is_cell_control"
-    }
-    if ( !is.null(size_by) ) {
-        if ( !(size_by %in% varLabels(object)) &&
-             !(size_by %in% featureNames(object)) )
-            stop("the argument 'size_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
-        if ( !(size_by %in% varLabels(object)) &&
-             (size_by %in% featureNames(object)) )
-            size_by_use_pdata <- FALSE
-    }
-    if ( !is.null(feature_set) && typeof(feature_set) == "character" ) {
+    colour_by_out <- .choose_vis_values(object, colour_by, cell_control_default = TRUE,
+                                        check_features = TRUE, exprs_values = exprs_values)
+    colour_by <- colour_by_out$name
+    colour_by_vals <- colour_by_out$val 
+
+    shape_by_out <- .choose_vis_values(object, shape_by, cell_control_default = TRUE, 
+                                       coerce_factor = TRUE, level_limit = 10)
+    shape_by <- shape_by_out$name
+    shape_by_vals <- shape_by_out$val 
+
+    size_by_out <- .choose_vis_values(object, size_by, check_features = TRUE, exprs_values = exprs_values)
+    size_by <- size_by_out$name
+    size_by_vals <- size_by_out$val 
+
+    if ( is.character(feature_set) ) {
         if ( !(all(feature_set %in% featureNames(object))) )
             stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
     }
@@ -453,12 +507,9 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
 #     exprs_values <- match.arg(
 #         exprs_values, c("exprs", "tpm", "fpkm", "counts", "cpm", "norm_exprs",
 #                         "stand_exprs"))
-    exprs_mat <- get_exprs(object, exprs_values)
-    if ( is.null(exprs_mat) ) {
-        warning(paste0("The object does not contain ", exprs_values, " expression values. Using exprs(object) values instead."))
-        exprs_mat <- exprs(object)
-        exprs_values <- "exprs"
-    }
+    exprs_mat <- get_exprs(object, exprs_values, warning=FALSE)
+    if ( is.null(exprs_mat) ) 
+        stop(sprintf("object does not contain '%s'", exprs_values))
 
     ## Define features to use: either ntop, or if a set of features is defined,
     ## then those
@@ -506,36 +557,17 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
     ## Compute PCA
     pca <- prcomp(exprs_to_plot)
     percentVar <- pca$sdev ^ 2 / sum(pca$sdev ^ 2)
+
     ## Define data.frame for plotting
-    if ( pca_data_input == "fdata")
+    if ( pca_data_input == "fdata") { 
         df_to_plot <- data.frame(pca$x[, 1:ncomponents],
                                  row.names = featureNames(object))
-    else
+    } else {
         df_to_plot <- data.frame(pca$x[, 1:ncomponents],
                                  row.names = sampleNames(object))
-
-    if ( !is.null(colour_by) && pca_data_input != "fdata") {
-        if ( colour_by_use_pdata )
-            colour_by_vals <- pData(object)[[colour_by]]
-        else
-            colour_by_vals <- exprs(object)[colour_by,]
-        if ( nlevels(as.factor(colour_by_vals)) > 10 )
-            df_to_plot <- data.frame(
-                df_to_plot, colour_by = colour_by_vals)
-        else
-            df_to_plot <- data.frame(
-                df_to_plot, colour_by = as.factor(colour_by_vals))
-    }
-    if ( !is.null(shape_by) && pca_data_input != "fdata" )
-        df_to_plot <- data.frame(
-            df_to_plot,
-            shape_by = as.factor(pData(object)[[shape_by]]))
-    if ( !is.null(size_by) && pca_data_input != "fdata" ) {
-        if ( size_by_use_pdata )
-            size_by_vals <- pData(object)[[size_by]]
-        else
-            size_by_vals <- exprs(object)[size_by,]
-        df_to_plot <- data.frame(df_to_plot, size_by = size_by_vals)
+        df_to_plot$colour_by <- colour_by_vals
+        df_to_plot$shape_by <- shape_by_vals
+        df_to_plot$size_by <- size_by_vals
     }
 
     ## conduct outlier detection
@@ -680,11 +712,14 @@ setMethod("plotPCA", signature("SCESet"),
 #' or any other named element of the \code{assayData} slot of the \code{SCESet}
 #' object that can be accessed with the \code{get_exprs} function.
 #' @param colour_by character string defining the column of \code{pData(object)} to
-#' be used as a factor by which to colour the points in the plot.
+#' be used as a factor by which to colour the points in the plot. Alternatively, 
+#' a data frame with one column containing values to map to colours for all cells.
 #' @param shape_by character string defining the column of \code{pData(object)} to
 #' be used as a factor by which to define the shape of the points in the plot.
+#' Alternatively, a data frame with one column containing values to map to shapes. 
 #' @param size_by character string defining the column of \code{pData(object)} to
 #' be used as a factor by which to define the size of points in the plot.
+#' Alternatively, a data frame with one column containing values to map to sizes.
 #' @param feature_set character, numeric or logical vector indicating a set of
 #' features to use for the t-SNE calculation. If character, entries must all be
 #' in \code{featureNames(object)}. If numeric, values are taken to be indices for
@@ -764,39 +799,22 @@ setMethod("plotTSNE", signature("SCESet"),
                        Try: install.packages('Rtsne').")
               ## check legend argument
               legend <- match.arg(legend, c("auto", "none", "all"))
-              ## Set up indicator for whether to use pData or features for size_by and
-              ## colour_by
-              colour_by_use_pdata <- TRUE
-              size_by_use_pdata <- TRUE
+
               ## Check arguments are valid
-              if ( !is.null(colour_by) ) {
-                  if ( !(colour_by %in% varLabels(object)) &&
-                       !(colour_by %in% featureNames(object)) )
-                      stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
-                  if ( !(colour_by %in% varLabels(object)) &&
-                       (colour_by %in% featureNames(object)) )
-                      colour_by_use_pdata <- FALSE
-              } else {
-                  if ( "is_cell_control" %in% varLabels(object) )
-                      colour_by <- "is_cell_control"
-              }
-              if ( !is.null(shape_by) ) {
-                  if ( !(shape_by %in% varLabels(object)) )
-                      stop("the argument 'shape_by' should specify a column of pData(object) [see varLabels(object)]")
-                  if ( nlevels(as.factor(pData(object)[[shape_by]])) > 10 )
-                      stop("when coerced to a factor, 'shape_by' should have fewer than 10 levels")
-              } else {
-                  if ( "is_cell_control" %in% varLabels(object) )
-                      shape_by <- "is_cell_control"
-              }
-              if ( !is.null(size_by) ) {
-                  if ( !(size_by %in% varLabels(object)) &&
-                       !(size_by %in% featureNames(object)) )
-                      stop("the argument 'size_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
-                  if ( !(size_by %in% varLabels(object)) &&
-                       (size_by %in% featureNames(object)) )
-                      size_by_use_pdata <- FALSE
-              }
+              colour_by_out <- .choose_vis_values(object, colour_by, cell_control_default = TRUE,
+                                                  check_features = TRUE, exprs_values = exprs_values)
+              colour_by <- colour_by_out$name
+              colour_by_vals <- colour_by_out$val 
+              
+              shape_by_out <- .choose_vis_values(object, shape_by, cell_control_default = TRUE, 
+                                                 coerce_factor = TRUE, level_limit = 10)
+              shape_by <- shape_by_out$name
+              shape_by_vals <- shape_by_out$val 
+              
+              size_by_out <- .choose_vis_values(object, size_by, check_features = TRUE, exprs_values = exprs_values)
+              size_by <- size_by_out$name
+              size_by_vals <- size_by_out$val 
+
               if ( !is.null(feature_set) && typeof(feature_set) == "character" ) {
                   if ( !(all(feature_set %in% featureNames(object))) )
                       stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
@@ -804,12 +822,9 @@ setMethod("plotTSNE", signature("SCESet"),
 
               ## Define an expression matrix depending on which values we're
               ## using
-              exprs_mat <- get_exprs(object, exprs_values)
-              if ( is.null(exprs_mat) ) {
-                  warning(paste0("The object does not contain ", exprs_values, " expression values. Using exprs(object) values instead."))
-                  exprs_mat <- exprs(object)
-                  exprs_values <- "exprs"
-              }
+              exprs_mat <- get_exprs(object, exprs_values, warning=FALSE)
+              if ( is.null(exprs_mat) ) 
+                  stop(sprintf("object does not contain '%s'", exprs_values))
 
               ## Define features to use: either ntop, or if a set of features is
               ## defined, then those
@@ -839,29 +854,9 @@ setMethod("plotTSNE", signature("SCESet"),
               ## Define data.frame for plotting
               df_to_plot <- data.frame(tsne_out$Y[, 1:ncomponents],
                                        row.names = sampleNames(object))
-              if ( !is.null(colour_by) ) {
-                  if ( colour_by_use_pdata )
-                      colour_by_vals <- pData(object)[[colour_by]]
-                  else
-                      colour_by_vals <- exprs(object)[colour_by,]
-                  if ( nlevels(as.factor(colour_by_vals)) > 10 )
-                      df_to_plot <- data.frame(
-                          df_to_plot, colour_by = colour_by_vals)
-                  else
-                      df_to_plot <- data.frame(
-                          df_to_plot, colour_by = as.factor(colour_by_vals))
-              }
-              if ( !is.null(shape_by) )
-                  df_to_plot <- data.frame(
-                      df_to_plot,
-                      shape_by = as.factor(pData(object)[[shape_by]]))
-              if ( !is.null(size_by) ) {
-                  if ( size_by_use_pdata )
-                      size_by_vals <- pData(object)[[size_by]]
-                  else
-                      size_by_vals <- exprs(object)[size_by,]
-                  df_to_plot <- data.frame(df_to_plot, size_by = size_by_vals)
-              }
+              df_to_plot$colour_by <- colour_by_vals
+              df_to_plot$shape_by <- shape_by_vals
+              df_to_plot$size_by <- size_by_vals
 
               ## Make reduced-dimension plot
               plot_out <- plotReducedDim.default(df_to_plot, ncomponents,
@@ -920,7 +915,8 @@ setMethod("plotTSNE", signature("SCESet"),
 #' or any other named element of the \code{assayData} slot of the \code{SCESet}
 #' object that can be accessed with the \code{get_exprs} function.
 #' @param colour_by character string defining the column of \code{pData(object)} to
-#' be used as a factor by which to colour the points in the plot.
+#' be used as a factor by which to colour the points in the plot. Alternatively, a
+#' data frame with one column containing values to map to colours for all cells.
 #' @param shape_by character string defining the column of \code{pData(object)} to
 #' be used as a factor by which to define the shape of the points in the plot.
 #' @param size_by character string defining the column of \code{pData(object)} to
@@ -1005,40 +1001,22 @@ plotDiffusionMapSCESet <- function(object, ntop = 500, ncomponents = 2,
                        biocLite('destiny').")
     ## check legend argument
     legend <- match.arg(legend, c("auto", "none", "all"))
-    ## Set up indicator for whether to use pData or features
-    ## for size_by and
-    ## colour_by
-    colour_by_use_pdata <- TRUE
-    size_by_use_pdata <- TRUE
+
     ## Check arguments are valid
-    if ( !is.null(colour_by) ) {
-        if ( !(colour_by %in% varLabels(object)) &&
-             !(colour_by %in% featureNames(object)) )
-            stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
-        if ( !(colour_by %in% varLabels(object)) &&
-             (colour_by %in% featureNames(object)) )
-            colour_by_use_pdata <- FALSE
-    } else {
-        if ( "is_cell_control" %in% varLabels(object) )
-            colour_by <- "is_cell_control"
-    }
-    if ( !is.null(shape_by) ) {
-        if ( !(shape_by %in% varLabels(object)) )
-            stop("the argument 'shape_by' should specify a column of pData(object) [see varLabels(object)]")
-        if ( nlevels(as.factor(pData(object)[[shape_by]])) > 10 )
-            stop("when coerced to a factor, 'shape_by' should have fewer than 10 levels")
-    } else {
-        if ( "is_cell_control" %in% varLabels(object) )
-            shape_by <- "is_cell_control"
-    }
-    if ( !is.null(size_by) ) {
-        if ( !(size_by %in% varLabels(object)) &&
-             !(size_by %in% featureNames(object)) )
-            stop("the argument 'size_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
-        if ( !(size_by %in% varLabels(object)) &&
-             (size_by %in% featureNames(object)) )
-            size_by_use_pdata <- FALSE
-    }
+    colour_by_out <- .choose_vis_values(object, colour_by, cell_control_default = TRUE,
+                                        check_features = TRUE, exprs_values = exprs_values)
+    colour_by <- colour_by_out$name
+    colour_by_vals <- colour_by_out$val 
+    
+    shape_by_out <- .choose_vis_values(object, shape_by, cell_control_default = TRUE, 
+                                       coerce_factor = TRUE, level_limit = 10)
+    shape_by <- shape_by_out$name
+    shape_by_vals <- shape_by_out$val 
+    
+    size_by_out <- .choose_vis_values(object, size_by, check_features = TRUE, exprs_values = exprs_values)
+    size_by <- size_by_out$name
+    size_by_vals <- size_by_out$val 
+
     if ( !is.null(feature_set) && typeof(feature_set) == "character" ) {
         if ( !(all(feature_set %in% featureNames(object))) )
             stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
@@ -1046,13 +1024,9 @@ plotDiffusionMapSCESet <- function(object, ntop = 500, ncomponents = 2,
 
     ## Define an expression matrix depending on which values we're
     ## using
-    exprs_mat <- get_exprs(object, exprs_values)
-    if ( is.null(exprs_mat) ) {
-        warning(paste0("The object does not contain ", exprs_values,
-                       " expression values. Using exprs(object) values instead."))
-        exprs_mat <- exprs(object)
-        exprs_values <- "exprs"
-    }
+    exprs_mat <- get_exprs(object, exprs_values, warning = FALSE)
+    if ( is.null(exprs_mat) ) 
+        stop(sprintf("object does not contain '%s'", exprs_values))
 
     ## Define features to use: either ntop, or if a set of features is
     ## defined, then those
@@ -1082,29 +1056,9 @@ plotDiffusionMapSCESet <- function(object, ntop = 500, ncomponents = 2,
     ## Define data.frame for plotting
     df_to_plot <- data.frame(difmap_out@eigenvectors[, 1:ncomponents],
                              row.names = sampleNames(object))
-    if ( !is.null(colour_by) ) {
-        if ( colour_by_use_pdata )
-            colour_by_vals <- pData(object)[[colour_by]]
-        else
-            colour_by_vals <- exprs(object)[colour_by,]
-        if ( nlevels(as.factor(colour_by_vals)) > 10 )
-            df_to_plot <- data.frame(
-                df_to_plot, colour_by = colour_by_vals)
-        else
-            df_to_plot <- data.frame(
-                df_to_plot, colour_by = as.factor(colour_by_vals))
-    }
-    if ( !is.null(shape_by) )
-        df_to_plot <- data.frame(
-            df_to_plot,
-            shape_by = as.factor(pData(object)[[shape_by]]))
-    if ( !is.null(size_by) ) {
-        if ( size_by_use_pdata )
-            size_by_vals <- pData(object)[[size_by]]
-        else
-            size_by_vals <- exprs(object)[size_by,]
-        df_to_plot <- data.frame(df_to_plot, size_by = size_by_vals)
-    }
+    df_to_plot$colour_by <- colour_by_vals
+    df_to_plot$shape_by <- shape_by_vals
+    df_to_plot$size_by <- size_by_vals
 
     ## Make reduced-dimension plot
     plot_out <- plotReducedDim.default(df_to_plot, ncomponents,
@@ -1168,7 +1122,8 @@ setMethod("plotDiffusionMap", signature("SCESet"),
 #' is produced. NB: computing more than two components for t-SNE can become very
 #' time consuming.
 #' @param colour_by character string defining the column of \code{pData(object)} to
-#' be used as a factor by which to colour the points in the plot.
+#' be used as a factor by which to colour the points in the plot. Alternatively, a 
+#' data frame with one column containing values to map to colours for all cells.
 #' @param shape_by character string defining the column of \code{pData(object)} to
 #' be used as a factor by which to define the shape of the points in the plot.
 #' @param size_by character string defining the column of \code{pData(object)} to
@@ -1180,6 +1135,8 @@ setMethod("plotDiffusionMap", signature("SCESet"),
 #' @param draw_plot logical, should the plot be drawn on the current graphics
 #' device? Only used if \code{return_SCESet} is \code{TRUE}, otherwise the plot
 #' is always produced.
+#' @param exprs_values a string specifying the expression values to use for
+#' colouring the points, if \code{colour_by} or \code{size_by} are set as feature names.
 #' @param theme_size numeric scalar giving default font size for plotting theme
 #' (default is 10).
 #' @param legend character, specifying how the legend(s) be shown? Default is
@@ -1225,7 +1182,7 @@ setMethod("plotDiffusionMap", signature("SCESet"),
 plotMDSSCESet <- function(object, ncomponents = 2, colour_by = NULL,
                           shape_by = NULL, size_by = NULL,
                           return_SCESet = FALSE, draw_plot = TRUE,
-                          theme_size = 10, legend = "auto") {
+                          exprs_values = "exprs", theme_size = 10, legend = "auto") {
     ## check legend argument
     legend <- match.arg(legend, c("auto", "none", "all"))
     ##
@@ -1235,41 +1192,22 @@ plotMDSSCESet <- function(object, ncomponents = 2, colour_by = NULL,
            dim(cellDist(object))[2] == ncells) )
         stop("cellDist(object) is not of the correct dimensions. Please define cell pairwise distances and try again:
              e.g. cellDist(object) <- as.matrix(dist(t(exprs(object))))")
-    ## Set up indicator for whether to use pData or features
-    ## for size_by and
-    ## colour_by
-    colour_by_use_pdata <- TRUE
-    size_by_use_pdata <- TRUE
-    ## Check arguments are valid
-    if ( !is.null(colour_by) ) {
-        if ( !(colour_by %in% varLabels(object)) &&
-             !(colour_by %in% featureNames(object)) )
-            stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
-        if ( !(colour_by %in% varLabels(object)) &&
-             (colour_by %in% featureNames(object)) )
-            colour_by_use_pdata <- FALSE
-    } else {
-        if ( "is_cell_control" %in% varLabels(object) )
-            colour_by <- "is_cell_control"
-    }
-    if ( !is.null(shape_by) ) {
-        if ( !(shape_by %in% varLabels(object)) )
-            stop("the argument 'shape_by' should specify a column of pData(object) [see varLabels(object)]")
-        if ( nlevels(as.factor(pData(object)[[shape_by]])) > 10 )
-            stop("when coerced to a factor, 'shape_by' should have fewer than 10 levels")
-    } else {
-        if ( "is_cell_control" %in% varLabels(object) )
-            shape_by <- "is_cell_control"
-    }
-    if ( !is.null(size_by) ) {
-        if ( !(size_by %in% varLabels(object)) &&
-             !(size_by %in% featureNames(object)) )
-            stop("the argument 'size_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
-        if ( !(size_by %in% varLabels(object)) &&
-             (size_by %in% featureNames(object)) )
-            size_by_use_pdata <- FALSE
-    }
 
+    ## Check arguments are valid
+    colour_by_out <- .choose_vis_values(object, colour_by, cell_control_default = TRUE,
+                                        check_features = TRUE, exprs_values = exprs_values)
+    colour_by <- colour_by_out$name
+    colour_by_vals <- colour_by_out$val 
+    
+    shape_by_out <- .choose_vis_values(object, shape_by, cell_control_default = TRUE, 
+                                       coerce_factor = TRUE, level_limit = 10)
+    shape_by <- shape_by_out$name
+    shape_by_vals <- shape_by_out$val 
+    
+    size_by_out <- .choose_vis_values(object, size_by, check_features = TRUE, exprs_values = exprs_values)
+    size_by <- size_by_out$name
+    size_by_vals <- size_by_out$val 
+ 
     ## Compute multidimentional scaling
     mds_out <- cmdscale(cell_dist, k = ncomponents)
 
@@ -1277,29 +1215,9 @@ plotMDSSCESet <- function(object, ncomponents = 2, colour_by = NULL,
     df_to_plot <- data.frame(mds_out[, 1:ncomponents],
                              row.names = sampleNames(object))
     colnames(df_to_plot) <- paste0("Component_", 1:ncomponents)
-    if ( !is.null(colour_by) ) {
-        if ( colour_by_use_pdata )
-            colour_by_vals <- pData(object)[[colour_by]]
-        else
-            colour_by_vals <- exprs(object)[colour_by,]
-        if ( nlevels(as.factor(colour_by_vals)) > 10 )
-            df_to_plot <- data.frame(
-                df_to_plot, colour_by = colour_by_vals)
-        else
-            df_to_plot <- data.frame(
-                df_to_plot, colour_by = as.factor(colour_by_vals))
-    }
-    if ( !is.null(shape_by) )
-        df_to_plot <- data.frame(
-            df_to_plot,
-            shape_by = as.factor(pData(object)[[shape_by]]))
-    if ( !is.null(size_by) ) {
-        if ( size_by_use_pdata )
-            size_by_vals <- pData(object)[[size_by]]
-        else
-            size_by_vals <- exprs(object)[size_by,]
-        df_to_plot <- data.frame(df_to_plot, size_by = size_by_vals)
-    }
+    df_to_plot$colour_by <- colour_by_vals
+    df_to_plot$shape_by <- shape_by_vals
+    df_to_plot$size_by <- size_by_vals
 
     ## Make reduced-dimension plot
     plot_out <- plotReducedDim.default(df_to_plot, ncomponents,
@@ -1335,9 +1253,9 @@ plotMDSSCESet <- function(object, ncomponents = 2, colour_by = NULL,
 setMethod("plotMDS", signature("SCESet"),
           function(object, ncomponents = 2, colour_by = NULL, shape_by = NULL,
                    size_by = NULL, return_SCESet = FALSE, draw_plot = TRUE,
-                   theme_size = 10, legend = "auto") {
+                   exprs_values = "exprs", theme_size = 10, legend = "auto") {
               plotMDSSCESet(object, ncomponents, colour_by, shape_by, size_by,
-                            return_SCESet, draw_plot, theme_size, legend)
+                            return_SCESet, draw_plot, exprs_values, theme_size, legend)
           })
 
 
@@ -1357,7 +1275,8 @@ setMethod("plotMDS", signature("SCESet"),
 #' 1 is produced. If \code{ncomponents} is greater than 2, a pairs plots for the
 #'  top dimensions is produced.
 #' @param colour_by character string defining the column of \code{pData(object)} to
-#' be used as a factor by which to colour the points in the plot.
+#' be used as a factor by which to colour the points in the plot. Alternatively, a 
+#' data frame with one column containing values to map to colours for all cells.
 #' @param shape_by character string defining the column of \code{pData(object)} to
 #' be used as a factor by which to define the shape of the points in the plot.
 #' @param size_by character string defining the column of \code{pData(object)} to
@@ -1365,6 +1284,8 @@ setMethod("plotMDS", signature("SCESet"),
 #' @param percentVar numeric vector giving the proportion of variance in
 #' expression explained by each reduced dimension. Only expected to be used
 #' internally in the \code{\link[scater]{plotPCA}} function.
+#' @param exprs_values a string specifying the expression values to use for
+#' colouring the points, if \code{colour_by} or \code{size_by} are set as feature names.
 #' @param theme_size numeric scalar giving default font size for plotting theme
 #' (default is 10).
 #' @param legend character, specifying how the legend(s) be shown? Default is
@@ -1459,6 +1380,7 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
         if ( !is.null(size_by) && length(unique(df_to_plot$size_by)) == 1)
             size_by <- NULL
     }
+
     ## Apply colour_by, shape_by and size_by variables if defined
     if ( !is.null(colour_by) && !is.null(shape_by) && !is.null(size_by) ) {
         plot_out <- plot_out +
@@ -1537,43 +1459,25 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
 #' @aliases plotReducedDim
 #' @export
 plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
-                                  shape_by=NULL, size_by=NULL, theme_size = 10,
-                                  legend = "auto") {
+                                  shape_by=NULL, size_by=NULL, exprs_values = "exprs",
+                                  theme_size = 10, legend = "auto") {
     ## check legend argument
     legend <- match.arg(legend, c("auto", "none", "all"))
-    ## Set up indicator for whether to use pData or features for size_by and
-    ## colour_by
-    colour_by_use_pdata <- TRUE
-    size_by_use_pdata <- TRUE
+
     ## Check arguments are valid
-    if ( !is.null(colour_by) ) {
-        if ( !(colour_by %in% varLabels(object)) &&
-             !(colour_by %in% featureNames(object)) )
-            stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
-        if ( !(colour_by %in% varLabels(object)) &&
-             (colour_by %in% featureNames(object)) )
-            colour_by_use_pdata <- FALSE
-    } else {
-        if ( "is_cell_control" %in% varLabels(object) )
-            colour_by <- "is_cell_control"
-    }
-    if ( !is.null(shape_by) ) {
-        if ( !(shape_by %in% varLabels(object)) )
-            stop("the argument 'shape_by' should specify a column of pData(object) [see varLabels(object)]")
-        if ( nlevels(as.factor(pData(object)[[shape_by]])) > 10 )
-            stop("when coerced to a factor, 'shape_by' should have fewer than 10 levels")
-    } else {
-        if ( "is_cell_control" %in% varLabels(object) )
-            shape_by <- "is_cell_control"
-    }
-    if ( !is.null(size_by) ) {
-        if ( !(size_by %in% varLabels(object)) &&
-             !(size_by %in% featureNames(object)) )
-            stop("the argument 'size_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
-        if ( !(size_by %in% varLabels(object)) &&
-             (size_by %in% featureNames(object)) )
-            size_by_use_pdata <- FALSE
-    }
+    colour_by_out <- .choose_vis_values(object, colour_by, cell_control_default = TRUE,
+                                        check_features = TRUE, exprs_values = exprs_values)
+    colour_by <- colour_by_out$name
+    colour_by_vals <- colour_by_out$val 
+    
+    shape_by_out <- .choose_vis_values(object, shape_by, cell_control_default = TRUE, 
+                                       coerce_factor = TRUE, level_limit = 10)
+    shape_by <- shape_by_out$name
+    shape_by_vals <- shape_by_out$val 
+    
+    size_by_out <- .choose_vis_values(object, size_by, check_features = TRUE, exprs_values = exprs_values)
+    size_by <- size_by_out$name
+    size_by_vals <- size_by_out$val 
 
     ## Extract reduced dimension representation of cells
     if ( is.null(reducedDimension(object)) )
@@ -1584,28 +1488,9 @@ plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
 
     ## Define data.frame for plotting
     df_to_plot <- data.frame(red_dim[, 1:ncomponents])
-    if ( !is.null(colour_by) ) {
-        if ( colour_by_use_pdata )
-            colour_by_vals <- pData(object)[[colour_by]]
-        else
-            colour_by_vals <- exprs(object)[colour_by,]
-        if ( nlevels(as.factor(colour_by_vals)) > 10 )
-            df_to_plot <- data.frame(
-                df_to_plot, colour_by = colour_by_vals)
-        else
-            df_to_plot <- data.frame(
-                df_to_plot, colour_by = as.factor(colour_by_vals))
-    }
-    if ( !is.null(shape_by) )
-        df_to_plot <- data.frame(df_to_plot,
-                                 shape_by = as.factor(pData(object)[[shape_by]]))
-    if ( !is.null(size_by) ) {
-        if ( size_by_use_pdata )
-            size_by_vals <- pData(object)[[size_by]]
-        else
-            size_by_vals <- exprs(object)[size_by,]
-        df_to_plot <- data.frame(df_to_plot, size_by = size_by_vals)
-    }
+    df_to_plot$colour_by <- colour_by_vals
+    df_to_plot$shape_by <- shape_by_vals
+    df_to_plot$size_by <- size_by_vals
 
     ## Call default method to make the plot
     plot_out <- plotReducedDim.default(df_to_plot, ncomponents, colour_by,
@@ -1631,9 +1516,10 @@ plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
 #' @export
 setMethod("plotReducedDim", signature("SCESet"),
           function(object, ncomponents=2, colour_by=NULL, shape_by=NULL,
-                   size_by=NULL, theme_size = 10, legend="auto") {
+                   size_by=NULL, exprs_values = "exprs", 
+                   theme_size = 10, legend="auto") {
               plotReducedDim.SCESet(object, ncomponents, colour_by, shape_by,
-                                    size_by, theme_size, legend)
+                                    size_by, exprs_values, theme_size, legend)
           })
 
 #' @rdname plotReducedDim
@@ -1665,11 +1551,14 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' number indicates column). Specifying this argument overrides any plate
 #' position information extracted from the SCESet object.
 #' @param colour_by character string defining the column of \code{pData(object)} to
-#' be used as a factor by which to colour the points in the plot.
+#' be used as a factor by which to colour the points in the plot. Alternatively, a 
+#' data frame with one column containing values to map to colours for all cells.
 #' @param x_position numeric vector providing x-axis positions for the cells
 #' (ignored if \code{plate_position} is not \code{NULL})
 #' @param y_position numeric vector providing y-axis positions for the cells
 #' (ignored if \code{plate_position} is not \code{NULL})
+#' @param exprs_values a string specifying the expression values to use for
+#' colouring the points, if \code{colour_by} is set as a feature name.
 #' @param theme_size numeric scalar giving default font size for plotting theme
 #' (default is 10).
 #' @param legend character, specifying how the legend(s) be shown? Default is
@@ -1685,7 +1574,10 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' then positions should be provided in this format. Alternatively, numeric
 #' values to be used as x- and y-coordinates by supplying both the
 #' \code{x_position} and \code{y_position} arguments to the function.
-#'
+#' 
+#' @return 
+#' A ggplot object.
+#' 
 #' @export
 #'
 #' @examples
@@ -1708,27 +1600,18 @@ setMethod("plotReducedDim", signature("data.frame"),
 plotPlatePosition <- function(object, plate_position = NULL,
                               colour_by = NULL,
                               x_position = NULL, y_position = NULL,
-                              theme_size = 24, legend = "auto") {
+                              exprs_values = "exprs", theme_size = 24, legend = "auto") {
     ## check object is SCESet object
     if ( !is(object, "SCESet") )
         stop("Object must be of class SCESet.")
+
     ## check legend argument
     legend <- match.arg(legend, c("auto", "none", "all"))
-    ## Set up indicator for whether to use pData or features
-    ## for colour_by
-    colour_by_use_pdata <- TRUE
-    ## Check arguments are valid
-    if ( !is.null(colour_by) ) {
-        if ( !(colour_by %in% varLabels(object)) &&
-             !(colour_by %in% featureNames(object)) )
-            stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)]")
-        if ( !(colour_by %in% varLabels(object)) &&
-             (colour_by %in% featureNames(object)) )
-            colour_by_use_pdata <- FALSE
-    } else {
-        if ( "is_cell_control" %in% varLabels(object) )
-            colour_by <- "is_cell_control"
-    }
+    ## Checking colour validity
+    colour_by_out <- .choose_vis_values(object, colour_by, cell_control_default = TRUE,
+                                        check_features = TRUE, exprs_values = exprs_values)
+    colour_by <- colour_by_out$name
+    colour_by_vals <- colour_by_out$val 
 
     ## obtain well positions
     if ( !is.null(plate_position) ) {
@@ -1751,18 +1634,12 @@ plotPlatePosition <- function(object, plate_position = NULL,
         plate_position_x <- gsub("[A-Z]*", "", plate_position_char)
         plate_position_x <- ordered(as.integer(plate_position_x))
     }
+
     ## Define data.frame for plotting
     df_to_plot <- data.frame(plate_position_x, plate_position_y)
     if ( !is.null(plate_position_char) )
-        df_to_plot[["plate_position_char"]] <- plate_position_char
-
-    if ( !is.null(colour_by) ) {
-        if ( colour_by_use_pdata )
-            colour_by_vals <- pData(object)[[colour_by]]
-        else
-            colour_by_vals <- exprs(object)[colour_by,]
-        df_to_plot <- data.frame(df_to_plot, colour_by = colour_by_vals)
-    }
+        df_to_plot[["plate_position_char"]] <- plate_position_char      
+    df_to_plot$colour_by <- colour_by_vals
 
     ## make the plot
     aesth <- aes(x = plate_position_x, y = plate_position_y, fill = colour_by)
@@ -1823,13 +1700,16 @@ plotPlatePosition <- function(object, plate_position = NULL,
 #' the user.
 #' @param colour_by optional character string supplying name of a column of
 #' \code{pData(object)} which will be used as a variable by which to colour
-#' expression values on the plot.
+#' expression values on the plot. Alternatively, a data frame with one column,
+#' containing a value for each cell that will be mapped to a colour.
 #' @param shape_by optional character string supplying name of a column of
 #' \code{pData(object)} which will be used as a variable to define the shape of
-#' points for expression values on the plot.
+#' points for expression values on the plot. Alternatively, a data frame with 
+#' one column containing values to map to shapes.
 #' @param size_by optional character string supplying name of a column of
 #' \code{pData(object)} which will be used as a variable to define the size of
-#' points for expression values on the plot.
+#' points for expression values on the plot. Alternatively, a data frame with 
+#' one column containing values to map to sizes.
 #' @param ncol number of columns to be used for the panels of the plot
 #' @param xlab label for x-axis; if \code{NULL} (default), then \code{x} will be
 #' used as the x-axis label
@@ -1917,33 +1797,7 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
     else
         nfeatures <- length(features)
 
-    ## Check arguments are valid
-    if ( is.null(x) ) {
-        x_is_feature <- FALSE
-    } else {
-        if ( !(x %in% varLabels(object)) && !(x %in% featureNames(object)))
-            stop("the argument 'x' should specify a column of pData(object) [see varLabels(object)] or a feature [see featureNames(object)")
-        if ( x %in% featureNames(object) ) {
-            x_is_feature <- TRUE
-            show_violin <- FALSE
-            show_median <- FALSE
-        } else
-            x_is_feature <- FALSE
-    }
-    if ( !is.null(colour_by) ) {
-        if ( !(colour_by %in% varLabels(object)) )
-            stop("the argument 'colour_by' should specify a column of pData(object) [see varLabels(object)]")
-    }
-    if ( !is.null(shape_by) ) {
-        if ( !(shape_by %in% varLabels(object)) )
-            stop("the argument 'shape_by' should specify a column of pData(object) [see varLabels(object)]")
-        if ( nlevels(as.factor(pData(object)[[shape_by]])) > 10 )
-            stop("when coerced to a factor, 'shape_by' should have fewer than 10 levels")
-    }
-    if ( !is.null(size_by) ) {
-        if ( !(size_by %in% varLabels(object)) )
-            stop("the argument 'size_by' should specify a column of pData(object) [see varLabels(object)]")
-    }
+    ## Picking the expression values
     if ( typeof(features) == "character" ) {
         if ( !(all(features %in% featureNames(object))) )
             stop("when the argument 'features' is of type character, all features must be in featureNames(object)")
@@ -1957,14 +1811,48 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
         ylab <- paste0("Expression (", exprs_values, ")")
     to_melt <- as.matrix(exprs_mat[features, , drop = FALSE])
 
+    ## check x-coordinates are valid
+    xcoord <- NULL
+    if ( !is.null(x) ) {
+        if ( x %in% featureNames(object) ) {
+            xcoord <- exprs_mat[x,]
+            show_violin <- FALSE
+            show_median <- FALSE
+        } else if (x %in% varLabels(object)) { 
+            xcoord <- pData(object)[,x]
+        } else {
+            stop("'x' should be a column of pData(object) or in featureNames(object)")
+        }
+    }
+
+    ## checking visualization arguments
+    colour_by_out <- .choose_vis_values(object, colour_by) 
+    colour_by <- colour_by_out$name
+    colour_by_vals <- colour_by_out$val 
+    
+    shape_by_out <- .choose_vis_values(object, shape_by, coerce_factor = TRUE, level_limit = 10)
+    shape_by <- shape_by_out$name
+    shape_by_vals <- shape_by_out$val 
+    
+    size_by_out <- .choose_vis_values(object, size_by)
+    size_by <- size_by_out$name
+    size_by_vals <- size_by_out$val 
+
+    ## Colour by is_exprs if we can (i.e. is_exprs is not NULL)
+    if ( is.null(colour_by) && !is.null(is_exprs(object)) ) {
+        colour_by <- "Is_Expressed"
+        colour_by_vals <- reshape2::melt(is_exprs(object)[features,],
+                                         value.name = "is_exprs")
+        colour_by_vals <- as.vector(colour_by_vals)
+    }
+
     ## Melt the expression data and metadata into a convenient form
     evals_long <- reshape2::melt(to_melt, value.name = "evals")
     colnames(evals_long) <- c("Feature", "Cell", "evals")
-    ## Extend the samples information
-    samps <-  pData(object)
-    if ( x_is_feature )
-        samps[[x]] <- exprs_mat[x, ]
-    samples_long <- samps[rep(seq_len(ncol(object)), each = nfeatures),]
+
+    ## Prepare the samples information
+    samps <- data.frame(row.names=colnames(object))
+    if ( !is.null(xcoord) ) samps[[x]] <- xcoord
 
     ## Construct a ggplot2 aesthetic for the plot
     aesth <- aes()
@@ -1976,25 +1864,26 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
         one_facet <- FALSE
     }
     aesth$y <- as.symbol("evals")
-    if ( !is.null(colour_by) )
+    
+    if ( !is.null(colour_by) ) {
         aesth$colour <- as.symbol(colour_by)
-    else {
-        if ( !is.null(is_exprs(object)) ) {
-            ## Colour by is_exprs if we can (i.e. is_exprs is not NULL)
-            isexpr_long <- reshape2::melt(is_exprs(object)[features,],
-                                          value.name = "is_exprs")
-            evals_long <- dplyr::mutate(
-                evals_long, Is_Expressed = as.vector(isexpr_long$is_exprs))
-            aesth$colour <- as.symbol("Is_Expressed")
-        }
+        samps[[colour_by]] <- colour_by_vals
     }
-    if ( !is.null(shape_by) )
+    if ( !is.null(shape_by) ) {
         aesth$shape <- as.symbol(shape_by)
+        samps[[shape_by]] <- shape_by_vals
+    }
+    if ( !is.null(size_by) ) {
+        aesth$size <- as.symbol(size_by)
+        samps[[size_by]] <- size_by_vals
+    }
+
     ## Define sensible x-axis label if NULL
     if ( is.null(xlab) )
         xlab <- x
 
-    ## Combine the expression values and sample information
+    ## Extend the sample information, combine with the expression values
+    samples_long <- samps[rep(seq_len(ncol(object)), each = nfeatures), , drop=FALSE]
     object <- cbind(evals_long, samples_long)
 
     ## Make the plot
@@ -2531,13 +2420,16 @@ multiplot <- function(..., plotlist = NULL, cols = 1, layout = NULL) {
 #' the user.
 #' @param colour_by optional character string supplying name of a column of
 #' \code{fData(object)} which will be used as a variable by which to colour
-#' expression values on the plot.
+#' expression values on the plot. Alternatively, a data frame with 
+#' one column, containing a value for each feature to map to a colour.
 #' @param shape_by optional character string supplying name of a column of
 #' \code{fData(object)} which will be used as a variable to define the shape of
-#' points for expression values on the plot.
+#' points for expression values on the plot. Alternatively, a data frame
+#' with one column containing values to map to shapes.
 #' @param size_by optional character string supplying name of a column of
 #' \code{fData(object)} which will be used as a variable to define the size of
-#' points for expression values on the plot.
+#' points for expression values on the plot. Alternatively, a data frame
+#' with one column containing values to map to sizes.
 #' @param xlab label for x-axis; if \code{NULL} (default), then \code{x} will be
 #' used as the x-axis label
 #' @param show_exprs_sd logical, show the standard deviation of expression
@@ -2640,24 +2532,19 @@ plotExprsVsTxLength <- function(object, tx_length = "median_feat_eff_len",
                              ymax = exprs_mean + exprs_sd)
 
     ## check colour, size, shape arguments
-    if ( !is.null(colour_by) ) {
-        if ( !(colour_by %in% Biobase::fvarLabels(object)) )
-            stop("the argument 'colour_by' should specify a column of fData(object) [see fvarLabels(object)]")
-        df_to_plot[[colour_by]] <- fData(object)[[colour_by]]
-    }
-    if ( !is.null(shape_by) ) {
-        if ( !(shape_by %in% Biobase::fvarLabels(object)) )
-            stop("the argument 'shape_by' should specify a column of fData(object) [see fvarLabels(object)]")
-        if ( nlevels(as.factor(pData(object)[[shape_by]])) > 10 )
-            stop("when coerced to a factor, 'shape_by' should have fewer than 10 levels")
-        df_to_plot[[shape_by]] <- fData(object)[[shape_by]]
-    }
-    if ( !is.null(size_by) ) {
-        if ( !(size_by %in% Biobase::fvarLabels(object)) )
-            stop("the argument 'size_by' should specify a column of fData(object) [see fvarLabels(object)]")
-        df_to_plot[[size_by]] <- fData(object)[[size_by]]
-    }
-
+    colour_by_out <- .choose_vis_values(object, colour_by, check_pdata = FALSE) 
+    colour_by <- colour_by_out$name
+    if (!is.null(colour_by)) df_to_plot[[colour_by]] <- colour_by_out$val 
+    
+    shape_by_out <- .choose_vis_values(object, shape_by, check_pdata = FALSE,
+                                       coerce_factor = TRUE, level_limit = 10)
+    shape_by <- shape_by_out$name
+    if (!is.null(shape_by)) df_to_plot[[shape_by]] <- shape_by_out$val 
+    
+    size_by_out <- .choose_vis_values(object, size_by, check_pdata = FALSE)
+    size_by <- size_by_out$name
+    if (!is.null(size_by)) df_to_plot[[size_by]] <- size_by_out$val 
+    
     ## Construct a ggplot2 aesthetic for the plot
     aesth <- aes()
     aesth$x <- as.symbol("tx_length_values")
@@ -2671,6 +2558,7 @@ plotExprsVsTxLength <- function(object, tx_length = "median_feat_eff_len",
         aesth$shape <- as.symbol(shape_by)
     if ( !is.null(size_by) )
         aesth$size <- as.symbol(size_by)
+
     ## Define sensible x-axis label if NULL
     if ( is.null(xlab) )
         xlab <- "Median transcript length"

@@ -3,10 +3,16 @@
 \docType{methods}
 \name{plotExpression}
 \alias{plotExpression}
+\alias{plotExpression}
+\alias{plotExpressionSCESet}
 \alias{plotExpression,SCESet-method}
 \alias{plotExpression,data.frame-method}
 \alias{plotExpressionDefault}
-\alias{plotExpressionSCESet}
+\alias{plotExpression}
+\alias{plotExpression,SCESet-method}
+\alias{plotExpression}
+\alias{plotExpression,data.frame-method}
+\alias{plotExpression}
 \title{Plot expression values for a set of features (e.g. genes or transcripts)}
 \usage{
 plotExpression(object, ...)
@@ -61,15 +67,18 @@ the user.}
 
 \item{colour_by}{optional character string supplying name of a column of
 \code{pData(object)} which will be used as a variable by which to colour
-expression values on the plot.}
+expression values on the plot. Alternatively, a data frame with one column,
+containing a value for each cell that will be mapped to a colour.}
 
 \item{shape_by}{optional character string supplying name of a column of
 \code{pData(object)} which will be used as a variable to define the shape of
-points for expression values on the plot.}
+points for expression values on the plot. Alternatively, a data frame with 
+one column containing values to map to shapes.}
 
 \item{size_by}{optional character string supplying name of a column of
 \code{pData(object)} which will be used as a variable to define the size of
-points for expression values on the plot.}
+points for expression values on the plot. Alternatively, a data frame with 
+one column containing values to map to sizes.}
 
 \item{ncol}{number of columns to be used for the panels of the plot}
 
@@ -157,4 +166,3 @@ plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE)
 plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE, se = FALSE)
 
 }
-

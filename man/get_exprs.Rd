@@ -3,8 +3,10 @@
 \docType{methods}
 \name{get_exprs}
 \alias{get_exprs}
-\alias{get_exprs,SCESet-method}
+\alias{get_exprs}
 \alias{get_exprs.SCESet}
+\alias{get_exprs,SCESet-method}
+\alias{get_exprs,SCESet-method}
 \title{Generic accessor for expression data from an SCESet object.}
 \usage{
 get_exprs(object, exprs_values, ...)
@@ -57,4 +59,3 @@ get_exprs(example_sceset, "scaled_counts")[1:6, 1:6]
 \author{
 Davis McCarthy
 }
-
