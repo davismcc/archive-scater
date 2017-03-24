@@ -3,8 +3,10 @@
 \docType{methods}
 \name{plotPCA}
 \alias{plotPCA}
-\alias{plotPCA,SCESet-method}
 \alias{plotPCASCESet}
+\alias{plotPCA,SCESet-method}
+\alias{plotPCA,SCESet-method}
+\alias{plotPCA}
 \title{Plot PCA for an SCESet object}
 \usage{
 plotPCASCESet(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
@@ -46,13 +48,16 @@ or any other named element of the \code{assayData} slot of the \code{SCESet}
 object that can be accessed with the \code{get_exprs} function.}
 
 \item{colour_by}{character string defining the column of \code{pData(object)} to
-be used as a factor by which to colour the points in the plot.}
+be used as a factor by which to colour the points in the plot. Alternatively, 
+a data frame with one column, containing values to map to colours for all cells.}
 
 \item{shape_by}{character string defining the column of \code{pData(object)} to
-be used as a factor by which to define the shape of the points in the plot.}
+be used as a factor by which to define the shape of the points in the plot.
+Alternatively, a data frame with one column containing values to map to shapes.}
 
 \item{size_by}{character string defining the column of \code{pData(object)} to
-be used as a factor by which to define the size of points in the plot.}
+be used as a factor by which to define the size of points in the plot.
+Alternatively, a data frame with one column containing values to map to sizes.}
 
 \item{feature_set}{character, numeric or logical vector indicating a set of
 features to use for the PCA. If character, entries must all be in
@@ -151,4 +156,3 @@ plotPCA(example_sceset, ncomponents = 4, colour_by = "Treatment",
 shape_by = "Mutation_Status")
 
 }
-

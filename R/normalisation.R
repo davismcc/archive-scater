@@ -198,6 +198,26 @@ normalizeExprs <- function(...) {
 #' provided for those who have a preference for North American or
 #' British/Australian spelling.
 #'
+#' @section Warning about centred size factors:
+#' Centring the size factors ensures that the computed \code{exprs} can be 
+#' interpreted as being on the same scale as log-counts. This does not affect
+#' relative comparisons between cells in the same \code{object}, as all size 
+#' factors are scaled by the same amount. However, if two different \code{SCESet}
+#' objects are run separately through \code{normalize}, the size factors 
+#' in each object will be rescaled differently. This means that the size factors
+#' and \code{exprs} will \emph{not} be comparable between objects.
+#'
+#' This lack of comparability is not always obvious. For example, if we subsetted
+#' an existing \code{SCESet}, and ran \code{normalize} separately on each subset, 
+#' the resulting \code{exprs} in each subsetted object would \emph{not} be 
+#' comparable to each other. This is despite the fact that all cells were 
+#' originally derived from a single \code{SCESet} object. 
+#'
+#' In general, it is advisable to only compare size factors and \code{exprs}
+#' between cells in one \code{SCESet} object. If objects are to be combined,
+#' e.g., with \code{\link{mergeSCESet}}, new size factors should be computed 
+#' using all cells in the combined object, followed by running \code{normalize}.
+#'
 #' @return an SCESet object
 #'
 #' @name normalize

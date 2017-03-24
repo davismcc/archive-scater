@@ -33,15 +33,18 @@ the user.}
 
 \item{colour_by}{optional character string supplying name of a column of
 \code{fData(object)} which will be used as a variable by which to colour
-expression values on the plot.}
+expression values on the plot. Alternatively, a data frame with 
+one column, containing a value for each feature to map to a colour.}
 
 \item{shape_by}{optional character string supplying name of a column of
 \code{fData(object)} which will be used as a variable to define the shape of
-points for expression values on the plot.}
+points for expression values on the plot. Alternatively, a data frame
+with one column containing values to map to shapes.}
 
 \item{size_by}{optional character string supplying name of a column of
 \code{fData(object)} which will be used as a variable to define the size of
-points for expression values on the plot.}
+points for expression values on the plot. Alternatively, a data frame
+with one column containing values to map to sizes.}
 
 \item{xlab}{label for x-axis; if \code{NULL} (default), then \code{x} will be
 used as the x-axis label}
@@ -107,4 +110,3 @@ show_exprs_sd = TRUE)
 plotExprsVsTxLength(example_sceset, rnorm(2000, mean = 5000, sd = 500))
 
 }
-

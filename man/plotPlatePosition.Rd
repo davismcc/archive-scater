@@ -5,8 +5,8 @@
 \title{Plot cells in plate positions}
 \usage{
 plotPlatePosition(object, plate_position = NULL, colour_by = NULL,
-  x_position = NULL, y_position = NULL, theme_size = 24,
-  legend = "auto")
+  x_position = NULL, y_position = NULL, exprs_values = "exprs",
+  theme_size = 24, legend = "auto")
 }
 \arguments{
 \item{object}{an \code{SCESet} object. If \code{object$plate_position} is not
@@ -19,7 +19,8 @@ number indicates column). Specifying this argument overrides any plate
 position information extracted from the SCESet object.}
 
 \item{colour_by}{character string defining the column of \code{pData(object)} to
-be used as a factor by which to colour the points in the plot.}
+be used as a factor by which to colour the points in the plot. Alternatively, a 
+data frame with one column containing values to map to colours for all cells.}
 
 \item{x_position}{numeric vector providing x-axis positions for the cells
 (ignored if \code{plate_position} is not \code{NULL})}
@@ -27,12 +28,18 @@ be used as a factor by which to colour the points in the plot.}
 \item{y_position}{numeric vector providing y-axis positions for the cells
 (ignored if \code{plate_position} is not \code{NULL})}
 
+\item{exprs_values}{a string specifying the expression values to use for
+colouring the points, if \code{colour_by} is set as a feature name.}
+
 \item{theme_size}{numeric scalar giving default font size for plotting theme
 (default is 10).}
 
 \item{legend}{character, specifying how the legend(s) be shown? Default is 
 \code{"auto"}, which hides legends that have only one level and shows others. 
 Alternatives are "all" (show all legends) or "none" (hide all legends).}
+}
+\value{
+A ggplot object.
 }
 \description{
 Plots cells in their position on a plate, coloured by phenotype data or 
@@ -67,4 +74,3 @@ plotPlatePosition(example_sceset, colour_by = "Mutation_Status")
 plotPlatePosition(example_sceset, colour_by = "Gene_0004")
 
 }
-

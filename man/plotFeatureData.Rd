@@ -45,4 +45,3 @@ example_sceset <- calculateQCMetrics(example_sceset)
 plotFeatureData(example_sceset, aesth=aes(x=n_cells_exprs, y=pct_total_counts))
 
 }
-
