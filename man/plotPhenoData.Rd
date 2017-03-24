@@ -45,4 +45,3 @@ plotPhenoData(example_sceset, aesth = aes_string(x = "log10(total_counts)",
 y = "total_features", colour = "Mutation_Status"))
 
 }
-

@@ -2,11 +2,14 @@
 % Please edit documentation in R/normalisation.R
 \docType{methods}
 \name{normalize}
-\alias{normalise}
-\alias{normalise,SCESet-method}
 \alias{normalize}
-\alias{normalize,SCESet-method}
 \alias{normalize.SCESet}
+\alias{normalise}
+\alias{normalize,SCESet-method}
+\alias{normalise,SCESet-method}
+\alias{normalize,SCESet-method}
+\alias{normalize}
+\alias{normalise}
 \title{Normalise an SCESet object using pre-computed size factors}
 \usage{
 normalize.SCESet(object, exprs_values = NULL, logExprsOffset = NULL,
@@ -79,6 +82,7 @@ between cells in one \code{SCESet} object. If objects are to be combined,
 e.g., with \code{\link{mergeSCESet}}, new size factors should be computed 
 using all cells in the combined object, followed by running \code{normalize}.
 }
+
 \examples{
 data("sc_example_counts")
 data("sc_example_cell_info")
@@ -100,4 +104,3 @@ example_sceset <- normalize(example_sceset)
 \author{
 Davis McCarthy and Aaron Lun
 }
-

@@ -3,6 +3,7 @@
 \docType{methods}
 \name{plotTSNE}
 \alias{plotTSNE}
+\alias{plotTSNE}
 \alias{plotTSNE,SCESet-method}
 \title{Plot t-SNE for an SCESet object}
 \usage{
@@ -132,4 +133,3 @@ Conference on Learning Representations, 2013.
 \seealso{
 \code{\link[Rtsne]{Rtsne}}
 }
-

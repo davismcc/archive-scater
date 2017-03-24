@@ -3,8 +3,10 @@
 \docType{methods}
 \name{plotPCA}
 \alias{plotPCA}
-\alias{plotPCA,SCESet-method}
 \alias{plotPCASCESet}
+\alias{plotPCA,SCESet-method}
+\alias{plotPCA,SCESet-method}
+\alias{plotPCA}
 \title{Plot PCA for an SCESet object}
 \usage{
 plotPCASCESet(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
@@ -154,4 +156,3 @@ plotPCA(example_sceset, ncomponents = 4, colour_by = "Treatment",
 shape_by = "Mutation_Status")
 
 }
-

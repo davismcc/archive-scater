@@ -721,7 +721,7 @@ setReplaceMethod("set_exprs", signature(object = "SCESet", value = "NULL"),
 #' @rdname counts
 #' @importFrom BiocGenerics counts
 #' @aliases counts counts,SCESet-method counts<-,SCESet,matrix-method
-#'
+#' @return A matrix of count values.
 #' @param object a \code{SCESet} object.
 #' @param value an integer matrix
 #' @author Davis McCarthy
@@ -1327,6 +1327,8 @@ setReplaceMethod("norm_fpkm", signature(object = "SCESet", value = "matrix"),
 #' @details The size factors can alternatively be directly accessed from the
 #' \code{SCESet} object with \code{object$size_factor_type} (where "type" in the
 #' preceding is replaced by the actual type name).
+#'
+#' @return A numeric vector of size factors.
 #'
 #' @author Davis McCarthy and Aaron Lun
 #' @export

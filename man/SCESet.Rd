@@ -38,9 +38,9 @@ Methods that operate on SCESet objects constitute the basic scater workflow.
    bootstrap estimates of the expression or count values.}
 }
 }
+
 \references{
 Thanks to the Monocle package 
 (github.com/cole-trapnell-lab/monocle-release/) for their CellDataSet class, 
 which provided the inspiration and template for SCESet.
 }
-

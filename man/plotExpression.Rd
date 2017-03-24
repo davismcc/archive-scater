@@ -3,10 +3,16 @@
 \docType{methods}
 \name{plotExpression}
 \alias{plotExpression}
+\alias{plotExpression}
+\alias{plotExpressionSCESet}
 \alias{plotExpression,SCESet-method}
 \alias{plotExpression,data.frame-method}
 \alias{plotExpressionDefault}
-\alias{plotExpressionSCESet}
+\alias{plotExpression}
+\alias{plotExpression,SCESet-method}
+\alias{plotExpression}
+\alias{plotExpression,data.frame-method}
+\alias{plotExpression}
 \title{Plot expression values for a set of features (e.g. genes or transcripts)}
 \usage{
 plotExpression(object, ...)
@@ -160,4 +166,3 @@ plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE)
 plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE, se = FALSE)
 
 }
-

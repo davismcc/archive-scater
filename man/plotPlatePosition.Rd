@@ -38,6 +38,9 @@ colouring the points, if \code{colour_by} is set as a feature name.}
 \code{"auto"}, which hides legends that have only one level and shows others. 
 Alternatives are "all" (show all legends) or "none" (hide all legends).}
 }
+\value{
+A ggplot object.
+}
 \description{
 Plots cells in their position on a plate, coloured by phenotype data or 
 feature expression.
@@ -71,4 +74,3 @@ plotPlatePosition(example_sceset, colour_by = "Mutation_Status")
 plotPlatePosition(example_sceset, colour_by = "Gene_0004")
 
 }
-

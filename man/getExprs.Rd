@@ -15,4 +15,3 @@ A matrix representation of expression values.
 \description{
 Deprecated from scater version 1.3.29.
 }
-

@@ -47,4 +47,3 @@ vars <- names(pData(example_sceset))[c(2:3, 5:14)]
 plotQC(example_sceset, type="expl", variables=vars)
 
 }
-

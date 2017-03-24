@@ -34,4 +34,3 @@ if ( requireNamespace("monocle") ) {
     # sceset <- fromCellDataSet(cds) # not run
 }
 }
-

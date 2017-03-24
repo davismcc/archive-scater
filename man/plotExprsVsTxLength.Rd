@@ -110,4 +110,3 @@ show_exprs_sd = TRUE)
 plotExprsVsTxLength(example_sceset, rnorm(2000, mean = 5000, sd = 500))
 
 }
-

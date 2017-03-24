@@ -1575,6 +1575,9 @@ setMethod("plotReducedDim", signature("data.frame"),
 #' values to be used as x- and y-coordinates by supplying both the 
 #' \code{x_position} and \code{y_position} arguments to the function.
 #' 
+#' @return 
+#' A ggplot object.
+#' 
 #' @export
 #' 
 #' @examples 

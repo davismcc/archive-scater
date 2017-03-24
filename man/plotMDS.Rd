@@ -3,8 +3,11 @@
 \docType{methods}
 \name{plotMDS}
 \alias{plotMDS}
-\alias{plotMDS,SCESet-method}
+\alias{plotMDS}
 \alias{plotMDSSCESet}
+\alias{plotMDS,SCESet-method}
+\alias{plotMDS,SCESet-method}
+\alias{plotMDS}
 \title{Produce a multidimensional scaling plot for an SCESet object}
 \usage{
 plotMDS(object, ...)
@@ -97,4 +100,3 @@ plotMDS(example_sceset, colour_by = "Cell_Cycle",
 shape_by = "Treatment", size_by = "Mutation_Status")
 
 }
-

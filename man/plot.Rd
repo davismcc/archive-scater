@@ -3,9 +3,10 @@
 \docType{methods}
 \name{plot}
 \alias{plot}
-\alias{plot,SCESet,ANY-method}
 \alias{plot,SCESet-method}
+\alias{plot,SCESet,ANY-method}
 \alias{plotSCESet}
+\alias{plot}
 \title{Plot an overview of expression for each cell}
 \usage{
 \S4method{plot}{SCESet,ANY}(x, y, ...)
@@ -91,4 +92,3 @@ block2 = "Mutation_Status", colour_by = "Cell_Cycle")
 plot(example_sceset, block1 = "Treatment", colour_by = "Cell_Cycle")
 
 }
-

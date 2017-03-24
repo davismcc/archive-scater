@@ -3,8 +3,11 @@
 \docType{methods}
 \name{plotDiffusionMap}
 \alias{plotDiffusionMap}
-\alias{plotDiffusionMap,SCESet-method}
+\alias{plotDiffusionMap}
 \alias{plotDiffusionMapSCESet}
+\alias{plotDiffusionMap,SCESet-method}
+\alias{plotDiffusionMap,SCESet-method}
+\alias{plotDiffusionMap}
 \title{Plot a diffusion map for an SCESet object}
 \usage{
 plotDiffusionMap(object, ...)
@@ -136,4 +139,3 @@ Haghverdi L, Buettner F, Theis FJ. Diffusion maps for high-dimensional single-ce
 \seealso{
 \code{\link[destiny]{destiny}}
 }
-

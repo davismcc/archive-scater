@@ -2,12 +2,17 @@
 % Please edit documentation in R/AllGenerics.R, R/plotting.R
 \docType{methods}
 \name{plotReducedDim}
-\alias{plotReducedDIm}
 \alias{plotReducedDim}
+\alias{plotReducedDim}
+\alias{plotReducedDim.default}
 \alias{plotReducedDim,SCESet-method}
 \alias{plotReducedDim,data.frame-method}
 \alias{plotReducedDim.SCESet}
-\alias{plotReducedDim.default}
+\alias{plotReducedDim}
+\alias{plotReducedDim,SCESet-method}
+\alias{plotReducedDIm}
+\alias{plotReducedDim,data.frame-method}
+\alias{plotReducedDim}
 \title{Plot reduced dimension representation of cells}
 \usage{
 plotReducedDim(object, ...)
@@ -98,4 +103,3 @@ plotReducedDim(example_sceset, ncomponents=5, colour_by="Cell_Cycle", shape_by="
 
 
 }
-
