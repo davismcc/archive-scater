@@ -2244,7 +2244,7 @@ getExprs <- function(object) {
 #'
 #' ## with specification of columns of pData
 #' mergeSCESet(example_sceset[, 1:20], example_sceset[, 21:40], pdata_cols = 1:6)
-#'
+#' mergeSCESet(example_sceset[, 1:20], example_sceset[, 40], pdata_cols = 3)
 #'
 mergeSCESet <- function(x, y, fdata_cols = NULL, pdata_cols = NULL) {
     if (!is(x,'SCESet')) stop('x must be of type SCESet')
@@ -2281,7 +2281,8 @@ mergeSCESet <- function(x, y, fdata_cols = NULL, pdata_cols = NULL) {
     if (ncol(pdata_x)) { 
         new_pdata <- rbind(pdata_x, pdata_y)
     } else {
-        new_pdata <- data.frame(row.names=c(rownames(pdata_x), rownames(pdata_y)))
+        new_pdata <- data.frame(row.names = c(rownames(pdata_x), 
+                                              rownames(pdata_y)))
     }
     new_pdata <- as(new_pdata, "AnnotatedDataFrame")
 

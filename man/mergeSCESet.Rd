@@ -52,6 +52,6 @@ mergeSCESet(example_sceset[, 1:20], example_sceset[, 21:40], fdata_cols = c(1, 7
 
 ## with specification of columns of pData
 mergeSCESet(example_sceset[, 1:20], example_sceset[, 21:40], pdata_cols = 1:6)
-
+mergeSCESet(example_sceset[, 1:20], example_sceset[, 40], pdata_cols = 3)
 
 }

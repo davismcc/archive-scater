@@ -58,8 +58,8 @@ colouring the points, if \code{colour_by} or \code{size_by} are set as feature n
 \item{theme_size}{numeric scalar giving default font size for plotting theme
 (default is 10).}
 
-\item{legend}{character, specifying how the legend(s) be shown? Default is 
-\code{"auto"}, which hides legends that have only one level and shows others. 
+\item{legend}{character, specifying how the legend(s) be shown? Default is
+\code{"auto"}, which hides legends that have only one level and shows others.
 Alternatives are "all" (show all legends) or "none" (hide all legends).}
 }
 \value{

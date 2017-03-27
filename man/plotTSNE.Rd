@@ -40,7 +40,7 @@ values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
 counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot
 of the \code{SCESet} object; default), \code{"norm_exprs"} (normalised
-expression values) or \code{"stand_exprs"} (standardised expression values), 
+expression values) or \code{"stand_exprs"} (standardised expression values),
 or any other named element of the \code{assayData} slot of the \code{SCESet}
 object that can be accessed with the \code{get_exprs} function.}
 
@@ -57,7 +57,7 @@ be used as a factor by which to define the size of points in the plot.
 Alternatively, a data frame with one column containing values to map to sizes.}
 
 \item{feature_set}{character, numeric or logical vector indicating a set of
-features to use for the t-SNE calculation. If character, entries must all be 
+features to use for the t-SNE calculation. If character, entries must all be
 in \code{featureNames(object)}. If numeric, values are taken to be indices for
 features. If logical, vector is used to index features and should have length
 equal to \code{nrow(object)}.}
@@ -84,8 +84,8 @@ is always produced.}
 for the t-SNE plot. Passed to \code{\link[Rtsne]{Rtsne}} - see documentation
 for that package for more details.}
 
-\item{legend}{character, specifying how the legend(s) be shown? Default is 
-\code{"auto"}, which hides legends that have only one level and shows others. 
+\item{legend}{character, specifying how the legend(s) be shown? Default is
+\code{"auto"}, which hides legends that have only one level and shows others.
 Alternatives are "all" (show all legends) or "none" (hide all legends).}
 }
 \value{

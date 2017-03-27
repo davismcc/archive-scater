@@ -171,6 +171,10 @@ test_that("mergeSCESet works as expected", {
     fData(tmp_sceset)$ID <- "nope"
     expect_error(mergeSCESet(example_sceset[, 1:20], tmp_sceset),
                  "not identical")
+    
+    # checking that selecting 1 pData column works OK
+    expect_that(mergeSCESet(example_sceset[, 1:20], example_sceset[, 40], 
+                            pdata_cols = 3), is_a("SCESet"))
 
     # Checking that featureControlInfo is handled properly.
     new_example_sceset <- calculateQCMetrics(example_sceset, 

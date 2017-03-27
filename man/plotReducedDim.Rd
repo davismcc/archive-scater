@@ -66,8 +66,8 @@ internally in the \code{\link[scater]{plotPCA}} function.}
 \item{theme_size}{numeric scalar giving default font size for plotting theme
 (default is 10).}
 
-\item{legend}{character, specifying how the legend(s) be shown? Default is 
-\code{"auto"}, which hides legends that have only one level and shows others. 
+\item{legend}{character, specifying how the legend(s) be shown? Default is
+\code{"auto"}, which hides legends that have only one level and shows others.
 Alternatives are "all" (show all legends) or "none" (hide all legends).}
 
 \item{exprs_values}{a string specifying the expression values to use for

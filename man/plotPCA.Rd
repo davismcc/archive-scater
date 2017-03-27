@@ -95,8 +95,8 @@ is \code{FALSE}.}
 \item{theme_size}{numeric scalar giving default font size for plotting theme
 (default is 10).}
 
-\item{legend}{character, specifying how the legend(s) be shown? Default is 
-\code{"auto"}, which hides legends that have only one level and shows others. 
+\item{legend}{character, specifying how the legend(s) be shown? Default is
+\code{"auto"}, which hides legends that have only one level and shows others.
 Alternatives are "all" (show all legends) or "none" (hide all legends).}
 
 \item{...}{further arguments passed to \code{\link{plotPCASCESet}}}
@@ -118,11 +118,11 @@ feature-wise unit variances or not according to the \code{scale_features}
 argument), added to the object and PCA is done using these new standardised
 expression values.
 
-If the arguments \code{detect_outliers} and \code{return_SCESet} are both 
-\code{TRUE}, then the element \code{$outlier} is added to the pData 
+If the arguments \code{detect_outliers} and \code{return_SCESet} are both
+\code{TRUE}, then the element \code{$outlier} is added to the pData
 (phenotype data) slot of the \code{SCESet} object. This element contains
 indicator values about whether or not each cell has been designated as an
-outlier based on the PCA. These values can be accessed for filtering 
+outlier based on the PCA. These values can be accessed for filtering
 low quality cells with, foe example, \code{example_sceset$outlier}.
 }
 \examples{
