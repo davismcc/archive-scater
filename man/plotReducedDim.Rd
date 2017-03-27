@@ -100,6 +100,6 @@ plotReducedDim(example_sceset, colour_by="Cell_Cycle", shape_by="Treatment")
 plotReducedDim(example_sceset, colour_by="Cell_Cycle", size_by="Treatment")
 plotReducedDim(example_sceset, ncomponents=5)
 plotReducedDim(example_sceset, ncomponents=5, colour_by="Cell_Cycle", shape_by="Treatment")
-
+plotReducedDim(example_sceset, colour_by="Gene_0001") 
 
 }

@@ -98,7 +98,7 @@
     ## or a column of fData, or the expression values of a feature.
 
     if (is.character(by)) {
-        if (length(by)!=1L) {
+        if (length(by) != 1L) {
             stop("'by' should be a character vector of length 1")
         }
         
@@ -127,13 +127,13 @@
         ## throwing an error if still unfound
         if (is.null(vals)) {
             stop(sprintf("'%s' not found %s", by,
-                         paste(sprintf("in '%s'", unfound), collapse=" or ")))
+                         paste(sprintf("in '%s'", unfound), collapse = " or ")))
         }
 
     } else if (is.data.frame(by)) {
-        if (ncol(by)!=1L) {
+        if (ncol(by) != 1L) {
             stop("'by' should be a data frame with one column")
-        } else if (nrow(by)!=ncol(x)) {
+        } else if (nrow(by) != ncol(x)) {
             stop("'nrow(by)' should be equal to number of columns in 'x'")
         }
 
@@ -161,7 +161,7 @@
             stop(sprintf("number of unique levels exceeds %i", level_limit))
     }
 
-    return(list(name=by, val=vals))
+    return(list(name = by, val = vals))
 }
 
 
@@ -822,7 +822,7 @@ setMethod("plotTSNE", signature("SCESet"),
 
               ## Define an expression matrix depending on which values we're
               ## using
-              exprs_mat <- get_exprs(object, exprs_values, warning=FALSE)
+              exprs_mat <- get_exprs(object, exprs_values, warning = FALSE)
               if ( is.null(exprs_mat) ) 
                   stop(sprintf("object does not contain '%s'", exprs_values))
 
@@ -1834,7 +1834,8 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
     colour_by <- colour_by_out$name
     colour_by_vals <- colour_by_out$val 
     
-    shape_by_out <- .choose_vis_values(object, shape_by, coerce_factor = TRUE, level_limit = 10)
+    shape_by_out <- .choose_vis_values(object, shape_by, coerce_factor = TRUE, 
+                                       level_limit = 10)
     shape_by <- shape_by_out$name
     shape_by_vals <- shape_by_out$val 
     
@@ -1855,7 +1856,7 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
     colnames(evals_long) <- c("Feature", "Cell", "evals")
 
     ## Prepare the samples information
-    samps <- data.frame(row.names=colnames(object))
+    samps <- data.frame(row.names = colnames(object))
     if ( !is.null(xcoord) ) samps[[x]] <- xcoord
 
     ## Construct a ggplot2 aesthetic for the plot
@@ -1920,7 +1921,7 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
 #' @rdname plotExpression
 #' @aliases plotExpression
 #' @export
-plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
+plotExpressionDefault <- function(object, aesth, ncol = 2, xlab = NULL,
                                   ylab = NULL, show_median = FALSE,
                                   show_violin = TRUE, show_smooth = FALSE,
                                   alpha = 0.6, size = NULL, scales = "fixed",
@@ -1928,6 +1929,15 @@ plotExpressionDefault <- function(object, aesth, ncol=2, xlab = NULL,
     if ( !("Feature" %in% names(object)) )
         stop("object needs a column named 'Feature' to define the feature(s) by which to plot expression.")
 
+    ## use x as group for violin plot if discrete
+    group_by_x <- (show_violin && 
+        (!is.numeric(object[[as.character(aesth$x)]]) || 
+             nlevels(as.factor(object[[as.character(aesth$x)]])) <= 5))
+    if (group_by_x)
+        aesth$group <- aesth$x
+    else 
+        aesth$group <- 1
+    
     ## Define the plot
     if (one_facet) {
         if (is.null(aesth$colour))
