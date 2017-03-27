@@ -1321,7 +1321,7 @@ setMethod("plotMDS", signature("SCESet"),
 #' plotReducedDim(example_sceset, colour_by="Cell_Cycle", size_by="Treatment")
 #' plotReducedDim(example_sceset, ncomponents=5)
 #' plotReducedDim(example_sceset, ncomponents=5, colour_by="Cell_Cycle", shape_by="Treatment")
-#'
+#' plotReducedDim(example_sceset, colour_by="Gene_0001") 
 #'
 plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
                            shape_by=NULL, size_by=NULL, percentVar=NULL,
@@ -1459,23 +1459,27 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
 #' @aliases plotReducedDim
 #' @export
 plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
-                                  shape_by=NULL, size_by=NULL, exprs_values = "exprs",
-                                  theme_size = 10, legend = "auto") {
+                                  shape_by=NULL, size_by=NULL, 
+                                  exprs_values = "exprs", theme_size = 10, 
+                                  legend = "auto") {
     ## check legend argument
     legend <- match.arg(legend, c("auto", "none", "all"))
 
     ## Check arguments are valid
-    colour_by_out <- .choose_vis_values(object, colour_by, cell_control_default = TRUE,
-                                        check_features = TRUE, exprs_values = exprs_values)
+    colour_by_out <- .choose_vis_values(
+        object, colour_by, cell_control_default = TRUE, check_features = TRUE, 
+        exprs_values = exprs_values)
     colour_by <- colour_by_out$name
     colour_by_vals <- colour_by_out$val 
     
-    shape_by_out <- .choose_vis_values(object, shape_by, cell_control_default = TRUE, 
-                                       coerce_factor = TRUE, level_limit = 10)
+    shape_by_out <- .choose_vis_values(
+        object, shape_by, cell_control_default = TRUE, coerce_factor = TRUE, 
+        level_limit = 10)
     shape_by <- shape_by_out$name
     shape_by_vals <- shape_by_out$val 
     
-    size_by_out <- .choose_vis_values(object, size_by, check_features = TRUE, exprs_values = exprs_values)
+    size_by_out <- .choose_vis_values(
+        object, size_by, check_features = TRUE, exprs_values = exprs_values)
     size_by <- size_by_out$name
     size_by_vals <- size_by_out$val 
 
