@@ -1843,15 +1843,7 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
     size_by <- size_by_out$name
     size_by_vals <- size_by_out$val 
 
-    ## Colour by is_exprs if we can (i.e. is_exprs is not NULL)
-    if ( is.null(colour_by) && !is.null(is_exprs(object)) ) {
-        colour_by <- "Is_Expressed"
-        colour_by_vals <- reshape2::melt(is_exprs(object)[features,],
-                                         value.name = "is_exprs")
-        colour_by_vals <- as.vector(colour_by_vals)
-    }
-
-    ## Melt the expression data and metadata into a convenient form
+       ## Melt the expression data and metadata into a convenient form
     evals_long <- reshape2::melt(to_melt, value.name = "evals")
     colnames(evals_long) <- c("Feature", "Cell", "evals")
 
@@ -1869,11 +1861,10 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
         one_facet <- FALSE
     }
     aesth$y <- as.symbol("evals")
+    ## Define sensible x-axis label if NULL
+    if ( is.null(xlab) )
+        xlab <- x
     
-    if ( !is.null(colour_by) ) {
-        aesth$colour <- as.symbol(colour_by)
-        samps[[colour_by]] <- colour_by_vals
-    }
     if ( !is.null(shape_by) ) {
         aesth$shape <- as.symbol(shape_by)
         samps[[shape_by]] <- shape_by_vals
@@ -1882,13 +1873,22 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
         aesth$size <- as.symbol(size_by)
         samps[[size_by]] <- size_by_vals
     }
-
-    ## Define sensible x-axis label if NULL
-    if ( is.null(xlab) )
-        xlab <- x
-
+    if ( !is.null(colour_by) ) {
+        aesth$colour <- as.symbol(colour_by)
+        samps[[colour_by]] <- colour_by_vals
+    }
     ## Extend the sample information, combine with the expression values
-    samples_long <- samps[rep(seq_len(ncol(object)), each = nfeatures), , drop=FALSE]
+    samples_long <- samps[rep(seq_len(ncol(object)), each = nfeatures), , drop = FALSE]
+    ## Colour by is_exprs if we can (i.e. is_exprs is not NULL)
+    if ( is.null(colour_by) && !is.null(is_exprs(object)) ) {
+        colour_by <- "Is_Expressed"
+        aesth$colour <- as.symbol(colour_by)
+        colour_by_vals <- reshape2::melt(is_exprs(object)[features,],
+                                         value.name = "is_exprs")
+        samples_long[[colour_by]] <- colour_by_vals[["is_exprs"]]
+    }
+    
+    ## create plotting object
     object <- cbind(evals_long, samples_long)
 
     ## Make the plot
