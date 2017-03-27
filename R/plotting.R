@@ -2103,16 +2103,12 @@ plotMetadata <- function(object,
     if ( is.null(aesth$size) ) {
         show_size_guide <- FALSE
         if ( is.null(size) )
-            aesth$size <- 4
-        else
-            aesth$size <- size
+            size <- 1
     }
     if ( is.null(aesth$alpha) ) {
         show_alpha_guide <- FALSE
         if ( is.null(alpha) )
-            aesth$alpha <- 0.7
-        else
-            aesth$alpha <- alpha
+            alpha <- 0.7
     }
     if ( is.null(aesth$shape) ) {
         show_shape_guide <- FALSE
@@ -2126,31 +2122,42 @@ plotMetadata <- function(object,
     ## Density plot
     if (plot_type == "bar") {
         plot_out <- plot_out + geom_bar(stat = "identity")
-    }
-    if (plot_type == "density") {
+    } else if (plot_type == "density") {
         plot_out <- plot_out + geom_density(kernel = "rectangular", size = 2) +
             geom_rug(alpha = 0.5, size = 1)
-    }
-    if (plot_type == "jitter") {
-        if ( !show_shape_guide )
-            plot_out <- plot_out +  ggbeeswarm::geom_quasirandom(shape = shape)
-        else
-            plot_out <- plot_out +  ggbeeswarm::geom_quasirandom()
-    }
-    if (plot_type == "scatter") {
-        if ( !show_shape_guide )
-            plot_out <- plot_out +  ggbeeswarm::geom_quasirandom(shape = shape)
-        else
-            plot_out <- plot_out +  ggbeeswarm::geom_quasirandom()
-        plot_out <- plot_out + geom_rug(alpha = 0.5, size = 1)
-    }
-    if (plot_type == "violin") {
-        if ( !show_shape_guide )
-            plot_out  <- plot_out +  ggbeeswarm::geom_quasirandom(shape = shape)
-        else
-            plot_out  <- plot_out +  ggbeeswarm::geom_quasirandom()
-        plot_out <- plot_out + geom_violin(size = 1, scale = "width")
-
+    } else {
+        if (!show_shape_guide && !show_size_guide && !show_alpha_guide)
+            plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
+                shape = shape, size = size, alpha = alpha)
+        else {
+            if (!show_shape_guide && !show_size_guide) {
+                plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
+                    shape = shape, size = size)
+            } else if (!show_size_guide && !show_alpha_guide) {
+                plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
+                    size = size, alpha = alpha)
+            } else if (!show_shape_guide && !show_alpha_guide) {
+                plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
+                    shape = shape, alpha = alpha)
+            } else {
+                if (!show_shape_guide) {
+                    plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
+                        shape = shape)
+                } else if (!show_size_guide) {
+                    plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
+                        size = size)
+                } else if (!show_alpha_guide) {
+                    plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
+                        alpha = alpha)
+                } else {
+                    plot_out <- plot_out +  ggbeeswarm::geom_quasirandom()
+                }
+            }
+        }
+        if (plot_type == "scatter")
+            plot_out <- plot_out + geom_rug(alpha = 0.5, size = 1)
+        if (plot_type == "violin") 
+            plot_out <- plot_out + geom_violin(size = 1, scale = "width")
     }
 
     ## Define plotting theme
@@ -2195,9 +2202,8 @@ plotMetadata <- function(object,
 #' @param aesth aesthetics function call to pass to ggplot. This function
 #' expects at least x and y variables to be supplied. The default is to plot
 #' total_features against log10(total_counts).
-#' @param theme_size numeric scalar giving default font size for plotting theme
-#' (default is 10).
-#' @param ... arguments passed to \code{\link{plotMetadata}}.
+#' @param ... arguments passed to \code{\link{plotMetadata}}, e.g. 
+#' \code{theme_size}, \code{size}, \code{alpha}, \code{shape}.
 #'
 #' @details Plot phenotype data from an SCESet object. If one variable is
 #' supplied then a density plot will be returned. If both variables are
@@ -2220,8 +2226,7 @@ plotMetadata <- function(object,
 #' y = "total_features", colour = "Mutation_Status"))
 #'
 plotPhenoData <- function(object, aesth=aes_string(x = "log10(total_counts)",
-                                                   y = "total_features"),
-                          theme_size = 10, ...) {
+                                                   y = "total_features"), ...) {
     ## We must have an SCESet object
     if (!is(object, "SCESet"))
         stop("object must be an SCESet object.")
@@ -2242,12 +2247,6 @@ plotPhenoData <- function(object, aesth=aes_string(x = "log10(total_counts)",
     ## Pass pData(object) to plotMetadata
     plot_out <- plotMetadata(df_to_plot, aesth, ...)
 
-    ## Define plotting theme
-#     if ( requireNamespace("cowplot", quietly = TRUE) )
-#         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
-#     else
-#         plot_out <- plot_out + theme_bw(theme_size)
-    ## Return plot object
     plot_out
 }
 
@@ -2262,9 +2261,8 @@ plotPhenoData <- function(object, aesth=aes_string(x = "log10(total_counts)",
 #' expects at least x and y variables to be supplied. The default is to produce
 #' a density plot of number of cells expressing the feature (requires
 #' \code{calculateQCMetrics} to have been run on the SCESet object prior).
-#' @param theme_size numeric scalar giving default font size for plotting theme
-#' (default is 10).
-#' @param ... arguments passed to \code{\link{plotMetadata}}.
+#' @param ... arguments passed to \code{\link{plotMetadata}}, e.g. 
+#' \code{theme_size}, \code{size}, \code{alpha}, \code{shape}.
 #'
 #' @details Plot feature (gene) data from an SCESet object. If one variable is
 #' supplied then a density plot will be returned. If both variables are
@@ -2287,8 +2285,7 @@ plotPhenoData <- function(object, aesth=aes_string(x = "log10(total_counts)",
 #'
 plotFeatureData <- function(object,
                             aesth = aes_string(x = "n_cells_exprs",
-                                               y = "prop_total_counts"),
-                            theme_size = 10, ...) {
+                                               y = "prop_total_counts"), ...) {
     ## We must have an SCESet object
     if (!is(object, "SCESet"))
         stop("object must be an SCESet object.")
@@ -2296,12 +2293,6 @@ plotFeatureData <- function(object,
     ## Pass pData(object) to plotMetadata
     plot_out <- plotMetadata(fData(object), aesth, ...)
 
-    ## Define plotting theme
-#     if ( requireNamespace("cowplot", quietly = TRUE) )
-#         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
-#     else
-#         plot_out <- plot_out + theme_bw(theme_size)
-    ## Return plot object
     plot_out
 }
 
