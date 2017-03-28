@@ -32,7 +32,7 @@ power before multiplying the original expression values to obtain imputed
 values.}
 
 \item{rescale}{numeric(1), optional (default is NULL for no rescaling)
-rescaling parameter. If provided, must be a numeric scale in [0, 1) providing
+rescaling parameter. If provided, must be a numeric scale in [0, 1] providing
 the quantile of expression values to use as the ratio between original and
 imputed expression values by which to scale imputed expression values.}
 

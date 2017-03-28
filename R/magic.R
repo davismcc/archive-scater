@@ -31,7 +31,7 @@
 #' power before multiplying the original expression values to obtain imputed
 #' values.
 #' @param rescale numeric(1), optional (default is NULL for no rescaling)
-#' rescaling parameter. If provided, must be a numeric scale in [0, 1) providing
+#' rescaling parameter. If provided, must be a numeric scale in [0, 1] providing
 #' the quantile of expression values to use as the ratio between original and
 #' imputed expression values by which to scale imputed expression values.
 #' @param logged_data is the input data on a log scale? If so, no rescaling will
@@ -77,13 +77,13 @@
         stop("This function requires the 'destiny' package.
              Try: source('https://bioconductor.org/biocLite.R'); biocLite('destiny').")
     if ( !is.null(rescale) && (rescale < 0 || rescale > 1) )
-        stop("rescale argument defines a quantile and must be in [0, 1).")
+        stop("rescale argument defines a quantile and must be in [0, 1].")
     ## here, exprs_mat is a cells x features matrix
     #run diffusion maps to get markov matrix
     diffmap <- destiny::DiffusionMap(exprs_mat, ...)
     L <- as.matrix(diffmap@transitions)
     L_t <- L
-    for (i in seq_along(as.integer(power) - 1))
+    for (i in seq_len(as.integer(power) - 1))
         L_t <- L_t %*% L
     new_exprs <- L_t %*% exprs_mat
     colnames(new_exprs) <- colnames(exprs_mat)
@@ -95,7 +95,7 @@
                     '(or other negative) values. Imputed data return unscaled.')
         } else {
             if (logged_data)
-                message('Rescaling should used with caution on log-transformed data.')
+                message('Rescaling should be used with caution on log-transformed data.')
             M99 <- apply(exprs_mat, 2, quantile, probs = rescale)
             M100 <- apply(exprs_mat, 2, max)
             indices <- which(M99 == 0)
@@ -105,9 +105,9 @@
             indices <- which(M99_new == 0)
             M99_new[indices] <- M100_new[indices]
             max_ratio <- M99 / M99_new
-            new_exprs <- new_exprs * matrix(max_ratio,
-                                            nrow = nrow(new_exprs),
-                                            ncol = ncol(new_exprs), byrow = TRUE)
+            rescale_mat <- matrix(max_ratio, nrow = nrow(new_exprs),
+                                  ncol = ncol(new_exprs), byrow = TRUE)
+            new_exprs <- new_exprs * rescale_mat
         }
     }
     t(new_exprs)
@@ -154,21 +154,25 @@ setMethod("magic", signature(object = "SCESet"),
 # abline(0, 1, col = "firebrick")
 #
 #
-# corset_exprs(example_sceset, "mgc") <- mgc
+# set_exprs(example_sceset, "mgc") <- mgc
 # set_exprs(example_sceset, "mgc_py") <- mgc_py_mat
 # set_exprs(example_sceset, "mgc_norescale") <- mgc_norescale
 # set_exprs(example_sceset, "mgc_py_norescale") <- mgc_py_norescale_mat
-# set_exprs(example_sceset, "mgc_k5") <-
-#     magic(example_sceset, power = 6, k = 5, n_eigs = 20, rescale = 0)
+# set_exprs(example_sceset, "mgc_k5") <- magic(example_sceset, power = 6, k = 5, n_eigs = 20, rescale = 0.99)
+# set_exprs(example_sceset, "mgc_p3") <- magic(example_sceset, power = 3, k = 5, n_eigs = 20, rescale = 0.99)
+# set_exprs(example_sceset, "mgc_p10") <- magic(example_sceset, power = 10, k = 5, n_eigs = 20, rescale = 0.99)
 #
 # plotTSNE(example_sceset, exprs_values = "mgc", colour_by = "Mutation_Status")
+# plotTSNE(example_sceset, exprs_values = "mgc", colour_by = "Cell_Cycle")
 # plotTSNE(example_sceset, exprs_values = "mgc_py", colour_by = "Mutation_Status")
 # plot(example_sceset, exprs_values = "mgc_py")
 #
+# 
+# par(mfcol = c(4, 1))
 # boxplot(exprs(example_sceset))
-# par(mfcol = c(2, 1))
 # boxplot(get_exprs(example_sceset, "mgc"))
 # boxplot(get_exprs(example_sceset, "mgc_py"))
+# boxplot(get_exprs(example_sceset, "mgc_p10"))
 # par(mfcol = c(2, 1))
 # boxplot(get_exprs(example_sceset, "mgc_norescale"))
 # boxplot(get_exprs(example_sceset, "mgc_py_norescale"))
@@ -176,8 +180,13 @@ setMethod("magic", signature(object = "SCESet"),
 # boxplot(t(exprs(example_sceset)[1:30,]))
 # boxplot(t(get_exprs(example_sceset, "mgc_k5")[1:30,]), main = "R: k=5")
 # boxplot(t(get_exprs(example_sceset, "mgc_norescale")[1:30,]), main = "R: k=30")
-# boxplot(t(get_exprs(example_sceset, "mgc_py_norescale")[1:30,]))
+# boxplot(t(get_exprs(example_sceset, "mgc_py_norescale")[1:30,]), main = "Py: k=30")
 #
+# par(mfcol = c(4, 1))
+# boxplot(t(exprs(example_sceset)[1:30,]))
+# boxplot(t(get_exprs(example_sceset, "mgc_p3")[1:30,]), main = "R: power=3")
+# boxplot(t(get_exprs(example_sceset, "mgc_k5")[1:30,]), main = "R: power=6")
+# boxplot(t(get_exprs(example_sceset, "mgc_p10")[1:30,]), main = "R: power=10")
 
 
 
