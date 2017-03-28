@@ -90,10 +90,12 @@
     rownames(new_exprs) <- rownames(exprs_mat)
     ## rescale data by gene
     if (!is.null(rescale)) {
-        if (logged_data || any(new_exprs < 0)) {
-            message('Rescaling should not be performed on log-transformed ',
+        if (logged_data && any(exprs_mat < 0)) {
+            warning('Rescaling should not be performed on log-transformed ',
                     '(or other negative) values. Imputed data return unscaled.')
         } else {
+            if (logged_data)
+                message('Rescaling should used with caution on log-transformed data.')
             M99 <- apply(exprs_mat, 2, quantile, probs = rescale)
             M100 <- apply(exprs_mat, 2, max)
             indices <- which(M99 == 0)
