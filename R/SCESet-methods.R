@@ -596,7 +596,7 @@ setReplaceMethod("pData", signature(object = "SCESet", value = "data.frame"),
 #' @param object a \code{SCESet} object.
 #' @param exprs_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
-#' (default; transcripts per million), \code{"norm_tpm"} (normalised TPM
+#' (transcripts per million), \code{"norm_tpm"} (normalised TPM
 #' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 #' values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 #' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised

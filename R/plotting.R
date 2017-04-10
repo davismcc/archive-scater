@@ -191,8 +191,8 @@
 #' @param exprs_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
 #' (transcripts per million), \code{"counts"} (raw counts), \code{"cpm"} 
-#' (counts per million), \code{"fpkm"} (FPKM values), or \code{"exprs"} (which are 
-#' assumed to be on the log2 scale and are un-logged prior to plotting). If
+#' (counts per million), \code{"fpkm"} (FPKM values), or \code{"exprs"} (default; 
+#' which are assumed to be on the log2 scale and are un-logged prior to plotting). If
 #' not specified, the function will search for values in the order given above.
 #' @param linewidth numeric scalar giving the "size" parameter (in ggplot2
 #' parlance) for the lines plotted. Default is 1.5.
@@ -368,7 +368,7 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' is produced.
 #' @param exprs_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
-#' (default; transcripts per million), \code{"norm_tpm"} (normalised TPM
+#' (transcripts per million), \code{"norm_tpm"} (normalised TPM
 #' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 #' values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 #' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
@@ -702,7 +702,7 @@ setMethod("plotPCA", signature("SCESet"),
 #' can become very time consuming.
 #' @param exprs_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
-#' (default; transcripts per million), \code{"norm_tpm"} (normalised TPM
+#' (transcripts per million), \code{"norm_tpm"} (normalised TPM
 #' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 #' values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 #' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
@@ -905,7 +905,7 @@ setMethod("plotTSNE", signature("SCESet"),
 #' the diffusion map can become time consuming.
 #' @param exprs_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
-#' (default; transcripts per million), \code{"norm_tpm"} (normalised TPM
+#' (transcripts per million), \code{"norm_tpm"} (normalised TPM
 #' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 #' values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 #' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
@@ -1693,7 +1693,7 @@ plotPlatePosition <- function(object, plate_position = NULL,
 #' will be plotted on the x-axis for each subplot.
 #' @param exprs_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
-#' (default; transcripts per million), \code{"norm_tpm"} (normalised TPM
+#' (transcripts per million), \code{"norm_tpm"} (normalised TPM
 #' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 #' values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 #' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
@@ -2414,7 +2414,7 @@ multiplot <- function(..., plotlist = NULL, cols = 1, layout = NULL) {
 #' to the number of rows of \code{object} (number of features).
 #' @param exprs_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
-#' (default; transcripts per million), \code{"norm_tpm"} (normalised TPM
+#' (transcripts per million), \code{"norm_tpm"} (normalised TPM
 #' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 #' values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 #' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised

@@ -645,8 +645,8 @@ isOutlier <- function(metric, nmads = 5, type = c("both", "lower", "higher"),
 #' \code{"pcs-vs-vars"} produces plots of the top PCs against the variable of
 #' interest.
 #' @param exprs_values which slot of the \code{assayData} in the \code{object}
-#' should be used to define expression? Valid options are "counts" (default),
-#' "tpm", "fpkm" and "exprs", or anything else in the object added manually by 
+#' should be used to define expression? Valid options are "counts",
+#' "tpm", "fpkm" and "exprs" (default), or anything else in the object added manually by 
 #' the user.
 #' @param ntop numeric scalar indicating the number of most variable features to
 #' use for the PCA. Default is \code{500}, but any \code{ntop} argument is
@@ -1428,9 +1428,9 @@ plotExprsFreqVsMean <- function(object, feature_set = NULL,
 #' against each other, ordered by marginal variance explained), or
 #' "exprs-mean-vs-freq" (plotting the mean expression levels against the
 #' frequency of expression for a set of features).
-#' @param ... arguments passed to \code{plotHighestExprs},
-#' \code{plotImportantPCs}, \code{plotExplanatoryVariables} and
-#' \code{plotExprsMeanVsFreq} as appropriate.
+#' @param ... arguments passed to \code{\link{plotHighestExprs}},
+#' \code{\link{findImportantPCs}}, \code{\link{plotExplanatoryVariables}} and
+#' \code{{plotExprsMeanVsFreq}} as appropriate.
 #'
 #' @details Display useful quality control plots to help with pre-processing
 #' of data and identification of potentially problematic features and cells.

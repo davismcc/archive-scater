@@ -44,8 +44,8 @@ in the plot.}
 \item{exprs_values}{character string indicating which values should be used
 as the expression values for this plot. Valid arguments are \code{"tpm"}
 (transcripts per million), \code{"counts"} (raw counts), \code{"cpm"} 
-(counts per million), \code{"fpkm"} (FPKM values), or \code{"exprs"} (which are 
-assumed to be on the log2 scale and are un-logged prior to plotting). If
+(counts per million), \code{"fpkm"} (FPKM values), or \code{"exprs"} (default; 
+which are assumed to be on the log2 scale and are un-logged prior to plotting). If
 not specified, the function will search for values in the order given above.}
 
 \item{ncol}{number of columns to use for \code{facet_wrap} if only one block is

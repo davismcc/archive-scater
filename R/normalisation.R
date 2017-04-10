@@ -96,8 +96,8 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
     exprs_values <- .exprs_hunter(object, exprs_values)
 
     ## If counts, we can compute size factors.
-    if (exprs_values=="counts") {
-        exprs_mat <- get_exprs(object, exprs_values, warning=FALSE)
+    if (exprs_values == "counts") {
+        exprs_mat <- get_exprs(object, exprs_values, warning = FALSE)
 
         ## Check feature_set
         if (is.character(feature_set)) {
@@ -124,13 +124,13 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
         sizeFactors(object) <- size_factors
 
         ## Computing (normalized) CPMs is also possible.
-        norm_cpm(object) <- calculateCPM(object, use.size.factors=TRUE)
+        norm_cpm(object) <- calculateCPM(object, use.size.factors = TRUE)
     }
 
     ## Computing normalized expression values, if we're not working with 'exprs'.
-    if (exprs_values!="exprs") {
-        object <- normalize.SCESet(object, exprs_values=exprs_values,
-                                   return_norm_as_exprs=return_norm_as_exprs)
+    if (exprs_values != "exprs") {
+        object <- normalize.SCESet(object, exprs_values = exprs_values,
+                                   return_norm_as_exprs = return_norm_as_exprs)
     }
 
 #    ## exit if any features have zero variance as this causes problem downstream
@@ -142,9 +142,12 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
     ## If a design matrix is provided, then normalised expression values are
     ## residuals of a linear model fit to norm_exprs values with that design
     if ( !is.null(design) ) {
-        norm_exprs_mat <- norm_exprs(object)
+        if (exprs_values != "exprs")
+            norm_exprs_mat <- norm_exprs(object)
+        else 
+            norm_exprs_mat <- exprs(object)
         limma_fit <- limma::lmFit(norm_exprs_mat, design)
-        norm_exprs(object) <- limma::residuals.MArrayLM(limma_fit,
+        norm_exprs(object) <- limma::residuals.MArrayLM(limma_fit, 
                                                         norm_exprs_mat)
     }
 
