@@ -1476,3 +1476,57 @@ plotQC <- function(object, type = "highest-expression", ...) {
 
 }
 
+
+################################################################################
+
+
+plotRLE <- function(object, exprs_mats = list("exprs"), exprs_logged = c(TRUE),
+                    colour_by = NULL) {
+    rle_mats <- list()
+    for (i in seq_along(exprs_mats)) {
+        rle_mats[[i]] <- .calc_RLE(.get_exprs_for_RLE(exprs_mats[[i]]), 
+                                   exprs_logged[i])
+    }
+    
+}
+
+
+.plotRLE <- function(df, aesth) {
+    
+}
+
+.get_exprs_for_RLE <- function() {
+    
+}
+
+.calc_RLE <- function(exprs_mat, logged = TRUE) {
+    if (!logged)
+        exprs_mat <- log2(exprs_mat + 1)
+    features_meds <- matrixStats::rowMedians(exprs_mat)
+    med_devs <- exprs_mat - features_meds
+    med_devs
+}
+
+
+
+calc_cell_RLE <-
+    function (expr_mat, spikes = NULL) 
+    {
+        RLE_gene <- function(x) {
+            if (median(unlist(x)) > 0) {
+                log((x + 1)/(median(unlist(x)) + 1))/log(2)
+            }
+            else {
+                rep(NA, times = length(x))
+            }
+        }
+        if (!is.null(spikes)) {
+            RLE_matrix <- t(apply(expr_mat[-spikes, ], 1, RLE_gene))
+        }
+        else {
+            RLE_matrix <- t(apply(expr_mat, 1, RLE_gene))
+        }
+        cell_RLE <- apply(RLE_matrix, 2, median, na.rm = T)
+        return(cell_RLE)
+    }
+
