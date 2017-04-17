@@ -5,7 +5,7 @@
 [![Windows Build status](https://ci.appveyor.com/api/projects/status/github/davismcc/scater?svg=true)](https://ci.appveyor.com/project/davismcc/scater)
 <!--- [![Linux Build Status](https://travis-ci.org/davismcc/scater.svg?branch=master)](https://travis-ci.org/davismcc/scater) --->
 
-<img src=scater_sticker_300dpi.png height="200">
+<img src=inst/scater_sticker_300dpi.png height="200">
 
 This package contains useful tools for the analysis of single-cell
 gene expression data using the statistical software R. The package places an
