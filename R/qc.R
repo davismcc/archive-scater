@@ -1479,24 +1479,159 @@ plotQC <- function(object, type = "highest-expression", ...) {
 
 ################################################################################
 
+#' Plot a relative log expression (RLE) plot
+#'
+#' Produce a relative log expression (RLE) plot of one or more transformations of 
+#' cell expression values.
+#'
+#' @param object an \code{SCESet} object
+#' @param exprs_mats named list of expression matrices. Entries can either be a 
+#' character string, in which case the corresponding expression matrix will be 
+#' extracted from the SCESet \code{object}, or a matrix of expression values.
+#' @param exprs_logged logical vector of same length as \code{exprs_mats} indicating
+#' whether the corresponding entry in \code{exprs_mats} contains logged expression
+#' values (\code{TRUE}) or not (\code{FALSE}).
+#' @param colour_by character string defining the column of \code{pData(object)} to
+#' be used as a factor by which to colour the points in the plot. Alternatively, 
+#' a data frame with one column, containing values to map to colours for all cells.
+#' @param legend character, specifying how the legend(s) be shown? Default is
+#' \code{"auto"}, which hides legends that have only one level and shows others.
+#' Alternative is "none" (hide all legends).
+#' @param order_by_colour logical, should cells be ordered (grouped) by the 
+#' \code{colour_by} variable? Default is \code{TRUE}. Useful for visualising 
+#' differences between batches or experimental conditions.
+#' @param ncol integer, number of columns for the facetting of the plot. 
+#' Default is 1.
+#' @param ... further arguments passed to \code{\link[ggplot2]{geom_boxplot}}.
+#'
+#' @return a ggplot plot object
+#'
+#' @details 
+#' Unwanted variation can be highly problematic and so its detection is often crucial.
+#' Relative log expression (RLE) plots are a powerful tool for visualising such 
+#' variation in high dimensional data. RLE plots are particularly useful for
+#' assessing whether a procedure aimed at removing unwanted variation, i.e. a 
+#' normalisation procedure, has been successful. These plots, while originally 
+#' devised for gene expression data from microarrays, can also be used to reveal 
+#' unwanted variation in single-cell expression data, where such variation can be 
+#' problematic.
+#' 
+#' As usual with boxplots, the box shows the inter-quartile range and whiskers 
+#' extend no more than 1.5 * IQR from the hinge (the 25th or 75th percentile). 
+#' Data beyond the whiskers are called outliers and are plotted individually. The
+#' median (50th percentile) is shown with a white bar.
+#'
+#' @references 
+#' Gandolfo LC, Speed TP. RLE Plots: Visualising Unwanted Variation in High Dimensional Data. 
+#' arXiv [stat.ME]. 2017. Available: http://arxiv.org/abs/1704.03590
+#'
+#' @author 
+#' Davis McCarthy
+#'
+#' @name plotRLE
+#' @aliases plotRLE plotRLE,SCESet-method
+#' @export
+#' 
+#' @examples 
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' drop_genes <- apply(exprs(example_sceset), 1, function(x) {var(x) == 0})
+#' example_sceset <- example_sceset[!drop_genes, ]
+#'
+#' plotRLE(example_sceset, list(exprs = "exprs", counts = "counts"), c(TRUE, FALSE), 
+#'        colour_by = "Mutation_Status", 
+#'        outlier.alpha = 0.1, outlier.shape = 3, outlier.size = 0)
+#' 
+setMethod("plotRLE", signature("SCESet"),
+          function(object, exprs_mats = list(exprs = "exprs"), exprs_logged = c(TRUE),
+                   colour_by = NULL, legend = "auto", order_by_colour = TRUE, 
+                   ncol = 1, ...) {
+              .plotRLE(object, exprs_mats = exprs_mats, exprs_logged = exprs_logged,
+                       colour_by = colour_by, legend = legend, 
+                       order_by_colour = order_by_colour, ncol = ncol, ...)
+          })
 
-plotRLE <- function(object, exprs_mats = list("exprs"), exprs_logged = c(TRUE),
-                    colour_by = NULL) {
+.plotRLE <- function(object, exprs_mats = list(exprs = "exprs"), exprs_logged = c(TRUE),
+                    colour_by = NULL, legend = "auto", order_by_colour = TRUE, ncol = 1, ...) {
+    if (any(is.null(names(exprs_mats))) || any(names(exprs_mats) == ""))
+        stop("exprs_mats must be a named list, with all names non-NULL and non-empty.")
+    ## check legend argument
+    legend <- match.arg(legend, c("auto", "none", "all"))
+    ## Check arguments are valid
+    colour_by_out <- .choose_vis_values(object, colour_by, cell_control_default = TRUE,
+                                        check_features = TRUE, exprs_values = "exprs")
+    colour_by <- colour_by_out$name
+    colour_by_vals <- colour_by_out$val
+    ncells <- NULL
+    ## calculate RLE
     rle_mats <- list()
     for (i in seq_along(exprs_mats)) {
-        rle_mats[[i]] <- .calc_RLE(.get_exprs_for_RLE(exprs_mats[[i]]), 
+        rle_mats[[i]] <- .calc_RLE(.get_exprs_for_RLE(object, exprs_mats[[i]]), 
                                    exprs_logged[i])
+        names(rle_mats)[i] <- names(exprs_mats)[i]
+        if (is.null(ncells))
+            ncells <- ncol(rle_mats[[i]])
+        else {
+            if (ncol(rle_mats[[i]]) != ncells)
+                stop(paste("Number of cells for", names(rle_mats)[i], "does not match other exprs matrices."))
+        }
     }
-    
+    ## get into df for ggplot
+    df_to_plot <- NULL
+    if (order_by_colour) {
+        oo <- order(colour_by_vals)
+        colour_by_vals <- colour_by_vals[oo]
+    }
+    for (i in seq_along(rle_mats)) {
+        tmp_df <- dplyr::as_data_frame(rle_mats[[i]])
+        if (order_by_colour)
+            tmp_df <- tmp_df[, oo]
+        tmp_df[["source"]] <- names(rle_mats)[i]
+        tmp_df <- reshape2::melt(tmp_df, id.vars = c("source"), value.name = "rle")
+        tmp_df[[colour_by]] <- rep(colour_by_vals, each = nrow(rle_mats[[i]]))        
+        if (is.null(df_to_plot)) {
+            df_to_plot <- tmp_df
+        } else {
+            df_to_plot <- dplyr::bind_rows(df_to_plot, tmp_df)
+        }
+    }
+    aesth <- aes_string(x = "variable", y = "rle", colour = colour_by, fill = colour_by)
+    plot_out <- .plotRLE_ggplot(df_to_plot, aesth, ncol, ...)
+    plot_out <- .resolve_plot_colours(plot_out, colour_by_vals, colour_by,
+                                      fill = FALSE)
+    plot_out <- .resolve_plot_colours(plot_out, colour_by_vals, colour_by,
+                                      fill = TRUE)
+    if ( legend == "none" )
+        plot_out <- plot_out + theme(legend.position = "none")
+    plot_out
 }
 
 
-.plotRLE <- function(df, aesth) {
-    
+.plotRLE_ggplot <- function(df, aesth, ncol, ...) {
+    plot_out <- ggplot(df, aesth) +
+        geom_boxplot(...) + # geom_boxplot(notch=T) to compare groups
+        stat_summary(geom = "crossbar", width = 0.65, fatten = 0, color = "white", 
+                     fun.data = function(x){ 
+                         return(c(y = median(x), ymin = median(x), ymax = median(x))) }) +
+        facet_wrap(~source, ncol = ncol) +
+        ylab("Relative log expression") + xlab("Sample") +
+        theme_classic() +
+        theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), 
+              axis.line.x = element_blank())
+    plot_out
 }
 
-.get_exprs_for_RLE <- function() {
-    
+.get_exprs_for_RLE <- function(object, exprs_mat) {
+    if (is.matrix(exprs_mat)) {
+        return(exprs_mat)
+    } else {
+        if (is.character(exprs_mat))
+            return(get_exprs(object, exprs_mat))
+        else
+            stop("exprs_mat must be either a matrix of expression values or a character string giving the name of an expression data element of the SCESet object.")
+    } 
 }
 
 .calc_RLE <- function(exprs_mat, logged = TRUE) {
@@ -1506,27 +1641,4 @@ plotRLE <- function(object, exprs_mats = list("exprs"), exprs_logged = c(TRUE),
     med_devs <- exprs_mat - features_meds
     med_devs
 }
-
-
-
-calc_cell_RLE <-
-    function (expr_mat, spikes = NULL) 
-    {
-        RLE_gene <- function(x) {
-            if (median(unlist(x)) > 0) {
-                log((x + 1)/(median(unlist(x)) + 1))/log(2)
-            }
-            else {
-                rep(NA, times = length(x))
-            }
-        }
-        if (!is.null(spikes)) {
-            RLE_matrix <- t(apply(expr_mat[-spikes, ], 1, RLE_gene))
-        }
-        else {
-            RLE_matrix <- t(apply(expr_mat, 1, RLE_gene))
-        }
-        cell_RLE <- apply(RLE_matrix, 2, median, na.rm = T)
-        return(cell_RLE)
-    }
 
