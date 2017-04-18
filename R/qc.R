@@ -1494,6 +1494,11 @@ plotQC <- function(object, type = "highest-expression", ...) {
 #' @param colour_by character string defining the column of \code{pData(object)} to
 #' be used as a factor by which to colour the points in the plot. Alternatively, 
 #' a data frame with one column, containing values to map to colours for all cells.
+#' @param style character(1), either \code{"minimal"} (default) or \code{"full"},
+#' defining the boxplot style to use. \code{"minimal"} uses Tufte-style boxplots and
+#' is fast for large numbers of cells. \code{"full"} uses the usual 
+#' \code{\link{ggplot2}} and is more detailed and flexible, but can take a long 
+#' time to plot for large datasets.
 #' @param legend character, specifying how the legend(s) be shown? Default is
 #' \code{"auto"}, which hides legends that have only one level and shows others.
 #' Alternative is "none" (hide all legends).
@@ -1516,10 +1521,14 @@ plotQC <- function(object, type = "highest-expression", ...) {
 #' unwanted variation in single-cell expression data, where such variation can be 
 #' problematic.
 #' 
-#' As usual with boxplots, the box shows the inter-quartile range and whiskers 
-#' extend no more than 1.5 * IQR from the hinge (the 25th or 75th percentile). 
-#' Data beyond the whiskers are called outliers and are plotted individually. The
-#' median (50th percentile) is shown with a white bar.
+#' If style is "full", as usual with boxplots, the box shows the inter-quartile 
+#' range and whiskers extend no more than 1.5 * IQR from the hinge (the 25th or 
+#' 75th percentile). Data beyond the whiskers are called outliers and are plotted 
+#' individually. The median (50th percentile) is shown with a white bar.
+#' 
+#' If style is "minimal", then median is shown with a circle, the IQR in a grey
+#' line, and "whiskers" (as defined above) for the plots are shown with coloured 
+#' lines. No outliers are shown for this plot style.
 #'
 #' @references 
 #' Gandolfo LC, Speed TP. RLE Plots: Visualising Unwanted Variation in High Dimensional Data. 
@@ -1541,24 +1550,29 @@ plotQC <- function(object, type = "highest-expression", ...) {
 #' example_sceset <- example_sceset[!drop_genes, ]
 #'
 #' plotRLE(example_sceset, list(exprs = "exprs", counts = "counts"), c(TRUE, FALSE), 
-#'        colour_by = "Mutation_Status", 
+#'        colour_by = "Mutation_Status", style = "minimal")
+#'
+#' plotRLE(example_sceset, list(exprs = "exprs", counts = "counts"), c(TRUE, FALSE), 
+#'        colour_by = "Mutation_Status", style = "full",
 #'        outlier.alpha = 0.1, outlier.shape = 3, outlier.size = 0)
 #' 
 setMethod("plotRLE", signature("SCESet"),
           function(object, exprs_mats = list(exprs = "exprs"), exprs_logged = c(TRUE),
-                   colour_by = NULL, legend = "auto", order_by_colour = TRUE, 
-                   ncol = 1, ...) {
+                   colour_by = NULL, style = "minimal", legend = "auto", 
+                   order_by_colour = TRUE, ncol = 1,  ...) {
               .plotRLE(object, exprs_mats = exprs_mats, exprs_logged = exprs_logged,
                        colour_by = colour_by, legend = legend, 
-                       order_by_colour = order_by_colour, ncol = ncol, ...)
+                       order_by_colour = order_by_colour, ncol = ncol, style = style, ...)
           })
 
 .plotRLE <- function(object, exprs_mats = list(exprs = "exprs"), exprs_logged = c(TRUE),
-                    colour_by = NULL, legend = "auto", order_by_colour = TRUE, ncol = 1, ...) {
+                    colour_by = NULL, legend = "auto", order_by_colour = TRUE, ncol = 1,
+                    style = "minimal", ...) {
     if (any(is.null(names(exprs_mats))) || any(names(exprs_mats) == ""))
         stop("exprs_mats must be a named list, with all names non-NULL and non-empty.")
     ## check legend argument
     legend <- match.arg(legend, c("auto", "none", "all"))
+    style <- match.arg(style, c("full", "minimal"))
     ## Check arguments are valid
     colour_by_out <- .choose_vis_values(object, colour_by, cell_control_default = TRUE,
                                         check_features = TRUE, exprs_values = "exprs")
@@ -1588,17 +1602,32 @@ setMethod("plotRLE", signature("SCESet"),
         tmp_df <- dplyr::as_data_frame(rle_mats[[i]])
         if (order_by_colour)
             tmp_df <- tmp_df[, oo]
+        if (style == "full") {
+            tmp_df[["source"]] <- names(rle_mats)[i]
+            tmp_df <- reshape2::melt(tmp_df, id.vars = c("source"), value.name = "rle")
+            tmp_df[[colour_by]] <- rep(colour_by_vals, each = nrow(rle_mats[[i]]))
+            tmp_df[["x"]] <- rep(seq_len(ncells), each = nrow(rle_mats[[i]]))
+        } else if (style == "minimal") {
+            boxstats <- .rle_boxplot_stats(as.matrix(tmp_df))
+            boxstats[[colour_by]] <- colour_by_vals
+            boxstats[["x"]] <- seq_len(ncells)
+            tmp_df <- boxstats
+        } else
+            stop("style argument must be either 'full' or 'minimal'.")
         tmp_df[["source"]] <- names(rle_mats)[i]
-        tmp_df <- reshape2::melt(tmp_df, id.vars = c("source"), value.name = "rle")
-        tmp_df[[colour_by]] <- rep(colour_by_vals, each = nrow(rle_mats[[i]]))        
         if (is.null(df_to_plot)) {
             df_to_plot <- tmp_df
         } else {
             df_to_plot <- dplyr::bind_rows(df_to_plot, tmp_df)
         }
     }
-    aesth <- aes_string(x = "variable", y = "rle", colour = colour_by, fill = colour_by)
-    plot_out <- .plotRLE_ggplot(df_to_plot, aesth, ncol, ...)
+    if (style == "full") {
+        aesth <- aes_string(x = "x", group = "x", y = "rle", 
+                            colour = colour_by, fill = colour_by)
+        plot_out <- .plotRLE_full(df_to_plot, aesth, ncol, ...)
+    } else if (style == "minimal") {
+        plot_out <- .plotRLE_minimal(df_to_plot, colour_by, ncol)
+    } 
     plot_out <- .resolve_plot_colours(plot_out, colour_by_vals, colour_by,
                                       fill = FALSE)
     plot_out <- .resolve_plot_colours(plot_out, colour_by_vals, colour_by,
@@ -1608,8 +1637,39 @@ setMethod("plotRLE", signature("SCESet"),
     plot_out
 }
 
+.rle_boxplot_stats <- function(mat) {
+    boxstats <- matrixStats::colQuantiles(mat)
+    colnames(boxstats) <- c("q0", "q25", "q50", "q75", "q100")
+    boxdf <- dplyr::as_data_frame(boxstats)
+    interqr <- boxstats[, 4] - boxstats[, 2]
+    boxdf[["whiskMin"]] <- pmax(boxdf[["q0"]], 
+                                boxdf[["q25"]] - 1.5 * interqr)
+    boxdf[["whiskMax"]] <- pmin(boxdf[["q100"]], 
+                                boxdf[["q75"]] + 1.5 * interqr)
+    boxdf[["variable"]] <- colnames(mat)
+    boxdf
+}
 
-.plotRLE_ggplot <- function(df, aesth, ncol, ...) {
+.plotRLE_minimal <- function(df, colour_by, ncol, ...) {
+    plot_out <- ggplot(df, aes_string(x = "x", fill = colour_by)) +
+        geom_segment(aes_string(xend = "x", y = "q25", yend = "q75"), 
+                                colour = "gray60") +
+        geom_segment(aes_string(xend = "x", y = "q75", yend = "whiskMax", 
+                                colour = colour_by)) +
+        geom_segment(aes_string(xend = "x", y = "q25", yend = "whiskMin",
+                                colour = colour_by)) +
+        geom_point(aes_string(y = "q50"), shape = 21) +
+        geom_hline(yintercept = 0, colour = "gray40", alpha = 0.5) +
+        facet_wrap(~source, ncol = ncol) +
+        ylab("Relative log expression") + xlab("Sample") +
+        theme_classic() +
+        theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), 
+              axis.line.x = element_blank())
+    plot_out
+}
+
+
+.plotRLE_full <- function(df, aesth, ncol, ...) {
     plot_out <- ggplot(df, aesth) +
         geom_boxplot(...) + # geom_boxplot(notch=T) to compare groups
         stat_summary(geom = "crossbar", width = 0.65, fatten = 0, color = "white", 

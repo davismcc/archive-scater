@@ -10,8 +10,8 @@
 plotRLE(object, ...)
 
 \S4method{plotRLE}{SCESet}(object, exprs_mats = list(exprs = "exprs"),
-  exprs_logged = c(TRUE), colour_by = NULL, legend = "auto",
-  order_by_colour = TRUE, ncol = 1, ...)
+  exprs_logged = c(TRUE), colour_by = NULL, style = "minimal",
+  legend = "auto", order_by_colour = TRUE, ncol = 1, ...)
 }
 \arguments{
 \item{object}{an \code{SCESet} object}
@@ -29,6 +29,12 @@ values (\code{TRUE}) or not (\code{FALSE}).}
 \item{colour_by}{character string defining the column of \code{pData(object)} to
 be used as a factor by which to colour the points in the plot. Alternatively, 
 a data frame with one column, containing values to map to colours for all cells.}
+
+\item{style}{character(1), either \code{"minimal"} (default) or \code{"full"},
+defining the boxplot style to use. \code{"minimal"} uses Tufte-style boxplots and
+is fast for large numbers of cells. \code{"full"} uses the usual 
+\code{\link{ggplot2}} and is more detailed and flexible, but can take a long 
+time to plot for large datasets.}
 
 \item{legend}{character, specifying how the legend(s) be shown? Default is
 \code{"auto"}, which hides legends that have only one level and shows others.
@@ -58,10 +64,14 @@ devised for gene expression data from microarrays, can also be used to reveal
 unwanted variation in single-cell expression data, where such variation can be 
 problematic.
 
-As usual with boxplots, the box shows the inter-quartile range and whiskers 
-extend no more than 1.5 * IQR from the hinge (the 25th or 75th percentile). 
-Data beyond the whiskers are called outliers and are plotted individually. The
-median (50th percentile) is shown with a white bar.
+If style is "full", as usual with boxplots, the box shows the inter-quartile 
+range and whiskers extend no more than 1.5 * IQR from the hinge (the 25th or 
+75th percentile). Data beyond the whiskers are called outliers and are plotted 
+individually. The median (50th percentile) is shown with a white bar.
+
+If style is "minimal", then median is shown with a circle, the IQR in a grey
+line, and "whiskers" (as defined above) for the plots are shown with coloured 
+lines. No outliers are shown for this plot style.
 }
 \examples{
 data("sc_example_counts")
@@ -72,7 +82,10 @@ drop_genes <- apply(exprs(example_sceset), 1, function(x) {var(x) == 0})
 example_sceset <- example_sceset[!drop_genes, ]
 
 plotRLE(example_sceset, list(exprs = "exprs", counts = "counts"), c(TRUE, FALSE), 
-       colour_by = "Mutation_Status", 
+       colour_by = "Mutation_Status", style = "minimal")
+
+plotRLE(example_sceset, list(exprs = "exprs", counts = "counts"), c(TRUE, FALSE), 
+       colour_by = "Mutation_Status", style = "full",
        outlier.alpha = 0.1, outlier.shape = 3, outlier.size = 0)
 
 }

@@ -145,18 +145,26 @@ test_that("plotRLE works as expected", {
     rownames(pd) <- pd$Cell
     example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
     p <- plotRLE(example_sceset, list(exprs = "exprs", counts = "counts"), 
-                 c(TRUE, FALSE), colour_by = "Mutation_Status", 
-                 outlier.alpha = 0.1, outlier.shape = NULL, outlier.size = 0)
+                 c(TRUE, FALSE), colour_by = "Mutation_Status")
     expect_that(p, is_a("ggplot"))
 
     p <- plotRLE(example_sceset, list(exprs = "exprs", counts = "counts"), 
-                 c(TRUE, FALSE), colour_by = "Gene_0004", 
+                 c(TRUE, FALSE), colour_by = "Gene_0004", style = "minimal")
+    expect_that(p, is_a("ggplot"))
+    
+    p <- plotRLE(example_sceset, list(exprs = "exprs", counts = "counts"), 
+                 c(TRUE, FALSE), colour_by = "Mutation_Status", style = "full",
+                 outlier.alpha = 0.1, outlier.shape = NULL, outlier.size = 0)
+    expect_that(p, is_a("ggplot"))
+    
+    p <- plotRLE(example_sceset, list(exprs = "exprs", counts = "counts"), 
+                 c(TRUE, FALSE), colour_by = "Gene_0004", style = "full",
                  outlier.alpha = 0.1, outlier.shape = NULL, outlier.size = 0)
     expect_that(p, is_a("ggplot"))
 
     p <- plotRLE(example_sceset, 
                  list(exprs = "exprs", counts = counts(example_sceset)), 
-                 c(TRUE, FALSE), colour_by = "Gene_0004", 
+                 c(TRUE, FALSE), colour_by = "Gene_0004", style = "full",
                  outlier.alpha = 0.1, outlier.shape = NULL, outlier.size = 0)
     expect_that(p, is_a("ggplot"))
     
@@ -169,6 +177,11 @@ test_that("plotRLE works as expected", {
                          list(exprs = "exprs", counts = counts(example_sceset)[, 1:30]), 
                          c(TRUE, FALSE)), 
                  regexp = "Number of cells")
+    
+    expect_error(plotRLE(example_sceset, 
+                         list(exprs = "exprs"), style = "blah", 
+                         c(TRUE, FALSE)), 
+                 regexp = "should be one of")
         
 })
 
