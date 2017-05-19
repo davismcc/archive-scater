@@ -123,16 +123,6 @@ newSCESet <- function(exprsData = NULL,
         stop("one set of expression values should be supplied")
     }
 
-    if (!is.null(is_exprsData)) {
-        if (have.data != "exprsData") {
-            warning(sprintf("'%s' provided, 'is_exprsData' will be ignored",
-                            have.data))
-            is_exprsData <- NULL
-        } else {
-            is_exprsData <- as.matrix(is_exprsData)
-        }
-    }
-
     ## Setting logExprsOffset and lowerDetectionLimit.
     if (is.null(logExprsOffset)) {
         logExprsOffset <- 1
@@ -156,6 +146,19 @@ newSCESet <- function(exprsData = NULL,
         dimnames(exprsData) <- dimnames(countData)
     } else if (have.data != "exprsData") {
         exprsData <- log2(get(have.data) + logExprsOffset)
+    }
+
+    ## If no is_exprsData provided, define it from exprsData.
+    if (!is.null(is_exprsData)) {
+        if (have.data != "exprsData") {
+            warning(sprintf("'%s' provided, 'is_exprsData' will be ignored",
+                            have.data))
+            is_exprsData <- NULL
+        } else {
+            is_exprsData <- as.matrix(is_exprsData)
+        }
+    } else {
+        is_exprsData <- exprsData > lowerDetectionLimit
     }
 
     ## Generate valid phenoData and featureData if not provided

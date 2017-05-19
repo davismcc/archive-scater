@@ -107,14 +107,14 @@ nexprs <- function(object, lowerDetectionLimit = NULL, exprs_values = NULL, byro
         if (is.null(subset_row)) {
             out <- colSums(is_exprs_mat)
         } else {
-            out <- colSums(is_exprs_mat[subset.row,,drop=FALSE])
+            out <- colSums(is_exprs_mat[subset_row,,drop=FALSE])
         }
     } else {
         # Counting expressing cells per gene.
         if (is.null(subset_col)) { 
             out <- rowSums(is_exprs_mat)
         } else {
-            out <- rowSums(is_exprs_mat[,subset.col,drop=FALSE])
+            out <- rowSums(is_exprs_mat[,subset_col,drop=FALSE])
         }
     }
     return(out)
