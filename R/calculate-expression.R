@@ -94,55 +94,27 @@ nexprs <- function(object, lowerDetectionLimit = NULL, exprs_values = NULL, byro
         stop(sprintf("either 'is_exprs(object)' or '%s(object)' must be non-NULL", exprs_values))
     }
 
-    # Setting the detection lowerDetectionLimit properly.
-    if (is.null(lowerDetectionLimit)) {
-        lowerDetectionLimit <- object@lowerDetectionLimit
-    }
-    if (!is.null(exprs_mat)) {
-        storage.mode(lowerDetectionLimit) <- storage.mode(exprs_mat)
+    # Building the expression profile.
+    if (!is.null(is_exprs_mat)) {
+        if (is.null(lowerDetectionLimit)) {
+            lowerDetectionLimit <- object@lowerDetectionLimit
+        }
+        is_exprs_mat <- exprs(object) > lowerDetectionLimit
     }
 
     if (!byrow) {
-        if (!is.null(is_exprs_mat)) {
-            # Counting expressing genes per cell, using predefined 'is_exprs(object)'.
-            if (is.null(subset_row)) {
-                out <- colSums(is_exprs_mat)
-            } else {
-                subset_row <- .subset2index(subset_row, is_exprs_mat)
-                out <- .checkedCall(cxx_colsum_subset, is_exprs_mat, subset_row - 1L)
-                names(out) <- colnames(is_exprs_mat)
-            }
+        # Counting expressing genes per cell.
+        if (is.null(subset_row)) {
+            out <- colSums(is_exprs_mat)
         } else {
-            # Counting expressing genes per cell, using the counts to define 'expressing'.
-            if (is.null(subset_row)) {
-                subset_row <- seq_len(nrow(exprs_mat))
-            } else {
-                subset_row <- .subset2index(subset_row, exprs_mat)
-            }
-            out <- .checkedCall(cxx_colsum_exprs_subset, exprs_mat,
-                                lowerDetectionLimit, subset_row - 1L)
-            names(out) <- colnames(exprs_mat)
+            out <- colSums(is_exprs_mat[subset.row,,drop=FALSE])
         }
     } else {
-        if (!is.null(is_exprs_mat)) {
-            # Counting expressing cells per gene, using predefined 'is_exprs(object)'.
-            if (is.null(subset_col)) { 
-                out <- rowSums(is_exprs_mat)
-            } else {
-                subset_col <- .subset2index(subset_col, is_exprs_mat, byrow = FALSE)
-                out <- .checkedCall(cxx_rowsum_subset, is_exprs_mat, subset_col - 1L)
-                names(out) <- rownames(is_exprs_mat)
-            }
+        # Counting expressing cells per gene.
+        if (is.null(subset_col)) { 
+            out <- rowSums(is_exprs_mat)
         } else {
-            # Counting expressing cells per gene, using the counts to define 'expressing'.
-            if (is.null(subset_col)) {
-                subset_col <- seq_len(ncol(exprs_mat))                
-            } else {
-                subset_col <- .subset2index(subset_col, exprs_mat, byrow = FALSE)
-            } 
-            out <- .checkedCall(cxx_rowsum_exprs_subset, exprs_mat, 
-                                lowerDetectionLimit, subset_col - 1L)
-            names(out) <- rownames(exprs_mat)
+            out <- rowSums(is_exprs_mat[,subset.col,drop=FALSE])
         }
     }
     return(out)

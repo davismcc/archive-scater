@@ -281,12 +281,16 @@ setValidity("SCESet", function(object) {
         msg <- c(msg,
                  "Label names of featurePairwiseDistances must be identical to featureNames(SCESet)")
     }
-    ## Check that we have sensible values for the counts
-    if( .checkedCall(cxx_missing_exprs, exprs(object)) ) {
-        warning( "'exprs' contains missing values" )
-    }
-    if ( (!is.null(counts(object))) && .checkedCall(cxx_negative_counts, counts(object)) )
-        warning( "'counts' contains negative values" )
+
+## AL: People can put whatever they like, but it's their responsibility if they put in stupid things.
+## Some functions will care about NAs, others will not.
+#    ## Check that we have sensible values for the counts
+#    if (any(is.na(exprs(object)))) { 
+#        warning( "'exprs' contains missing values" )
+#    }
+#    if (!is.null(counts(object)) && any(counts(object) < 0)) {
+#        warning( "'counts' contains negative values" )
+#    }
 
     if (valid) TRUE else msg
 })

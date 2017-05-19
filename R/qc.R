@@ -391,9 +391,8 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     if (is.logical(is_feature_control)) { 
         is_feature_control <- which(is_feature_control) 
     }
-    exprs_feature_controls <- .checkedCall(cxx_colsum_subset, exprs_mat, 
-                                           is_feature_control - 1L) 
-
+    exprs_feature_controls <- colSums(exprs_mat[is_feature_control,,drop=FALSE])
+   
     ## Get % expression from feature controls
     pct_exprs_feature_controls <- (100 * exprs_feature_controls /
                                          colSums(exprs_mat))
