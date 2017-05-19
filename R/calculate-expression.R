@@ -95,7 +95,7 @@ nexprs <- function(object, lowerDetectionLimit = NULL, exprs_values = NULL, byro
     }
 
     # Building the expression profile.
-    if (!is.null(is_exprs_mat)) {
+    if (is.null(is_exprs_mat)) {
         if (is.null(lowerDetectionLimit)) {
             lowerDetectionLimit <- object@lowerDetectionLimit
         }
