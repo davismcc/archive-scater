@@ -229,26 +229,26 @@ calculateTPM <- function(object, effective_length = NULL, calc_from = "counts") 
 calculateCPM <- function(object, use.size.factors = TRUE) {
     counts_mat <- counts(object)
     if (use.size.factors) {
-        sf <- sizeFactors(object)
-        control_list <- .find_control_SF(object)
-        if (is.null(sf)) {
+        sf.list <- .get_all_sf_sets(object)
+        if (is.null(sf.list$size.factors[[1]])) {
             warning("size factors requested but not specified, using library sizes instead")
-            sf <- colSums(counts_mat)
-            control_list <- list()
-        }
+            sf.list$size.factors[[1]] <- colSums(counts_mat)
+        }  
     } else {
-        sf <- colSums(counts_mat)
-        control_list <- list()
+        sf.list <- list(size.factors=list(colSums(counts_mat)),
+                        index=rep(1, nrow(object)))
     }
 
     # Scaling the size factors to the library size.
-    lib.size <- colSums(counts_mat)
-    scaled.sf <- sf/mean(sf) * mean(lib.size)
-    cpm_mat <- edgeR::cpm(counts_mat, lib.size = scaled.sf)
+    cpm_mat <- counts_mat
+    mean.lib.size <- mean(colSums(counts_mat))
+    by.type <- split(seq_along(sf.list$index), sf.list$index)
 
-    for (alt in control_list) {
-        scaled.sf <- alt$SF/mean(alt$SF) * mean(lib.size)
-        cpm_mat[alt$ID,] <- edgeR::cpm(counts_mat[alt$ID,,drop = FALSE],
+    for (g in seq_along(by.type)) {
+        chosen <- by.type[[g]]
+        sf <- sf.list$size.factors[[g]]
+        scaled.sf <- sf/mean(sf) * mean.lib.size
+        cpm_mat[chosen,] <- edgeR::cpm(counts_mat[chosen,,drop = FALSE],
                                        lib.size = scaled.sf)
     }
 
@@ -306,25 +306,17 @@ calculateFPKM <- function(object, effective_length, use.size.factors=TRUE) {
 #' ave_counts <- calcAverage(example_sceset)
 #'
 calcAverage <- function(object) {
-    # Computes the average count, adjusting for size factors or library size.
-    control_list <- .find_control_SF(object)
-    sf <- suppressWarnings(sizeFactors(object))
-    if (is.null(sf)) sf <- colSums(counts(object))
-    control_list <- .find_control_SF(object)
-
-    all.ave <- .compute_ave_count(counts(object), size_factors = sf)
-    for (alt in control_list) {
-        all.ave[alt$ID] <- .compute_ave_count(counts(object), 
-                                              size_factors = alt$SF,
-                                              subset_row = alt$ID)
+    # Gets the size factors (set to library sizes if not available).
+    sf.list <- .get_all_sf_sets(object)
+    if (is.null(sf.list$size.factors[[1]])) {
+        sf.list$size.factors[[1]] <- colSums(counts(object))
     }
+    
+    # Computes the average count, adjusting for size factors or library size.
+    all.ave <- .compute_exprs(counts(object), sf.list$size.factors, sf_to_use = sf.list$index, 
+                              log = FALSE, sum = TRUE, logExprsOffset = 0, subset_row = NULL)
 
     names(all.ave) <- rownames(object)
     return(all.ave / ncol(object))
 }
 
-
-.compute_ave_count <- function(counts_mat, size_factors, subset_row = NULL) {
-    .compute_exprs(counts_mat, size_factors, log = FALSE, sum = TRUE,
-                   logExprsOffset = 0, subset_row = subset_row)
-}

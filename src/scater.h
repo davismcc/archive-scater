@@ -17,7 +17,7 @@ extern "C" {
 
 SEXP calc_top_features(SEXP, SEXP, SEXP);
 
-SEXP calc_exprs(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+SEXP calc_exprs(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 }
 
