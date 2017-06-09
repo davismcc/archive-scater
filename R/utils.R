@@ -57,7 +57,7 @@
     } else {
         subset_row <- .subset2index(subset_row, exprs_mat)
     }
-    .checkedCall(cxx_calc_exprs, exprs_mat, as.double(size_factors),
+    .Call(cxx_calc_exprs, exprs_mat, as.double(size_factors),
                  as.double(logExprsOffset), as.logical(log),
                  as.logical(sum), subset_row - 1L)
 }

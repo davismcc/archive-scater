@@ -20,7 +20,7 @@ Description: A collection of tools for doing various analyses of
 Depends: R (>= 3.3), Biobase, ggplot2, methods
 Imports: biomaRt, BiocGenerics, data.table, dplyr, edgeR, ggbeeswarm, grid, limma,
         Matrix, matrixStats, parallel, plyr, reshape2, rhdf5, rjson, shiny,
-        shinydashboard, stats, tximport, utils, viridis
+        shinydashboard, stats, tximport, utils, viridis, Rcpp
 Suggests: BiocStyle, cowplot, cluster, destiny, knitr, monocle,
         mvoutlier, rmarkdown, Rtsne, testthat, magrittr
 VignetteBuilder: knitr
@@ -29,6 +29,8 @@ biocViews: SingleCell, RNASeq, QualityControl, Preprocessing, Normalization,
         Visualization, DimensionReduction, Transcriptomics,
         GeneExpression, Sequencing, Software, DataImport,
         DataRepresentation, Infrastructure
+LinkingTo: Rhdf5lib, Rcpp, beachmat
+SystemRequirements: C++11
 RoxygenNote: 6.0.1
 NeedsCompilation: yes
 URL: http://bioconductor.org/packages/scater/

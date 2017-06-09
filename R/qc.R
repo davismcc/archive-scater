@@ -453,13 +453,11 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     can.calculate <- top.number <= total_nrows
     if (any(can.calculate)) { 
         top.number <- top.number[can.calculate]
-        pct_exprs_top_out <- .checkedCall(cxx_calc_top_features, exprs_mat,
-                                          top.number, subset_row)
-        ## this call returns proportions, not percentages, so adjust
-        pct_exprs_top_out <- 100 * pct_exprs_top_out
-        colnames(pct_exprs_top_out) <- paste0("pct_exprs_top_",
-                                              top.number, "_", suffix)
-        return(pct_exprs_top_out)
+        pct_exprs_top_out <- .Call(cxx_calc_top_features, exprs_mat,
+                                   top.number, subset_row)
+        names(pct_exprs_top_out) <- paste0("pct_exprs_top_",
+                                           top.number, "_", suffix)
+        return(do.call(data.frame, pct_exprs_top_out))
     }
     return(NULL)
 }
