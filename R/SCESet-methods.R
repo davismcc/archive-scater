@@ -123,16 +123,6 @@ newSCESet <- function(exprsData = NULL,
         stop("one set of expression values should be supplied")
     }
 
-    if (!is.null(is_exprsData)) {
-        if (have.data != "exprsData") {
-            warning(sprintf("'%s' provided, 'is_exprsData' will be ignored",
-                            have.data))
-            is_exprsData <- NULL
-        } else {
-            is_exprsData <- as.matrix(is_exprsData)
-        }
-    }
-
     ## Setting logExprsOffset and lowerDetectionLimit.
     if (is.null(logExprsOffset)) {
         logExprsOffset <- 1
@@ -156,6 +146,19 @@ newSCESet <- function(exprsData = NULL,
         dimnames(exprsData) <- dimnames(countData)
     } else if (have.data != "exprsData") {
         exprsData <- log2(get(have.data) + logExprsOffset)
+    }
+
+    ## If no is_exprsData provided, define it from exprsData.
+    if (!is.null(is_exprsData)) {
+        if (have.data != "exprsData") {
+            warning(sprintf("'%s' provided, 'is_exprsData' will be ignored",
+                            have.data))
+            is_exprsData <- NULL
+        } else {
+            is_exprsData <- as.matrix(is_exprsData)
+        }
+    } else {
+        is_exprsData <- exprsData > lowerDetectionLimit
     }
 
     ## Generate valid phenoData and featureData if not provided
@@ -281,12 +284,16 @@ setValidity("SCESet", function(object) {
         msg <- c(msg,
                  "Label names of featurePairwiseDistances must be identical to featureNames(SCESet)")
     }
-    ## Check that we have sensible values for the counts
-    if( .checkedCall(cxx_missing_exprs, exprs(object)) ) {
-        warning( "'exprs' contains missing values" )
-    }
-    if ( (!is.null(counts(object))) && .checkedCall(cxx_negative_counts, counts(object)) )
-        warning( "'counts' contains negative values" )
+
+## AL: People can put whatever they like, but it's their responsibility if they put in stupid things.
+## Some functions will care about NAs, others will not.
+#    ## Check that we have sensible values for the counts
+#    if (any(is.na(exprs(object)))) { 
+#        warning( "'exprs' contains missing values" )
+#    }
+#    if (!is.null(counts(object)) && any(counts(object) < 0)) {
+#        warning( "'counts' contains negative values" )
+#    }
 
     if (valid) TRUE else msg
 })
