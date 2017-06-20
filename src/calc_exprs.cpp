@@ -58,7 +58,8 @@ Rcpp::RObject calc_exprs_internal (M mat, SEXP in_type,
     V input(ngenes);
     Rcpp::NumericVector output(slen);
     const bool preserve_sparse=(prior==1 && dolog) || (prior==0 && !dolog); // Deciding whether or not to preserve sparsity.
-    auto outmat=beachmat::create_numeric_output(slen, (dosum ? 0 : ncells), in_type, true, preserve_sparse);
+    auto outmat=beachmat::create_numeric_output(slen, (dosum ? 0 : ncells), 
+            beachmat::output_param(in_type, true, preserve_sparse));
 
     /* Computing normalized expression values for each cell, plus a prior.
      * We may or may not log-transform, and we may or may not sum across genes.
