@@ -24,7 +24,6 @@ public:
        
         H5::DSetCreatPropList cparms = ihdata.getCreatePlist();
         cparms.getChunk(2, chunk_dims);
-        Rprintf("Incoming chunk sizes are: (%i, %i)\n", chunk_nrows(), chunk_ncols());
 
         // Setting up the storage structure. 
         hsize_t new_chunk_ncols=chunk_ncols(), new_chunk_nrows=chunk_nrows();
@@ -47,7 +46,6 @@ public:
         store_space.setExtentSimple(2, storage_dims);
         const int datasize=(use_size ? HDT.getSize() : 1);
         cached.resize(storage_dims[0]*storage_dims[1]*datasize);
-        Rprintf("Size is %i\n", cached.size());
     
         // Setting up the output structures.       
         if (byrow) { 
@@ -58,7 +56,6 @@ public:
             out_chunk_dims[1]=new_chunk_nrows;
         }
         cparms.setChunk(2, out_chunk_dims);
-        Rprintf("Outgoing chunk sizes are: (%i, %i)\n", out_chunk_nrows(), out_chunk_ncols());
         
         ohspace.setExtentSimple(2, dims);
         ohdata=ohfile.createDataSet(output_data, HDT, ohspace, cparms); 
@@ -150,20 +147,16 @@ public:
     }
 
     void read_in_data () {
-        Rprintf("Input locations at: (%i %i) + (%i %i)\n", in_rowpos(), in_colpos(), in_nrows(), in_ncols());
         inspace.selectHyperslab(H5S_SELECT_SET, in_count, in_offset);
-        Rprintf("Dumping at: (%i %i)\n", storage_rowpos(), storage_colpos());
         store_space.selectHyperslab(H5S_SELECT_SET, in_count, storage_offset);
         ihdata.read(cached.data(), HDT, store_space, inspace);
         return;
     } 
 
     void write_out_data() {
-        Rprintf("Output locations at: (%i %i) + (%i %i)\n", out_rowpos(), out_colpos(), out_nrows(), out_ncols());
         ohspace.selectHyperslab(H5S_SELECT_SET, out_count, out_offset);
         storage_colpos()=0;
         storage_rowpos()=0;
-        Rprintf("Dumping from: (%i %i)\n", storage_rowpos(), storage_colpos());
         store_space.selectHyperslab(H5S_SELECT_SET, out_count, storage_offset);
         ohdata.write(cached.data(), HDT, store_space, ohspace);
     }
