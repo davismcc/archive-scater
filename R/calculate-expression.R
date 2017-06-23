@@ -305,18 +305,28 @@ calculateFPKM <- function(object, effective_length, use.size.factors=TRUE) {
 #' ## calculate average counts
 #' ave_counts <- calcAverage(example_sceset)
 #'
-calcAverage <- function(object) {
-    # Gets the size factors (set to library sizes if not available).
+setMethod("calcAverage", "SCESet", function(object) {
     sf.list <- .get_all_sf_sets(object)
+    .calcAverage(counts(object), sf.list)
+})
+          
+setMethod("calcAverage", "ANY", function(object, size.factors=NULL) {
+    # Using the lone set of size factors, if provided.
+    sf.list <- list(index=rep(1L, nrow(object)), size.factors=list(size.factors))
+    .calcAverage(object, sf.list)    
+})
+          
+.calcAverage <- function(mat, sf.list) {
+    # Set size factors to library sizes if not available.
     if (is.null(sf.list$size.factors[[1]])) {
-        sf.list$size.factors[[1]] <- colSums(counts(object))
+        sf.list$size.factors[[1]] <- colSums(mat)
     }
     
     # Computes the average count, adjusting for size factors or library size.
-    all.ave <- .compute_exprs(counts(object), sf.list$size.factors, sf_to_use = sf.list$index, 
+    all.ave <- .compute_exprs(mat, sf.list$size.factors, sf_to_use = sf.list$index, 
                               log = FALSE, sum = TRUE, logExprsOffset = 0, subset_row = NULL)
 
-    names(all.ave) <- rownames(object)
-    return(all.ave / ncol(object))
+    names(all.ave) <- rownames(mat)
+    return(all.ave / ncol(mat))
 }
 
