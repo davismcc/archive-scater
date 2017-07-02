@@ -19,8 +19,6 @@ SEXP calc_top_features(SEXP, SEXP, SEXP);
 
 SEXP calc_exprs(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
-SEXP rechunk_matrix(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-
 }
 
 #include "template_methods.h"
