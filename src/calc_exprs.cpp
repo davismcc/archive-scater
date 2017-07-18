@@ -100,7 +100,7 @@ Rcpp::RObject calc_exprs_internal (M mat, SEXP in_type,
 
         // Adding the result.
         if (!dosum) {
-            outmat->fill_col(c, output.begin());
+            outmat->set_col(c, output.begin());
         }
     }
 
