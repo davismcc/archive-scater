@@ -1,7 +1,7 @@
 #include "scater.h"
 
 template <typename T, class V, class M>
-Rcpp::RObject calc_exprs_internal (M mat, SEXP in_type, 
+Rcpp::RObject calc_exprs_internal (M mat, 
         Rcpp::List size_fac_list, Rcpp::IntegerVector sf_to_use, 
         Rcpp::RObject prior_count, Rcpp::RObject log, 
         Rcpp::RObject sum, Rcpp::RObject subset) {
@@ -59,18 +59,18 @@ Rcpp::RObject calc_exprs_internal (M mat, SEXP in_type,
     Rcpp::NumericVector output(slen);
     const bool preserve_sparse=(prior==1 && dolog) || (prior==0 && !dolog); // Deciding whether or not to preserve sparsity.
     auto outmat=beachmat::create_numeric_output(slen, (dosum ? 0 : ncells), 
-            beachmat::output_param(in_type, true, preserve_sparse));
+            beachmat::output_param(mat->get_matrix_type(), true, preserve_sparse));
 
     /* Computing normalized expression values for each cell, plus a prior.
      * We may or may not log-transform, and we may or may not sum across genes.
      */
     for (size_t c=0; c<ncells; ++c) {
-        mat->get_col(c, input.begin());
+        auto inIt=mat->get_const_col(c, input.begin());
         auto oIt=output.begin();
         auto csdIt=chosen_sf_dex.begin();
 
-        for (auto s : subout) {
-            double tmp=input[s];
+        for (const auto& s : subout) {
+            double tmp=*(inIt+s);
 
             if (!tmp && preserve_sparse) { // Ensure that it doesn't get turned into some slightly non-zero value.
                 if (!dosum) {
@@ -122,10 +122,10 @@ SEXP calc_exprs(SEXP counts, SEXP size_fac, SEXP sf_use, SEXP prior_count, SEXP 
     auto mattype=beachmat::find_sexp_type(counts);
     if (mattype==INTSXP) {
         auto mat=beachmat::create_integer_matrix(counts);
-        return calc_exprs_internal<int, Rcpp::IntegerVector>(mat.get(), counts, size_fac, sf_use, prior_count, log, sum, subset);
+        return calc_exprs_internal<int, Rcpp::IntegerVector>(mat.get(), size_fac, sf_use, prior_count, log, sum, subset);
     } else if (mattype==REALSXP) {
         auto mat=beachmat::create_numeric_matrix(counts);
-        return calc_exprs_internal<double, Rcpp::NumericVector>(mat.get(), counts, size_fac, sf_use, prior_count, log, sum, subset);
+        return calc_exprs_internal<double, Rcpp::NumericVector>(mat.get(), size_fac, sf_use, prior_count, log, sum, subset);
     } else {
         throw std::runtime_error("unacceptable matrix type");
     }
