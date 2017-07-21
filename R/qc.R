@@ -798,15 +798,16 @@ findImportantPCs <- function(object, variable="total_features",
 
 
 #' @importFrom limma lmFit
-.getRSquared <- function(y, design, recenter=TRUE) {
-    ## Mean-centre rows to get correct R-squared values with the limma formula below
-    if (recenter) y <- y - rowMeans(y)
-    ## Get linear model fit
-    fit <- limma::lmFit(y, design = design)
+.getRSquared <- function(y, design) { 
     ## Compute total sum of squares
-    sst <- rowSums(y ^ 2)
+    sst <- matrixStats::rowVars(y) * (ncol(y)-1)
+    
     ## Compute residual sum of squares
-    ssr <- sst - fit$df.residual * fit$sigma ^ 2
+    QR <- qr(design)
+    effects <- qr.qty(QR, t(y))
+    ssr <- sst - colSums(effects[-seq_len(QR$rank),]^2)
+
+    # Return proportion of variance explained    
     (ssr/sst)
 }
 
@@ -1084,12 +1085,7 @@ plotExplanatoryVariables <- function(object, method = "density",
     exprs_mat <- get_exprs(object, exprs_values)
     if ( is.null(exprs_mat) )
         stop("The supplied 'exprs_values' argument not found in assayData(object). Try 'exprs' or similar.")
-    exprs_mat <- exprs_mat - rowMeans(exprs_mat)
 
-    ## discard any features that have zero variance as this causes problem downstream
-    keep <- matrixStats::rowVars(exprs_mat) > 0
-    if ( !all(keep) ) exprs_mat <- exprs_mat[keep,,drop=FALSE]
-    
     ## Check that variables are defined
     if ( is.null(variables) ) {
         variables_to_plot <- varLabels(object)
@@ -1104,19 +1100,18 @@ plotExplanatoryVariables <- function(object, method = "density",
             }
         }
     }
-    variables_all <- varLabels(object)
 
     ## Initialise matrix to store R^2 values for each feature for each variable
     rsquared_mat <- matrix(NA_real_, nrow = nrow(object),
-                           ncol = length(variables_all))
+                           ncol = length(variables_to_plot))
     val_to_plot_mat <- matrix(NA_real_, nrow = ncol(object),
-                              ncol = length(variables_all))
-    colnames(rsquared_mat) <- colnames(val_to_plot_mat) <- variables_all
+                              ncol = length(variables_to_plot))
+    colnames(rsquared_mat) <- colnames(val_to_plot_mat) <- variables_to_plot
     rownames(rsquared_mat) <- rownames(object)
     rownames(val_to_plot_mat) <- colnames(object)
 
     ## Get R^2 values for each feature and each variable
-    for (var in variables_all) {
+    for (var in variables_to_plot) {
         if ( var %in% variables_to_plot ) {
             if (length(unique(pData(object)[, var])) <= 1) {
                 message(paste("The variable", var, "only has one unique value, so R^2 is not meaningful.
@@ -1135,7 +1130,7 @@ This variable will not be plotted."))
                     val_to_plot_mat[, var] <- x
                 }
                 design <- model.matrix(~x)
-                rsquared_mat[keep, var] <- .getRSquared(exprs_mat, design, recenter=FALSE)
+                rsquared_mat[, var] <- .getRSquared(exprs_mat, design)
 #                 rsq_base <- apply(exprs_mat, 1, function(y) {
 #                     lm.first <- lm(y ~ -1 + design); summary(lm.first)$r.squared})
 #                 all(abs(rsq_base - rsquared_mat[, var]) < 0.000000000001)
@@ -1144,7 +1139,7 @@ This variable will not be plotted."))
     }
 
     ## Get median R^2 for each variable, add to labels and order by median R^2
-    median_rsquared <- apply(rsquared_mat, 2, median)
+    median_rsquared <- apply(rsquared_mat, 2, median, na.rm=TRUE)
     oo_median <- order(median_rsquared, decreasing = TRUE)
     nvars_to_plot <- min(sum(median_rsquared > min_marginal_r2, na.rm = TRUE),
                          nvars_to_plot)
