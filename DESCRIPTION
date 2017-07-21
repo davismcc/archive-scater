@@ -21,7 +21,7 @@ Depends: R (>= 3.3), Biobase, ggplot2, methods
 Imports: biomaRt, BiocGenerics, data.table, dplyr, edgeR, ggbeeswarm, grid, limma,
         Matrix, matrixStats, parallel, plyr, reshape2, rhdf5, rjson, shiny,
         shinydashboard, stats, tximport, utils, viridis, Rcpp
-Suggests: BiocStyle, cowplot, cluster, destiny, knitr, monocle,
+Suggests: BiocStyle, beachmat, cowplot, cluster, destiny, knitr, monocle,
         mvoutlier, rmarkdown, Rtsne, testthat, magrittr
 VignetteBuilder: knitr
 LazyData: true
