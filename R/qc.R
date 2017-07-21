@@ -798,13 +798,13 @@ findImportantPCs <- function(object, variable="total_features",
 
 
 #' @importFrom limma lmFit
-.getRSquared <- function(y, design) {
+.getRSquared <- function(y, design, recenter=TRUE) {
     ## Mean-centre rows to get correct R-squared values with the limma formula below
-    y0 <- t(scale(t(y), center = TRUE, scale = FALSE))
+    if (recenter) y <- y - rowMeans(y)
     ## Get linear model fit
-    fit <- limma::lmFit(y0, design = design)
+    fit <- limma::lmFit(y, design = design)
     ## Compute total sum of squares
-    sst <- rowSums(y0 ^ 2)
+    sst <- rowSums(y ^ 2)
     ## Compute residual sum of squares
     ssr <- sst - fit$df.residual * fit$sigma ^ 2
     (ssr/sst)
@@ -1084,9 +1084,11 @@ plotExplanatoryVariables <- function(object, method = "density",
     exprs_mat <- get_exprs(object, exprs_values)
     if ( is.null(exprs_mat) )
         stop("The supplied 'exprs_values' argument not found in assayData(object). Try 'exprs' or similar.")
-    ## exit if any features have zero variance as this causes problem downstream
-    if ( any(matrixStats::rowVars(exprs_mat) == 0) )
-        stop("Some features have zero variance. Please filter out features with zero variance (e.g. all zeros).")
+    exprs_mat <- exprs_mat - rowMeans(exprs_mat)
+
+    ## discard any features that have zero variance as this causes problem downstream
+    keep <- matrixStats::rowVars(exprs_mat) > 0
+    if ( !all(keep) ) exprs_mat <- exprs_mat[keep,,drop=FALSE]
     
     ## Check that variables are defined
     if ( is.null(variables) ) {
@@ -1105,9 +1107,9 @@ plotExplanatoryVariables <- function(object, method = "density",
     variables_all <- varLabels(object)
 
     ## Initialise matrix to store R^2 values for each feature for each variable
-    rsquared_mat <- matrix(NA, nrow = nrow(object),
+    rsquared_mat <- matrix(NA_real_, nrow = nrow(object),
                            ncol = length(variables_all))
-    val_to_plot_mat <- matrix(NA, nrow = ncol(object),
+    val_to_plot_mat <- matrix(NA_real_, nrow = ncol(object),
                               ncol = length(variables_all))
     colnames(rsquared_mat) <- colnames(val_to_plot_mat) <- variables_all
     rownames(rsquared_mat) <- rownames(object)
@@ -1133,13 +1135,11 @@ This variable will not be plotted."))
                     val_to_plot_mat[, var] <- x
                 }
                 design <- model.matrix(~x)
-                rsquared_mat[, var] <- .getRSquared(exprs_mat, design)
+                rsquared_mat[keep, var] <- .getRSquared(exprs_mat, design, recenter=FALSE)
 #                 rsq_base <- apply(exprs_mat, 1, function(y) {
 #                     lm.first <- lm(y ~ -1 + design); summary(lm.first)$r.squared})
 #                 all(abs(rsq_base - rsquared_mat[, var]) < 0.000000000001)
             }
-        } else {
-            rsquared_mat[, var] <- NA
         }
     }
 
