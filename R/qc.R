@@ -798,19 +798,36 @@ findImportantPCs <- function(object, variable="total_features",
 
 
 #' @importFrom limma lmFit
-.getRSquared <- function(y, design) { 
-    ## Compute total sum of squares
-    sst <- matrixStats::rowVars(y) * (ncol(y)-1)
-    
-    ## Compute residual sum of squares
+.getRSquared <- function(y, design, chunk=NULL) { 
     QR <- qr(design)
-    effects <- qr.qty(QR, t(y))
-    ssr <- sst - colSums(effects[-seq_len(QR$rank),]^2)
-
+    if (!is.null(chunk)) {
+        ngenes <- nrow(y)
+        by.chunk <- cut(seq_len(ngenes), ceiling(ngenes/chunk))
+        sst <- ssr <- numeric(nrow(y))
+        for (element in levels(by.chunk)) {
+            current <- by.chunk==element
+            out <- .getRSquared_internal(QR, y[current,,drop=FALSE])
+            sst[current] <- out$sst
+            ssr[current] <- out$ssr
+        }
+    } else {
+        out <- .getRSquared_internal(QR, y)
+        sst <- out$sst
+        ssr <- out$ssr
+    }
+        
     # Return proportion of variance explained    
     (ssr/sst)
 }
 
+.getRSquared_internal<- function(QR, y) {
+    ## Compute total sum of squares
+    sst <- matrixStats::rowVars(y) * (ncol(y)-1)    
+    ## Compute residual sum of squares
+    effects <- qr.qty(QR, t(y))
+    ssr <- sst - colSums(effects[-seq_len(QR$rank),,drop=FALSE]^2)
+    return(list(sst=sst, ssr=ssr))
+}
 
 ################################################################################
 
@@ -1130,7 +1147,7 @@ This variable will not be plotted."))
                     val_to_plot_mat[, var] <- x
                 }
                 design <- model.matrix(~x)
-                rsquared_mat[, var] <- .getRSquared(exprs_mat, design)
+                rsquared_mat[, var] <- .getRSquared(exprs_mat, design, chunk=500)
 #                 rsq_base <- apply(exprs_mat, 1, function(y) {
 #                     lm.first <- lm(y ~ -1 + design); summary(lm.first)$r.squared})
 #                 all(abs(rsq_base - rsquared_mat[, var]) < 0.000000000001)
