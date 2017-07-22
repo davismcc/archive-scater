@@ -793,7 +793,7 @@ setMethod("plotPCA", signature("SCESet"),
 setMethod("plotTSNE", signature("SCESet"),
           function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
                    colour_by = NULL, shape_by = NULL, size_by = NULL,
-                   feature_set = NULL, return_SCESet = FALSE,
+                   feature_set = NULL, use_dimred=FALSE, return_SCESet = FALSE,
                    scale_features = TRUE, draw_plot = TRUE, theme_size = 10,
                    rand_seed = NULL, perplexity = floor(ncol(object) / 5),
                    legend = "auto", ...) {
@@ -824,36 +824,47 @@ setMethod("plotTSNE", signature("SCESet"),
                       stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
               }
 
-              ## Define an expression matrix depending on which values we're
-              ## using
-              exprs_mat <- get_exprs(object, exprs_values, warning = FALSE)
-              if ( is.null(exprs_mat) ) 
-                  stop(sprintf("object does not contain '%s'", exprs_values))
-
-              ## Define features to use: either ntop, or if a set of features is
-              ## defined, then those
-              if ( is.null(feature_set) ) {
-                  rv <- matrixStats::rowVars(exprs_mat)
-                  ntop <- min(ntop, length(rv))
-                  feature_set <- order(rv, decreasing = TRUE)[seq_len(ntop)]
-              }
-
-              ## Drop any features with zero variance
-              exprs_to_plot <- exprs_mat[feature_set,]
-              keep_feature <- (matrixStats::rowVars(exprs_to_plot) > 0.001)
-              keep_feature[is.na(keep_feature)] <- FALSE
-              exprs_to_plot <- exprs_to_plot[keep_feature, ]
-
-              ## Standardise expression if stand_exprs(object) is null
-              exprs_to_plot <- t(scale(t(exprs_to_plot), scale = scale_features))
-
-              ## Compute t-SNE
               if ( !is.null(rand_seed) )
                   set.seed(rand_seed)
-              tsne_out <- Rtsne::Rtsne(t(exprs_to_plot),
-                                       initial_dims = max(50, ncol(object)),
-                                       perplexity = perplexity,
-                                       dims = ncomponents,...)
+
+              if (use_dimred) { 
+                  ## Use existing dimensionality reduction results (turning off PCA)
+                  pcs <- reducedDimension(sce)
+                  if (!length(pcs)) {
+                      stop("'reducedDimension(sce)' cannot be empty with 'use_dimred=TRUE'")
+                  }
+                  tsne_out <- Rtsne::Rtsne(pcs, pca = FALSE, 
+                                           perplexity = perplexity,
+                                           dims = ncomponents,...)
+              } else {
+                  ## Define an expression matrix depending on which values we're
+                  ## using
+                  exprs_mat <- get_exprs(object, exprs_values, warning = FALSE)
+                  if ( is.null(exprs_mat) ) 
+                      stop(sprintf("object does not contain '%s'", exprs_values))
+    
+                  ## Define features to use: either ntop, or if a set of features is
+                  ## defined, then those
+                  if ( is.null(feature_set) ) {
+                      rv <- matrixStats::rowVars(exprs_mat)
+                      ntop <- min(ntop, length(rv))
+                      feature_set <- order(rv, decreasing = TRUE)[seq_len(ntop)]
+                  }
+    
+                  ## Drop any features with zero variance
+                  exprs_to_plot <- exprs_mat[feature_set,,drop=FALSE]
+                  keep_feature <- (matrixStats::rowVars(exprs_to_plot) > 0.001)
+                  keep_feature[is.na(keep_feature)] <- FALSE
+                  exprs_to_plot <- exprs_to_plot[keep_feature,,drop=FALSE]
+    
+                  ## Standardise expression if stand_exprs(object) is null
+                  exprs_to_plot <- t(scale(t(exprs_to_plot), scale = scale_features))
+
+                  tsne_out <- Rtsne::Rtsne(t(exprs_to_plot), 
+                                           initial_dims = max(50, ncol(object)),
+                                           perplexity = perplexity,
+                                           dims = ncomponents,...)
+              }
 
               ## Define data.frame for plotting
               df_to_plot <- data.frame(tsne_out$Y[, 1:ncomponents],

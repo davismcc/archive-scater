@@ -34,34 +34,61 @@
     .fcontrol_names(object)[spike.sets]
 }
 
-.find_control_SF <- function(object) {
-    ## returns a list of indices and SFs for each control set.
-    control_list <- list()
-    for (fc in .fcontrol_names(object)) {
+.get_all_sf_sets <- function(object) {
+    fcontrols <- .fcontrol_names(object)
+    
+    # Storing the default size factors.
+    sf.list <- vector("list", length(fcontrols)+1)
+    sf.list[[1]] <- suppressWarnings(sizeFactors(object))
+    to.use <- rep(1L, nrow(object))
+
+    # Filling up the controls.
+    counter <- 1L
+    okay <- character(length(fcontrols))
+    for (fc in fcontrols) {
         specific_sf <- suppressWarnings(sizeFactors(object, type=fc))
         if (!is.null(specific_sf)) {
+            okay[counter] <- fc
+            counter <- counter+1L
             which.current <- fData(object)[[paste0("is_feature_control_", fc)]]
-            control_list[[fc]] <- list(SF=specific_sf, ID=which.current)
+            to.use[which.current] <- counter
+            sf.list[[counter]] <- specific_sf
         }
     }
-    return(control_list)
+
+    # Returning the output.
+    return(list(size.factors=sf.list[seq_len(counter)], index=to.use, 
+                available=okay[seq_len(counter-1)]))
 }
 
-.compute_exprs <- function(exprs_mat, size_factors, log = TRUE,
+.compute_exprs <- function(exprs_mat, size_factors, sf_to_use=NULL, log = TRUE,
                            sum = FALSE, logExprsOffset = 1,
                            subset_row = NULL) {
-    ## computes normalized expression values.
-    size_factors <- size_factors / mean(size_factors)
+
+    if (!is.list(size_factors)) { 
+        size_factors <- list(size_factors)
+        sf_to_use <- rep(1L, nrow(exprs_mat))
+    }
+
+    ## Mean centers all the size factors.
+    for (s in seq_along(size_factors)) {
+        sf <- size_factors[[s]]
+        sf <- sf/mean(sf)
+        size_factors[[s]] <- sf
+    }
+
+    ## Specify the rows to be subsetted.
     if (is.null(subset_row)) {
         subset_row <- seq_len(nrow(exprs_mat))
     } else {
         subset_row <- .subset2index(subset_row, exprs_mat)
     }
-    .checkedCall(cxx_calc_exprs, exprs_mat, as.double(size_factors),
+    
+    ## computes normalized expression values.
+    .Call(cxx_calc_exprs, exprs_mat, size_factors, sf_to_use,
                  as.double(logExprsOffset), as.logical(log),
                  as.logical(sum), subset_row - 1L)
 }
-
 
 ## contains the hierarchy of expression values.
 .exprs_hierarchy <- c("counts", "tpm", "cpm", "fpkm", "exprs")

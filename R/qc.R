@@ -453,13 +453,11 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
     can.calculate <- top.number <= total_nrows
     if (any(can.calculate)) { 
         top.number <- top.number[can.calculate]
-        pct_exprs_top_out <- .checkedCall(cxx_calc_top_features, exprs_mat,
-                                          top.number, subset_row)
-        ## this call returns proportions, not percentages, so adjust
-        pct_exprs_top_out <- 100 * pct_exprs_top_out
-        colnames(pct_exprs_top_out) <- paste0("pct_exprs_top_",
-                                              top.number, "_", suffix)
-        return(pct_exprs_top_out)
+        pct_exprs_top_out <- .Call(cxx_calc_top_features, exprs_mat,
+                                   top.number, subset_row)
+        names(pct_exprs_top_out) <- paste0("pct_exprs_top_",
+                                           top.number, "_", suffix)
+        return(do.call(data.frame, pct_exprs_top_out))
     }
     return(NULL)
 }
@@ -553,6 +551,10 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
 #' @param batch factor of length equal to \code{metric}, specifying the batch
 #' to which each observation belongs. A median/MAD is calculated for each batch,
 #' and outliers are then identified within each batch.
+#' @param min.diff numeric scalar indicating the minimum difference from the 
+#' median to consider as an outlier. The outlier threshold is defined from the 
+#' larger of \code{nmads} MADs and \code{min.diff}, to avoid calling many 
+#' outliers when the MAD is very small. If \code{NA}, it is ignored.
 #' 
 #' @description Convenience function to determine which values for a metric are
 #' outliers based on median-absolute-deviation (MAD).
@@ -573,7 +575,7 @@ calculateQCMetrics <- function(object, feature_controls = NULL,
 #' isOutlier(example_sceset$total_counts, nmads = 3)
 #' 
 isOutlier <- function(metric, nmads = 5, type = c("both", "lower", "higher"), 
-                      log = FALSE, subset = NULL, batch = NULL) {
+                      log = FALSE, subset = NULL, batch = NULL, min.diff = NA) {
     if (log) {
         metric <- log10(metric)
     }
@@ -600,12 +602,13 @@ isOutlier <- function(metric, nmads = 5, type = c("both", "lower", "higher"),
         collected <- logical(N)
         for (b in by.batch) {
             collected[b] <- Recall(metric[b], nmads=nmads, type=type,
-                                   log=FALSE, subset=subset[b], batch=NULL)
+                                   log=FALSE, subset=subset[b], 
+                                   batch=NULL, min.diff=min.diff)
         }
         return(collected)
     }
 
-    # Computing median/MAD based on subsets.
+    # Computing median/MAD (possibly based on subset of the data).
     if (!is.null(subset)) {
         submetric <- metric[subset]
         if (length(submetric)==0L) {
@@ -617,9 +620,11 @@ isOutlier <- function(metric, nmads = 5, type = c("both", "lower", "higher"),
     cur.med <- median(submetric, na.rm = TRUE)
     cur.mad <- mad(submetric, center = cur.med, na.rm = TRUE)
 
+    diff.val <- max(min.diff, nmads * cur.mad, na.rm=TRUE)
+    upper.limit <- cur.med + diff.val 
+    lower.limit <- cur.med - diff.val 
+    
     type <- match.arg(type)
-    upper.limit <- cur.med + nmads * cur.mad
-    lower.limit <- cur.med - nmads * cur.mad
     if (type == "lower") {
         upper.limit <- Inf
     } else if (type == "higher") {
@@ -793,18 +798,36 @@ findImportantPCs <- function(object, variable="total_features",
 
 
 #' @importFrom limma lmFit
-.getRSquared <- function(y, design) {
-    ## Mean-centre rows to get correct R-squared values with the limma formula below
-    y0 <- t(scale(t(y), center = TRUE, scale = FALSE))
-    ## Get linear model fit
-    fit <- limma::lmFit(y0, design = design)
-    ## Compute total sum of squares
-    sst <- rowSums(y0 ^ 2)
-    ## Compute residual sum of squares
-    ssr <- sst - fit$df.residual * fit$sigma ^ 2
+.getRSquared <- function(y, design, chunk=NULL) { 
+    QR <- qr(design)
+    if (!is.null(chunk)) {
+        ngenes <- nrow(y)
+        by.chunk <- cut(seq_len(ngenes), ceiling(ngenes/chunk))
+        sst <- ssr <- numeric(nrow(y))
+        for (element in levels(by.chunk)) {
+            current <- by.chunk==element
+            out <- .getRSquared_internal(QR, y[current,,drop=FALSE])
+            sst[current] <- out$sst
+            ssr[current] <- out$ssr
+        }
+    } else {
+        out <- .getRSquared_internal(QR, y)
+        sst <- out$sst
+        ssr <- out$ssr
+    }
+        
+    # Return proportion of variance explained    
     (ssr/sst)
 }
 
+.getRSquared_internal<- function(QR, y) {
+    ## Compute total sum of squares
+    sst <- matrixStats::rowVars(y) * (ncol(y)-1)    
+    ## Compute residual sum of squares
+    effects <- qr.qty(QR, t(y))
+    ssr <- sst - colSums(effects[-seq_len(QR$rank),,drop=FALSE]^2)
+    return(list(sst=sst, ssr=ssr))
+}
 
 ################################################################################
 
@@ -1079,10 +1102,7 @@ plotExplanatoryVariables <- function(object, method = "density",
     exprs_mat <- get_exprs(object, exprs_values)
     if ( is.null(exprs_mat) )
         stop("The supplied 'exprs_values' argument not found in assayData(object). Try 'exprs' or similar.")
-    ## exit if any features have zero variance as this causes problem downstream
-    if ( any(matrixStats::rowVars(exprs_mat) == 0) )
-        stop("Some features have zero variance. Please filter out features with zero variance (e.g. all zeros).")
-    
+
     ## Check that variables are defined
     if ( is.null(variables) ) {
         variables_to_plot <- varLabels(object)
@@ -1097,19 +1117,18 @@ plotExplanatoryVariables <- function(object, method = "density",
             }
         }
     }
-    variables_all <- varLabels(object)
 
     ## Initialise matrix to store R^2 values for each feature for each variable
-    rsquared_mat <- matrix(NA, nrow = nrow(object),
-                           ncol = length(variables_all))
-    val_to_plot_mat <- matrix(NA, nrow = ncol(object),
-                              ncol = length(variables_all))
-    colnames(rsquared_mat) <- colnames(val_to_plot_mat) <- variables_all
+    rsquared_mat <- matrix(NA_real_, nrow = nrow(object),
+                           ncol = length(variables_to_plot))
+    val_to_plot_mat <- matrix(NA_real_, nrow = ncol(object),
+                              ncol = length(variables_to_plot))
+    colnames(rsquared_mat) <- colnames(val_to_plot_mat) <- variables_to_plot
     rownames(rsquared_mat) <- rownames(object)
     rownames(val_to_plot_mat) <- colnames(object)
 
     ## Get R^2 values for each feature and each variable
-    for (var in variables_all) {
+    for (var in variables_to_plot) {
         if ( var %in% variables_to_plot ) {
             if (length(unique(pData(object)[, var])) <= 1) {
                 message(paste("The variable", var, "only has one unique value, so R^2 is not meaningful.
@@ -1128,18 +1147,16 @@ This variable will not be plotted."))
                     val_to_plot_mat[, var] <- x
                 }
                 design <- model.matrix(~x)
-                rsquared_mat[, var] <- .getRSquared(exprs_mat, design)
+                rsquared_mat[, var] <- .getRSquared(exprs_mat, design, chunk=500)
 #                 rsq_base <- apply(exprs_mat, 1, function(y) {
 #                     lm.first <- lm(y ~ -1 + design); summary(lm.first)$r.squared})
 #                 all(abs(rsq_base - rsquared_mat[, var]) < 0.000000000001)
             }
-        } else {
-            rsquared_mat[, var] <- NA
         }
     }
 
     ## Get median R^2 for each variable, add to labels and order by median R^2
-    median_rsquared <- apply(rsquared_mat, 2, median)
+    median_rsquared <- apply(rsquared_mat, 2, median, na.rm=TRUE)
     oo_median <- order(median_rsquared, decreasing = TRUE)
     nvars_to_plot <- min(sum(median_rsquared > min_marginal_r2, na.rm = TRUE),
                          nvars_to_plot)

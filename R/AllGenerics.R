@@ -404,3 +404,10 @@ setGeneric("magic", function(object, ...) standardGeneric("magic"))
 setGeneric("plotRLE", function(object, ...) {
     standardGeneric("plotRLE")
 })
+
+#' @name calcAverage 
+#' @export
+#' @docType methods
+#' @rdname calcAverage
+setGeneric("calcAverage", function(object, ...) standardGeneric("calcAverage"))
+
