@@ -1000,7 +1000,7 @@ setMethod("plotTSNE", signature("SCESet"),
 #' return_SCESet = TRUE)
 #'
 #'
-plotDiffusionMapSCESet <- function(object, ntop = 500, ncomponents = 2,
+plotDiffusionMapSCESet <- function(object, ntop = 500, ncomponents = 2, use_dimred=FALSE,
                                    exprs_values = "exprs", colour_by = NULL,
                                    shape_by = NULL, size_by = NULL,
                                    feature_set = NULL, return_SCESet = FALSE,
@@ -1037,35 +1037,43 @@ plotDiffusionMapSCESet <- function(object, ntop = 500, ncomponents = 2,
             stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
     }
 
-    ## Define an expression matrix depending on which values we're
-    ## using
-    exprs_mat <- get_exprs(object, exprs_values, warning = FALSE)
-    if ( is.null(exprs_mat) ) 
-        stop(sprintf("object does not contain '%s'", exprs_values))
-
-    ## Define features to use: either ntop, or if a set of features is
-    ## defined, then those
-    if ( is.null(feature_set) ) {
-        rv <- matrixStats::rowVars(exprs_mat)
-        feature_set <-
-            order(rv, decreasing = TRUE)[seq_len(min(ntop, length(rv)))]
+    if (use_dimred) { 
+        ## Use existing dimensionality reduction results.
+        vals_to_plot <- reducedDimension(sce)
+        if (!length(vals_to_plot)) {
+            stop("'reducedDimension(sce)' cannot be empty with 'use_dimred=TRUE'")
+        }
+    } else {  
+        ## Define an expression matrix depending on which values we're
+        ## using
+        exprs_mat <- get_exprs(object, exprs_values, warning = FALSE)
+        if ( is.null(exprs_mat) ) 
+            stop(sprintf("object does not contain '%s'", exprs_values))
+    
+        ## Define features to use: either ntop, or if a set of features is
+        ## defined, then those
+        if ( is.null(feature_set) ) {
+            rv <- matrixStats::rowVars(exprs_mat)
+            feature_set <-
+                order(rv, decreasing = TRUE)[seq_len(min(ntop, length(rv)))]
+        }
+    
+        ## Drop any features with zero variance
+        vals_to_plot <- exprs_mat
+        vals_to_plot <- vals_to_plot[feature_set,,drop=FALSE]
+        keep_feature <- (matrixStats::rowVars(vals_to_plot) > 0.001)
+        keep_feature[is.na(keep_feature)] <- FALSE
+        vals_to_plot <- vals_to_plot[keep_feature,,drop=FALSE]
+    
+        ## Standardise expression if indicated by scale_features argument
+        vals_to_plot <- scale(t(vals_to_plot), scale = scale_features)
     }
-
-    ## Drop any features with zero variance
-    exprs_to_plot <- exprs_mat
-    exprs_to_plot <- exprs_to_plot[feature_set,]
-    keep_feature <- (matrixStats::rowVars(exprs_to_plot) > 0.001)
-    keep_feature[is.na(keep_feature)] <- FALSE
-    exprs_to_plot <- exprs_to_plot[keep_feature, ]
-
-    ## Standardise expression if indicated by scale_features argument
-    exprs_to_plot <- t(scale(t(exprs_to_plot), scale = scale_features))
 
     ## Compute DiffusionMap
     if ( !is.null(rand_seed) )
         set.seed(rand_seed)
     difmap_out <- destiny::DiffusionMap(
-        t(exprs_to_plot), sigma = sigma, distance = distance, ...)
+        vals_to_plot, sigma = sigma, distance = distance, ...)
 
 
     ## Define data.frame for plotting
