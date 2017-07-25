@@ -274,8 +274,13 @@ normalize.SCESet <- function(object, exprs_values = "counts",
     }
 
     ## using logExprsOffset=1 if argument is NULL
-    if ( is.null(log_exprs_offset) )
-        log_exprs_offset <- 1
+    if ( is.null(log_exprs_offset)) {
+        if (!is.null(metadata(object)$log.exprs.offset)) {
+            log_exprs_offset <- metadata(object)$log.exprs.offset
+        } else {
+            log_exprs_offset <- 1
+        }
+    }
 
     ## Compute normalized expression values.
     norm_exprs <- .compute_exprs(exprs_mat, sf.list$size.factors, sf_to_use = sf.list$index, 
@@ -284,7 +289,7 @@ normalize.SCESet <- function(object, exprs_values = "counts",
 
     ## add normalised values to object
     assay(object, "exprs") <- norm_exprs
-    metadata(object)$normalize_log.exprs.offset <- log_exprs_offset
+    metadata(object)$log.exprs.offset <- log_exprs_offset
 
     ## centering all existing size factors if requested
     if (exprs_values=="counts" && centre_size_factors) {
