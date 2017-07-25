@@ -305,9 +305,9 @@ calculateFPKM <- function(object, effective_length, use.size.factors=TRUE) {
 #' ## calculate average counts
 #' ave_counts <- calcAverage(example_sceset)
 #'
-setMethod("calcAverage", "SCESet", function(object) {
+setMethod("calcAverage", "SingleCellExperiment", function(object) {
     sf.list <- .get_all_sf_sets(object)
-    .calcAverage(counts(object), sf.list)
+    .calcAverage(assay(object, i="counts"), sf.list)
 })
           
 setMethod("calcAverage", "ANY", function(object, size.factors=NULL) {

@@ -367,30 +367,6 @@ setGeneric("filter", function(object, ...) {
 setGeneric("arrange", function(object, ...) {
   standardGeneric("arrange")})
 
-#' @name spikes
-#' @rdname spikes
-#' @docType methods
-#' @export
-setGeneric("spikes", function(object, ...) standardGeneric("spikes"))
-
-#' @name isSpike
-#' @rdname isSpike
-#' @docType methods
-#' @export
-setGeneric("isSpike", function(object, ...) standardGeneric("isSpike"))
-
-#' @name setSpike
-#' @rdname setSpike
-#' @docType methods
-#' @export
-setGeneric("setSpike<-", function(object, value) standardGeneric("setSpike<-"))
-
-#' @name whichSpike
-#' @rdname whichSpike
-#' @docType methods
-#' @export
-setGeneric("whichSpike", function(object) standardGeneric("whichSpike")) 
-
 # #' @name magic
 # #' @rdname magic
 # #' @docType methods

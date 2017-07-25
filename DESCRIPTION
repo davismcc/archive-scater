@@ -17,7 +17,7 @@ Title: Single-cell analysis toolkit for gene expression data in R
 Description: A collection of tools for doing various analyses of
         single-cell RNA-seq gene expression data, with a focus on
         quality control.
-Depends: R (>= 3.3), Biobase, ggplot2, methods
+Depends: R (>= 3.3), Biobase, ggplot2, methods, SingleCellExperiment
 Imports: biomaRt, BiocGenerics, data.table, dplyr, edgeR, ggbeeswarm, grid, limma,
         Matrix, matrixStats, parallel, plyr, reshape2, rhdf5, rjson, shiny,
         shinydashboard, stats, tximport, utils, viridis, Rcpp
