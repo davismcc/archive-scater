@@ -23,35 +23,24 @@
     return(unname(subset))
 }
 
-.fcontrol_names <- function(object){  
-    ## Gets names of all feature control sets.
-    object@featureControlInfo$name
-}
-
-.spike_fcontrol_names <- function(object) {
-    ## Gets names of feature control sets that are spike-ins.
-    spike.sets <- featureControlInfo(object)$spike
-    .fcontrol_names(object)[spike.sets]
-}
-
 .get_all_sf_sets <- function(object) {
-    fcontrols <- .fcontrol_names(object)
+    fcontrols <- spikeNames(object)
     
     # Storing the default size factors.
     sf.list <- vector("list", length(fcontrols)+1)
-    sf.list[[1]] <- suppressWarnings(sizeFactors(object))
+    sf.list[[1]] <- sizeFactors(object)
     to.use <- rep(1L, nrow(object))
 
     # Filling up the controls.
     counter <- 1L
     okay <- character(length(fcontrols))
     for (fc in fcontrols) {
-        specific_sf <- suppressWarnings(sizeFactors(object, type=fc))
+        specific_sf <- sizeFactors(object, type=fc)
         if (!is.null(specific_sf)) {
             okay[counter] <- fc
             counter <- counter+1L
-            which.current <- fData(object)[[paste0("is_feature_control_", fc)]]
-            to.use[which.current] <- counter
+            which.current <- isSpike(object, type=fc)
+            to.use[which.current] <- counter # after increment, as 1 is the NULL sizeFactors.
             sf.list[[counter]] <- specific_sf
         }
     }
@@ -86,8 +75,8 @@
     
     ## computes normalized expression values.
     .Call(cxx_calc_exprs, exprs_mat, size_factors, sf_to_use,
-                 as.double(logExprsOffset), as.logical(log),
-                 as.logical(sum), subset_row - 1L)
+          as.double(logExprsOffset), as.logical(log),
+          as.logical(sum), subset_row - 1L)
 }
 
 ## contains the hierarchy of expression values.

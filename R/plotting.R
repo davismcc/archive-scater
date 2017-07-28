@@ -105,23 +105,23 @@
         ## checking if it refers to a field in pData/fData.
         vals <- NULL
         if (check_pdata) {
-            if (by %in% varLabels(x)) {
-                vals <- x[[by]]
+            if (by %in% colnames(colData(x))) {
+                vals <- colData(x)[[by]]
             } 
-            unfound <- "colnames(pData(x))"
+            unfound <- "colnames(colData(x))"
         } else {
-            if (by %in% Biobase::fvarLabels(x)) {
-                vals <- fData(x)[[by]]
+            if (by %in% colnames(rowData(x))) { 
+                vals <- rowData(x)[[by]]
             }
-            unfound <- "colnames(fData(x))"
+            unfound <- "colnames(rowData(x))"
         }
 
         ## checking if it refers to a feature
         if (check_features) {
-            if (is.null(vals) && by %in% featureNames(x)) { 
-                vals <- get_exprs(x, exprs_values)[by,]
+            if (is.null(vals) && by %in% rownames(x)) { 
+                vals <- assay(x, i=exprs_values)[by,]
             } 
-            unfound <- append(unfound, "featureNames(x)")
+            unfound <- append(unfound, "rownames(x)")
         }
 
         ## throwing an error if still unfound
@@ -147,9 +147,9 @@
 
         ##  Switching to cell controls if desired.
         if (cell_control_default) {
-            if ( "is_cell_control" %in% varLabels(x) ) {
+            if ( "is_cell_control" %in% colnames(colData(x)) ) {
                 by <- "is_cell_control"
-                vals <- x[[by]]
+                vals <- colData(x)[[by]]
             }
         }
     }
@@ -352,6 +352,85 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 
 ################################################################################
 
+runPCA <- function(object, ntop=500, ncomponents=2, exprs_values = "exprs", 
+       feature_set = NULL, scale_features = TRUE, pca_data_input = "exprs",
+       selected_variables = NULL, detect_outliers = FALSE) {
+    
+    exprs_mat <- assay(object, i=exprs_values)
+
+    # Choosing a set of features, if null.
+    if (is.null(feature_set)) {
+        rv <- matrixStats::rowVars(exprs_mat)
+        o <- order(rv, decreasing=TRUE)
+        feature_set <- o[seq_len(min(ntop, length(rv)))]
+    }
+
+    if ( pca_data_input == "pdata" ) {
+        #use_variable <- sapply(pData(object), is.double)
+        ## select pData features to use
+        if ( is.null(selected_variables) ) {
+            selected_variables <- c("pct_counts_top_100_features",
+                                    "total_features",
+                                    "pct_counts_feature_controls",
+                                    "n_detected_feature_controls",
+                                    "log10_counts_endogenous_features",
+                                    "log10_counts_feature_controls")
+        }
+        use_variable <- varLabels(object) %in% selected_variables
+        vars_not_found <- !(selected_variables %in% varLabels(object))
+        if ( any(vars_not_found) ) {
+            message(paste("The following selected_variables were not found in pData(object):", selected_variables[vars_not_found]))
+            message("Other variables from pData(object) can be used by specifying a vector of variable names as the selected_variables argument.")
+            message("PCA is being conducted using the following variables:", 
+                    selected_variables[!vars_not_found])
+        }
+        ## scale double variables
+        exprs_to_plot <- scale(colData(object)[, use_variable],
+                               scale = scale_features)
+    } else {
+        # Subsetting to the desired features (do NOT move below 'scale()')
+        exprs_to_plot <- exprs_mat[feature_set,, drop = FALSE]
+        ## Standardise expression if scale_features argument is TRUE
+        exprs_to_plot <- scale(t(exprs_to_plot), scale = scale_features)
+    }
+
+    ## Drop any features with zero variance
+    keep_feature <- (matrixStats::colVars(exprs_to_plot) > 0.001)
+    keep_feature[is.na(keep_feature)] <- FALSE
+    exprs_to_plot <- exprs_to_plot[, keep_feature]
+
+    ## conduct outlier detection
+    if ( detect_outliers ) {
+        if ( requireNamespace("mvoutlier", quietly = TRUE) ) {
+            if ( !(pca_data_input == "pdata") ) {
+                warning("outlier detection will only be done if pca_data_input
+                        argument is 'pdata' (operating on QC metrics)")
+            } else {
+                outliers <- mvoutlier::pcout(exprs_to_plot, makeplot = FALSE,
+                                             explvar = 0.5, crit.M1 = 0.9,
+                                             crit.c1 = 5, crit.M2 = 0.9,
+                                             crit.c2 = 0.99, cs = 0.25,
+                                             outbound = 0.05)
+                outlier <- !as.logical(outliers$wfinal01)
+                object$outlier <- outlier
+            }
+        } else {
+            warning("The package mvoutlier must be installed to do outlier
+                    detection")
+        }
+    }
+
+    ## Compute PCA
+    pca <- prcomp(exprs_to_plot, rank.=ncomponents)
+    percentVar <- pca$sdev ^ 2 / sum(pca$sdev ^ 2)
+    pcs <- pca$x
+    attr(pcs, "percentVar") <- percentVar
+
+    # Saving the stuff in the object.
+    reducedDim(object, "PCA") <- pcs
+    return(object)
+}
+
 #' Plot PCA for an SCESet object
 #'
 #' Produce a principal components analysis (PCA) plot of two or more principal
@@ -473,13 +552,16 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' plotPCA(example_sceset, ncomponents = 4, colour_by = "Treatment",
 #' shape_by = "Mutation_Status")
 #'
-plotPCASCESet <- function(object, ntop=500, ncomponents=2,
-                          exprs_values = "exprs", colour_by = NULL,
-                          shape_by = NULL, size_by = NULL, feature_set = NULL,
-                          return_SCESet = FALSE, scale_features = TRUE,
-                          draw_plot = TRUE, pca_data_input = "exprs",
-                          selected_variables = NULL, detect_outliers = FALSE,
-                          theme_size = 10, legend = "auto") {
+plotPCASCESet <- function(object, colour_by = NULL, shape_by = NULL, size_by = NULL, 
+                          return_SCESet = FALSE, draw_plot = TRUE, theme_size = 10, legend = "auto",
+                          rerun = FALSE, ncomponents=2, ...) {
+    ## Running PCA if necessary.
+    if (!"PCA" %in% names(reducedDims(object)) || rerun) {
+        object <- runPCA(object, ncomponents=ncomponents, ...)
+    }
+    pc.out <- reducedDim(object, "PCA")
+    percentVar <- attr(pc.out, "percentVar")
+
     ## check legend argument
     legend <- match.arg(legend, c("auto", "none", "all"))
 
@@ -498,145 +580,33 @@ plotPCASCESet <- function(object, ntop=500, ncomponents=2,
     size_by <- size_by_out$name
     size_by_vals <- size_by_out$val 
 
-    if ( is.character(feature_set) ) {
-        if ( !(all(feature_set %in% featureNames(object))) )
-            stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
-    }
-
-    ## Define an expression matrix depending on which values we're using
-#     exprs_values <- match.arg(
-#         exprs_values, c("exprs", "tpm", "fpkm", "counts", "cpm", "norm_exprs",
-#                         "stand_exprs"))
-    exprs_mat <- get_exprs(object, exprs_values, warning=FALSE)
-    if ( is.null(exprs_mat) ) 
-        stop(sprintf("object does not contain '%s'", exprs_values))
-
-    ## Define features to use: either ntop, or if a set of features is defined,
-    ## then those
-    if ( is.null(feature_set) ) {
-        rv <- matrixStats::rowVars(exprs_mat)
-        feature_set <-
-            order(rv, decreasing = TRUE)[seq_len(min(ntop, length(rv)))]
-    }
-
-    if ( pca_data_input == "pdata" ) {
-        #use_variable <- sapply(pData(object), is.double)
-        ## select pData features to use
-        if ( is.null(selected_variables) ) {
-            selected_variables <- c("pct_counts_top_100_features",
-                                    "total_features",
-                                    "pct_counts_feature_controls",
-                                    "n_detected_feature_controls",
-                                    "log10_counts_endogenous_features",
-                                    "log10_counts_feature_controls")
-        }
-        use_variable <- varLabels(object) %in% selected_variables
-        vars_not_found <- !(selected_variables %in% varLabels(object))
-        if ( any(vars_not_found) ) {
-            message(paste("The following selected_variables were not found in pData(object):", selected_variables[vars_not_found]))
-            message("Other variables from pData(object) can be used by specifying a vector of variable names as the selected_variables argument.")
-            message("PCA is being conducted using the following variables:", 
-                    selected_variables[!vars_not_found])
-        }
-        ## scale double variables
-        exprs_to_plot <- scale(pData(object)[, use_variable],
-                               scale = scale_features)
-    } else if ( pca_data_input == "fdata" ) {
-        use_variable <- sapply(fData(object), is.double)
-        ## scale double variables
-        exprs_to_plot <- scale(fData(object)[, use_variable],
-                               scale = scale_features)
-    } else {
-        # Subsetting to the desired features (do NOT move below 'scale()')
-        exprs_to_plot <- exprs_mat[feature_set,, drop = FALSE]
-        ## Standardise expression if scale_features argument is TRUE
-        exprs_to_plot <- scale(t(exprs_to_plot), scale = scale_features)
-    }
-
-    ## Drop any features with zero variance
-    keep_feature <- (matrixStats::colVars(exprs_to_plot) > 0.001)
-    keep_feature[is.na(keep_feature)] <- FALSE
-    exprs_to_plot <- exprs_to_plot[, keep_feature]
-
-    ## Compute PCA
-    pca <- prcomp(exprs_to_plot)
-    percentVar <- pca$sdev ^ 2 / sum(pca$sdev ^ 2)
-
     ## Define data.frame for plotting
-    if ( pca_data_input == "fdata") { 
-        df_to_plot <- data.frame(pca$x[, 1:ncomponents],
-                                 row.names = featureNames(object))
-    } else {
-        df_to_plot <- data.frame(pca$x[, 1:ncomponents],
-                                 row.names = sampleNames(object))
-        df_to_plot$colour_by <- colour_by_vals
-        df_to_plot$shape_by <- shape_by_vals
-        df_to_plot$size_by <- size_by_vals
-    }
-
-    ## conduct outlier detection
-    if ( detect_outliers ) {
-        if ( requireNamespace("mvoutlier", quietly = TRUE) ) {
-            if ( !(pca_data_input == "pdata") ) {
-                warning("outlier detection will only be done if pca_data_input
-                        argument is 'pdata' (operating on QC metrics)")
-            } else {
-                outliers <- mvoutlier::pcout(exprs_to_plot, makeplot = FALSE,
-                                             explvar = 0.5, crit.M1 = 0.9,
-                                             crit.c1 = 5, crit.M2 = 0.9,
-                                             crit.c2 = 0.99, cs = 0.25,
-                                             outbound = 0.05)
-                outlier <- !as.logical(outliers$wfinal01)
-                object$outlier <- outlier
-                df_to_plot$colour_by <- outlier
-                colour_by <- "outlier"
-                cat("The following cells/samples are detected as outliers:\n")
-                cat(paste(sampleNames(object)[outlier], collapse = "\n"))
-                cat("\nVariables with highest loadings for PC1 and PC2:")
-                oo <- order(pca$rotation[, 1], decreasing = TRUE)
-                if ( requireNamespace("knitr", quietly = TRUE))
-                    print(knitr::kable(pca$rotation[oo, 1:2]))
-                else
-                    print(pca$rotation[oo, 1:2])
-            }
-        } else {
-            warning("The package mvoutlier must be installed to do outlier
-                    detection")
-        }
-    }
+    df_to_plot <- data.frame(pc.out[,seq_len(ncomponents),drop=FALSE],
+                             row.names = colnames(object))
+    df_to_plot$colour_by <- colour_by_vals
+    df_to_plot$shape_by <- shape_by_vals
+    df_to_plot$size_by <- size_by_vals
 
     ## Make reduced-dimension plot
-    if ( pca_data_input == "fdata" )
-        plot_out <- plotReducedDim.default(df_to_plot, ncomponents,
-                                           percentVar = percentVar,
-                                           legend = legend)
-    else
-        plot_out <- plotReducedDim.default(df_to_plot, ncomponents, colour_by,
-                                           shape_by, size_by, percentVar,
-                                           legend = legend)
+    plot_out <- plotReducedDim.default(df_to_plot, ncomponents, colour_by,
+            shape_by, size_by, percentVar, legend = legend)
 
     ## Define plotting theme
     if ( requireNamespace("cowplot", quietly = TRUE) )
         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
     else
         plot_out <- plot_out + theme_bw(theme_size)
+
     ## remove legend if so desired
     if ( legend == "none" )
         plot_out <- plot_out + theme(legend.position = "none")
 
     ## Plot PCA and return appropriate object
     if (return_SCESet) {
-        ncomp_out <- max(ncomponents, 10)
-        ncomp_out <- min(ncomp_out, ncol(pca$x))
-        df_out <- pca$x[, 1:ncomp_out]
-        rownames(df_out) <- sampleNames(object)
-        attr(df_out, "percentVar") <- percentVar[1:ncomp_out]
-        reducedDimension(object) <- df_out
         if ( draw_plot )
             print(plot_out)
         return(object)
     } else {
-        ## Return PCA plot
         return(plot_out)
     }
 }
@@ -688,6 +658,62 @@ setMethod("plotPCA", signature("SCESet"),
 
 ################################################################################
 ### plotTSNE
+
+runTSNE <- function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
+        feature_set = NULL, use_dimred=NULL, n_dimred=NULL, scale_features = TRUE, 
+        rand_seed = NULL, perplexity = floor(ncol(object) / 5), ...) {
+
+    if ( !requireNamespace("Rtsne", quietly = TRUE) )
+        stop("This function requires the 'Rtsne' package.
+             Try: install.packages('Rtsne').")
+
+    if (!is.null(use_dimred)) {
+        ## Use existing dimensionality reduction results (turning off PCA)
+        dr <- reducedDim(object, use_dimred)
+        if (!is.null(n_dimred)) {
+            dr <- dr[,seq_len(n_dimred),drop=FALSE]
+        }
+        if (!length(pcs)) {
+            stop("'reducedDimension(sce)' cannot be empty with 'use_dimred=TRUE'")
+        }
+        exprs_to_plot <- dr
+        do_pca <- FALSE
+        pca_dims <- ncol(exprs_to_plot)
+
+    } else {
+        ## Define an expression matrix depending on which values we're
+        ## using
+        exprs_mat <- assay(object, i=exprs_values)
+
+        ## Define features to use: either ntop, or if a set of features is
+        ## defined, then those
+        if ( is.null(feature_set) ) {
+            rv <- matrixStats::rowVars(exprs_mat)
+            ntop <- min(ntop, length(rv))
+            feature_set <- order(rv, decreasing = TRUE)[seq_len(ntop)]
+        }
+
+        ## Drop any features with zero variance
+        exprs_to_plot <- exprs_mat[feature_set,,drop=FALSE]
+        keep_feature <- (matrixStats::rowVars(exprs_to_plot) > 0.001)
+        keep_feature[is.na(keep_feature)] <- FALSE
+        exprs_to_plot <- exprs_to_plot[keep_feature,,drop=FALSE]
+
+        ## Standardise expression if stand_exprs(object) is null
+        exprs_to_plot <- scale(t(exprs_to_plot), scale = scale_features)
+        do_pca <- TRUE
+        pca_dims <- max(50, ncol(object))
+    }
+
+    # Actually running the Rtsne step.
+    if ( !is.null(rand_seed) )
+        set.seed(rand_seed)
+    tsne_out <- Rtsne::Rtsne(exprs_to_plot, initial_dims = pca_dims, pca = do_pca,
+                             perplexity = perplexity, dims = ncomponents,...)
+    reducedDim(object, "TSNE") <- tsne_out$Y
+    return(object)
+}
+
 
 #' Plot t-SNE for an SCESet object
 #'
@@ -790,119 +816,116 @@ setMethod("plotPCA", signature("SCESet"),
 #' perplexity = 10)
 #'
 #'
-setMethod("plotTSNE", signature("SCESet"),
-          function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
-                   colour_by = NULL, shape_by = NULL, size_by = NULL,
-                   feature_set = NULL, use_dimred=FALSE, return_SCESet = FALSE,
-                   scale_features = TRUE, draw_plot = TRUE, theme_size = 10,
-                   rand_seed = NULL, perplexity = floor(ncol(object) / 5),
-                   legend = "auto", ...) {
-              ##
-              if ( !requireNamespace("Rtsne", quietly = TRUE) )
-                  stop("This function requires the 'Rtsne' package.
-                       Try: install.packages('Rtsne').")
-              ## check legend argument
-              legend <- match.arg(legend, c("auto", "none", "all"))
+setMethod("plotTSNE", signature("SingleCellExperiment"),
+          function(object, colour_by = NULL, shape_by = NULL, size_by = NULL,
+                   return_SCESet = FALSE, draw_plot = TRUE, 
+                   theme_size = 10, legend = "auto", 
+                   rerun = FALSE, ncomponents=2, ...) {
 
-              ## Check arguments are valid
-              colour_by_out <- .choose_vis_values(object, colour_by, cell_control_default = TRUE,
-                                                  check_features = TRUE, exprs_values = exprs_values)
-              colour_by <- colour_by_out$name
-              colour_by_vals <- colour_by_out$val 
-              
-              shape_by_out <- .choose_vis_values(object, shape_by, cell_control_default = TRUE, 
-                                                 coerce_factor = TRUE, level_limit = 10)
-              shape_by <- shape_by_out$name
-              shape_by_vals <- shape_by_out$val 
-              
-              size_by_out <- .choose_vis_values(object, size_by, check_features = TRUE, exprs_values = exprs_values)
-              size_by <- size_by_out$name
-              size_by_vals <- size_by_out$val 
+    if ( ! "TSNE" %in% names(reducedDims(object)) || rerun) {
+        object <- runTSNE(object, ncomponents=ncomponents, ...)
+    }
+    tsne <- reducedDim(object, "TSNE")
 
-              if ( !is.null(feature_set) && typeof(feature_set) == "character" ) {
-                  if ( !(all(feature_set %in% featureNames(object))) )
-                      stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
-              }
+    ## check legend argument
+    legend <- match.arg(legend, c("auto", "none", "all"))
 
-              if ( !is.null(rand_seed) )
-                  set.seed(rand_seed)
-
-              if (use_dimred) { 
-                  ## Use existing dimensionality reduction results (turning off PCA)
-                  pcs <- reducedDimension(sce)
-                  if (!length(pcs)) {
-                      stop("'reducedDimension(sce)' cannot be empty with 'use_dimred=TRUE'")
-                  }
-                  tsne_out <- Rtsne::Rtsne(pcs, pca = FALSE, 
-                                           perplexity = perplexity,
-                                           dims = ncomponents,...)
-              } else {
-                  ## Define an expression matrix depending on which values we're
-                  ## using
-                  exprs_mat <- get_exprs(object, exprs_values, warning = FALSE)
-                  if ( is.null(exprs_mat) ) 
-                      stop(sprintf("object does not contain '%s'", exprs_values))
+    ## Check arguments are valid
+    colour_by_out <- .choose_vis_values(object, colour_by, cell_control_default = TRUE,
+                                        check_features = TRUE, exprs_values = exprs_values)
+    colour_by <- colour_by_out$name
+    colour_by_vals <- colour_by_out$val 
     
-                  ## Define features to use: either ntop, or if a set of features is
-                  ## defined, then those
-                  if ( is.null(feature_set) ) {
-                      rv <- matrixStats::rowVars(exprs_mat)
-                      ntop <- min(ntop, length(rv))
-                      feature_set <- order(rv, decreasing = TRUE)[seq_len(ntop)]
-                  }
+    shape_by_out <- .choose_vis_values(object, shape_by, cell_control_default = TRUE, 
+                                       coerce_factor = TRUE, level_limit = 10)
+    shape_by <- shape_by_out$name
+    shape_by_vals <- shape_by_out$val 
     
-                  ## Drop any features with zero variance
-                  exprs_to_plot <- exprs_mat[feature_set,,drop=FALSE]
-                  keep_feature <- (matrixStats::rowVars(exprs_to_plot) > 0.001)
-                  keep_feature[is.na(keep_feature)] <- FALSE
-                  exprs_to_plot <- exprs_to_plot[keep_feature,,drop=FALSE]
-    
-                  ## Standardise expression if stand_exprs(object) is null
-                  exprs_to_plot <- t(scale(t(exprs_to_plot), scale = scale_features))
+    size_by_out <- .choose_vis_values(object, size_by, check_features = TRUE, exprs_values = exprs_values)
+    size_by <- size_by_out$name
+    size_by_vals <- size_by_out$val 
 
-                  tsne_out <- Rtsne::Rtsne(t(exprs_to_plot), 
-                                           initial_dims = max(50, ncol(object)),
-                                           perplexity = perplexity,
-                                           dims = ncomponents,...)
-              }
+    ## Define data.frame for plotting
+    df_to_plot <- data.frame(tsne[, seq_len(ncomponents)],
+                             row.names = colnames(object))
+    df_to_plot$colour_by <- colour_by_vals
+    df_to_plot$shape_by <- shape_by_vals
+    df_to_plot$size_by <- size_by_vals
 
-              ## Define data.frame for plotting
-              df_to_plot <- data.frame(tsne_out$Y[, 1:ncomponents],
-                                       row.names = sampleNames(object))
-              df_to_plot$colour_by <- colour_by_vals
-              df_to_plot$shape_by <- shape_by_vals
-              df_to_plot$size_by <- size_by_vals
+    ## Make reduced-dimension plot
+    plot_out <- plotReducedDim.default(df_to_plot, ncomponents,
+                                       colour_by, shape_by, size_by,
+                                       legend = legend)
 
-              ## Make reduced-dimension plot
-              plot_out <- plotReducedDim.default(df_to_plot, ncomponents,
-                                                 colour_by, shape_by, size_by,
-                                                 legend = legend)
+    ## Define plotting theme
+    if ( requireNamespace("cowplot", quietly = TRUE) )
+        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+    else
+        plot_out <- plot_out + theme_bw(theme_size)
+    ## remove legend if so desired
+    if ( legend == "none" )
+        plot_out <- plot_out + theme(legend.position = "none")
 
-              ## Define plotting theme
-              if ( requireNamespace("cowplot", quietly = TRUE) )
-                  plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
-              else
-                  plot_out <- plot_out + theme_bw(theme_size)
-              ## remove legend if so desired
-              if ( legend == "none" )
-                  plot_out <- plot_out + theme(legend.position = "none")
-
-              ## Plot t-SNE and return appropriate object
-              if (return_SCESet) {
-                  df_out <- tsne_out$Y[, 1:ncomponents]
-                  rownames(df_out) <- sampleNames(object)
-                  reducedDimension(object) <- df_out
-                  if ( draw_plot )
-                      print(plot_out)
-                  return(object)
-              } else {
-                  ## Return t-SNE plot
-                  return(plot_out)
-              }
-          })
+    ## Plot t-SNE and return appropriate object
+    if (return_SCESet) {
+        if ( draw_plot )
+            print(plot_out)
+        return(object)
+    } else {
+        ## Return t-SNE plot
+        return(plot_out)
+    }
+})
 
 ################################################################################
 ### plotDiffusionMap
+
+runDiffusionMap <- function(object, ntop = 500, ncomponents = 2, feature_set = NULL, 
+        exprs_values = "exprs", scale_features = TRUE, use_dimred=NULL, 
+        rand_seed = NULL, sigma = NULL, distance = "euclidean", ...) {
+
+    if ( !requireNamespace("destiny", quietly = TRUE) )
+        stop("This function requires the 'destiny' package.
+                       Try from Bioconductor with:
+                       source('https://bioconductor.org/biocLite.R')
+                       biocLite('destiny').")
+
+    if (!is.null(use_dimred)) { 
+        ## Use existing dimensionality reduction results.
+        vals_to_plot <- reducedDim(object, use_dimred)
+    } else {  
+        ## Define an expression matrix depending on which values we're
+        ## using
+        exprs_mat <- assay(object, i=exprs_values)
+    
+        ## Define features to use: either ntop, or if a set of features is
+        ## defined, then those
+        if ( is.null(feature_set) ) {
+            rv <- matrixStats::rowVars(exprs_mat)
+            feature_set <-
+                order(rv, decreasing = TRUE)[seq_len(min(ntop, length(rv)))]
+        }
+    
+        ## Drop any features with zero variance
+        vals_to_plot <- exprs_mat
+        vals_to_plot <- vals_to_plot[feature_set,,drop=FALSE]
+        keep_feature <- (matrixStats::rowVars(vals_to_plot) > 0.001)
+        keep_feature[is.na(keep_feature)] <- FALSE
+        vals_to_plot <- vals_to_plot[keep_feature,,drop=FALSE]
+    
+        ## Standardise expression if indicated by scale_features argument
+        vals_to_plot <- scale(t(vals_to_plot), scale = scale_features)
+    }
+
+    ## Compute DiffusionMap
+    if ( !is.null(rand_seed) )
+        set.seed(rand_seed)
+    difmap_out <- destiny::DiffusionMap(
+        vals_to_plot, sigma = sigma, distance = distance, ...)
+
+    reducedDim(object, "DiffusionMap") <- difmap_out@eigenvectors[, seq_len(ncomponents), drop=FALSE]
+    return(object)
+}
 
 #' Plot a diffusion map for an SCESet object
 #'
@@ -1000,20 +1023,15 @@ setMethod("plotTSNE", signature("SCESet"),
 #' return_SCESet = TRUE)
 #'
 #'
-plotDiffusionMapSCESet <- function(object, ntop = 500, ncomponents = 2,
-                                   exprs_values = "exprs", colour_by = NULL,
-                                   shape_by = NULL, size_by = NULL,
-                                   feature_set = NULL, return_SCESet = FALSE,
-                                   scale_features = TRUE, draw_plot = TRUE,
-                                   theme_size = 10, rand_seed = NULL,
-                                   sigma = NULL, distance = "euclidean",
-                                   legend = "auto", ...) {
-    ##
-    if ( !requireNamespace("destiny", quietly = TRUE) )
-        stop("This function requires the 'destiny' package.
-                       Try from Bioconductor with:
-                       source('https://bioconductor.org/biocLite.R')
-                       biocLite('destiny').")
+plotDiffusionMapSCESet <- function(object, colour_by = NULL, shape_by = NULL, size_by = NULL,
+      return_SCESet = FALSE, draw_plot = TRUE, theme_size = 10, legend = "auto", 
+      rerun=FALSE, ncomponents=2, ...) {
+
+    if ( ! "DiffusionMap" %in% names(reducedDims(object)) || rerun) {
+        object <- runDiffusionMap(object, ncomponents=ncomponents, ...)
+    }
+    dm <- reducedDim(object, "DiffusionMap")
+
     ## check legend argument
     legend <- match.arg(legend, c("auto", "none", "all"))
 
@@ -1032,45 +1050,8 @@ plotDiffusionMapSCESet <- function(object, ntop = 500, ncomponents = 2,
     size_by <- size_by_out$name
     size_by_vals <- size_by_out$val 
 
-    if ( !is.null(feature_set) && typeof(feature_set) == "character" ) {
-        if ( !(all(feature_set %in% featureNames(object))) )
-            stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
-    }
-
-    ## Define an expression matrix depending on which values we're
-    ## using
-    exprs_mat <- get_exprs(object, exprs_values, warning = FALSE)
-    if ( is.null(exprs_mat) ) 
-        stop(sprintf("object does not contain '%s'", exprs_values))
-
-    ## Define features to use: either ntop, or if a set of features is
-    ## defined, then those
-    if ( is.null(feature_set) ) {
-        rv <- matrixStats::rowVars(exprs_mat)
-        feature_set <-
-            order(rv, decreasing = TRUE)[seq_len(min(ntop, length(rv)))]
-    }
-
-    ## Drop any features with zero variance
-    exprs_to_plot <- exprs_mat
-    exprs_to_plot <- exprs_to_plot[feature_set,]
-    keep_feature <- (matrixStats::rowVars(exprs_to_plot) > 0.001)
-    keep_feature[is.na(keep_feature)] <- FALSE
-    exprs_to_plot <- exprs_to_plot[keep_feature, ]
-
-    ## Standardise expression if indicated by scale_features argument
-    exprs_to_plot <- t(scale(t(exprs_to_plot), scale = scale_features))
-
-    ## Compute DiffusionMap
-    if ( !is.null(rand_seed) )
-        set.seed(rand_seed)
-    difmap_out <- destiny::DiffusionMap(
-        t(exprs_to_plot), sigma = sigma, distance = distance, ...)
-
-
     ## Define data.frame for plotting
-    df_to_plot <- data.frame(difmap_out@eigenvectors[, 1:ncomponents],
-                             row.names = sampleNames(object))
+    df_to_plot <- data.frame(dm[,seq_len(ncomponents),drop=FALSE], row.names = colnames(object))
     df_to_plot$colour_by <- colour_by_vals
     df_to_plot$shape_by <- shape_by_vals
     df_to_plot$size_by <- size_by_vals
@@ -1091,9 +1072,6 @@ plotDiffusionMapSCESet <- function(object, ntop = 500, ncomponents = 2,
 
     ## Plot PCA and return appropriate object
     if (return_SCESet) {
-        df_out <- difmap_out@eigenvectors[, 1:ncomponents]
-        rownames(df_out) <- sampleNames(object)
-        reducedDimension(object) <- df_out
         if ( draw_plot )
             print(plot_out)
         return(object)
