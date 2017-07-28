@@ -98,8 +98,8 @@ test_that("failure is as expected for input with zero-variance features", {
     pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
     example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
     exprs(example_sceset)[1:5,] <- 0
-    err_string <- "Some features have zero variance"
-    expect_error(plotExplanatoryVariables(example_sceset, "density"), err_string)
+    expect_that(
+        plotExplanatoryVariables(example_sceset, "density"), is_a("ggplot"))
 })
 
 

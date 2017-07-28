@@ -64,7 +64,7 @@ objects, a matrix of counts and a dataframe with information about the cells we
 are studying:
 
 ```{r quickstart-load-data, message=FALSE, warning=FALSE}
-library(scater, quietly = TRUE)
+suppressPackageStartupMessages(library(scater))
 data("sc_example_counts")
 data("sc_example_cell_info")
 ```

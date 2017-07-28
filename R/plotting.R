@@ -729,6 +729,9 @@ setMethod("plotPCA", signature("SCESet"),
 #' in \code{featureNames(object)}. If numeric, values are taken to be indices for
 #' features. If logical, vector is used to index features and should have length
 #' equal to \code{nrow(object)}.
+#' @param use_dimred logical, use reduced dimension representation of cells 
+#' stored in \code{SCESet} object instead of recomputing? Default is 
+#' \code{FALSE}.
 #' @param return_SCESet logical, should the function return an \code{SCESet}
 #' object with principal component values for cells in the
 #' \code{reducedDimension} slot. Default is \code{FALSE}, in which case a

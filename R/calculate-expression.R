@@ -309,10 +309,15 @@ setMethod("calcAverage", "SCESet", function(object) {
     sf.list <- .get_all_sf_sets(object)
     .calcAverage(counts(object), sf.list)
 })
-          
-setMethod("calcAverage", "ANY", function(object, size.factors=NULL) {
+
+#' @name calcAverage 
+#' @export
+#' @docType methods
+#' @rdname calcAverage  
+setMethod("calcAverage", "ANY", function(object, size.factors = NULL) {
     # Using the lone set of size factors, if provided.
-    sf.list <- list(index=rep(1L, nrow(object)), size.factors=list(size.factors))
+    sf.list <- list(index = rep(1L, nrow(object)), 
+                    size.factors = list(size.factors))
     .calcAverage(object, sf.list)    
 })
           
@@ -324,7 +329,8 @@ setMethod("calcAverage", "ANY", function(object, size.factors=NULL) {
     
     # Computes the average count, adjusting for size factors or library size.
     all.ave <- .compute_exprs(mat, sf.list$size.factors, sf_to_use = sf.list$index, 
-                              log = FALSE, sum = TRUE, logExprsOffset = 0, subset_row = NULL)
+                              log = FALSE, sum = TRUE, logExprsOffset = 0, 
+                              subset_row = NULL)
 
     names(all.ave) <- rownames(mat)
     return(all.ave / ncol(mat))

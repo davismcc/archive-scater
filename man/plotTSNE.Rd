@@ -11,10 +11,10 @@ plotTSNE(object, ...)
 
 \S4method{plotTSNE}{SCESet}(object, ntop = 500, ncomponents = 2,
   exprs_values = "exprs", colour_by = NULL, shape_by = NULL,
-  size_by = NULL, feature_set = NULL, return_SCESet = FALSE,
-  scale_features = TRUE, draw_plot = TRUE, theme_size = 10,
-  rand_seed = NULL, perplexity = floor(ncol(object)/5), legend = "auto",
-  ...)
+  size_by = NULL, feature_set = NULL, use_dimred = FALSE,
+  return_SCESet = FALSE, scale_features = TRUE, draw_plot = TRUE,
+  theme_size = 10, rand_seed = NULL, perplexity = floor(ncol(object)/5),
+  legend = "auto", ...)
 }
 \arguments{
 \item{object}{an \code{SCESet} object}
@@ -61,6 +61,10 @@ features to use for the t-SNE calculation. If character, entries must all be
 in \code{featureNames(object)}. If numeric, values are taken to be indices for
 features. If logical, vector is used to index features and should have length
 equal to \code{nrow(object)}.}
+
+\item{use_dimred}{logical, use reduced dimension representation of cells 
+stored in \code{SCESet} object instead of recomputing? Default is 
+\code{FALSE}.}
 
 \item{return_SCESet}{logical, should the function return an \code{SCESet}
 object with principal component values for cells in the
