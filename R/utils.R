@@ -16,9 +16,13 @@
         names(dummy) <- colnames(target)
     }
 
-    subset <- dummy[subset]
-    if (any(is.na(subset))) {
-        stop("invalid subset indices specified")
+    if (!is.null(subset)) {
+        subset <- dummy[subset]
+        if (any(is.na(subset))) {
+            stop("invalid subset indices specified")
+        }
+    } else {
+        subset <- dummy
     }
     return(unname(subset))
 }
@@ -67,11 +71,7 @@
     }
 
     ## Specify the rows to be subsetted.
-    if (is.null(subset_row)) {
-        subset_row <- seq_len(nrow(exprs_mat))
-    } else {
-        subset_row <- .subset2index(subset_row, exprs_mat)
-    }
+    subset_row <- .subset2index(subset_row, exprs_mat)
     
     ## computes normalized expression values.
     .Call(cxx_calc_exprs, exprs_mat, size_factors, sf_to_use,

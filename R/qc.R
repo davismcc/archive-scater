@@ -289,15 +289,15 @@ calculateQCMetrics <- function(object, exprs_values="counts",
         subset_type <- paste0("_", subset_type)
     }
 
-    is_exprs <- exprs_mat > 0
-    storage.mode(is_exprs) <- "integer"
-    nfeatures <- matrixStats::colSums2(is_exprs, rows=subset_row)
+    margin.stats <- .Call(cxx_margin_summary, exprs_mat, 0, 
+            .subset2index(subset_row, target=exprs_mat, byrow=TRUE)-1L, FALSE)
+    nfeatures <- margin.stats[[2]]
     rd <- DataFrame(nfeatures, log10(nfeatures + 1), row.names=colnames(exprs_mat))
     colnames(rd) <- paste0(c("log10_total", "total"), subset_type, "_features")
 
     if (linear) {
         ## Adding the total sum.
-        libsize <- matrixStats::colSums2(exprs_mat, rows=subset_row)
+        libsize <- margin.stats[[1]]
         rd[[paste0("total_", exprs_type, subset_type)]] <- libsize
         rd[[paste0("log10_total_", exprs_type, subset_type)]] <- log10(libsize + 1)
 
@@ -356,18 +356,18 @@ calculateQCMetrics <- function(object, exprs_values="counts",
         total.cells <- length(subset_col)
     }
 
-    ave <- matrixStats::rowMeans2(exprs_mat, cols=subset_col)
+    margin.stats <- .Call(cxx_margin_summary, exprs_mat, 0, 
+            .subset2index(subset_col, target=exprs_mat, byrow=FALSE)-1L, TRUE)
+    ave <- margin.stats[[1]]/total.cells
     fd <- DataFrame(ave, log10(ave+1), rank(ave), row.names=rownames(exprs_mat))
     colnames(fd) <- paste0(c("mean", "log10_mean", "rank"), "_", exprs_type, subset_type)
 
-    is_exprs <- exprs_mat > 0
-    storage.mode(is_exprs) <- "integer"
-    ncells.exprs <- matrixStats::rowSums2(is_exprs, col=subset_col)
+    ncells.exprs <- margin.stats[[2]]
     fd[[paste0("n_cells_", exprs_type, subset_type)]] <- ncells.exprs
     fd[[paste0("pct_dropout_", exprs_type, subset_type)]] <- 100 * (1 - ncells.exprs/total.cells)
 
     if (linear) {
-        sum_exprs <- ave * total.cells
+        sum_exprs <- margin.stats[[1]]
         total_exprs <- rowSums(exprs_mat)
         fd[[paste0("total_", exprs_type, subset_type)]] <- sum_exprs
         fd[[paste0("log10_total_", exprs_type, subset_type)]] <- log10(sum_exprs)
