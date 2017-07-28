@@ -248,20 +248,12 @@ normalizeExprs <- function(...) {
 #' ## normalize the object using the saved size factors
 #' example_sceset <- normalize(example_sceset)
 #'
-normalize.SCESet <- function(object, exprs_values = NULL,
-                             logExprsOffset = NULL,
+normalize.SCESet <- function(object, exprs_values = "counts",
+                             log_exprs_offset = NULL,
                              centre_size_factors = TRUE,
                              return_norm_as_exprs = TRUE) {
-    if ( !is(object, "SCESet") )
-        stop("'object' must be an SCESet")
 
-    ## Define expression values to be used
-    exprs_values <- .exprs_hunter(object, exprs_values)
-    if (exprs_values=="exprs") {
-        stop("cannot compute normalized values from 'exprs'")
-    }
-    exprs_mat <- get_exprs(object, exprs_values, warning=FALSE)
-
+    exprs_mat <- assay(object, i=exprs_values)
     if (exprs_values=="counts") {
         sf.list <- .get_all_sf_sets(object)
         if (is.null(sf.list$size.factors[[1]])) {
@@ -270,7 +262,7 @@ normalize.SCESet <- function(object, exprs_values = NULL,
         }
 
         ## figuring out how many controls have their own size factors
-        spike.names <- .spike_fcontrol_names(object)
+        spike.names <- spikeNames(object)
         no.spike.sf <- ! spike.names %in% sf.list$available
         if (any(no.spike.sf)) {
             warning(sprintf("spike-in transcripts in '%s' should have their own size factors",
@@ -281,27 +273,35 @@ normalize.SCESet <- function(object, exprs_values = NULL,
         sf.list <- list(size.factors=rep(1, ncol(object)), index=NULL) 
     }
 
-    ## extract logExprsOffset if argument is NULL
-    if ( is.null(logExprsOffset) )
-        logExprsOffset <- object@logExprsOffset
+    ## using logExprsOffset=1 if argument is NULL
+    if ( is.null(log_exprs_offset)) {
+        if (!is.null(metadata(object)$log.exprs.offset)) {
+            log_exprs_offset <- metadata(object)$log.exprs.offset
+        } else {
+            log_exprs_offset <- 1
+        }
+    }
 
     ## Compute normalized expression values.
     norm_exprs <- .compute_exprs(exprs_mat, sf.list$size.factors, sf_to_use = sf.list$index, 
-                                 log = TRUE, sum = FALSE, logExprsOffset = logExprsOffset,
+                                 log = TRUE, sum = FALSE, logExprsOffset = log_exprs_offset,
                                  subset_row = NULL)
 
     ## add normalised values to object
-    norm_exprs(object) <- norm_exprs
-    if ( return_norm_as_exprs )
-        exprs(object) <- norm_exprs
+    assay(object, "exprs") <- norm_exprs
+    metadata(object)$log.exprs.offset <- log_exprs_offset
 
     ## centering all existing size factors if requested
     if (exprs_values=="counts" && centre_size_factors) {
-        all.sf.fields <- c("size_factor", sprintf("size_factor_%s", sf.list$available))
-        for (sf in all.sf.fields) {
-            cur.sf <- pData(object)[[sf]]
-            cur.sf <- cur.sf/mean(cur.sf)
-            pData(object)[[sf]] <- cur.sf
+        sf <- sizeFactors(object)
+        sf <- sf/mean(sf)
+        sizeFactors(object) <- sf
+
+        # ... and for all controls.
+        for (type in sf.list$available) {
+            sf <- sizeFactors(object, type=type)
+            sf <- sf/mean(sf)
+            sizeFactors(object, type=type) <- sf
         }
     }
 
@@ -314,6 +314,8 @@ normalize.SCESet <- function(object, exprs_values = NULL,
 #' @export
 setMethod("normalize", signature(object = "SCESet"),
           normalize.SCESet)
+
+setMethod("normalize", "SingleCellExperiment", normalize.SCESet)
 
 #' @rdname normalize
 #' @aliases normalise
