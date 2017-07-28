@@ -554,10 +554,10 @@ runPCA <- function(object, ntop=500, ncomponents=2, exprs_values = "exprs",
 #'
 plotPCASCESet <- function(object, colour_by = NULL, shape_by = NULL, size_by = NULL, 
                           return_SCESet = FALSE, draw_plot = TRUE, theme_size = 10, legend = "auto",
-                          rerun_PCA = FALSE, ncomponents=2, detect_outliers = FALSE, ...) {
+                          rerun = FALSE, ncomponents=2, ...) {
     ## Running PCA if necessary.
-    if (!"PCA" %in% names(reducedDims(object)) || rerun_PCA) {
-        object <- runPCA(object, ncomponents=ncomponents, ..., detect_outliers=detect_outliers)
+    if (!"PCA" %in% names(reducedDims(object)) || rerun) {
+        object <- runPCA(object, ncomponents=ncomponents, ...)
     }
     pc.out <- reducedDim(object, "PCA")
     percentVar <- attr(pc.out, "percentVar")
@@ -658,6 +658,62 @@ setMethod("plotPCA", signature("SCESet"),
 
 ################################################################################
 ### plotTSNE
+
+runTSNE <- function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
+        feature_set = NULL, use_dimred=NULL, n_dimred=NULL, scale_features = TRUE, 
+        rand_seed = NULL, perplexity = floor(ncol(object) / 5), ...) {
+
+    if ( !requireNamespace("Rtsne", quietly = TRUE) )
+        stop("This function requires the 'Rtsne' package.
+             Try: install.packages('Rtsne').")
+
+    if (!is.null(use_dimred)) {
+        ## Use existing dimensionality reduction results (turning off PCA)
+        dr <- reducedDim(sce, use_dimred)
+        if (!is.null(n_dimred)) {
+            dr <- dr[,seq_len(n_dimred),drop=FALSE]
+        }
+        if (!length(pcs)) {
+            stop("'reducedDimension(sce)' cannot be empty with 'use_dimred=TRUE'")
+        }
+        exprs_to_plot <- dr
+        do_pca <- FALSE
+        pca_dims <- ncol(exprs_to_plot)
+
+    } else {
+        ## Define an expression matrix depending on which values we're
+        ## using
+        exprs_mat <- assay(object, i=exprs_values)
+
+        ## Define features to use: either ntop, or if a set of features is
+        ## defined, then those
+        if ( is.null(feature_set) ) {
+            rv <- matrixStats::rowVars(exprs_mat)
+            ntop <- min(ntop, length(rv))
+            feature_set <- order(rv, decreasing = TRUE)[seq_len(ntop)]
+        }
+
+        ## Drop any features with zero variance
+        exprs_to_plot <- exprs_mat[feature_set,,drop=FALSE]
+        keep_feature <- (matrixStats::rowVars(exprs_to_plot) > 0.001)
+        keep_feature[is.na(keep_feature)] <- FALSE
+        exprs_to_plot <- exprs_to_plot[keep_feature,,drop=FALSE]
+
+        ## Standardise expression if stand_exprs(object) is null
+        exprs_to_plot <- scale(t(exprs_to_plot), scale = scale_features)
+        do_pca <- TRUE
+        pca_dims <- max(50, ncol(object))
+    }
+
+    # Actually running the Rtsne step.
+    if ( !is.null(rand_seed) )
+        set.seed(rand_seed)
+    tsne_out <- Rtsne::Rtsne(exprs_to_plot, initial_dims = pca_dims, pca = do_pca,
+                             perplexity = perplexity, dims = ncomponents,...)
+    reducedDim(object, "TSNE") <- tsne_out$Y
+    return(object)
+}
+
 
 #' Plot t-SNE for an SCESet object
 #'
@@ -760,116 +816,66 @@ setMethod("plotPCA", signature("SCESet"),
 #' perplexity = 10)
 #'
 #'
-setMethod("plotTSNE", signature("SCESet"),
-          function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
-                   colour_by = NULL, shape_by = NULL, size_by = NULL,
-                   feature_set = NULL, use_dimred=FALSE, return_SCESet = FALSE,
-                   scale_features = TRUE, draw_plot = TRUE, theme_size = 10,
-                   rand_seed = NULL, perplexity = floor(ncol(object) / 5),
-                   legend = "auto", ...) {
-              ##
-              if ( !requireNamespace("Rtsne", quietly = TRUE) )
-                  stop("This function requires the 'Rtsne' package.
-                       Try: install.packages('Rtsne').")
-              ## check legend argument
-              legend <- match.arg(legend, c("auto", "none", "all"))
+setMethod("plotTSNE", signature("SingleCellExperiment"),
+          function(object, colour_by = NULL, shape_by = NULL, size_by = NULL,
+                   return_SCESet = FALSE, draw_plot = TRUE, 
+                   theme_size = 10, legend = "auto", 
+                   rerun = FALSE, ncomponents=2, ...) {
 
-              ## Check arguments are valid
-              colour_by_out <- .choose_vis_values(object, colour_by, cell_control_default = TRUE,
-                                                  check_features = TRUE, exprs_values = exprs_values)
-              colour_by <- colour_by_out$name
-              colour_by_vals <- colour_by_out$val 
-              
-              shape_by_out <- .choose_vis_values(object, shape_by, cell_control_default = TRUE, 
-                                                 coerce_factor = TRUE, level_limit = 10)
-              shape_by <- shape_by_out$name
-              shape_by_vals <- shape_by_out$val 
-              
-              size_by_out <- .choose_vis_values(object, size_by, check_features = TRUE, exprs_values = exprs_values)
-              size_by <- size_by_out$name
-              size_by_vals <- size_by_out$val 
+    if ( ! "TSNE" %in% names(reducedDims(object)) || rerun) {
+        object <- runTSNE(object, ncomponents=ncomponents, ...)
+    }
+    tsne < reducedDim(object, "TSNE")
 
-              if ( !is.null(feature_set) && typeof(feature_set) == "character" ) {
-                  if ( !(all(feature_set %in% featureNames(object))) )
-                      stop("when the argument 'feature_set' is of type character, all features must be in featureNames(object)")
-              }
+    ## check legend argument
+    legend <- match.arg(legend, c("auto", "none", "all"))
 
-              if ( !is.null(rand_seed) )
-                  set.seed(rand_seed)
-
-              if (use_dimred) { 
-                  ## Use existing dimensionality reduction results (turning off PCA)
-                  pcs <- reducedDimension(sce)
-                  if (!length(pcs)) {
-                      stop("'reducedDimension(sce)' cannot be empty with 'use_dimred=TRUE'")
-                  }
-                  tsne_out <- Rtsne::Rtsne(pcs, pca = FALSE, 
-                                           perplexity = perplexity,
-                                           dims = ncomponents,...)
-              } else {
-                  ## Define an expression matrix depending on which values we're
-                  ## using
-                  exprs_mat <- get_exprs(object, exprs_values, warning = FALSE)
-                  if ( is.null(exprs_mat) ) 
-                      stop(sprintf("object does not contain '%s'", exprs_values))
+    ## Check arguments are valid
+    colour_by_out <- .choose_vis_values(object, colour_by, cell_control_default = TRUE,
+                                        check_features = TRUE, exprs_values = exprs_values)
+    colour_by <- colour_by_out$name
+    colour_by_vals <- colour_by_out$val 
     
-                  ## Define features to use: either ntop, or if a set of features is
-                  ## defined, then those
-                  if ( is.null(feature_set) ) {
-                      rv <- matrixStats::rowVars(exprs_mat)
-                      ntop <- min(ntop, length(rv))
-                      feature_set <- order(rv, decreasing = TRUE)[seq_len(ntop)]
-                  }
+    shape_by_out <- .choose_vis_values(object, shape_by, cell_control_default = TRUE, 
+                                       coerce_factor = TRUE, level_limit = 10)
+    shape_by <- shape_by_out$name
+    shape_by_vals <- shape_by_out$val 
     
-                  ## Drop any features with zero variance
-                  exprs_to_plot <- exprs_mat[feature_set,,drop=FALSE]
-                  keep_feature <- (matrixStats::rowVars(exprs_to_plot) > 0.001)
-                  keep_feature[is.na(keep_feature)] <- FALSE
-                  exprs_to_plot <- exprs_to_plot[keep_feature,,drop=FALSE]
-    
-                  ## Standardise expression if stand_exprs(object) is null
-                  exprs_to_plot <- t(scale(t(exprs_to_plot), scale = scale_features))
+    size_by_out <- .choose_vis_values(object, size_by, check_features = TRUE, exprs_values = exprs_values)
+    size_by <- size_by_out$name
+    size_by_vals <- size_by_out$val 
 
-                  tsne_out <- Rtsne::Rtsne(t(exprs_to_plot), 
-                                           initial_dims = max(50, ncol(object)),
-                                           perplexity = perplexity,
-                                           dims = ncomponents,...)
-              }
+    ## Define data.frame for plotting
+    df_to_plot <- data.frame(tsne[, seq_len(ncomponents)],
+                             row.names = colnames(object))
+    df_to_plot$colour_by <- colour_by_vals
+    df_to_plot$shape_by <- shape_by_vals
+    df_to_plot$size_by <- size_by_vals
 
-              ## Define data.frame for plotting
-              df_to_plot <- data.frame(tsne_out$Y[, 1:ncomponents],
-                                       row.names = sampleNames(object))
-              df_to_plot$colour_by <- colour_by_vals
-              df_to_plot$shape_by <- shape_by_vals
-              df_to_plot$size_by <- size_by_vals
+    ## Make reduced-dimension plot
+    plot_out <- plotReducedDim.default(df_to_plot, ncomponents,
+                                       colour_by, shape_by, size_by,
+                                       legend = legend)
 
-              ## Make reduced-dimension plot
-              plot_out <- plotReducedDim.default(df_to_plot, ncomponents,
-                                                 colour_by, shape_by, size_by,
-                                                 legend = legend)
+    ## Define plotting theme
+    if ( requireNamespace("cowplot", quietly = TRUE) )
+        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+    else
+        plot_out <- plot_out + theme_bw(theme_size)
+    ## remove legend if so desired
+    if ( legend == "none" )
+        plot_out <- plot_out + theme(legend.position = "none")
 
-              ## Define plotting theme
-              if ( requireNamespace("cowplot", quietly = TRUE) )
-                  plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
-              else
-                  plot_out <- plot_out + theme_bw(theme_size)
-              ## remove legend if so desired
-              if ( legend == "none" )
-                  plot_out <- plot_out + theme(legend.position = "none")
-
-              ## Plot t-SNE and return appropriate object
-              if (return_SCESet) {
-                  df_out <- tsne_out$Y[, 1:ncomponents]
-                  rownames(df_out) <- sampleNames(object)
-                  reducedDimension(object) <- df_out
-                  if ( draw_plot )
-                      print(plot_out)
-                  return(object)
-              } else {
-                  ## Return t-SNE plot
-                  return(plot_out)
-              }
-          })
+    ## Plot t-SNE and return appropriate object
+    if (return_SCESet) {
+        if ( draw_plot )
+            print(plot_out)
+        return(object)
+    } else {
+        ## Return t-SNE plot
+        return(plot_out)
+    }
+})
 
 ################################################################################
 ### plotDiffusionMap
