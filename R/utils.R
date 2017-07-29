@@ -71,7 +71,7 @@
     }
 
     ## Specify the rows to be subsetted.
-    subset_row <- .subset2index(subset_row, exprs_mat)
+    subset_row <- .subset2index(subset_row, exprs_mat, byrow=TRUE)
     
     ## computes normalized expression values.
     .Call(cxx_calc_exprs, exprs_mat, size_factors, sf_to_use,

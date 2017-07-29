@@ -82,42 +82,20 @@ calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_values = NULL)
 #' nexprs(example_sceset)[1:10]
 #' nexprs(example_sceset, byrow = TRUE)[1:10]
 #'
-nexprs <- function(object, lowerDetectionLimit = NULL, exprs_values = NULL, byrow = FALSE, subset_row = NULL, subset_col = NULL) {
-    if (!is(object, "SCESet")) {
-        stop("'object' must be a SCESet")
-    }
-    is_exprs_mat <- is_exprs(object)
-
-    exprs_values <- .exprs_hunter(object, exprs_values)
-    exprs_mat <- suppressWarnings(get_exprs(object, exprs_values))
-    if (is.null(is_exprs_mat) && is.null(exprs_mat)) {
-        stop(sprintf("either 'is_exprs(object)' or '%s(object)' must be non-NULL", exprs_values))
-    }
-
-    # Building the expression profile.
-    if (is.null(is_exprs_mat)) {
-        if (is.null(lowerDetectionLimit)) {
-            lowerDetectionLimit <- object@lowerDetectionLimit
-        }
-        is_exprs_mat <- exprs(object) > lowerDetectionLimit
-    }
+nexprs <- function(object, lowerDetectionLimit = 0, exprs_values = "counts", byrow = FALSE, subset_row = NULL, subset_col = NULL) {
+    exprs_mat <- assay(object, i=exprs_values)
+    subset_row <- .subset2index(subset_row, target=exprs_mat, byrow=TRUE)
+    subset_col <- .subset2index(subset_col, target=exprs_mat, byrow=FALSE)
 
     if (!byrow) {
-        # Counting expressing genes per cell.
-        if (is.null(subset_row)) {
-            out <- colSums(is_exprs_mat)
-        } else {
-            out <- colSums(is_exprs_mat[subset_row,,drop=FALSE])
-        }
+        margin.stats <- .Call(cxx_margin_summary, exprs_mat, lowerDetectionLimit, 
+                subset_row - 1L, FALSE)
+        return(margin.stats[[2]][subset_col])
     } else {
-        # Counting expressing cells per gene.
-        if (is.null(subset_col)) { 
-            out <- rowSums(is_exprs_mat)
-        } else {
-            out <- rowSums(is_exprs_mat[,subset_col,drop=FALSE])
-        }
+        margin.stats <- .Call(cxx_margin_summary, exprs_mat, lowerDetectionLimit,
+                subset_col - 1L, TRUE)
+        return(margin.stats[[2]][subset_row])
     }
-    return(out)
 }
 
 #' Calculate transcripts-per-million (TPM)
