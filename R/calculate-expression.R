@@ -22,24 +22,9 @@
 #' example_sceset <- newSCESet(countData=sc_example_counts)
 #' is_exprs(example_sceset) <- calcIsExprs(example_sceset, lowerDetectionLimit = 1,
 #' exprs_values = "exprs")
-calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_values = NULL)
+calcIsExprs <- function(object, lowerDetectionLimit = 0, exprs_values = "counts")
 {
-    if ( !is(object, "SCESet") )
-        stop("Object must be an SCESet.")
-
-    ## Check that args are appropriate
-    exprs_values <- .exprs_hunter(object, exprs_values)
-    dat_matrix <- get_exprs(object, exprs_values, warning = FALSE)
-
-    ## Extract lowerDetectionLimit if not provided
-    if ( is.null(lowerDetectionLimit) )
-        lowerDetectionLimit <- object@lowerDetectionLimit
-
-    ## Decide which observations are above detection limit and return matrix
-    isexprs <- dat_matrix > lowerDetectionLimit
-    rownames(isexprs) <- rownames(dat_matrix)
-    colnames(isexprs) <- colnames(dat_matrix)
-    isexprs
+    assay(object, i=exprs_values) > lowerDetectionLimit
 }
 
 #' Count the number of expressed genes per cell
@@ -283,18 +268,14 @@ calculateFPKM <- function(object, effective_length, use.size.factors=TRUE) {
 #' ## calculate average counts
 #' ave_counts <- calcAverage(example_sceset)
 #'
-setMethod("calcAverage", "SingleCellExperiment", function(object) {
-    sf.list <- .get_all_sf_sets(object)
-    .calcAverage(assay(object, i="counts"), sf.list)
-})
-          
-setMethod("calcAverage", "ANY", function(object, size.factors=NULL) {
-    # Using the lone set of size factors, if provided.
-    sf.list <- list(index=rep(1L, nrow(object)), size.factors=list(size.factors))
-    .calcAverage(object, sf.list)    
-})
-          
-.calcAverage <- function(mat, sf.list) {
+calcAverage <- function(object, size.factors=NULL) {
+    if (is(object, "SingleCellExperiment")) { 
+        sf.list <- .get_all_sf_sets(object)
+    } else {    
+        # Using the lone set of size factors, if provided.
+        sf.list <- list(index=rep(1L, nrow(object)), size.factors=list(size.factors))
+    }
+
     # Set size factors to library sizes if not available.
     if (is.null(sf.list$size.factors[[1]])) {
         sf.list$size.factors[[1]] <- colSums(mat)
