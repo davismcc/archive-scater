@@ -189,12 +189,14 @@ updateSCESet <- function(object) {
 #'
 
 GET_FUN <- function(exprs_values) {
+    (exprs_values) # To get evaluated.
     function(object) {
         assay(object, i=exprs_values)
     }
 }
 
 SET_FUN <- function(exprs_values) {
+    (exprs_values) # To get evaluated.
     function(object, value) {
         assay(object, i=exprs_value) <- value
         object
