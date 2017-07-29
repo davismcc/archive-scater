@@ -307,9 +307,6 @@ normalize.SCESet <- function(object, exprs_values = "counts",
 #' @rdname normalize
 #' @aliases normalize
 #' @export
-setMethod("normalize", signature(object = "SCESet"),
-          normalize.SCESet)
-
 setMethod("normalize", "SingleCellExperiment", normalize.SCESet)
 
 #' @rdname normalize

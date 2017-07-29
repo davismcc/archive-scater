@@ -1419,14 +1419,13 @@ plotQC <- function(object, type = "highest-expression", ...) {
 #'        colour_by = "Mutation_Status", style = "full",
 #'        outlier.alpha = 0.1, outlier.shape = 3, outlier.size = 0)
 #' 
-setMethod("plotRLE", signature("SCESet"),
-          function(object, exprs_mats = list(exprs = "exprs"), exprs_logged = c(TRUE),
+plotRLE <- function(object, exprs_mats = list(exprs = "exprs"), exprs_logged = c(TRUE),
                    colour_by = NULL, style = "minimal", legend = "auto", 
                    order_by_colour = TRUE, ncol = 1,  ...) {
               .plotRLE(object, exprs_mats = exprs_mats, exprs_logged = exprs_logged,
                        colour_by = colour_by, legend = legend, 
                        order_by_colour = order_by_colour, ncol = ncol, style = style, ...)
-          })
+          }
 
 .plotRLE <- function(object, exprs_mats = list(exprs = "exprs"), exprs_logged = c(TRUE),
                     colour_by = NULL, legend = "auto", order_by_colour = TRUE, ncol = 1,

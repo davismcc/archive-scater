@@ -605,22 +605,7 @@ plotPCASCESet <- function(object, colour_by = NULL, shape_by = NULL, size_by = N
 #' @param ... further arguments passed to \code{\link{plotPCASCESet}}
 #' @aliases plotPCA
 #' @export
-setMethod("plotPCA", signature("SCESet"),
-          function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
-                   colour_by = NULL, shape_by = NULL, size_by = NULL,
-                   feature_set = NULL, return_SCESet = FALSE,
-                   scale_features = TRUE, draw_plot = TRUE,
-                   pca_data_input = "exprs", selected_variables = NULL,
-                   detect_outliers = FALSE, theme_size = 10, legend = "auto") {
-              plotPCASCESet(object, ntop, ncomponents, exprs_values, colour_by,
-                            shape_by, size_by, feature_set, return_SCESet,
-                            scale_features, draw_plot, pca_data_input,
-                            selected_variables, detect_outliers, theme_size,
-                            legend)
-          })
-
-
-
+setMethod("plotPCA", "SingleCellExperiment", plotPCASCESet) 
 
 .makePairs <- function(data_matrix) {
     ## with thanks to Gaston Sanchez, who posted this code online
@@ -798,8 +783,7 @@ runTSNE <- function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
 #' perplexity = 10)
 #'
 #'
-setMethod("plotTSNE", signature("SingleCellExperiment"),
-          function(object, colour_by = NULL, shape_by = NULL, size_by = NULL,
+plotTSNE <- function(object, colour_by = NULL, shape_by = NULL, size_by = NULL,
                    return_SCESet = FALSE, draw_plot = TRUE, 
                    theme_size = 10, legend = "auto", 
                    rerun = FALSE, ncomponents=2, ...) {
@@ -857,7 +841,7 @@ setMethod("plotTSNE", signature("SingleCellExperiment"),
         ## Return t-SNE plot
         return(plot_out)
     }
-})
+}
 
 ################################################################################
 ### plotDiffusionMap
@@ -1002,7 +986,7 @@ runDiffusionMap <- function(object, ntop = 500, ncomponents = 2, feature_set = N
 #' return_SCESet = TRUE)
 #'
 #'
-plotDiffusionMapSCESet <- function(object, colour_by = NULL, shape_by = NULL, size_by = NULL,
+plotDiffusionMap <- function(object, colour_by = NULL, shape_by = NULL, size_by = NULL,
       return_SCESet = FALSE, draw_plot = TRUE, theme_size = 10, legend = "auto", 
       rerun=FALSE, ncomponents=2, ...) {
 
@@ -1059,24 +1043,6 @@ plotDiffusionMapSCESet <- function(object, colour_by = NULL, shape_by = NULL, si
         return(plot_out)
     }
 }
-
-#' @rdname plotDiffusionMap
-#' @aliases plotDiffusionMap
-#' @export
-setMethod("plotDiffusionMap", signature("SCESet"),
-          function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
-                   colour_by = NULL, shape_by = NULL, size_by = NULL,
-                   feature_set = NULL, return_SCESet = FALSE,
-                   scale_features = FALSE, draw_plot = TRUE, theme_size = 10,
-                   rand_seed = NULL, sigma = NULL, distance = "euclidean",
-                   legend = "auto", ...) {
-              plotDiffusionMapSCESet(object, ntop, ncomponents, exprs_values,
-                                     colour_by, shape_by, size_by,
-                                     feature_set, return_SCESet,
-                                     scale_features, draw_plot, theme_size,
-                                     rand_seed, sigma, distance, legend, ...)
-          })
-
 
 ################################################################################
 ### plotMDS
@@ -1151,7 +1117,7 @@ setMethod("plotDiffusionMap", signature("SCESet"),
 #' plotMDS(example_sceset, colour_by = "Cell_Cycle",
 #' shape_by = "Treatment", size_by = "Mutation_Status")
 #'
-plotMDSSCESet <- function(object, ncomponents = 2, colour_by = NULL,
+plotMDS <- function(object, ncomponents = 2, colour_by = NULL,
                           shape_by = NULL, size_by = NULL,
                           return_SCESet = FALSE, draw_plot = TRUE,
                           exprs_values = "exprs", theme_size = 10, legend = "auto") {
@@ -1219,19 +1185,6 @@ plotMDSSCESet <- function(object, ncomponents = 2, colour_by = NULL,
     }
 }
 
-#' @rdname plotMDS
-#' @aliases plotMDS
-#' @export
-setMethod("plotMDS", signature("SCESet"),
-          function(object, ncomponents = 2, colour_by = NULL, shape_by = NULL,
-                   size_by = NULL, return_SCESet = FALSE, draw_plot = TRUE,
-                   exprs_values = "exprs", theme_size = 10, legend = "auto") {
-              plotMDSSCESet(object, ncomponents, colour_by, shape_by, size_by,
-                            return_SCESet, draw_plot, exprs_values, theme_size, legend)
-          })
-
-
-
 ################################################################################
 ### plotReducedDim
 
@@ -1295,11 +1248,15 @@ setMethod("plotMDS", signature("SCESet"),
 #' plotReducedDim(example_sceset, ncomponents=5, colour_by="Cell_Cycle", shape_by="Treatment")
 #' plotReducedDim(example_sceset, colour_by="Gene_0001") 
 #'
-plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
-                           shape_by=NULL, size_by=NULL, percentVar=NULL,
+
+plotReducedDimDefault <- function(object, ncomponents=2, 
+                           colour_by=NULL, shape_by=NULL, size_by=NULL, 
+                           exprs_values="exprs", use_dimred=NULL, percentVar=NULL,
                            theme_size = 10, legend = "auto") {
+
     ## check legend argument
     legend <- match.arg(legend, c("auto", "none", "all"), several.ok = FALSE)
+
     ## Define plot
     if ( ncomponents > 2 ) {
         ## expanding numeric columns for pairs plot
@@ -1423,6 +1380,16 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
         }
     }
 
+    ## Define plotting theme
+    if ( requireNamespace("cowplot", quietly = TRUE) )
+        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+    else
+        plot_out <- plot_out + theme_bw(theme_size)
+
+    ## remove legend if so desired
+    if ( legend == "none" )
+        plot_out <- plot_out + theme(legend.position = "none")
+
     ## Return plot
     plot_out
 }
@@ -1430,12 +1397,10 @@ plotReducedDim.default <- function(df_to_plot, ncomponents=2, colour_by=NULL,
 #' @rdname plotReducedDim
 #' @aliases plotReducedDim
 #' @export
-plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
-                                  shape_by=NULL, size_by=NULL, 
-                                  exprs_values = "exprs", theme_size = 10, 
-                                  legend = "auto") {
-    ## check legend argument
-    legend <- match.arg(legend, c("auto", "none", "all"))
+
+plotReducedDim <- function(object, use_dimred, ncomponents=2, 
+                              colour_by=NULL, shape_by=NULL, size_by=NULL, 
+                              exprs_values = "exprs", percentVar=NULL, ...) {
 
     ## Check arguments are valid
     colour_by_out <- .choose_vis_values(
@@ -1456,60 +1421,23 @@ plotReducedDim.SCESet <- function(object, ncomponents=2, colour_by=NULL,
     size_by_vals <- size_by_out$val 
 
     ## Extract reduced dimension representation of cells
-    if ( is.null(reducedDimension(object)) )
-        stop("reducedDimension slot of object is NULL. Need non null reducedDimension to plot.")
-    red_dim <- redDim(object)
+    red_dim <- reducedDim(object, use_dimred)
     if ( ncomponents > ncol(red_dim) )
         stop("ncomponents to plot is larger than number of columns of reducedDimension(object)")
+    if (is.null(percentVar)) { 
+        percentVar <- attr(red_dim, "percentVar")
+    }
 
     ## Define data.frame for plotting
-    df_to_plot <- data.frame(red_dim[, 1:ncomponents])
+    df_to_plot <- data.frame(red_dim[, seq_len(ncomponents),drop=FALSE])
     df_to_plot$colour_by <- colour_by_vals
     df_to_plot$shape_by <- shape_by_vals
     df_to_plot$size_by <- size_by_vals
 
     ## Call default method to make the plot
-    plot_out <- plotReducedDim.default(df_to_plot, ncomponents, colour_by,
-                                       shape_by, size_by, percentVar = NULL,
-                                       legend = legend)
-
-    ## Define plotting theme
-    if ( requireNamespace("cowplot", quietly = TRUE) )
-        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
-    else
-        plot_out <- plot_out + theme_bw(theme_size)
-    ## remove legend if so desired
-    if ( legend == "none" )
-        plot_out <- plot_out + theme(legend.position = "none")
-
-    ## return plot
-    plot_out
-
+    plotReducedDimDefault(df_to_plot=df_to_plot, percentVar=percentVar,
+                colour_by=colour_by, shape_by=shape_by, size_by=size_by, ...)
 }
-
-#' @rdname plotReducedDim
-#' @aliases plotReducedDIm
-#' @export
-setMethod("plotReducedDim", signature("SCESet"),
-          function(object, ncomponents=2, colour_by=NULL, shape_by=NULL,
-                   size_by=NULL, exprs_values = "exprs", 
-                   theme_size = 10, legend="auto") {
-              plotReducedDim.SCESet(object, ncomponents, colour_by, shape_by,
-                                    size_by, exprs_values, theme_size, legend)
-          })
-
-#' @rdname plotReducedDim
-#' @aliases plotReducedDim
-#' @export
-setMethod("plotReducedDim", signature("data.frame"),
-          function(object, ncomponents=2, colour_by=NULL, shape_by=NULL,
-                   size_by=NULL, percentVar=NULL, legend="auto") {
-              plotReducedDim.default(object, ncomponents, colour_by, shape_by,
-                                     size_by, percentVar, legend)
-          })
-
-
-
 
 ################################################################################
 ### Plot cells in plate positions
@@ -1756,16 +1684,11 @@ plotPlatePosition <- function(object, plate_position = NULL,
 #' plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE)
 #' plotExpression(example_sceset, 1:4, "Gene_0004", show_smooth = TRUE, se = FALSE)
 #'
-plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exprs",
-                                 colour_by = NULL, shape_by = NULL,
-                                 size_by = NULL, ncol = 2, xlab = NULL,
-                                 show_median = FALSE, show_violin = TRUE,
-                                 show_smooth = FALSE, alpha = 0.6,
-                                 theme_size = 10, log2_values = FALSE, size = NULL,
-                                 scales = "fixed", se = TRUE, jitter = "swarm") {
-    ## Check object is an SCESet object
-    if ( !is(object, "SCESet") )
-        stop("object must be an SCESet")
+plotExpression <- function(object, features, x = NULL, 
+                              exprs_values = "exprs", log2_values = FALSE, 
+                              colour_by = NULL, shape_by = NULL, size_by = NULL, 
+                              ncol = 2, xlab = NULL,
+                              show_median = FALSE, show_violin = TRUE, ...) {
 
     ## Define number of features to plot
     if (is.logical(features))
@@ -1773,31 +1696,26 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
     else
         nfeatures <- length(features)
 
-    ## Picking the expression values
-    if ( typeof(features) == "character" ) {
-        if ( !(all(features %in% featureNames(object))) )
-            stop("when the argument 'features' is of type character, all features must be in featureNames(object)")
-    }
-
-    exprs_mat <- get_exprs(object, exprs_values)
+    exprs_mat <- assay(object, i=exprs_values)
+    exprs_mat <- exprs_mat[features,,drop=FALSE]
     if ( log2_values ) {
         exprs_mat <- log2(exprs_mat + 1)
         ylab <- paste0("Expression (", exprs_values, "; log2-scale)")
     } else
         ylab <- paste0("Expression (", exprs_values, ")")
-    to_melt <- as.matrix(exprs_mat[features, , drop = FALSE])
+    to_melt <- as.matrix(exprs_mat)
 
     ## check x-coordinates are valid
     xcoord <- NULL
     if ( !is.null(x) ) {
-        if ( x %in% featureNames(object) ) {
+        if ( x %in% rownames(object) ) {
             xcoord <- exprs_mat[x,]
             show_violin <- FALSE
             show_median <- FALSE
-        } else if (x %in% varLabels(object)) { 
-            xcoord <- pData(object)[,x]
+        } else if (x %in% colnames(colData(object))) { 
+            xcoord <- object[[x]]
         } else {
-            stop("'x' should be a column of pData(object) or in featureNames(object)")
+            stop("'x' should be a column of colData(object) or in rownames(object)")
         }
     }
 
@@ -1815,7 +1733,7 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
     size_by <- size_by_out$name
     size_by_vals <- size_by_out$val 
 
-       ## Melt the expression data and metadata into a convenient form
+    ## Melt the expression data and metadata into a convenient form
     evals_long <- reshape2::melt(to_melt, value.name = "evals")
     colnames(evals_long) <- c("Feature", "Cell", "evals")
 
@@ -1833,6 +1751,7 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
         one_facet <- FALSE
     }
     aesth$y <- as.symbol("evals")
+
     ## Define sensible x-axis label if NULL
     if ( is.null(xlab) )
         xlab <- x
@@ -1849,30 +1768,17 @@ plotExpressionSCESet <- function(object, features, x = NULL, exprs_values = "exp
         aesth$colour <- as.symbol(colour_by)
         samps[[colour_by]] <- colour_by_vals
     }
+
     ## Extend the sample information, combine with the expression values
     samples_long <- samps[rep(seq_len(ncol(object)), each = nfeatures), , drop = FALSE]
-    ## Colour by is_exprs if we can (i.e. is_exprs is not NULL)
-    if ( is.null(colour_by) && !is.null(is_exprs(object)) ) {
-        colour_by <- "Is_Expressed"
-        aesth$colour <- as.symbol(colour_by)
-        colour_by_vals <- reshape2::melt(is_exprs(object)[features,],
-                                         value.name = "is_exprs")
-        samples_long[[colour_by]] <- colour_by_vals[["is_exprs"]]
-    }
     
     ## create plotting object
     object <- cbind(evals_long, samples_long)
 
     ## Make the plot
     plot_out <- plotExpressionDefault(object, aesth, ncol, xlab, ylab,
-                                      show_median, show_violin, show_smooth,
-                                      alpha, size, scales, one_facet, se, jitter)
+                                      show_median, show_violin, ...)
 
-    ## Define plotting theme
-    if ( requireNamespace("cowplot", quietly = TRUE) )
-        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
-    else
-        plot_out <- plot_out + theme_bw(theme_size)
     if ( is.null(x) ) { ## in this case, do not show x-axis ticks or labels
         plot_out <- plot_out + theme(
             axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1),
@@ -1975,26 +1881,15 @@ plotExpressionDefault <- function(object, aesth, ncol = 2, xlab = NULL,
     if (show_smooth) {
         plot_out <- plot_out + stat_smooth(colour = "firebrick", linetype = 2, se = se)
     }
+
+    ## Define plotting theme
+    if ( requireNamespace("cowplot", quietly = TRUE) )
+        plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
+    else
+        plot_out <- plot_out + theme_bw(theme_size)
+
     plot_out
 }
-
-
-#' @rdname plotExpression
-#' @aliases plotExpression
-#' @export
-setMethod("plotExpression", signature(object = "SCESet"),
-          function(object, ...) {
-              plotExpressionSCESet(object, ...)
-          })
-
-
-#' @rdname plotExpression
-#' @aliases plotExpression
-#' @export
-setMethod("plotExpression", signature("data.frame"),
-          function(object, ...) {
-              plotExpressionDefault(object, ...)
-          })
 
 ################################################################################
 
