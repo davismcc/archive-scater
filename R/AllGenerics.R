@@ -24,4 +24,14 @@ setGeneric("stand_exprs", function(object) standardGeneric("stand_exprs"))
 #' @rdname stand_exprs
 setGeneric("stand_exprs<-", function(object, value) standardGeneric("stand_exprs<-"))
 
+#' @name bootstraps
+#' @export
+#' @docType methods
+#' @rdname bootstraps
+setGeneric("bootstraps", function(object) standardGeneric("bootstraps"))
 
+#' @name bootstraps<-
+#' @export
+#' @docType methods
+#' @rdname bootstraps
+setGeneric("bootstraps<-", function(object, value) standardGeneric("bootstraps<-"))

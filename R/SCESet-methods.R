@@ -239,22 +239,29 @@ bootstraps.SCESet <- function(object) {
 #' @rdname bootstraps
 #' @aliases bootstraps
 #' @export
-setMethod("bootstraps", signature(object = "SCESet"), bootstraps.SCESet)
-
+setMethod("bootstraps", "SingleCellExperiment", function(object) {
+    keep <- grep("^bootstrap", assayNames(object))
+    assays(object)[keep]
+})
 
 #' @name bootstraps<-
 #' @aliases bootstraps
 #' @rdname bootstraps
 #' @export "bootstraps<-"
-setReplaceMethod("bootstraps", signature(object = "SCESet", value = "array"),
-                 function(object, value) {
-                     if ( (nrow(value) == nrow(object)) &&
-                          (ncol(value) == ncol(object)) ) {
-                         object@bootstraps <- value
-                         return(object)
-                     } else
-                         stop("Array supplied is of incorrect size.")
-                 } )
+setReplaceMethod("bootstraps", c("SingleCellExperiment", "array"), function(object, value) {
+    # Erase existing bootstrap assays.
+    current <- grep("^bootstrap", assayNames(object))
+    for (x in current) {
+        assay(object, i=x) <- NULL
+    }
+
+    # Filling with new bootstrap assays.
+    for (x in seq_len(dim(value)[3])) {
+        assay(object, paste0("bootstrap", x)) <- value[,,x]
+    }
+
+    object
+})
 
 ################################################################################
 ### Convert to and from Monocle CellDataSet objects
