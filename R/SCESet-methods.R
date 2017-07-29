@@ -69,20 +69,6 @@ updateSCESet <- function(object) {
 #' example_sceset <- newSCESet(countData = sc_example_counts)
 #' counts(example_sceset)
 #'
-#' @rdname counts
-#' @export
-setMethod("counts", "SingleCellExperiment", function(object) {
-    assay(object, i="counts")
-})
-
-#' @name counts
-#' @rdname counts
-#' @importFrom BiocGenerics counts<-
-#' @exportMethod "counts<-"
-setReplaceMethod("counts", c("SingleCellExperiment", "ANY"), function(object, value) {
-    assay(object, i="counts") <- value
-    object
-})
 
 ################################################################################
 ### norm_exprs
@@ -124,21 +110,6 @@ setReplaceMethod("counts", c("SingleCellExperiment", "ANY"), function(object, va
 #' example_sceset <- newSCESet(countData = sc_example_counts)
 #' norm_exprs(example_sceset)
 #'
-
-
-#' @rdname norm_exprs
-#' @export
-setMethod("norm_exprs", "SingleCellExperiment", function(object) { 
-    assay(object, i="norm_exprs")
-})
-
-#' @name norm_exprs<-
-#' @rdname norm_exprs
-#' @exportMethod "norm_exprs<-"
-setReplaceMethod("norm_exprs", c("SingleCellExperiment", "ANY"), function(object, value) {                 
-    assay(object, i="norm_exprs") <- value
-    object
-})
 
 ################################################################################
 ### stand_exprs
@@ -183,19 +154,57 @@ setReplaceMethod("norm_exprs", c("SingleCellExperiment", "ANY"), function(object
 #' stand_exprs(example_sceset)
 #'
 
-#' @rdname stand_exprs
-#' @export
-setMethod("stand_exprs", "SingleCellExperiment", function(object) { 
-    assay(object, i="stand_exprs")
-})
+################################################################################
+### tpm
 
-#' @name stand_exprs<-
-#' @rdname stand_exprs
-#' @exportMethod "stand_exprs<-"
-setReplaceMethod("stand_exprs", c("SingleCellExperiment", "ANY"), function(object, value) {                 
-    assay(object, i="stand_exprs") <- value
-    object
-})
+#' Accessors for the 'tpm' (transcripts per million) element of an SCESet object.
+#'
+#' The \code{tpm} element of the arrayData slot in an SCESet object holds
+#' a matrix containing transcripts-per-million values. It has the same dimensions
+#' as the 'exprs' and 'counts' elements, which hold the transformed expression
+#' data and count data, respectively.
+#'
+#' @usage
+#' \S4method{tpm}{SCESet}(object)
+#'
+#' \S4method{tpm}{SCESet,matrix}(object)<-value
+#'
+#' @docType methods
+#' @name tpm
+#' @rdname tpm
+#' @aliases tpm tpm,SCESet-method tpm<-,SCESet,matrix-method
+#'
+#' @param object a \code{SCESet} object.
+#' @param value a matrix of class \code{"numeric"}
+#'
+#' @author Davis McCarthy
+#' @export
+#' @aliases tpm tpm,SCESet-method tpm<-,SCESet,matrix-method
+#'
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' example_sceset <- newSCESet(countData = sc_example_counts)
+#' tpm(example_sceset)
+#'
+
+GET_FUN <- function(exprs_values) {
+    function(object) {
+        assay(object, i=exprs_values)
+    }
+}
+
+SET_FUN <- function(exprs_values) {
+    function(object, value) {
+        assay(object, i=exprs_value) <- value
+        object
+    }
+}
+
+for (x in c("norm_exprs", "stand_exprs", "tpm", "cpm", "fpkm", "counts", "exprs")) { 
+    setMethod(x, "SingleCellExperiment", GET_FUN(x))
+    setReplaceMethod(x, c("SingleCellExperiment", "ANY"), SET_FUN(x))
+}
 
 ################################################################################
 ### bootstraps
