@@ -401,22 +401,16 @@ runPCA <- function(object, ntop=500, ncomponents=2, exprs_values = "exprs",
 
     ## conduct outlier detection
     if ( detect_outliers ) {
-        if ( requireNamespace("mvoutlier", quietly = TRUE) ) {
-            if ( !(pca_data_input == "pdata") ) {
-                warning("outlier detection will only be done if pca_data_input
-                        argument is 'pdata' (operating on QC metrics)")
-            } else {
-                outliers <- mvoutlier::pcout(exprs_to_plot, makeplot = FALSE,
-                                             explvar = 0.5, crit.M1 = 0.9,
-                                             crit.c1 = 5, crit.M2 = 0.9,
-                                             crit.c2 = 0.99, cs = 0.25,
-                                             outbound = 0.05)
-                outlier <- !as.logical(outliers$wfinal01)
-                object$outlier <- outlier
-            }
+        if ( !(pca_data_input == "pdata") ) {
+            warning("outlier detection requires 'pca_data_input=\"pdata\"")
         } else {
-            warning("The package mvoutlier must be installed to do outlier
-                    detection")
+            outliers <- mvoutlier::pcout(exprs_to_plot, makeplot = FALSE,
+                                         explvar = 0.5, crit.M1 = 0.9,
+                                         crit.c1 = 5, crit.M2 = 0.9,
+                                         crit.c2 = 0.99, cs = 0.25,
+                                         outbound = 0.05)
+             outlier <- !as.logical(outliers$wfinal01)
+             object$outlier <- outlier
         }
     }
 
@@ -663,18 +657,11 @@ runTSNE <- function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
         feature_set = NULL, use_dimred=NULL, n_dimred=NULL, scale_features = TRUE, 
         rand_seed = NULL, perplexity = floor(ncol(object) / 5), ...) {
 
-    if ( !requireNamespace("Rtsne", quietly = TRUE) )
-        stop("This function requires the 'Rtsne' package.
-             Try: install.packages('Rtsne').")
-
     if (!is.null(use_dimred)) {
         ## Use existing dimensionality reduction results (turning off PCA)
         dr <- reducedDim(object, use_dimred)
         if (!is.null(n_dimred)) {
             dr <- dr[,seq_len(n_dimred),drop=FALSE]
-        }
-        if (!length(pcs)) {
-            stop("'reducedDimension(sce)' cannot be empty with 'use_dimred=TRUE'")
         }
         exprs_to_plot <- dr
         do_pca <- FALSE
@@ -881,18 +868,15 @@ setMethod("plotTSNE", signature("SingleCellExperiment"),
 ### plotDiffusionMap
 
 runDiffusionMap <- function(object, ntop = 500, ncomponents = 2, feature_set = NULL, 
-        exprs_values = "exprs", scale_features = TRUE, use_dimred=NULL, 
+        exprs_values = "exprs", scale_features = TRUE, use_dimred=NULL, n_dimred=NULL,
         rand_seed = NULL, sigma = NULL, distance = "euclidean", ...) {
-
-    if ( !requireNamespace("destiny", quietly = TRUE) )
-        stop("This function requires the 'destiny' package.
-                       Try from Bioconductor with:
-                       source('https://bioconductor.org/biocLite.R')
-                       biocLite('destiny').")
 
     if (!is.null(use_dimred)) { 
         ## Use existing dimensionality reduction results.
         vals_to_plot <- reducedDim(object, use_dimred)
+        if (!is.null(n_dimred)) {
+            vals_to_plot <- vals_to_plot[,seq_len(n_dimred),drop=FALSE]
+        }
     } else {  
         ## Define an expression matrix depending on which values we're
         ## using
