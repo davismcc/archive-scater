@@ -249,17 +249,15 @@ setMethod("plot", signature("SCESet"),
 #' @importFrom reshape2 melt
 #' @export
 plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
-                       nfeatures = 500, exprs_values = NULL, ncol = 3,
+                       nfeatures = 500, exprs_values = "counts", ncol = 3,
                        linewidth = 1.5, theme_size = 10) {
     object <- x
-    if ( !is(object, "SCESet") )
-        stop("Object must be an SCESet")
     if ( !is.null(block1) ) {
-        if ( !(block1 %in% colnames(pData(object))) )
+        if ( !(block1 %in% colnames(colData(object))) )
             stop("The block1 argument must either be NULL or a column of pData(object).")
     }
     if ( !is.null(block2) ) {
-        if ( !(block2 %in% colnames(pData(object))) )
+        if ( !(block2 %in% colnames(colData(object))) )
             stop("The block2 argument must either be NULL or a column of pData(object).")
     }
 
@@ -269,10 +267,7 @@ plotSCESet <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
     colour_by_vals <- colour_by_out$val 
 
     ## Define an expression matrix depending on which values we're using
-    exprs_values <- .exprs_hunter(x, exprs_values)
-    exprs_mat <- get_exprs(x, exprs_values)
-    if ( exprs_values == "exprs" )
-        exprs_mat <- 2 ^ exprs_mat - object@logExprsOffset
+    exprs_mat <- assay(x, i=exprs_values)
 
     ## Use plyr to get the sequencing real estate accounted for by features
     nfeatures_total <- nrow(exprs_mat)

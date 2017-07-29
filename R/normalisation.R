@@ -87,17 +87,12 @@
 #' feature_set = 1:100)
 #'
 normaliseExprs <- function(object, method = "none", design = NULL, feature_set = NULL,
-                           exprs_values = NULL, return_norm_as_exprs = TRUE,
+                           exprs_values = "counts", return_norm_as_exprs = TRUE,
                            ...) {
-    if ( !is(object, "SCESet") )
-        stop("'object' must be an SCESet")
-
-    ## Define expression values to be used
-    exprs_values <- .exprs_hunter(object, exprs_values)
 
     ## If counts, we can compute size factors.
     if (exprs_values == "counts") {
-        exprs_mat <- get_exprs(object, exprs_values, warning = FALSE)
+        exprs_mat <- assay(object, i=exprs_values)
 
         ## Check feature_set
         if (is.character(feature_set)) {
