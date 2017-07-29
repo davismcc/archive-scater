@@ -271,9 +271,11 @@ calculateFPKM <- function(object, effective_length, use.size.factors=TRUE) {
 calcAverage <- function(object, size.factors=NULL) {
     if (is(object, "SingleCellExperiment")) { 
         sf.list <- .get_all_sf_sets(object)
+        mat <- counts(object)
     } else {    
         # Using the lone set of size factors, if provided.
         sf.list <- list(index=rep(1L, nrow(object)), size.factors=list(size.factors))
+        mat <- object
     }
 
     # Set size factors to library sizes if not available.
