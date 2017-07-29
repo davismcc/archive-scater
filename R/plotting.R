@@ -543,10 +543,14 @@ runPCA <- function(object, ntop=500, ncomponents=2, exprs_values = "exprs",
 #'
 plotPCASCESet <- function(object, colour_by = NULL, shape_by = NULL, size_by = NULL, 
                           return_SCESet = FALSE, draw_plot = TRUE, theme_size = 10, legend = "auto",
-                          rerun = FALSE, ncomponents=2, ...) {
+                          rerun = FALSE, ncomponents=2, detect_outliers=detect_outliers, ...) {
     ## Running PCA if necessary.
     if (!"PCA" %in% names(reducedDims(object)) || rerun) {
-        object <- runPCA(object, ncomponents=ncomponents, ...)
+        object <- runPCA(object, ncomponents=ncomponents, detect_outliers=detect_outliers, ...)
+    }
+
+    if (detect_outliers) {
+        colour_by <- "outlier"
     }
 
     plot_out <- plotReducedDim(object, ncomponents=ncomponents, use_dimred="PCA",
