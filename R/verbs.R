@@ -4,10 +4,13 @@
 
 #' @rdname mutate
 #' @export
-setMethod("mutate", signature(object = "SCESet"),
-          function(object, ...) {
-            mutate.SCESet(object, ...)
-          })
+setMethod("mutate", "SingleCellExperiment", function(object, ...) {
+    pd <- as.data.frame(colData(object))
+    pd <- dplyr::mutate(pd, ...)
+    rownames(pd) <- colnames(object)
+    colData(object) <- pd
+    return(object)
+})
 
 #' Add new variables to \code{pData(object)}.
 #' 
@@ -31,21 +34,18 @@ setMethod("mutate", signature(object = "SCESet"),
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset <- mutate(example_sceset, is_quiescent = Cell_Cycle == "G0")
-mutate.SCESet <- function(object, ...) {
-  pd <- dplyr::mutate(pData(object), ...)
-  rownames(pd) <- sampleNames(object)
-  pData(object) <- pd
-  return( object )
-}
 
 # Rename verb -------------------------------------------------------------
 
 #' @rdname rename
 #' @export
-setMethod("rename", signature(object = "SCESet"),
-          function(object, ...) {
-            rename.SCESet(object, ...)
-          })
+setMethod("rename", "SingleCellExperiment", function(object, ...) {
+    pd <- as.data.frame(colData(object))
+    pd <- dplyr::rename(pd, ...)
+    rownames(pd) <- colnames(object)
+    colData(object) <- pd
+    return(object)
+})
 
 #' Rename variables of \code{pData(object)}.
 #' 
@@ -66,22 +66,17 @@ setMethod("rename", signature(object = "SCESet"),
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset <- rename(example_sceset, Cell_Phase = Cell_Cycle)
-rename.SCESet <- function(object, ...) {
-  pd <- dplyr::rename(pData(object), ...)
-  rownames(pd) <- sampleNames(object)
-  pData(object) <- pd
-  return( object )
-}
-
 
 # Filter verb -------------------------------------------------------------
 
 #' @rdname filter
 #' @export
-setMethod("filter", signature(object = "SCESet"),
-          function(object, ...) {
-            filter.SCESet(object, ...)
-          })
+setMethod("filter", "SingleCellExperiment", function(object, ...) {
+    pd <- as.data.frame(colData(object))
+    pd <- dplyr::mutate(pd, scater_placeholder_index = seq_len(nrow(pd)))
+    pd <- dplyr::filter(pd, ...) # filter not exported by dplyr
+    object[, pd$scater_placeholder_index]
+})
 
 #' Return \code{SCESet} with cells matching conditions.
 #' 
@@ -105,22 +100,18 @@ setMethod("filter", signature(object = "SCESet"),
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset_treat1 <- filter(example_sceset, Treatment == "treat1")
-filter.SCESet <- function(object, ...) {
-  pd <- pData(object)
-  pd <- dplyr::mutate(pd, scater_placeholder_index = 1:nrow(pd))
-  pd <- dplyr::filter(pd, ...) # filter not exported by dplyr
-  object <- object[, pd$scater_placeholder_index]
-  return( object )
-}
+
 
 # Arrange verb ------------------------------------------------------------
 
 #' @rdname arrange
 #' @export
-setMethod("arrange", signature(object = "SCESet"),
-          function(object, ...) {
-            arrange.SCESet(object, ...)
-          })
+setMethod("arrange", "SingleCellExperiment", function(object, ...) {
+    pd <- as.data.frame(colData(object))
+    pd <- dplyr::mutate(pd, scater_placeholder_index = seq_len(nrow(pd)))
+    pd <- dplyr::arrange(pd, ...) # arrange not exported by dplyr
+    object[, pd$scater_placeholder_index]
+})
 
 #' Arrange rows of \code{pData(object)} by variables.
 #' 
@@ -144,10 +135,4 @@ setMethod("arrange", signature(object = "SCESet"),
 #' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
 #' example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
 #' example_sceset <- arrange(example_sceset, Cell_Cycle)
-arrange.SCESet <- function(object, ...) {
-  pd <- pData(object)
-  pd <- dplyr::mutate(pd, scater_placeholder_index = 1:nrow(pd))
-  pd <- dplyr::arrange(pd, ...) # arrange not exported by dplyr
-  object <- object[, pd$scater_placeholder_index]
-  return( object )
-}
+

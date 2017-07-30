@@ -16,9 +16,13 @@
         names(dummy) <- colnames(target)
     }
 
-    subset <- dummy[subset]
-    if (any(is.na(subset))) {
-        stop("invalid subset indices specified")
+    if (!is.null(subset)) {
+        subset <- dummy[subset]
+        if (any(is.na(subset))) {
+            stop("invalid subset indices specified")
+        }
+    } else {
+        subset <- dummy
     }
     return(unname(subset))
 }
@@ -67,11 +71,7 @@
     }
 
     ## Specify the rows to be subsetted.
-    if (is.null(subset_row)) {
-        subset_row <- seq_len(nrow(exprs_mat))
-    } else {
-        subset_row <- .subset2index(subset_row, exprs_mat)
-    }
+    subset_row <- .subset2index(subset_row, exprs_mat, byrow=TRUE)
     
     ## computes normalized expression values.
     .Call(cxx_calc_exprs, exprs_mat, size_factors, sf_to_use,
@@ -79,20 +79,3 @@
           as.logical(sum), subset_row - 1L)
 }
 
-## contains the hierarchy of expression values.
-.exprs_hierarchy <- c("counts", "tpm", "cpm", "fpkm", "exprs")
-
-.exprs_hunter <- function(object, proposed=NULL) {
-    ## Finds the highest ranking expression category that is not NULL.
-    if (!is.null(proposed)) {
-        proposed <- match.arg(proposed, .exprs_hierarchy)
-    } else {
-        m <- match(.exprs_hierarchy, Biobase::assayDataElementNames(object))
-        failed <- is.na(m)
-        if (all(failed)) {
-            stop("no expression values present in 'object'")
-        }
-        proposed <- Biobase::assayDataElementNames(object)[m[!failed][1]]
-    }
-    return(proposed)
-}
