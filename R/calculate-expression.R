@@ -313,7 +313,7 @@ setMethod("calcAverage", "SingleCellExperiment", function(object) {
 #' @name calcAverage 
 #' @export
 #' @docType methods
-#' @rdname calcAverage-SCESet-method  
+#' @rdname calcAverage-SingleCellExperiment-method  
 setMethod("calcAverage", "ANY", function(object, size.factors = NULL) {
     # Using the lone set of size factors, if provided.
     sf.list <- list(index = rep(1L, nrow(object)), 

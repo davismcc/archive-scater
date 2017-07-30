@@ -4,8 +4,8 @@
 \alias{calculateQCMetrics}
 \title{Calculate QC metrics}
 \usage{
-calculateQCMetrics(object, feature_controls = NULL, cell_controls = NULL,
-  nmads = 5, pct_feature_controls_threshold = 80)
+calculateQCMetrics(object, exprs_values = "counts", feature_controls = NULL,
+  cell_controls = NULL, nmads = 5, pct_feature_controls_threshold = 80)
 }
 \arguments{
 \item{object}{an SCESet object containing expression values and

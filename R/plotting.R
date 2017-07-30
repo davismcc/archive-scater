@@ -844,7 +844,8 @@ setMethod("plotTSNE", signature("SingleCellExperiment"),
     shape_by <- shape_by_out$name
     shape_by_vals <- shape_by_out$val 
     
-    size_by_out <- .choose_vis_values(object, size_by, check_features = TRUE, exprs_values = exprs_values)
+    size_by_out <- .choose_vis_values(object, size_by, check_features = TRUE, 
+                                      exprs_values = exprs_values)
     size_by <- size_by_out$name
     size_by_vals <- size_by_out$val 
 

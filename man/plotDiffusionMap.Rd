@@ -12,12 +12,9 @@
 \usage{
 plotDiffusionMap(object, ...)
 
-plotDiffusionMapSCESet(object, ntop = 500, ncomponents = 2,
-  exprs_values = "exprs", colour_by = NULL, shape_by = NULL,
-  size_by = NULL, feature_set = NULL, return_SCESet = FALSE,
-  scale_features = TRUE, draw_plot = TRUE, theme_size = 10,
-  rand_seed = NULL, sigma = NULL, distance = "euclidean",
-  legend = "auto", ...)
+plotDiffusionMapSCESet(object, colour_by = NULL, shape_by = NULL,
+  size_by = NULL, return_SCESet = FALSE, draw_plot = TRUE,
+  theme_size = 10, legend = "auto", rerun = FALSE, ncomponents = 2, ...)
 
 \S4method{plotDiffusionMap}{SCESet}(object, ntop = 500, ncomponents = 2,
   exprs_values = "exprs", colour_by = NULL, shape_by = NULL,
@@ -31,9 +28,31 @@ plotDiffusionMapSCESet(object, ntop = 500, ncomponents = 2,
 
 \item{...}{further arguments passed to \code{\link[destiny]{DiffusionMap}}}
 
-\item{ntop}{numeric scalar indicating the number of most variable features to
-use for the diffusion map. Default is \code{500}, but any \code{ntop}
-argument is overrided if the \code{feature_set} argument is non-NULL.}
+\item{colour_by}{character string defining the column of \code{pData(object)} to
+be used as a factor by which to colour the points in the plot. Alternatively, a
+data frame with one column containing values to map to colours for all cells.}
+
+\item{shape_by}{character string defining the column of \code{pData(object)} to
+be used as a factor by which to define the shape of the points in the plot.}
+
+\item{size_by}{character string defining the column of \code{pData(object)} to
+be used as a factor by which to define the size of points in the plot.}
+
+\item{return_SCESet}{logical, should the function return an \code{SCESet}
+object with principal component values for cells in the
+\code{reducedDimension} slot. Default is \code{FALSE}, in which case a
+\code{ggplot} object is returned.}
+
+\item{draw_plot}{logical, should the plot be drawn on the current graphics
+device? Only used if \code{return_SCESet} is \code{TRUE}, otherwise the plot
+is always produced.}
+
+\item{theme_size}{numeric scalar giving default font size for plotting theme
+(default is 10).}
+
+\item{legend}{character, specifying how the legend(s) be shown? Default is
+\code{"auto"}, which hides legends that have only one level and shows others.
+Alternatives are "all" (show all legends) or "none" (hide all legends).}
 
 \item{ncomponents}{numeric scalar indicating the number of principal
 components to plot, starting from the first diffusion map component. Default
@@ -41,6 +60,10 @@ is 2. If \code{ncomponents} is 2, then a scatterplot of component 1 vs
 component 2 is produced. If \code{ncomponents} is greater than 2, a pairs
 plots for the top components is produced. NB: computing many components for
 the diffusion map can become time consuming.}
+
+\item{ntop}{numeric scalar indicating the number of most variable features to
+use for the diffusion map. Default is \code{500}, but any \code{ntop}
+argument is overrided if the \code{feature_set} argument is non-NULL.}
 
 \item{exprs_values}{character string indicating which values should be used
 as the expression values for this plot. Valid arguments are \code{"tpm"}
@@ -54,36 +77,14 @@ expression values) or \code{"stand_exprs"} (standardised expression values)
 or any other named element of the \code{assayData} slot of the \code{SCESet}
 object that can be accessed with the \code{get_exprs} function.}
 
-\item{colour_by}{character string defining the column of \code{pData(object)} to
-be used as a factor by which to colour the points in the plot. Alternatively, a
-data frame with one column containing values to map to colours for all cells.}
-
-\item{shape_by}{character string defining the column of \code{pData(object)} to
-be used as a factor by which to define the shape of the points in the plot.}
-
-\item{size_by}{character string defining the column of \code{pData(object)} to
-be used as a factor by which to define the size of points in the plot.}
-
 \item{feature_set}{character, numeric or logical vector indicating a set of
 features to use for the diffusion map. If character, entries must all be in
 \code{featureNames(object)}. If numeric, values are taken to be indices for
 features. If logical, vector is used to index features and should have length
 equal to \code{nrow(object)}.}
 
-\item{return_SCESet}{logical, should the function return an \code{SCESet}
-object with principal component values for cells in the
-\code{reducedDimension} slot. Default is \code{FALSE}, in which case a
-\code{ggplot} object is returned.}
-
 \item{scale_features}{logical, should the expression values be standardised
 so that each feature has unit variance? Default is \code{TRUE}.}
-
-\item{draw_plot}{logical, should the plot be drawn on the current graphics
-device? Only used if \code{return_SCESet} is \code{TRUE}, otherwise the plot
-is always produced.}
-
-\item{theme_size}{numeric scalar giving default font size for plotting theme
-(default is 10).}
 
 \item{rand_seed}{(optional) numeric scalar that can be passed to
 \code{set.seed} to make plots reproducible.}
@@ -91,10 +92,6 @@ is always produced.}
 \item{sigma}{argument passed to \code{\link[destiny]{DiffusionMap}}}
 
 \item{distance}{argument passed to \code{\link[destiny]{DiffusionMap}}}
-
-\item{legend}{character, specifying how the legend(s) be shown? Default is
-\code{"auto"}, which hides legends that have only one level and shows others.
-Alternatives are "all" (show all legends) or "none" (hide all legends).}
 }
 \value{
 If \code{return_SCESet} is \code{TRUE}, then the function returns an

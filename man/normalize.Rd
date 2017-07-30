@@ -12,11 +12,11 @@
 \alias{normalise}
 \title{Normalise an SCESet object using pre-computed size factors}
 \usage{
-normalize.SCESet(object, exprs_values = NULL, logExprsOffset = NULL,
+normalize.SCESet(object, exprs_values = "counts", log_exprs_offset = NULL,
   centre_size_factors = TRUE, return_norm_as_exprs = TRUE)
 
-\S4method{normalize}{SCESet}(object, exprs_values = NULL,
-  logExprsOffset = NULL, centre_size_factors = TRUE,
+\S4method{normalize}{SCESet}(object, exprs_values = "counts",
+  log_exprs_offset = NULL, centre_size_factors = TRUE,
   return_norm_as_exprs = TRUE)
 
 normalise(...)
@@ -29,10 +29,6 @@ assayData from the \code{SCESet} object should be used to compute
 log-transformed expression values. Valid options are \code{'counts'},
 \code{'tpm'}, \code{'cpm'} and \code{'fpkm'}. Defaults to the first
 available value of the options in the order shown.}
-
-\item{logExprsOffset}{scalar numeric value giving the offset to add when
-taking log2 of normalised values to return as expression values. If NULL
-(default), then the value from \code{object@logExprsOffset} is used.}
 
 \item{centre_size_factors}{logical, should size factors centred
 at unity be stored in the returned object if \code{exprs_values="counts"}?
@@ -47,6 +43,10 @@ normalised expression values will be returned in the
 \code{norm_exprs(object)} slot.}
 
 \item{...}{arguments passed to \code{normalize} when calling \code{normalise}.}
+
+\item{logExprsOffset}{scalar numeric value giving the offset to add when
+taking log2 of normalised values to return as expression values. If NULL
+(default), then the value from \code{object@logExprsOffset} is used.}
 }
 \value{
 an SCESet object

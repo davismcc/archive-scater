@@ -384,6 +384,6 @@ setGeneric("plotRLE", function(object, ...) {
 #' @name calcAverage 
 #' @export
 #' @docType methods
-#' @rdname calcAverage-SCESet-method
+#' @rdname calcAverage-SingleCellExperiment-method
 setGeneric("calcAverage", function(object, ...) standardGeneric("calcAverage"))
 
