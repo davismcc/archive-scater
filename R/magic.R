@@ -72,11 +72,14 @@
 # #' example_sceset <- example_sceset[rowSums(counts(example_sceset)) > 0.5, ]
 # #' mgc <- magic(example_sceset, power = 6, k = 30, n_eigs = 20, n_local = 10)
 # #'
-.magic_default <- function(exprs_mat, power = 6L,
-                           rescale = NULL, logged_data = TRUE, ...) {
-    if ( !requireNamespace("destiny", quietly = TRUE) )
-        stop("This function requires the 'destiny' package.
-             Try: source('https://bioconductor.org/biocLite.R'); biocLite('destiny').")
+magic <- function(x, power = 6L, rescale = NULL, exprs_values="exprs", logged_data = TRUE, ...) {
+    if (is(x, "SingleCellExperiment")) {
+        exprs_mat <- assay(x, i=exprs_values)
+    } else {
+        exprs_mat <- x
+    }
+    exprs_mat <- t(exprs_mat)
+    
     if ( !is.null(rescale) && (rescale < 0 || rescale > 1) )
         stop("rescale argument defines a quantile and must be in [0, 1].")
     ## here, exprs_mat is a cells x features matrix
@@ -113,18 +116,6 @@
     }
     t(new_exprs)
 }
-
-
-# #' @rdname magic
-# #' #@export 
-setMethod("magic", signature(object = "SCESet"),
-          function(object, exprs_values = "exprs", power = 6, rescale = NULL,
-                   logged_data = TRUE, ...) {
-              exprs_mat <- t(get_exprs(object, exprs_values, warning = FALSE))
-              .magic_default(exprs_mat, power, rescale, logged_data, ...)
-          })
-
-
 
 # data("sc_example_counts")
 # data("sc_example_cell_info")

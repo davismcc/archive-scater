@@ -5,6 +5,7 @@ extern "C" {
 
 static const R_CallMethodDef all_call_entries[] = {
     REGISTER(calc_exprs, 7),
+    REGISTER(margin_summary, 4),
     REGISTER(calc_top_features, 3),
     {NULL, NULL, 0}
 };

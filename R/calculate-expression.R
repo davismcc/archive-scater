@@ -22,24 +22,9 @@
 #' example_sceset <- newSCESet(countData=sc_example_counts)
 #' is_exprs(example_sceset) <- calcIsExprs(example_sceset, lowerDetectionLimit = 1,
 #' exprs_values = "exprs")
-calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_values = NULL)
+calcIsExprs <- function(object, lowerDetectionLimit = 0, exprs_values = "counts")
 {
-    if ( !is(object, "SCESet") )
-        stop("Object must be an SCESet.")
-
-    ## Check that args are appropriate
-    exprs_values <- .exprs_hunter(object, exprs_values)
-    dat_matrix <- get_exprs(object, exprs_values, warning = FALSE)
-
-    ## Extract lowerDetectionLimit if not provided
-    if ( is.null(lowerDetectionLimit) )
-        lowerDetectionLimit <- object@lowerDetectionLimit
-
-    ## Decide which observations are above detection limit and return matrix
-    isexprs <- dat_matrix > lowerDetectionLimit
-    rownames(isexprs) <- rownames(dat_matrix)
-    colnames(isexprs) <- colnames(dat_matrix)
-    isexprs
+    assay(object, i=exprs_values) > lowerDetectionLimit
 }
 
 #' Count the number of expressed genes per cell
@@ -82,42 +67,20 @@ calcIsExprs <- function(object, lowerDetectionLimit = NULL, exprs_values = NULL)
 #' nexprs(example_sceset)[1:10]
 #' nexprs(example_sceset, byrow = TRUE)[1:10]
 #'
-nexprs <- function(object, lowerDetectionLimit = NULL, exprs_values = NULL, byrow = FALSE, subset_row = NULL, subset_col = NULL) {
-    if (!is(object, "SCESet")) {
-        stop("'object' must be a SCESet")
-    }
-    is_exprs_mat <- is_exprs(object)
-
-    exprs_values <- .exprs_hunter(object, exprs_values)
-    exprs_mat <- suppressWarnings(get_exprs(object, exprs_values))
-    if (is.null(is_exprs_mat) && is.null(exprs_mat)) {
-        stop(sprintf("either 'is_exprs(object)' or '%s(object)' must be non-NULL", exprs_values))
-    }
-
-    # Building the expression profile.
-    if (is.null(is_exprs_mat)) {
-        if (is.null(lowerDetectionLimit)) {
-            lowerDetectionLimit <- object@lowerDetectionLimit
-        }
-        is_exprs_mat <- exprs(object) > lowerDetectionLimit
-    }
+nexprs <- function(object, lowerDetectionLimit = 0, exprs_values = "counts", byrow = FALSE, subset_row = NULL, subset_col = NULL) {
+    exprs_mat <- assay(object, i=exprs_values)
+    subset_row <- .subset2index(subset_row, target=exprs_mat, byrow=TRUE)
+    subset_col <- .subset2index(subset_col, target=exprs_mat, byrow=FALSE)
 
     if (!byrow) {
-        # Counting expressing genes per cell.
-        if (is.null(subset_row)) {
-            out <- colSums(is_exprs_mat)
-        } else {
-            out <- colSums(is_exprs_mat[subset_row,,drop=FALSE])
-        }
+        margin.stats <- .Call(cxx_margin_summary, exprs_mat, lowerDetectionLimit,
+                subset_row - 1L, FALSE)
+        return(margin.stats[[2]][subset_col])
     } else {
-        # Counting expressing cells per gene.
-        if (is.null(subset_col)) { 
-            out <- rowSums(is_exprs_mat)
-        } else {
-            out <- rowSums(is_exprs_mat[,subset_col,drop=FALSE])
-        }
+        margin.stats <- .Call(cxx_margin_summary, exprs_mat, lowerDetectionLimit,
+                subset_col - 1L, TRUE)
+        return(margin.stats[[2]][subset_row])
     }
-    return(out)
 }
 
 #' Calculate transcripts-per-million (TPM)
@@ -233,7 +196,7 @@ calculateCPM <- function(object, use.size.factors = TRUE) {
         if (is.null(sf.list$size.factors[[1]])) {
             warning("size factors requested but not specified, using library sizes instead")
             sf.list$size.factors[[1]] <- colSums(counts_mat)
-        }  
+        }
     } else {
         sf.list <- list(size.factors=list(colSums(counts_mat)),
                         index=rep(1, nrow(object)))
@@ -305,31 +268,24 @@ calculateFPKM <- function(object, effective_length, use.size.factors=TRUE) {
 #' ## calculate average counts
 #' ave_counts <- calcAverage(example_sceset)
 #'
-setMethod("calcAverage", "SingleCellExperiment", function(object) {
-    sf.list <- .get_all_sf_sets(object)
-    .calcAverage(assay(object, i="counts"), sf.list)
-})
+calcAverage <- function(object, size.factors=NULL) {
+    if (is(object, "SingleCellExperiment")) {
+        sf.list <- .get_all_sf_sets(object)
+        mat <- counts(object)
+    } else {
+        # Using the lone set of size factors, if provided.
+        sf.list <- list(index=rep(1L, nrow(object)), size.factors=list(size.factors))
+        mat <- object
+    }
 
-#' @name calcAverage 
-#' @export
-#' @docType methods
-#' @rdname calcAverage-SingleCellExperiment-method  
-setMethod("calcAverage", "ANY", function(object, size.factors = NULL) {
-    # Using the lone set of size factors, if provided.
-    sf.list <- list(index = rep(1L, nrow(object)), 
-                    size.factors = list(size.factors))
-    .calcAverage(object, sf.list)    
-})
-          
-.calcAverage <- function(mat, sf.list) {
     # Set size factors to library sizes if not available.
     if (is.null(sf.list$size.factors[[1]])) {
         sf.list$size.factors[[1]] <- colSums(mat)
     }
-    
+
     # Computes the average count, adjusting for size factors or library size.
-    all.ave <- .compute_exprs(mat, sf.list$size.factors, sf_to_use = sf.list$index, 
-                              log = FALSE, sum = TRUE, logExprsOffset = 0, 
+    all.ave <- .compute_exprs(mat, sf.list$size.factors, sf_to_use = sf.list$index,
+                              log = FALSE, sum = TRUE, logExprsOffset = 0,
                               subset_row = NULL)
 
     names(all.ave) <- rownames(mat)
