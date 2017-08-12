@@ -198,12 +198,12 @@ GET_FUN <- function(exprs_values) {
 SET_FUN <- function(exprs_values) {
     (exprs_values) # To get evaluated.
     function(object, value) {
-        assay(object, i=exprs_value) <- value
+        assay(object, i=exprs_values) <- value
         object
     }
 }
 
-for (x in c("norm_exprs", "stand_exprs", "tpm", "cpm", "fpkm", "counts", "exprs")) { 
+for (x in c("norm_exprs", "stand_exprs", "fpkm", "exprs")) {  # Others are now present in SingleCellExperiment itself.
     setMethod(x, "SingleCellExperiment", GET_FUN(x))
     setReplaceMethod(x, c("SingleCellExperiment", "ANY"), SET_FUN(x))
 }
