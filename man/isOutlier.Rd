@@ -43,13 +43,13 @@ outliers based on median-absolute-deviation (MAD).
 \examples{
 data("sc_example_counts")
 data("sc_example_cell_info")
-pd <- new("AnnotatedDataFrame", data=sc_example_cell_info)
-rownames(pd) <- pd$Cell
-example_sceset <- newSCESet(countData=sc_example_counts, phenoData=pd)
-example_sceset <- calculateQCMetrics(example_sceset)
+example_sce <- SingleCellExperiment(
+assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
+example_sce <- calculateQCMetrics(example_sce)
 
 ## with a set of feature controls defined
-example_sceset <- calculateQCMetrics(example_sceset, feature_controls = 1:40)
-isOutlier(example_sceset$total_counts, nmads = 3)
+example_sce <- calculateQCMetrics(example_sce, 
+feature_controls = list(set1 = 1:40))
+isOutlier(example_sce$total_counts, nmads = 3)
 
 }
