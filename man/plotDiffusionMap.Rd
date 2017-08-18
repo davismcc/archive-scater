@@ -54,7 +54,7 @@ so that each feature has unit variance? Default is \code{TRUE}.}
 stored in \code{SingleCellExperiment} object instead of recomputing (e.g. "PCA").
  Default is \code{NULL}, no reduced dimension values are provided to \code{Rtsne}.}
 
-\item{n_dimred}{integer(1), number of components of the reduced dimension slot 
+\item{n_dimred}{integer(1), number of components of the reduced dimension slot
 to use. Default is \code{NULL}, in which case (if \code{use_dimred} is not \code{NULL})
 all components of the reduced dimension slot are used.}
 
@@ -79,7 +79,7 @@ be used as a factor by which to define the size of points in the plot.}
 
 \item{return_SCE}{logical, should the function return an \code{SingleCellExperiment}
 object with principal component values for cells in the
-\code{reducedDimension} slot. Default is \code{FALSE}, in which case a
+\code{reducedDims} slot. Default is \code{FALSE}, in which case a
 \code{ggplot} object is returned.}
 
 \item{draw_plot}{logical, should the plot be drawn on the current graphics

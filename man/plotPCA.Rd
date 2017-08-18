@@ -60,9 +60,9 @@ so that each feature has unit variance? Default is \code{TRUE}.}
 
 \item{pca_data_input}{character argument defining which data should be used
 as input for the PCA. Possible options are \code{"exprs"} (default), which
-uses expression data to produce a PCA at the cell level; \code{"coldata"} or 
-\code{"pdata"} (for backwards compatibility) which uses numeric variables 
-from \code{colData(object)} to do PCA at the cell level; and 
+uses expression data to produce a PCA at the cell level; \code{"coldata"} or
+\code{"pdata"} (for backwards compatibility) which uses numeric variables
+from \code{colData(object)} to do PCA at the cell level; and
 \code{"rowdata"} which uses numeric variables from \code{rowData(object)} to
 do PCA at the feature level.}
 
@@ -88,7 +88,7 @@ Alternatively, a data frame with one column containing values to map to sizes.}
 
 \item{return_SCE}{logical, should the function return an \code{SingleCellExperiment}
 object with principal component values for cells in the
-\code{reducedDimension} slot. Default is \code{FALSE}, in which case a
+\code{reducedDim} slot. Default is \code{FALSE}, in which case a
 \code{ggplot} object is returned.}
 
 \item{draw_plot}{logical, should the plot be drawn on the current graphics
@@ -137,7 +137,7 @@ data("sc_example_counts")
 data("sc_example_cell_info")
 example_sce <- SingleCellExperiment(
 assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-exprs(example_sce) <- log2(calculateCPM(example_sce) + 1)
+exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 example_sce <- example_sce[!drop_genes, ]
 

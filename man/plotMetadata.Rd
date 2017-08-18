@@ -50,6 +50,6 @@ data("sc_example_cell_info")
 example_sce <- SingleCellExperiment(
 assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
 example_sce <- calculateQCMetrics(example_sce)
-plotMetadata(pData(example_sce))
+plotMetadata(colData(example_sce))
 
 }

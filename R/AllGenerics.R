@@ -1,3 +1,7 @@
+# struggling with plot generic
+if (!isGeneric("plot"))
+    setGeneric("plot", function(x, y, ...) standardGeneric("plot"))
+
 #' @name norm_exprs
 #' @export
 #' @docType methods

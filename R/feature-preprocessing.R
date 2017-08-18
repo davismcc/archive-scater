@@ -157,7 +157,7 @@ getBMFeatureAnnos <- function(object, filters="ensembl_transcript_id",
 #' rd <- data.frame(gene_id = rownames(example_sce), 
 #' feature_id = paste("feature", rep(1:500, each = 4), sep = "_"))
 #' rownames(rd) <- rownames(example_sce)
-#' rowData(example_sce) <- fd
+#' rowData(example_sce) <- rd
 #' effective_length <- rep(c(1000, 2000), times = 1000)
 #' tpm(example_sce) <- calculateTPM(example_sce, effective_length, calc_from = "counts")
 #' 
@@ -165,8 +165,6 @@ getBMFeatureAnnos <- function(object, filters="ensembl_transcript_id",
 #' summariseExprsAcrossFeatures(example_sce, exprs_values = "tpm")
 #' example_sceset_summarised <- 
 #' summariseExprsAcrossFeatures(example_sce, exprs_values = "counts")
-#' example_sceset_summarised <- 
-#' summariseExprsAcrossFeatures(example_sce, exprs_values = "exprs")
 #' 
 summariseExprsAcrossFeatures <- function(object, exprs_values = "tpm", 
                                          summarise_by = "feature_id",

@@ -38,6 +38,7 @@ data("sc_example_cell_info")
 example_sce <- SingleCellExperiment(
 assays = list(counts = sc_example_counts), 
 colData = sc_example_cell_info)
+exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 example_sce <- example_sce[!drop_genes, ]
 example_sce <- calculateQCMetrics(example_sce)

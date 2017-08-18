@@ -728,6 +728,7 @@ findImportantPCs <- function(object, variable="total_features",
 #' feature_controls = list(set1 = 1:500))
 #' plotHighestExprs(example_sce, col_by_variable="total_features")
 #' plotHighestExprs(example_sce, col_by_variable="Mutation_Status")
+#' plotQC(example_sce, type = "highest-express")
 #'
 plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
                              drop_features = NULL, exprs_values = "counts",
@@ -816,6 +817,8 @@ plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
     top50_pctage <- 100 * sum(rowSums(exprs_mat)[oo[1:n]]) / total_exprs
     ## Determine percentage of counts for top features by cell
     df_pct_exprs_by_cell <- (100 * t(exprs_mat[oo[1:n],]) / colSums(exprs_mat))
+    pct_total <- 100 * rowSums(exprs_mat) / total_exprs
+    rdata[["pct_total"]] <- pct_total
 
     ## Melt dataframe so it is conducive to ggplot
     if ( is.null(rownames(rdata)) )
@@ -862,7 +865,7 @@ plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
                                   high = "firebrick4", space = "Lab")
     }
     plot_most_expressed + geom_point(
-        aes_string(x = paste0("as.numeric(pct_total_", exprs_values, ")"),
+        aes_string(x = "as.numeric(pct_total)",
                    y = "Feature", fill = "is_feature_control"),
         data = as.data.frame(rdata[oo[1:n],]), colour = "gray30", shape = 21) +
         scale_fill_manual(values = c("aliceblue", "wheat")) +
@@ -1329,6 +1332,7 @@ plotExprsFreqVsMean <- function(object, feature_set = NULL,
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), 
 #' colData = sc_example_cell_info)
+#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #' example_sce <- calculateQCMetrics(example_sce)
@@ -1433,6 +1437,7 @@ plotQC <- function(object, type = "highest-expression", ...) {
 #'  example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), 
 #' colData = sc_example_cell_info)
+#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'

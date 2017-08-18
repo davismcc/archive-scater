@@ -21,16 +21,16 @@ experimental information. Must have been appropriately prepared.}
 expects at least x and y variables to be supplied. The default is to plot
 total_features against log10(total_counts).}
 
-\item{...}{arguments passed to \code{\link{plotPhenoData}} (if 
-\code{\link{plotColData}} or \code{\link{plotCellData}}) or to 
-\code{\link{plotMetadata}}, e.g.\code{theme_size}, \code{size}, 
+\item{...}{arguments passed to \code{\link{plotPhenoData}} (if
+\code{\link{plotColData}} or \code{\link{plotCellData}}) or to
+\code{\link{plotMetadata}}, e.g.\code{theme_size}, \code{size},
 \code{alpha}, \code{shape}.}
 }
 \value{
 a ggplot plot object
 }
 \description{
-\code{plotPhenoData}, \code{plotColData} and \code{plotCellData} are 
+\code{plotPhenoData}, \code{plotColData} and \code{plotCellData} are
 synonymous.
 }
 \details{

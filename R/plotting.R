@@ -191,7 +191,7 @@
 #' @param exprs_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
 #' (transcripts per million), \code{"counts"} (raw counts) [default], \code{"cpm"}
-#' (counts per million), or \code{"fpkm"} (FPKM values). 
+#' (counts per million), or \code{"fpkm"} (FPKM values).
 #' @param linewidth numeric scalar giving the "size" parameter (in ggplot2
 #' parlance) for the lines plotted. Default is 1.5.
 #' @param y optional argument for generic \code{plot} functions, not used for
@@ -218,7 +218,7 @@
 #' @importFrom plyr aaply
 #' @importFrom reshape2 melt
 #' @name plot
-#' @aliases plot plot,SingleCellExperiment-method plot,SingleCellExperiment,ANY-method
+#' @aliases plot plot,SingleCellExperiment,missing-method
 #' @export
 #'
 #' @examples
@@ -231,7 +231,7 @@
 #' plot(example_sce)
 #' plot(example_sce, exprs_values = "counts", colour_by = "Cell_Cycle")
 #' plot(example_sce, block1 = "Treatment", colour_by = "Cell_Cycle")
-#' 
+#'
 #' cpm(example_sce) <- calculateCPM(example_sce, use.size.factors = FALSE)
 #' plot(example_sce, exprs_values = "cpm", block1 = "Treatment",
 #' block2 = "Mutation_Status", colour_by = "Cell_Cycle")
@@ -250,15 +250,15 @@ plotSCE <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
         if ( !(block2 %in% colnames(colData(x))) )
             stop("The block2 argument must either be NULL or a column of colData(x).")
     }
-    
+
     ## Setting values to colour by.
     colour_by_out <- .choose_vis_values(x, colour_by)
     colour_by <- colour_by_out$name
     colour_by_vals <- colour_by_out$val
-    
+
     ## Define an expression matrix depending on which values we're using
     exprs_mat <- assay(x, i = exprs_values)
-    
+
     ## Use plyr to get the sequencing real estate accounted for by features
     nfeatures_total <- nrow(exprs_mat)
     seq_real_estate <- t(plyr::aaply(exprs_mat, 2, .fun = function(x) {
@@ -269,14 +269,14 @@ plotSCE <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
     to_plot <- seq_len(nfeatures_to_plot)
     seq_real_estate_long <- reshape2::melt(seq_real_estate[to_plot, ],
                                            value.name = "exprs")
-    
+
     ## Get the proportion of the library accounted for by the top features
     prop_library <- reshape2::melt(t(t(seq_real_estate[to_plot, ]) /
                                          colSums(exprs_mat)),
                                    value.name = "prop_library")
     colnames(seq_real_estate_long) <- c("Feature", "Cell", "exprs")
     seq_real_estate_long$Proportion_Library <- prop_library$prop_library
-    
+
     ## Add block and colour_by information if provided
     if ( !is.null(block1) )
         seq_real_estate_long <- dplyr::mutate(
@@ -290,7 +290,7 @@ plotSCE <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
         seq_real_estate_long <- dplyr::mutate(
             seq_real_estate_long, colour_by = rep(colour_by_vals,
                                                   each = nfeatures_to_plot))
-    
+
     ## Set up plot
     if ( is.null(colour_by) ) {
         plot_out <- ggplot(seq_real_estate_long,
@@ -322,10 +322,10 @@ plotSCE <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
                                           seq_real_estate_long$colour_by,
                                           colour_by)
     }
-    
+
     plot_out <- plot_out +
         xlab("Number of features") + ylab("Cumulative proportion of library")
-    
+
     if ( requireNamespace("cowplot", quietly = TRUE) )
         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
     else
@@ -337,11 +337,10 @@ plotSCE <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 
 #' @rdname plot
 #' @aliases plot
-#' @exportMethod plot
 #' @method plot plot,SingleCellExperiment-method
 #' @export
-setMethod("plot", signature("SingleCellExperiment"),
-          function(x, ...) {
+setMethod("plot", signature(x = "SingleCellExperiment", y = "missing"),
+          function(x, y, ...) {
               plotSCE(x, ...)
           })
 
@@ -370,9 +369,9 @@ setMethod("plot", signature("SingleCellExperiment"),
 #' so that each feature has unit variance? Default is \code{TRUE}.
 #' @param pca_data_input character argument defining which data should be used
 #' as input for the PCA. Possible options are \code{"exprs"} (default), which
-#' uses expression data to produce a PCA at the cell level; \code{"coldata"} or 
-#' \code{"pdata"} (for backwards compatibility) which uses numeric variables 
-#' from \code{colData(object)} to do PCA at the cell level; and 
+#' uses expression data to produce a PCA at the cell level; \code{"coldata"} or
+#' \code{"pdata"} (for backwards compatibility) which uses numeric variables
+#' from \code{colData(object)} to do PCA at the cell level; and
 #' \code{"rowdata"} which uses numeric variables from \code{rowData(object)} to
 #' do PCA at the feature level.
 #' @param selected_variables character vector indicating which variables in
@@ -381,7 +380,7 @@ setMethod("plot", signature("SingleCellExperiment"),
 #' @param detect_outliers logical, should outliers be detected in the PC plot?
 #' Only an option when \code{pca_data_input} argument is \code{"pdata"}. Default
 #' is \code{FALSE}.
-#' 
+#'
 #' @rdname plotPCA
 #' @export
 runPCA <- function(object, ntop=500, ncomponents=2, exprs_values = "exprs",
@@ -482,7 +481,7 @@ runPCA <- function(object, ntop=500, ncomponents=2, exprs_values = "exprs",
 #' "PCA" element in the \code{reducedDims} slot?
 #' @param return_SCE logical, should the function return an \code{SingleCellExperiment}
 #' object with principal component values for cells in the
-#' \code{reducedDimension} slot. Default is \code{FALSE}, in which case a
+#' \code{reducedDim} slot. Default is \code{FALSE}, in which case a
 #' \code{ggplot} object is returned.
 #' @param draw_plot logical, should the plot be drawn on the current graphics
 #' device? Only used if \code{return_SCE} is \code{TRUE}, otherwise the plot
@@ -525,7 +524,7 @@ runPCA <- function(object, ntop=500, ncomponents=2, exprs_values = "exprs",
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce) + 1)
+#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
@@ -631,7 +630,7 @@ setMethod("plotPCA", "SingleCellExperiment", plotPCASCE)
 #' @param use_dimred character(1), use named reduced dimension representation of cells
 #' stored in \code{SingleCellExperiment} object instead of recomputing (e.g. "PCA").
 #'  Default is \code{NULL}, no reduced dimension values are provided to \code{Rtsne}.
-#' @param n_dimred integer(1), number of components of the reduced dimension slot 
+#' @param n_dimred integer(1), number of components of the reduced dimension slot
 #' to use. Default is \code{NULL}, in which case (if \code{use_dimred} is not \code{NULL})
 #' all components of the reduced dimension slot are used.
 #' @param scale_features logical, should the expression values be standardised
@@ -641,7 +640,7 @@ setMethod("plotPCA", "SingleCellExperiment", plotPCASCE)
 #' @param perplexity numeric scalar value defining the "perplexity parameter"
 #' for the t-SNE plot. Passed to \code{\link[Rtsne]{Rtsne}} - see documentation
 #' for that package for more details.
-#' 
+#'
 #' @rdname plotTSNE
 #' @export
 runTSNE <- function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
@@ -719,7 +718,7 @@ runTSNE <- function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
 #' Alternatively, a data frame with one column containing values to map to sizes.
 #' @param return_SCE logical, should the function return an \code{SingleCellExperiment}
 #' object with principal component values for cells in the
-#' \code{reducedDimension} slot. Default is \code{FALSE}, in which case a
+#' \code{reducedDims} slot. Default is \code{FALSE}, in which case a
 #' \code{ggplot} object is returned.
 #' @param rerun logical, should PCA be recomputed even if \code{object} contains a
 #' "PCA" element in the \code{reducedDims} slot?
@@ -736,8 +735,8 @@ runTSNE <- function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
 #' @details The function \code{\link[Rtsne]{Rtsne}} is used internally to
 #' compute the t-SNE. Note that the algorithm is not deterministic, so different
 #' runs of the function will produce differing plots (see \code{\link{set.seed}}
-#' to set a random seed for replicable results). The value of the 
-#' \code{perplexity} parameter can have a large effect on the resulting plot, so 
+#' to set a random seed for replicable results). The value of the
+#' \code{perplexity} parameter can have a large effect on the resulting plot, so
 #' it can often be worthwhile to try multiple values to find the most appealing
 #' visualisation.
 #'
@@ -760,14 +759,13 @@ runTSNE <- function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
+#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
 #' ## Examples plotting t-SNE
 #' plotTSNE(example_sce, perplexity = 10)
 #' plotTSNE(example_sce, colour_by = "Cell_Cycle", perplexity = 10)
-#' plotTSNE(example_sce, colour_by = "Cell_Cycle", shape_by = "Treatment",
-#' perplexity = 30)
 #' plotTSNE(example_sce, colour_by = "Cell_Cycle", shape_by = "Treatment",
 #' size_by = "Mutation_Status", perplexity = 10)
 #' plotTSNE(example_sce, shape_by = "Treatment", size_by = "Mutation_Status",
@@ -828,14 +826,14 @@ plotTSNE <- function(object, colour_by = NULL, shape_by = NULL, size_by = NULL,
 #' @param use_dimred character(1), use named reduced dimension representation of cells
 #' stored in \code{SingleCellExperiment} object instead of recomputing (e.g. "PCA").
 #'  Default is \code{NULL}, no reduced dimension values are provided to \code{Rtsne}.
-#' @param n_dimred integer(1), number of components of the reduced dimension slot 
+#' @param n_dimred integer(1), number of components of the reduced dimension slot
 #' to use. Default is \code{NULL}, in which case (if \code{use_dimred} is not \code{NULL})
 #' all components of the reduced dimension slot are used.
 #' @param rand_seed (optional) numeric scalar that can be passed to
 #' \code{set.seed} to make plots reproducible.
 #' @param sigma argument passed to \code{\link[destiny]{DiffusionMap}}
 #' @param distance argument passed to \code{\link[destiny]{DiffusionMap}}
-#' 
+#'
 #' @export
 #' @rdname plotDiffusionMap
 runDiffusionMap <- function(object, ntop = 500, ncomponents = 2, feature_set = NULL,
@@ -904,7 +902,7 @@ runDiffusionMap <- function(object, ntop = 500, ncomponents = 2, feature_set = N
 #' be used as a factor by which to define the size of points in the plot.
 #' @param return_SCE logical, should the function return an \code{SingleCellExperiment}
 #' object with principal component values for cells in the
-#' \code{reducedDimension} slot. Default is \code{FALSE}, in which case a
+#' \code{reducedDims} slot. Default is \code{FALSE}, in which case a
 #' \code{ggplot} object is returned.
 #' @param rerun logical, should PCA be recomputed even if \code{object} contains a
 #' "PCA" element in the \code{reducedDims} slot?
@@ -943,7 +941,7 @@ runDiffusionMap <- function(object, ntop = 500, ncomponents = 2, feature_set = N
 #' calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
-#' 
+#'
 #' \dontrun{
 #' ## Examples plotting diffusion maps
 #' plotDiffusionMap(example_sce)
@@ -1049,7 +1047,7 @@ runMDS <- function(object, ntop = 500, ncomponents = 2, feature_set = NULL,
 #' be used as a factor by which to define the size of points in the plot.
 #' @param return_SCE logical, should the function return an \code{SingleCellExperiment}
 #' object with principal component values for cells in the
-#' \code{reducedDimension} slot. Default is \code{FALSE}, in which case a
+#' \code{reducedDims} slot. Default is \code{FALSE}, in which case a
 #' \code{ggplot} object is returned.
 #' @param rerun logical, should PCA be recomputed even if \code{object} contains a
 #' "PCA" element in the \code{reducedDims} slot?
@@ -1081,6 +1079,7 @@ runMDS <- function(object, ntop = 500, ncomponents = 2, feature_set = NULL,
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
+#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
@@ -1094,8 +1093,8 @@ runMDS <- function(object, ntop = 500, ncomponents = 2, feature_set = NULL,
 #' shape_by = "Treatment", size_by = "Mutation_Status", method = "canberra")
 #'
 plotMDS <- function(object, ncomponents = 2, colour_by = NULL,
-                    shape_by = NULL, size_by = NULL, return_SCE = FALSE, 
-                    rerun = FALSE, draw_plot = TRUE, exprs_values = "exprs", 
+                    shape_by = NULL, size_by = NULL, return_SCE = FALSE,
+                    rerun = FALSE, draw_plot = TRUE, exprs_values = "exprs",
                     theme_size = 10, legend = "auto", ...) {
 
     if ( !("MDS" %in% names(reducedDims(object))) || rerun) {
@@ -1168,17 +1167,18 @@ plotMDS <- function(object, ncomponents = 2, colour_by = NULL,
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
+#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
-#' reducedDimension(example_sce) <- prcomp(t(exprs(example_sce)), scale. = TRUE)$x
-#' plotReducedDim(example_sce)
-#' plotReducedDim(example_sce, colour_by="Cell_Cycle")
-#' plotReducedDim(example_sce, colour_by="Cell_Cycle", shape_by="Treatment")
-#' plotReducedDim(example_sce, colour_by="Cell_Cycle", size_by="Treatment")
-#' plotReducedDim(example_sce, ncomponents=5)
-#' plotReducedDim(example_sce, ncomponents=5, colour_by="Cell_Cycle", shape_by="Treatment")
-#' plotReducedDim(example_sce, colour_by="Gene_0001")
+#' reducedDim(example_sce, "PCA") <- prcomp(t(exprs(example_sce)), scale. = TRUE)$x
+#' plotReducedDim(example_sce, "PCA")
+#' plotReducedDim(example_sce, "PCA", colour_by="Cell_Cycle")
+#' plotReducedDim(example_sce, "PCA", colour_by="Cell_Cycle", shape_by="Treatment")
+#' plotReducedDim(example_sce, "PCA", colour_by="Cell_Cycle", size_by="Treatment")
+#' plotReducedDim(example_sce, "PCA", ncomponents=5)
+#' plotReducedDim(example_sce, "PCA", ncomponents=5, colour_by="Cell_Cycle", shape_by="Treatment")
+#' plotReducedDim(example_sce, "PCA", colour_by="Gene_0001")
 #'
 plotReducedDimDefault <- function(df_to_plot, ncomponents=2, percentVar=NULL,
                            colour_by=NULL, shape_by=NULL, size_by=NULL,
@@ -1419,6 +1419,7 @@ plotReducedDim <- function(object, use_dimred, ncomponents = 2,
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
+#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 #' example_sce <- calculateQCMetrics(example_sce)
 #'
 #' ## define plate positions
@@ -1428,6 +1429,7 @@ plotReducedDim <- function(object, use_dimred, ncomponents = 2,
 #' ## plot plate positions
 #' plotPlatePosition(example_sce, colour_by = "Mutation_Status")
 #'
+#' ## Must have exprs slot defined in object
 #' plotPlatePosition(example_sce, colour_by = "Gene_0004")
 #'
 plotPlatePosition <- function(object, plate_position = NULL,
@@ -1618,7 +1620,7 @@ plotPlatePosition <- function(object, plate_position = NULL,
 plotExpression <- function(object, features, x = NULL,
                               exprs_values = "exprs", log2_values = FALSE,
                               colour_by = NULL, shape_by = NULL, size_by = NULL,
-                              ncol = 2, xlab = NULL, show_median = FALSE, 
+                              ncol = 2, xlab = NULL, show_median = FALSE,
                            show_violin = TRUE, theme_size = 10, ...) {
 
     ## Define number of features to plot
@@ -1732,7 +1734,7 @@ plotExpression <- function(object, features, x = NULL,
 #' @export
 plotExpressionDefault <- function(object, aesth, ncol = 2, xlab = NULL,
                                   ylab = NULL, show_median = FALSE,
-                                  show_violin = TRUE, show_smooth = FALSE, 
+                                  show_violin = TRUE, show_smooth = FALSE,
                                   theme_size = 10,
                                   alpha = 0.6, size = NULL, scales = "fixed",
                                   one_facet = FALSE, se = TRUE, jitter = "swarm") {
@@ -1861,13 +1863,14 @@ plotExpressionDefault <- function(object, aesth, ncol = 2, xlab = NULL,
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
 #' example_sce <- calculateQCMetrics(example_sce)
-#' plotMetadata(pData(example_sce))
+#' plotMetadata(colData(example_sce))
 #'
 plotMetadata <- function(object,
                          aesth = aes_string(x = "log10(total_counts)",
                                           y = "total_features"),
                          shape = NULL, alpha = NULL, size = NULL,
                          theme_size = 10) {
+    object <- as.data.frame(object)
     ## Must have at least an x variable in the aesthetics
     if (is.null(aesth$x))
         stop("No x variable defined. Must have at least an x variable defined
@@ -1932,47 +1935,80 @@ plotMetadata <- function(object,
     ## Set up basics of plot
     plot_out <- ggplot(object, aesth)
 
-    ## Density plot
     if (plot_type == "bar") {
         plot_out <- plot_out + geom_bar(stat = "identity")
     } else if (plot_type == "density") {
         plot_out <- plot_out + geom_density(kernel = "rectangular", size = 2) +
             geom_rug(alpha = 0.5, size = 1)
-    } else if (plot_type == "scatter") {
-        plot_out <- plot_out + geom_rug(alpha = 0.5, size = 1)
     } else if (plot_type == "violin") {
         plot_out <- plot_out + geom_violin(size = 1, scale = "width")
     } else {
-        if (!show_shape_guide && !show_size_guide && !show_alpha_guide)
-            plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
-                shape = shape, size = size, alpha = alpha)
-        else {
-            if (!show_shape_guide && !show_size_guide) {
+        plot_out <- plot_out + geom_rug(alpha = 0.5, size = 1)
+        if (!show_shape_guide && !show_size_guide && !show_alpha_guide) {
+            if (plot_type == "scatter") {
+                plot_out <- plot_out + geom_point(
+                    shape = shape, size = size, alpha = alpha)
+            } else {
                 plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
-                    shape = shape, size = size)
+                    shape = shape, size = size, alpha = alpha)
+            }
+        } else {
+            if (!show_shape_guide && !show_size_guide) {
+                if (plot_type == "scatter") {
+                    plot_out <- plot_out + geom_point(shape = shape, size = size)
+                } else {
+                    plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
+                        shape = shape, size = size)
+                }
             } else if (!show_size_guide && !show_alpha_guide) {
+                if (plot_type == "scatter") {
+                    plot_out <- plot_out + geom_point(
+                        alpha = alpha, size = size)
+                } else {
                 plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
                     size = size, alpha = alpha)
+                }
             } else if (!show_shape_guide && !show_alpha_guide) {
+                if (plot_type == "scatter") {
+                    plot_out <- plot_out + geom_point(
+                        shape = shape, alpha = alpha)
+                } else {
                 plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
                     shape = shape, alpha = alpha)
+                }
             } else {
                 if (!show_shape_guide) {
+                    if (plot_type == "scatter") {
+                        plot_out <- plot_out + geom_point(shape = shape)
+                    } else {
                     plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
                         shape = shape)
+                    }
                 } else if (!show_size_guide) {
-                    plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
-                        size = size)
+                    if (plot_type == "scatter") {
+                        plot_out <- plot_out + geom_point(size = size)
+                    } else {
+                        plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
+                            size = size)
+                    }
                 } else if (!show_alpha_guide) {
-                    plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
-                        alpha = alpha)
+                    if (plot_type == "scatter") {
+                        plot_out <- plot_out + geom_point(alpha = alpha)
+                    } else {
+                        plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
+                            alpha = alpha)
+                    }
                 } else {
-                    plot_out <- plot_out +  ggbeeswarm::geom_quasirandom()
+                    if (plot_type == "scatter") {
+                        plot_out <- plot_out + geom_point()
+                    } else {
+                        plot_out <- plot_out + ggbeeswarm::geom_quasirandom()
+                    }
                 }
             }
         }
     }
-
+    
     ## Define plotting theme
     if ( requireNamespace("cowplot", quietly = TRUE) )
         plot_out <- plot_out + cowplot::theme_cowplot(theme_size)
@@ -2010,7 +2046,7 @@ plotMetadata <- function(object,
 
 #' Plot cell phenotype data from an SingleCellExperiment object
 #'
-#' \code{plotPhenoData}, \code{plotColData} and \code{plotCellData} are 
+#' \code{plotPhenoData}, \code{plotColData} and \code{plotCellData} are
 #' synonymous.
 #'
 #' @param object an \code{\link{SingleCellExperiment}} object containing expression values and
@@ -2018,9 +2054,9 @@ plotMetadata <- function(object,
 #' @param aesth aesthetics function call to pass to ggplot. This function
 #' expects at least x and y variables to be supplied. The default is to plot
 #' total_features against log10(total_counts).
-#' @param ... arguments passed to \code{\link{plotPhenoData}} (if 
-#' \code{\link{plotColData}} or \code{\link{plotCellData}}) or to 
-#' \code{\link{plotMetadata}}, e.g.\code{theme_size}, \code{size}, 
+#' @param ... arguments passed to \code{\link{plotPhenoData}} (if
+#' \code{\link{plotColData}} or \code{\link{plotCellData}}) or to
+#' \code{\link{plotMetadata}}, e.g.\code{theme_size}, \code{size},
 #' \code{alpha}, \code{shape}.
 #'
 #' @details Plot phenotype data from a SingleCellExperiment object. If one variable is
@@ -2042,10 +2078,10 @@ plotMetadata <- function(object,
 #' example_sce <- calculateQCMetrics(example_sce)
 #' plotPhenoData(example_sce, aesth = aes_string(x = "log10(total_counts)",
 #' y = "total_features", colour = "Mutation_Status"))
-#' 
+#'
 #' plotColData(example_sce, aesth = aes_string(x = "log10(total_counts)",
 #' y = "total_features", colour = "Mutation_Status"))
-#' 
+#'
 #' plotCellData(example_sce, aesth = aes_string(x = "log10(total_counts)",
 #' y = "total_features", colour = "Mutation_Status"))
 
@@ -2057,13 +2093,13 @@ plotPhenoData <- function(object, aesth=aes_string(x = "log10(total_counts)",
         stop("object must be an SingleCellExperiment object.")
 
     ## Define dataframe to pass to plotMetadata
-    df_to_plot <- pData(object)
+    df_to_plot <- colData(object)
 
     ## Check that aesthetics make sense for feature names if used
     for (item in unlist(aesth)) {
         item <- as.character(item)
-        if ( !(item %in% varLabels(object)) &&
-             (item %in% featureNames(object)) ) {
+        if ( !(item %in% colnames(colData(object))) &&
+             (item %in% rownames(object)) ) {
             df_to_plot <- data.frame(df_to_plot, exprs(object)[item,])
             colnames(df_to_plot)[ncol(df_to_plot)] <- item
         }
@@ -2094,7 +2130,7 @@ plotCellData <- function(...) {
 #'
 #' \code{plotFeatureData} and \code{plotRowData} are synonymous.
 #'
-#' @param object an \code{\link{SingleCellExperiment}} object containing 
+#' @param object an \code{\link{SingleCellExperiment}} object containing
 #' expression values and experimental information. Must have been appropriately prepared.
 #' @param aesth aesthetics function call to pass to ggplot. This function
 #' expects at least x and y variables to be supplied. The default is to produce
@@ -2121,7 +2157,7 @@ plotCellData <- function(...) {
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
 #' example_sce <- calculateQCMetrics(example_sce)
 #' plotFeatureData(example_sce, aesth = aes(x = n_cells_counts, y = log10_total_counts))
-#' 
+#'
 #' plotRowData(example_sce, aesth = aes(x = n_cells_counts, y = log10_total_counts))
 #'
 plotFeatureData <- function(object,
@@ -2236,8 +2272,8 @@ multiplot <- function(..., plotlist = NULL, cols = 1, layout = NULL) {
 
 #' Plot expression against transcript length
 #'
-#' Plot expression values from an \code{\link{SingleCellExperiment}} object 
-#' against transcript length values defined in the SingleCellExperiment object 
+#' Plot expression values from an \code{\link{SingleCellExperiment}} object
+#' against transcript length values defined in the SingleCellExperiment object
 #' or supplied as an argument.
 #'
 #' @param object an \code{\link{SingleCellExperiment}} object
@@ -2300,9 +2336,9 @@ multiplot <- function(..., plotlist = NULL, cols = 1, layout = NULL) {
 #'      median_tx_length = rnorm(2000, mean = 5000, sd = 500))
 #' rownames(rd) <- rownames(sc_example_counts)
 #' example_sce <- SingleCellExperiment(
-#' assays = list(counts = sc_example_counts), 
+#' assays = list(counts = sc_example_counts),
 #' colData = sc_example_cell_info, rowData = rd)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce) + 1)
+#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 #'
 #' plotExprsVsTxLength(example_sce, "median_tx_length")
 #' plotExprsVsTxLength(example_sce, "median_tx_length", show_smooth = TRUE)

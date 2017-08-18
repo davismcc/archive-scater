@@ -62,6 +62,7 @@ data("sc_example_counts")
 data("sc_example_cell_info")
 example_sce <- SingleCellExperiment(
 assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
+exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 example_sce <- calculateQCMetrics(example_sce)
 
 ## define plate positions
@@ -71,6 +72,7 @@ rep(LETTERS[1:5], each = 8), rep(formatC(1:8, width = 2, flag = "0"), 5))
 ## plot plate positions
 plotPlatePosition(example_sce, colour_by = "Mutation_Status")
 
+## Must have exprs slot defined in object
 plotPlatePosition(example_sce, colour_by = "Gene_0004")
 
 }

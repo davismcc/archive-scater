@@ -77,8 +77,8 @@ the smoothed fit through the cells. (Ignored if \code{show_smooth} is \code{FALS
 a ggplot object
 }
 \description{
-Plot expression values from an \code{\link{SingleCellExperiment}} object 
-against transcript length values defined in the SingleCellExperiment object 
+Plot expression values from an \code{\link{SingleCellExperiment}} object
+against transcript length values defined in the SingleCellExperiment object
 or supplied as an argument.
 }
 \examples{
@@ -89,9 +89,9 @@ rd <- DataFrame(gene_id = rownames(sc_example_counts),
      median_tx_length = rnorm(2000, mean = 5000, sd = 500))
 rownames(rd) <- rownames(sc_example_counts)
 example_sce <- SingleCellExperiment(
-assays = list(counts = sc_example_counts), 
+assays = list(counts = sc_example_counts),
 colData = sc_example_cell_info, rowData = rd)
-exprs(example_sce) <- log2(calculateCPM(example_sce) + 1)
+exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 
 plotExprsVsTxLength(example_sce, "median_tx_length")
 plotExprsVsTxLength(example_sce, "median_tx_length", show_smooth = TRUE)

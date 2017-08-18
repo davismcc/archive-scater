@@ -51,7 +51,7 @@ equal to \code{nrow(object)}.}
 stored in \code{SingleCellExperiment} object instead of recomputing (e.g. "PCA").
  Default is \code{NULL}, no reduced dimension values are provided to \code{Rtsne}.}
 
-\item{n_dimred}{integer(1), number of components of the reduced dimension slot 
+\item{n_dimred}{integer(1), number of components of the reduced dimension slot
 to use. Default is \code{NULL}, in which case (if \code{use_dimred} is not \code{NULL})
 all components of the reduced dimension slot are used.}
 
@@ -81,7 +81,7 @@ Alternatively, a data frame with one column containing values to map to sizes.}
 
 \item{return_SCE}{logical, should the function return an \code{SingleCellExperiment}
 object with principal component values for cells in the
-\code{reducedDimension} slot. Default is \code{FALSE}, in which case a
+\code{reducedDims} slot. Default is \code{FALSE}, in which case a
 \code{ggplot} object is returned.}
 
 \item{draw_plot}{logical, should the plot be drawn on the current graphics
@@ -110,8 +110,8 @@ components for an \code{SingleCellExperiment} dataset.
 The function \code{\link[Rtsne]{Rtsne}} is used internally to
 compute the t-SNE. Note that the algorithm is not deterministic, so different
 runs of the function will produce differing plots (see \code{\link{set.seed}}
-to set a random seed for replicable results). The value of the 
-\code{perplexity} parameter can have a large effect on the resulting plot, so 
+to set a random seed for replicable results). The value of the
+\code{perplexity} parameter can have a large effect on the resulting plot, so
 it can often be worthwhile to try multiple values to find the most appealing
 visualisation.
 }
@@ -121,14 +121,13 @@ data("sc_example_counts")
 data("sc_example_cell_info")
 example_sce <- SingleCellExperiment(
 assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
+exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 example_sce <- example_sce[!drop_genes, ]
 
 ## Examples plotting t-SNE
 plotTSNE(example_sce, perplexity = 10)
 plotTSNE(example_sce, colour_by = "Cell_Cycle", perplexity = 10)
-plotTSNE(example_sce, colour_by = "Cell_Cycle", shape_by = "Treatment",
-perplexity = 30)
 plotTSNE(example_sce, colour_by = "Cell_Cycle", shape_by = "Treatment",
 size_by = "Mutation_Status", perplexity = 10)
 plotTSNE(example_sce, shape_by = "Treatment", size_by = "Mutation_Status",

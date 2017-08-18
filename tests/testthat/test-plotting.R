@@ -1,6 +1,6 @@
 ## tests for plotting functions
 
-context("test plot, plotPCA, plotTSNE and plotDiffusionMap")
+context("test plot, plotPCA, plotTSNE, plotDiffusionMap, plotMDS, plotReducedDim")
 
 test_that("we can produce default plots for SingleCellExperiment objects", {
     data("sc_example_counts")
@@ -94,6 +94,41 @@ test_that("we can produce MDS plots with different expression values",
                   is_a("ggplot"))
           })
 
+
+test_that("plotReducedDim works as expexted",
+          {
+              data("sc_example_counts")
+              data("sc_example_cell_info")
+              example_sce <- SingleCellExperiment(
+                  assays = list(counts = sc_example_counts), 
+                  colData = sc_example_cell_info)
+              exprs(example_sce) <- log2(calculateCPM(
+                  example_sce, use.size.factors = FALSE) + 1)
+              drop_genes <- apply(exprs(example_sce), 1, 
+                                  function(x) {var(x) == 0})
+              example_sce <- example_sce[!drop_genes, ]
+              
+              reducedDim(example_sce, "PCA") <- 
+                  prcomp(t(exprs(example_sce)), scale. = TRUE)$x
+              expect_that(plotReducedDim(example_sce, "PCA"), is_a("ggplot"))
+              expect_that(plotReducedDim(
+                  example_sce, "PCA", colour_by = "Cell_Cycle"), is_a("ggplot"))
+              expect_that(plotReducedDim(
+                  example_sce, "PCA", colour_by = "Cell_Cycle", 
+                  shape_by = "Treatment"), is_a("ggplot"))
+              expect_that(plotReducedDim(
+                  example_sce, "PCA", colour_by = "Cell_Cycle", 
+                  size_by = "Treatment"), is_a("ggplot"))
+              expect_that(plotReducedDim(example_sce, "PCA", ncomponents = 5), 
+                          is_a("ggplot"))
+              expect_that(plotReducedDim(
+                  example_sce, "PCA", ncomponents = 5, colour_by = "Cell_Cycle",
+                  shape_by = "Treatment"), is_a("ggplot"))
+              expect_that(plotReducedDim(
+                  example_sce, "PCA", colour_by = "Gene_0001"), is_a("ggplot"))
+              
+          })
+
 context("test plotExpression")
 
 test_that("we can produce expression plots with different expression values", {
@@ -171,6 +206,45 @@ test_that("we can produce plots showing cells in plate position", {
                                   y_position = rep(1:5, each = 8), 
                                   x_position = rep(1:8, 5), 
                                   colour_by = "Gene_0004"), is_a("ggplot"))
+    
+})
+
+test_that("we can produce plots for metadata", {
+    data("sc_example_counts")
+    data("sc_example_cell_info")
+    example_sce <- SingleCellExperiment(
+        assays = list(counts = sc_example_counts), 
+        colData = sc_example_cell_info)
+    exprs(example_sce) <- log2(
+        calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+    example_sce <- calculateQCMetrics(example_sce)
+    
+    expect_that(plotPhenoData(example_sce, 
+                              aesth = aes_string(x = "log10(total_counts)",
+    y = "total_features", colour = "Mutation_Status")), is_a("ggplot"))
+
+    expect_that(plotColData(example_sce, aesth = aes_string(x = "log10(total_counts)",
+    y = "total_features", colour = "Mutation_Status")), is_a("ggplot"))
+
+    expect_that(plotCellData(example_sce, aesth = aes_string(x = "log10(total_counts)",
+    y = "total_features", colour = "Mutation_Status")), is_a("ggplot"))
+    
+    expect_that(plotPhenoData(example_sce, aesth = aes_string(x = "log10(total_counts)",
+    y = "total_features", colour = "Mutation_Status")), is_a("ggplot"))
+
+    expect_that(plotColData(example_sce, aesth = aes_string(x = "log10(total_counts)",
+    y = "total_features", colour = "Mutation_Status")), is_a("ggplot"))
+
+    expect_that(plotCellData(example_sce, aesth = aes_string(x = "log10(total_counts)",
+    y = "total_features", colour = "Mutation_Status")), is_a("ggplot"))
+
+    expect_that(plotFeatureData(
+        example_sce, aesth = aes(x = n_cells_counts, y = log10_total_counts)),
+        is_a("ggplot"))
+
+    expect_that(plotRowData(
+        example_sce, aesth = aes(x = n_cells_counts, y = log10_total_counts)),
+        is_a("ggplot"))
     
 })
 

@@ -76,16 +76,17 @@ data("sc_example_counts")
 data("sc_example_cell_info")
 example_sce <- SingleCellExperiment(
 assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
+exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 example_sce <- example_sce[!drop_genes, ]
 
-reducedDimension(example_sce) <- prcomp(t(exprs(example_sce)), scale. = TRUE)$x
-plotReducedDim(example_sce)
-plotReducedDim(example_sce, colour_by="Cell_Cycle")
-plotReducedDim(example_sce, colour_by="Cell_Cycle", shape_by="Treatment")
-plotReducedDim(example_sce, colour_by="Cell_Cycle", size_by="Treatment")
-plotReducedDim(example_sce, ncomponents=5)
-plotReducedDim(example_sce, ncomponents=5, colour_by="Cell_Cycle", shape_by="Treatment")
-plotReducedDim(example_sce, colour_by="Gene_0001")
+reducedDim(example_sce, "PCA") <- prcomp(t(exprs(example_sce)), scale. = TRUE)$x
+plotReducedDim(example_sce, "PCA")
+plotReducedDim(example_sce, "PCA", colour_by="Cell_Cycle")
+plotReducedDim(example_sce, "PCA", colour_by="Cell_Cycle", shape_by="Treatment")
+plotReducedDim(example_sce, "PCA", colour_by="Cell_Cycle", size_by="Treatment")
+plotReducedDim(example_sce, "PCA", ncomponents=5)
+plotReducedDim(example_sce, "PCA", ncomponents=5, colour_by="Cell_Cycle", shape_by="Treatment")
+plotReducedDim(example_sce, "PCA", colour_by="Gene_0001")
 
 }

@@ -4,9 +4,8 @@
 \name{plot}
 \alias{plot}
 \alias{plotSCE}
-\alias{plot,SingleCellExperiment-method}
-\alias{plot,SingleCellExperiment,ANY-method}
-\alias{plot,SingleCellExperiment,ANY-method}
+\alias{plot,SingleCellExperiment,missing-method}
+\alias{plot,SingleCellExperiment,missing-method}
 \alias{plot}
 \title{Plot an overview of expression for each cell}
 \usage{
@@ -14,7 +13,7 @@ plotSCE(x, block1 = NULL, block2 = NULL, colour_by = NULL,
   nfeatures = 500, exprs_values = "counts", ncol = 3, linewidth = 1.5,
   theme_size = 10)
 
-\S4method{plot}{SingleCellExperiment,ANY}(x, y, ...)
+\S4method{plot}{SingleCellExperiment,missing}(x, y, ...)
 }
 \arguments{
 \item{x}{an \code{SingleCellExperiment} object}

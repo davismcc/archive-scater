@@ -31,7 +31,7 @@ be used as a factor by which to define the size of points in the plot.}
 
 \item{return_SCE}{logical, should the function return an \code{SingleCellExperiment}
 object with principal component values for cells in the
-\code{reducedDimension} slot. Default is \code{FALSE}, in which case a
+\code{reducedDims} slot. Default is \code{FALSE}, in which case a
 \code{ggplot} object is returned.}
 
 \item{rerun}{logical, should PCA be recomputed even if \code{object} contains a
@@ -71,6 +71,7 @@ data("sc_example_counts")
 data("sc_example_cell_info")
 example_sce <- SingleCellExperiment(
 assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
+exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 example_sce <- example_sce[!drop_genes, ]
 
