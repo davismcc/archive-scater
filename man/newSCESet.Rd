@@ -2,104 +2,12 @@
 % Please edit documentation in R/SCESet-methods.R
 \name{newSCESet}
 \alias{newSCESet}
-\title{Create a new SCESet object.}
+\title{Create a new SCESet object}
 \usage{
-newSCESet(exprsData = NULL, countData = NULL, tpmData = NULL,
-  fpkmData = NULL, cpmData = NULL, phenoData = NULL, featureData = NULL,
-  experimentData = NULL, is_exprsData = NULL,
-  cellPairwiseDistances = dist(vector()),
-  featurePairwiseDistances = dist(vector()), lowerDetectionLimit = NULL,
-  logExprsOffset = NULL)
-}
-\arguments{
-\item{exprsData}{expression data matrix for an experiment (features x cells)}
-
-\item{countData}{data matrix containing raw count expression values}
-
-\item{tpmData}{matrix of class \code{"numeric"} containing
-transcripts-per-million (TPM) expression values}
-
-\item{fpkmData}{matrix of class \code{"numeric"} containing fragments per
-kilobase of exon per million reads mapped (FPKM) expression values}
-
-\item{cpmData}{matrix of class \code{"numeric"} containing counts per
-million (CPM) expression values (optional)}
-
-\item{phenoData}{data frame containing attributes of individual cells}
-
-\item{featureData}{data frame containing attributes of features (e.g. genes)}
-
-\item{experimentData}{MIAME class object containing metadata data and details
-about the experiment and dataset.}
-
-\item{is_exprsData}{matrix of class \code{"logical"}, indicating whether
-or not each observation is above the \code{lowerDetectionLimit}.}
-
-\item{cellPairwiseDistances}{object of class \code{"dist"} (or a class that
-extends "dist") containing cell-cell distance or dissimilarity values.}
-
-\item{featurePairwiseDistances}{object of class \code{"dist"} (or a class that
-extends "dist") containing feature-feature distance or dissimilarity values.}
-
-\item{lowerDetectionLimit}{the minimum expression level that constitutes true
-expression (defaults to zero and uses count data to determine if an
-observation is expressed or not).}
-
-\item{logExprsOffset}{numeric scalar, providing the offset used when doing
-log2-transformations of expression data to avoid trying to take logs of zero.
-Default offset value is \code{1}.}
-}
-\value{
-a new SCESet object
+newSCESet()
 }
 \description{
-Create a new SCESet object (the basic data container class in scater) from a
-supplied matrix of expression values, plus cell and feature metadata. The
-expression matrix have rows representing features (usually genes) and columns
-representing cells.
-}
-\details{
-Scater requires that all data be housed in SCESet objects. SCESet extends
-Bioconductor's ExpressionSet class, and the same basic interface is
-supported. newSCESet() expects a single matrix of expression values of a
-nominated type to be provided, for example a matrix of counts or a matrix of
-transcripts-per-million values. There is a hierarchy applied to the
-expression data: counts > transcripts-per-million (tpm) > counts-per-million
-(cpm) > fragments-per-kilobase-per-million-mapped (fpkm) > generic expression
-values on the log2 scale (exprs). Data types higher in the higher are
-preferred. Data types lower in the hierarchy will be computed from values
-higher in the hierarchy - e.g. counts-per-million and expression values
-(as log2(cpm + offset)) will be computed from counts. Data types higher in
-the hierarchy will never be computed from types lower in the hierarchy (e.g.
-counts will never be computed from exprs values). At a
-minimum, an SCESet object will contain exprs values; these will be computed
-as log2(*pm + offset) values if a data type higher in the hierarchy is
-supplied as the expression matrix.
-
-Per-feature and per-cell metadata can be supplied with the featureData and
-phenoData arguments, respectively. Use of these optional arguments is strongly encouraged.
-
-Many methods are provided in the package that operate on SCESet objects.
-
-Aside from the hierarchy of data types described above, scater is relatively
-agnostic with respect to data the nature of the expression values. Most
-frequently used values are feature counts or transcripts-per-million (tpm),
-but any valid output from a program that calculates expression values from
-RNA-Seq reads is supported. For example, expression values could also be
-values from a single cell qPCR run or some other type of assay.
-
-In some cases it may be desirable to have both tpm and counts in an SCESet
-object. In such cases, expression matrices can be added to an SCESet object
-after it has been produced by using the \code{\link{set_exprs}} function to
-add the expression matrix to the SCESet object.
-
-In many downstream functions it is most convenient if the
-\code{'exprs'} values are on the log2-scale, so this is done by default.
-}
-\examples{
-data("sc_example_counts")
-data("sc_example_cell_info")
-pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
-example_sceset <- newSCESet(countData = sc_example_counts, phenoData = pd)
-example_sceset
+Deprecated from scater version 1.3.29; the package now uses the 
+\code{\link{SingleCellExperiment}} class. To convert an SCESet object to 
+SingleCellExperiment see the \code{\link{toSingleCellExperiment}} function.
 }

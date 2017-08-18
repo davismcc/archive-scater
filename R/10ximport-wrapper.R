@@ -1,22 +1,17 @@
-#' Load in data from 10X experiment
+#' Load in data from 10x experiment
 #' 
 #' Creates a full or sparse matrix from a sparse data matrix provided by 10X 
 #' genomics.
 #' 
 #' @param data_dir Directory containing the matrix.mtx, genes.tsv, and barcodes.tsv
-#' files provided by 10X. A vector or named vector can be given in order to load 
+#' files provided by 10x. A vector or named vector can be given in order to load 
 #' several data directories. If a named vector is given, the cell barcode names 
 #' will be prefixed with the name.
 #' @param min_total_cell_counts integer(1) threshold such that cells (barcodes)
 #' with total counts below the threshold are filtered out
 #' @param min_mean_gene_counts numeric(1) threshold such that genes with mean 
 #' counts below the threshold are filtered out.
-#' @param expand logical(1), should the sparse count matrix be expanded 
-#' into an SCESet object with dense matrices for expression data (default), or
-#' should the sparse count matrix be returned?
-#' @param logExprsOffset numeric(1) offset value to apply when computing 
-#' expression values  as log2(cpm + offset) for the SCESet. Ignored if 
-#' \code{expand = FALSE}.
+#' @param ... passed arguments
 #' 
 #' @details This function was developed from the \code{Read10X} function from 
 #' the \code{Seurat} package.
@@ -26,13 +21,16 @@
 #' rows and columns labeled.
 #' 
 #' @importFrom Matrix readMM
+#' @rdname read10xResults
+#' @aliases read10xResults read10XResults
 #' @export
 #' @examples 
 #' \dontrun{
-#' sce10x <- read10XResults("path/to/data/directory")
-#' count_matrix_10x <- read10XResults("path/to/data/directory", expand = FALSE)
+#' sce10x <- read10Xxesults("path/to/data/directory")
+#' count_matrix_10x <- read10xResults("path/to/data/directory", expand = FALSE)
 #' }
-read10XResults <- function(data_dir, min_total_cell_counts = NULL, min_mean_gene_counts = NULL) { 
+read10xResults <- function(data_dir, min_total_cell_counts = NULL, 
+                           min_mean_gene_counts = NULL) { 
 
     nsets <- length(data_dir)
     full_data <- vector("list", nsets)
@@ -54,15 +52,17 @@ read10XResults <- function(data_dir, min_total_cell_counts = NULL, min_mean_gene
             data_mat <- data_mat[, keep_barcode]
         }
          
-        cell.names <- read.table(barcode.loc, header = FALSE, colClasses="character")[[1]]
+        cell.names <- utils::read.table(barcode.loc, header = FALSE, 
+                                 colClasses = "character")[[1]]
         dataset <- i
         if (!is.null(names(data_dir))) {
             dataset <- names(data_dir)[i]
         }
         
         full_data[[i]] <- data_mat
-        gene_info_list[[i]] <- read.table(gene.loc, header = FALSE, colClasses="character")
-        cell_info_list[[i]] <- DataFrame(dataset=dataset, barcode=cell.names)
+        gene_info_list[[i]] <- utils::read.table(gene.loc, header = FALSE, 
+                                                 colClasses = "character")
+        cell_info_list[[i]] <- DataFrame(dataset = dataset, barcode = cell.names)
     }
    
     # Checking gene uniqueness. 
@@ -86,7 +86,14 @@ read10XResults <- function(data_dir, min_total_cell_counts = NULL, min_mean_gene
     
     # Adding the cell data.
     cell_info <- do.call(rbind, cell_info_list)
-    SingleCellExperiment(list(counts=full_data), rowData=gene_info, colData=cell_info)
+    SingleCellExperiment(list(counts = full_data), rowData = gene_info, 
+                         colData = cell_info)
 }
 
+
+#' @rdname read10xResults
+#' @export
+read10XResults <- function(...) {
+    read10xResults(...)
+}
 
