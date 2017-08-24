@@ -96,7 +96,7 @@ nexprs <- function(object, lowerDetectionLimit = 0, exprs_values = "counts",
 #' @param effective_length vector of class \code{"numeric"} providing the
 #' effective length for each feature in the \code{SCESet} object
 #' @param calc_from character string indicating whether to compute TPM from
-#' \code{"counts"}, \code{"norm_counts"} or \code{"fpkm"}.
+#' \code{"counts"}, \code{"normcounts"} or \code{"fpkm"}.
 #' Default is to use \code{"counts"}, in which case the \code{effective_length}
 #' argument must be supplied.
 #'
@@ -120,9 +120,9 @@ calculateTPM <- function(object, effective_length = NULL,
     if ( !methods::is(object, "SingleCellExperiment") )
         stop("object must be an SingleCellExperiment")
     ## Check that arguments are correct
-    calc_from <- match.arg(calc_from, c("counts", "norm_counts", "fpkm"), 
+    calc_from <- match.arg(calc_from, c("counts", "normcounts", "fpkm"), 
                            several.ok = FALSE)
-    if ( calc_from == "counts" || calc_from == "norm_counts" ) {
+    if ( calc_from == "counts" || calc_from == "normcounts" ) {
         if ( is.null(effective_length) )
             stop("effective_length argument is required if computing 
                  TPM from counts")
@@ -130,7 +130,7 @@ calculateTPM <- function(object, effective_length = NULL,
     ## Compute values to return
     tpm_to_add <- switch(calc_from,
                          counts = .countToTpm(counts(object), effective_length),
-                         norm_counts = .countToTpm(norm_counts(object),
+                         normcounts = .countToTpm(normcounts(object),
                                                     effective_length),
                          fpkm = .fpkmToTpm(fpkm(object)))
 

@@ -4,42 +4,24 @@
 \name{norm_exprs}
 \alias{norm_exprs}
 \alias{norm_exprs<-}
-\alias{norm_counts}
-\alias{norm_counts<-}
 \alias{stand_exprs}
 \alias{stand_exprs<-}
-\alias{tpm}
-\alias{tpm<-}
-\alias{cpm}
-\alias{cpm<-}
 \alias{fpkm}
 \alias{fpkm<-}
-\alias{accessors counts exprs norm_counts norm_exprs stand_exprs tpm cpm}
+\alias{accessors counts exprs normcounts logcounts norm_exprs stand_exprs tpm cpm fpkm}
 \alias{GET_FUN}
-\alias{counts}
-\alias{counts,SingleCellExperiment-method}
-\alias{counts<-,SingleCellExperiment,matrix-method}
+\alias{exprs}
+\alias{exprs,SingleCellExperiment-method,}
+\alias{exprs<-,SingleCellExperiment,matrix-method}
 \title{Accessors for the typical elements of a SingleCellExperiment object.}
 \usage{
 norm_exprs(object)
 
 norm_exprs(object) <- value
 
-norm_counts(object)
-
-norm_counts(object) <- value
-
 stand_exprs(object)
 
 stand_exprs(object) <- value
-
-tpm(object)
-
-tpm(object) <- value
-
-cpm(object)
-
-cpm(object) <- value
 
 fpkm(object)
 
@@ -54,19 +36,14 @@ GET_FUN(exprs_values)
 for \code{exprs}) or logical matrix}
 
 \item{exprs_values}{character(1), type of expression values for which 
-convenience accessors are provided. Namely: "counts", "exprs", "norm_counts",
-"norm_exprs", "stand_exprs", "tpm", "cpm", "fpkm".}
+convenience accessors are provided. Namely: "exprs", norm_exprs", "stand_exprs", "fpkm".
+The following are imported from \code{\link{SingleCellExperiment}}: "counts",
+"normcounts", "logcounts", "cpm", "tpm".}
 }
 \value{
 a matrix of normalised expression data
 
-a matrix of normalised expression data
-
 a matrix of standardised expressiond data
-
-a matrix of transcripts-per-million data
-
-a matrix of counts-per-million values
 
 a matrix of FPKM values
 
@@ -77,7 +54,7 @@ Convenience function to access commonly-used assays (counts, exprs, etc) of the
 \code{\link{SingleCellExperiment}} object.
 }
 \details{
-\code{exprs} values are yypically log2-scaled (normalised) 
+\code{exprs} values are typically log2-scaled (normalised) 
 counts-per-million values.
 }
 \examples{

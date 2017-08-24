@@ -13,7 +13,7 @@ calculateTPM(object, effective_length = NULL, calc_from = "counts")
 effective length for each feature in the \code{SCESet} object}
 
 \item{calc_from}{character string indicating whether to compute TPM from
-\code{"counts"}, \code{"norm_counts"} or \code{"fpkm"}.
+\code{"counts"}, \code{"normcounts"} or \code{"fpkm"}.
 Default is to use \code{"counts"}, in which case the \code{effective_length}
 argument must be supplied.}
 }

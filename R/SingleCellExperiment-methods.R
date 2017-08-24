@@ -10,23 +10,24 @@
 #' \code{\link{SingleCellExperiment}} object.
 #' 
 #' @param exprs_values character(1), type of expression values for which 
-#' convenience accessors are provided. Namely: "counts", "exprs", "norm_counts",
-#' "norm_exprs", "stand_exprs", "tpm", "cpm", "fpkm".
+#' convenience accessors are provided. Namely: "exprs", norm_exprs", "stand_exprs", "fpkm".
+#' The following are imported from \code{\link{SingleCellExperiment}}: "counts",
+#' "normcounts", "logcounts", "cpm", "tpm".
 #'
-#' @details \code{exprs} values are yypically log2-scaled (normalised) 
+#' @details \code{exprs} values are typically log2-scaled (normalised) 
 #' counts-per-million values.
 #'
 #' @docType methods
-#' @name accessors counts exprs norm_counts norm_exprs stand_exprs tpm cpm
+#' @name accessors counts exprs normcounts logcounts norm_exprs stand_exprs tpm cpm fpkm
 #' @rdname accessors
 #' @importFrom BiocGenerics counts counts<-
-#' @aliases counts counts,SingleCellExperiment-method counts<-,SingleCellExperiment,matrix-method
+#' @importFrom SingleCellExperiment normcounts normcounts<-
+#' @importFrom SingleCellExperiment logcounts logcounts<-
+#' @importFrom SingleCellExperiment tpm tpm<-
+#' @importFrom SingleCellExperiment cpm cpm<-
 #' @aliases exprs exprs,SingleCellExperiment-method, exprs<-,SingleCellExperiment,matrix-method
-#' @aliases norm_counts norm_counts,SingleCellExperiment-method norm_counts<-,SingleCellExperiment,matrix-method
 #' @aliases norm_exprs norm_exprs,SingleCellExperiment-method norm_exprs<-,SingleCellExperiment,matrix-method
 #' @aliases stand_exprs stand_exprs,SingleCellExperiment-method, stand_exprs<-,SingleCellExperiment,matrix-method
-#' @aliases tpm tpm,SingleCellExperiment-method tpm<-,SingleCellExperiment,matrix-method
-#' @aliases cpm cpm,SingleCellExperiment-method cpm<-,SingleCellExperiment,matrix-method  
 #' @aliases fpkm fpkm,SingleCellExperiment-method fpkm<-,SingleCellExperiment,matrix-method  
 #' 
 #' @return A matrix of numeric, integer or logical values.
@@ -75,7 +76,7 @@ SET_FUN <- function(exprs_values) {
 }
 
 for (x in c("norm_exprs", "stand_exprs", "tpm", "cpm", "fpkm",  
-            "counts", "norm_counts", "exprs")) { 
+            "counts", "normcounts", "logcounts", "exprs")) { 
     setMethod(x, "SingleCellExperiment", GET_FUN(x))
     setReplaceMethod(x, c("SingleCellExperiment", "ANY"), SET_FUN(x))
 }

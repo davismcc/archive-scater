@@ -2,26 +2,26 @@
 #' @export
 #' @docType methods
 #' @return a matrix of normalised expression data
-#' @rdname norm_exprs
+#' @rdname accessors
 setGeneric("norm_exprs", function(object) standardGeneric("norm_exprs"))
 
 #' @name norm_exprs<-
 #' @export
 #' @docType methods
-#' @rdname norm_exprs
+#' @rdname accessors
 setGeneric("norm_exprs<-", function(object, value) standardGeneric("norm_exprs<-"))
 
 #' @name stand_exprs
 #' @export
 #' @docType methods
 #' @return a matrix of standardised expressiond data
-#' @rdname stand_exprs
+#' @rdname accessors
 setGeneric("stand_exprs", function(object) standardGeneric("stand_exprs"))
 
 #' @name stand_exprs<-
 #' @export
 #' @docType methods
-#' @rdname stand_exprs
+#' @rdname accessors
 setGeneric("stand_exprs<-", function(object, value) standardGeneric("stand_exprs<-"))
 
 #' @name bootstraps
@@ -40,16 +40,17 @@ setGeneric("bootstraps<-", function(object, value) standardGeneric("bootstraps<-
 #' @export
 #' @docType methods
 #' @return a matrix of FPKM values
-#' @rdname fpkm
+#' @rdname accessors
 setGeneric("fpkm", function(object) standardGeneric("fpkm"))
 
 #' @name fpkm<-
 #' @export
 #' @docType methods
-#' @rdname fpkm
+#' @rdname accessors
 setGeneric("fpkm<-", function(object, value) standardGeneric("fpkm<-"))
 
-## dplyr-style verb genetics
+
+## dplyr-style verb generics
 
 #' @name mutate
 #' @rdname mutate
