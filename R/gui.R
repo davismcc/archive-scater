@@ -397,7 +397,7 @@ scater_gui <- function(object) {
         ),
         server <- function(input, output, session) {
             output$plot <- renderPlot({
-                plot(object, exprs_values = input$exprs_values,
+                plotScater(object, exprs_values = input$exprs_values,
                      block1 = input$block1,
                      block2 = input$block2,
                      colour_by = input$colour_by)

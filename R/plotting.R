@@ -166,7 +166,7 @@
 
 
 ################################################################################
-### Generic plot function for SingleCellExperiment
+### Overview plot function for SingleCellExperiment
 
 #' Plot an overview of expression for each cell
 #'
@@ -194,8 +194,6 @@
 #' (counts per million), or \code{"fpkm"} (FPKM values).
 #' @param linewidth numeric scalar giving the "size" parameter (in ggplot2
 #' parlance) for the lines plotted. Default is 1.5.
-#' @param y optional argument for generic \code{plot} functions, not used for
-#' plotting an \code{SingleCellExperiment} object
 #' @param ... arguments passed to \code{plotSCE}
 #' @param ncol number of columns to use for \code{facet_wrap} if only one block is
 #' defined.
@@ -217,8 +215,6 @@
 #' @importFrom dplyr mutate
 #' @importFrom plyr aaply
 #' @importFrom reshape2 melt
-#' @name plot
-#' @aliases plot plot,SingleCellExperiment,missing-method
 #' @export
 #'
 #' @examples
@@ -228,16 +224,16 @@
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
 #'
-#' plot(example_sce)
-#' plot(example_sce, exprs_values = "counts", colour_by = "Cell_Cycle")
-#' plot(example_sce, block1 = "Treatment", colour_by = "Cell_Cycle")
+#' plotScater(example_sce)
+#' plotScater(example_sce, exprs_values = "counts", colour_by = "Cell_Cycle")
+#' plotScater(example_sce, block1 = "Treatment", colour_by = "Cell_Cycle")
 #'
 #' cpm(example_sce) <- calculateCPM(example_sce, use.size.factors = FALSE)
-#' plot(example_sce, exprs_values = "cpm", block1 = "Treatment",
+#' plotScater(example_sce, exprs_values = "cpm", block1 = "Treatment",
 #' block2 = "Mutation_Status", colour_by = "Cell_Cycle")
 #' # Error is thrown if chosen expression values are not available
 #'
-plotSCE <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
+plotScater <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
                     nfeatures = 500, exprs_values = "counts", ncol = 3,
                     linewidth = 1.5, theme_size = 10) {
     if (!is(x, "SingleCellExperiment"))
@@ -335,14 +331,7 @@ plotSCE <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 }
 
 
-#' @rdname plot
-#' @aliases plot
-#' @method plot plot,SingleCellExperiment-method
-#' @export
-setMethod("plot", signature(x = "SingleCellExperiment", y = "missing"),
-          function(x, y, ...) {
-              plotSCE(x, ...)
-          })
+
 
 ################################################################################
 

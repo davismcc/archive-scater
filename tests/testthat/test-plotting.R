@@ -1,6 +1,6 @@
 ## tests for plotting functions
 
-context("test plot, plotPCA, plotTSNE, plotDiffusionMap, plotMDS, plotReducedDim")
+context("test plotScater, plotPCA, plotTSNE, plotDiffusionMap, plotMDS, plotReducedDim")
 
 test_that("we can produce default plots for SingleCellExperiment objects", {
     data("sc_example_counts")
@@ -12,26 +12,24 @@ test_that("we can produce default plots for SingleCellExperiment objects", {
                                             use.size.factors = FALSE) + 1)
     example_sce <- calculateQCMetrics(example_sce)
     
-    
-    expect_that(plotSCE(example_sce), is_a("ggplot"))
-    p <- plot(example_sce)
+    p <- plotScater(example_sce)
     print(p)
     expect_that(p, is_a("ggplot"))
     expect_that(
-        plot(example_sce, exprs_values = "counts", colour_by = "Cell_Cycle"),
+        plotScater(example_sce, exprs_values = "counts", colour_by = "Cell_Cycle"),
         is_a("ggplot"))
     expect_that(
-        plot(example_sce, block1 = "Treatment", colour_by = "Cell_Cycle"),
+        plotScater(example_sce, block1 = "Treatment", colour_by = "Cell_Cycle"),
         is_a("ggplot"))
 
     cpm(example_sce) <- calculateCPM(example_sce, use.size.factors = FALSE)
     expect_that(
-        plot(example_sce, exprs_values = "cpm", block1 = "Treatment",
+        plotScater(example_sce, exprs_values = "cpm", block1 = "Treatment",
              block2 = "Mutation_Status", colour_by = "Cell_Cycle"),
         is_a("ggplot"))
     # What happens if chosen expression values are not available?
     expect_error(
-        plot(example_sce, exprs_values = "tpm", block1 = "Treatment",
+        plotScater(example_sce, exprs_values = "tpm", block1 = "Treatment",
              colour_by = "Cell_Cycle"),
         "not in names")
 })
