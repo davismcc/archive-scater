@@ -338,7 +338,7 @@ plotScater <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' @param ntop numeric scalar indicating the number of most variable features to
 #' use for the PCA. Default is \code{500}, but any \code{ntop} argument is
 #' overrided if the \code{feature_set} argument is non-NULL.
-#' @param exprs_values character string indicating which values should be used
+#' @param logcounts_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
 #' (transcripts per million), \code{"norm_tpm"} (normalised TPM
 #' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
@@ -376,7 +376,7 @@ runPCA <- function(object, ntop=500, ncomponents=2, logcounts_values = "logcount
        feature_set = NULL, scale_features = TRUE, pca_data_input = "logcounts",
        selected_variables = NULL, detect_outliers = FALSE) {
 
-    exprs_mat <- assay(object, i = exprs_values)
+    exprs_mat <- assay(object, i = logcounts_values)
 
     # Choosing a set of features, if null.
     if (is.null(feature_set)) {

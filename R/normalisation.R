@@ -182,6 +182,8 @@ normalizeExprs <- function(...) {
 #' log-transformed expression values. Valid options are \code{'counts'},
 #' \code{'tpm'}, \code{'cpm'} and \code{'fpkm'}. Defaults to the first
 #' available value of the options in the order shown.
+#' @param return_log logical(1), should normalized values be returned on the log
+#' scale? Default is \code{TRUE}.
 #' @param log_exprs_offset scalar numeric value giving the offset to add when
 #' taking log2 of normalised values to return as expression values. If \code{NULL},
 #' value is taken from \code{metadata(object)$log.exprs.offset} if defined,

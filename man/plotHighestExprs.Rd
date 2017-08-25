@@ -25,7 +25,7 @@ from endogenous rather than synthetic genes.}
 
 \item{exprs_values}{which slot of the \code{assayData} in the \code{object}
 should be used to define expression? Valid options are "counts" (default),
-"tpm", "fpkm" and "exprs".}
+"tpm", "fpkm" and "logcounts".}
 
 \item{feature_names_to_plot}{character scalar indicating which column of the 
 featureData slot in the \code{object} is to be used for the feature names 

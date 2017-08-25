@@ -8,12 +8,11 @@
 \alias{stand_exprs<-}
 \alias{fpkm}
 \alias{fpkm<-}
-\alias{accessors counts exprs normcounts logcounts norm_exprs stand_exprs tpm cpm fpkm}
-\alias{GET_FUN}
+\alias{accessors exprs norm_exprs stand_exprs fpkm}
 \alias{exprs}
 \alias{exprs,SingleCellExperiment-method,}
 \alias{exprs<-,SingleCellExperiment,matrix-method}
-\title{Accessors for the typical elements of a SingleCellExperiment object.}
+\title{Additional accessors for the typical elements of a SingleCellExperiment object.}
 \usage{
 norm_exprs(object)
 
@@ -27,18 +26,17 @@ fpkm(object)
 
 fpkm(object) <- value
 
-GET_FUN(exprs_values)
+\S4method{exprs}{SingleCellExperiment}(object)
 }
 \arguments{
-\item{object}{a \code{SingleCellExperiment} object.}
-
-\item{value}{an integer matrix (e.g. for \code{counts}), numeric matrix (e.g.
-for \code{exprs}) or logical matrix}
-
-\item{exprs_values}{character(1), type of expression values for which 
-convenience accessors are provided. Namely: "exprs", norm_exprs", "stand_exprs", "fpkm".
+\item{object}{SingleCellExperiment class object from which to access or to 
+which to assign assay values. Namely: "exprs", norm_exprs", "stand_exprs", "fpkm".
 The following are imported from \code{\link{SingleCellExperiment}}: "counts",
 "normcounts", "logcounts", "cpm", "tpm".}
+
+\item{value}{a numeric matrix (e.g. for \code{exprs})}
+
+\item{object}{a \code{SingleCellExperiment} object.}
 }
 \value{
 a matrix of normalised expression data
@@ -50,7 +48,7 @@ a matrix of FPKM values
 A matrix of numeric, integer or logical values.
 }
 \description{
-Convenience function to access commonly-used assays (counts, exprs, etc) of the 
+Convenience functions to access commonly-used assays of the 
 \code{\link{SingleCellExperiment}} object.
 }
 \details{

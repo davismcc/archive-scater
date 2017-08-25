@@ -6,7 +6,7 @@
 \alias{plotTSNE,SingleCellExperiment-method}
 \title{Plot t-SNE for an SingleCellExperiment object}
 \usage{
-runTSNE(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
+runTSNE(object, ntop = 500, ncomponents = 2, exprs_values = "logcounts",
   feature_set = NULL, use_dimred = NULL, n_dimred = NULL,
   scale_features = TRUE, rand_seed = NULL,
   perplexity = floor(ncol(object)/5), ...)
@@ -35,8 +35,8 @@ as the expression values for this plot. Valid arguments are \code{"tpm"}
 values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
-counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot
-of the \code{SingleCellExperiment} object; default), \code{"norm_exprs"} (normalised
+counts-per-million), \code{"logcounts"} (log-transformed count data; default),
+\code{"norm_exprs"} (normalised
 expression values) or \code{"stand_exprs"} (standardised expression values),
 or any other named element of the \code{assayData} slot of the \code{SingleCellExperiment}
 object that can be accessed with the \code{assay} function.}

@@ -7,7 +7,7 @@
 \usage{
 plotMDS(object, ncomponents = 2, colour_by = NULL, shape_by = NULL,
   size_by = NULL, return_SCE = FALSE, rerun = FALSE, draw_plot = TRUE,
-  exprs_values = "exprs", theme_size = 10, legend = "auto", ...)
+  exprs_values = "logcounts", theme_size = 10, legend = "auto", ...)
 }
 \arguments{
 \item{object}{an \code{SingleCellExperiment} object}

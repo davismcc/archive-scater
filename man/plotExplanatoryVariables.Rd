@@ -4,9 +4,9 @@
 \alias{plotExplanatoryVariables}
 \title{Plot explanatory variables ordered by percentage of phenotypic variance explained}
 \usage{
-plotExplanatoryVariables(object, method = "density", exprs_values = "exprs",
-  nvars_to_plot = 10, min_marginal_r2 = 0, variables = NULL,
-  return_object = FALSE, theme_size = 10, ...)
+plotExplanatoryVariables(object, method = "density",
+  exprs_values = "logcounts", nvars_to_plot = 10, min_marginal_r2 = 0,
+  variables = NULL, return_object = FALSE, theme_size = 10, ...)
 }
 \arguments{
 \item{object}{an SingleCellExperiment object containing expression values and
@@ -20,7 +20,7 @@ ordered by the percentage of feature expression variance (as measured by
 R-squared in a marginal linear model) explained.}
 
 \item{exprs_values}{which slot of the \code{assayData} in the \code{object}
-should be used to define expression? Valid options are "exprs" (default),
+should be used to define expression? Valid options are "logcounts" (default),
 "tpm", "fpkm", "cpm", and "counts".}
 
 \item{nvars_to_plot}{integer, the number of variables to plot in the pairs

@@ -12,11 +12,12 @@
 \alias{normalise}
 \title{Normalise a SingleCellExperiment object using pre-computed size factors}
 \usage{
-normalizeSCE(object, exprs_values = "counts", log_exprs_offset = NULL,
-  centre_size_factors = TRUE, return_norm_as_exprs = TRUE)
+normalizeSCE(object, exprs_values = "counts", return_log = TRUE,
+  log_exprs_offset = NULL, centre_size_factors = TRUE,
+  return_norm_as_exprs = TRUE)
 
 \S4method{normalize}{SingleCellExperiment}(object, exprs_values = "counts",
-  log_exprs_offset = NULL, centre_size_factors = TRUE,
+  return_log = TRUE, log_exprs_offset = NULL, centre_size_factors = TRUE,
   return_norm_as_exprs = TRUE)
 
 normalise(...)
@@ -29,6 +30,9 @@ assayData from the \code{SingleCellExperiment} object should be used to compute
 log-transformed expression values. Valid options are \code{'counts'},
 \code{'tpm'}, \code{'cpm'} and \code{'fpkm'}. Defaults to the first
 available value of the options in the order shown.}
+
+\item{return_log}{logical(1), should normalized values be returned on the log
+scale? Default is \code{TRUE}.}
 
 \item{log_exprs_offset}{scalar numeric value giving the offset to add when
 taking log2 of normalised values to return as expression values. If \code{NULL},

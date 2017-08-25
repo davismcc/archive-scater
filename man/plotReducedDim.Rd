@@ -13,7 +13,7 @@ plotReducedDimDefault(df_to_plot, ncomponents = 2, percentVar = NULL,
   legend = "auto")
 
 plotReducedDim(object, use_dimred, ncomponents = 2, colour_by = NULL,
-  shape_by = NULL, size_by = NULL, exprs_values = "exprs",
+  shape_by = NULL, size_by = NULL, exprs_values = "logcounts",
   percentVar = NULL, ...)
 }
 \arguments{

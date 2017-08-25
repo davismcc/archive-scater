@@ -5,7 +5,7 @@
 \title{Plot expression against transcript length}
 \usage{
 plotExprsVsTxLength(object, tx_length = "median_feat_eff_len",
-  exprs_values = "exprs", colour_by = NULL, shape_by = NULL,
+  exprs_values = "logcounts", colour_by = NULL, shape_by = NULL,
   size_by = NULL, xlab = NULL, show_exprs_sd = FALSE,
   show_smooth = FALSE, alpha = 0.6, theme_size = 10,
   log2_values = FALSE, size = NULL, se = TRUE)
@@ -25,8 +25,8 @@ as the expression values for this plot. Valid arguments are \code{"tpm"}
 values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
-counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot
-of the \code{SingleCellExperiment} object; default), \code{"norm_exprs"} (normalised
+counts-per-million), \code{"logcounts"} (log-transformed count data; default),
+\code{"norm_exprs"} (normalised
 expression values) or \code{"stand_exprs"} (standardised expression values)
 or any other slots that have been added to the \code{"assays"} slot by
 the user.}

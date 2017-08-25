@@ -5,9 +5,9 @@
 \alias{plotRLE,SingleCellExperiment-method}
 \title{Plot a relative log expression (RLE) plot}
 \usage{
-plotRLE(object, exprs_mats = list(exprs = "exprs"), exprs_logged = c(TRUE),
-  colour_by = NULL, style = "minimal", legend = "auto",
-  order_by_colour = TRUE, ncol = 1, ...)
+plotRLE(object, exprs_mats = list(exprs = "logcounts"),
+  exprs_logged = c(TRUE), colour_by = NULL, style = "minimal",
+  legend = "auto", order_by_colour = TRUE, ncol = 1, ...)
 }
 \arguments{
 \item{object}{an \code{SingleCellExperiment} object}
@@ -79,10 +79,10 @@ exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) +
 drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 example_sce <- example_sce[!drop_genes, ]
 
-plotRLE(example_sce, list(exprs = "exprs", counts = "counts"), c(TRUE, FALSE), 
+plotRLE(example_sce, list(exprs = "logcounts", counts = "counts"), c(TRUE, FALSE), 
        colour_by = "Mutation_Status", style = "minimal")
 
-plotRLE(example_sce, list(exprs = "exprs", counts = "counts"), c(TRUE, FALSE), 
+plotRLE(example_sce, list(exprs = "logcounts", counts = "counts"), c(TRUE, FALSE), 
        colour_by = "Mutation_Status", style = "full",
        outlier.alpha = 0.1, outlier.shape = 3, outlier.size = 0)
 
