@@ -22,8 +22,8 @@
 # #' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 # #' values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 # #' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
-# #' counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot
-# #' of the \code{SCESet} object; default), \code{"norm_exprs"} (normalised
+# #' counts-per-million), \code{"logcounts"} (log-transformed count data;
+# #' default), \code{"norm_exprs"} (normalised
 # #' expression values) or \code{"stand_exprs"} (standardised expression values)
 # #' or any other slots that have been added to the \code{"assayData"} slot by
 # #' the user.
@@ -72,7 +72,7 @@
 # #' example_sceset <- example_sceset[rowSums(counts(example_sceset)) > 0.5, ]
 # #' mgc <- magic(example_sceset, power = 6, k = 30, n_eigs = 20, n_local = 10)
 # #'
-magic <- function(x, power = 6L, rescale = NULL, exprs_values="exprs", logged_data = TRUE, ...) {
+magic <- function(x, power = 6L, rescale = NULL, exprs_values="logcounts", logged_data = TRUE, ...) {
     if (is(x, "SingleCellExperiment")) {
         exprs_mat <- assay(x, i=exprs_values)
     } else {

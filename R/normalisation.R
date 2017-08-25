@@ -125,7 +125,7 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
     }
 
     ## Computing normalized expression values, if we're not working with 'exprs'.
-    if (exprs_values != "exprs") {
+    if (exprs_values != "logcounts") {
         object <- normalizeSCE(object, exprs_values = exprs_values,
                                    return_norm_as_exprs = return_norm_as_exprs)
     }
@@ -139,7 +139,7 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
     ## If a design matrix is provided, then normalised expression values are
     ## residuals of a linear model fit to norm_exprs values with that design
     if ( !is.null(design) ) {
-        if (exprs_values != "exprs")
+        if (exprs_values != "logcounts")
             if (return_norm_as_exprs)
                 norm_exprs_mat <- exprs(object)
             else 
@@ -153,7 +153,7 @@ normaliseExprs <- function(object, method = "none", design = NULL, feature_set =
 
     ## Return normalised expression values in exprs(object)?
     if ( return_norm_as_exprs )
-        assay(object, "exprs") <- norm_exprs(object)
+        assay(object, "logcounts") <- norm_exprs(object)
 
     ## Return SingleCellExperiment object
     object
@@ -252,6 +252,7 @@ normalizeExprs <- function(...) {
 #' example_sce <- normalize(example_sce)
 #'
 normalizeSCE <- function(object, exprs_values = "counts",
+                             return_log = TRUE,
                              log_exprs_offset = NULL,
                              centre_size_factors = TRUE,
                              return_norm_as_exprs = TRUE) {
@@ -287,12 +288,16 @@ normalizeSCE <- function(object, exprs_values = "counts",
 
     ## Compute normalized expression values.
     norm_exprs <- .compute_exprs(exprs_mat, sf.list$size.factors, sf_to_use = sf.list$index, 
-                                 log = TRUE, sum = FALSE, logExprsOffset = log_exprs_offset,
+                                 log = return_log, sum = FALSE, logExprsOffset = log_exprs_offset,
                                  subset_row = NULL)
 
     ## add normalised values to object
-    assay(object, "exprs") <- norm_exprs
-    metadata(object)$log.exprs.offset <- log_exprs_offset
+    if (return_log) { 
+        assay(object, "logcounts") <- norm_exprs
+        metadata(object)$log.exprs.offset <- log_exprs_offset
+    } else {
+        assay(object, "normcounts") <- norm_exprs
+    }
 
     ## centering all existing size factors if requested
     if (exprs_values == "counts" && centre_size_factors) {
