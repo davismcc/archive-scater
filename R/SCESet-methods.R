@@ -32,8 +32,19 @@ updateSCESet <- function(object) {
 toSingleCellExperiment <- function(object) {
     stopifnot(methods::is(object, "SCESet"))
     new.assay <- list()
-    for (x in Biobase::assayDataElementNames(object)) {
-        new.assay[[x]] <- Biobase::assayDataElement(object, x)
+    ass.names <- Biobase::assayDataElementNames(object)
+    for (x in ass.names) {
+        if (x=="exprs" || x=="logcounts") { 
+            new.name <- "logcounts"
+            if (new.name %in% names(new.assay)) {
+                warning("'exprs' renamed to 'logcounts' will ", 
+                        ifelse(x=="exprs", "overwrite existing value",
+                               "be overwritten"))
+            }
+        } else {
+            new.name <- x
+        }
+        new.assay[[new.name]] <- Biobase::assayDataElement(object, x)
     }
     
     new.coldata <- DataFrame(row.names = Biobase::sampleNames(object))
