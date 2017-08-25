@@ -32,7 +32,9 @@ log-transformed expression values. Valid options are \code{'counts'},
 available value of the options in the order shown.}
 
 \item{return_log}{logical(1), should normalized values be returned on the log
-scale? Default is \code{TRUE}.}
+scale? Default is \code{TRUE}. If \code{TRUE}, output is stored as 
+\code{"logcounts"} in the returned object; if \code{FALSE} output is stored
+as \code{"normcounts"}}
 
 \item{log_exprs_offset}{scalar numeric value giving the offset to add when
 taking log2 of normalised values to return as expression values. If \code{NULL},
