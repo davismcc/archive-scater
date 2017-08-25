@@ -4,36 +4,49 @@
 ################################################################################
 ### accessors
 
-#' Accessors for the typical elements of a SingleCellExperiment object.
+GET_FUN <- function(exprs_values) {
+    (exprs_values) # To get evaluated.
+    function(object) {
+        if (exprs_values %in% assayNames(object))
+            return(assay(object, i = exprs_values))
+        else
+            return(NULL)
+    }
+}
+
+SET_FUN <- function(exprs_values) {
+    (exprs_values) # To get evaluated.
+    function(object, value) {
+        assay(object, i = exprs_values) <- value
+        object
+    }
+}
+
+#' Additional accessors for the typical elements of a SingleCellExperiment object.
 #'
-#' Convenience function to access commonly-used assays (counts, exprs, etc) of the 
+#' Convenience functions to access commonly-used assays of the 
 #' \code{\link{SingleCellExperiment}} object.
 #' 
-#' @param exprs_values character(1), type of expression values for which 
-#' convenience accessors are provided. Namely: "exprs", norm_exprs", "stand_exprs", "fpkm".
+#' @param object \code{SingleCellExperiment} class object from which to access or to 
+#' which to assign assay values. Namely: "exprs", norm_exprs", "stand_exprs", "fpkm".
 #' The following are imported from \code{\link{SingleCellExperiment}}: "counts",
 #' "normcounts", "logcounts", "cpm", "tpm".
-#'
-#' @details \code{exprs} values are typically log2-scaled (normalised) 
-#' counts-per-million values.
+#' @param value a numeric matrix (e.g. for \code{exprs})
 #'
 #' @docType methods
-#' @name accessors counts exprs normcounts logcounts norm_exprs stand_exprs tpm cpm fpkm
+#' @name exprs
 #' @rdname accessors
 #' @importFrom BiocGenerics counts counts<-
 #' @importFrom SingleCellExperiment normcounts normcounts<-
 #' @importFrom SingleCellExperiment logcounts logcounts<-
 #' @importFrom SingleCellExperiment tpm tpm<-
 #' @importFrom SingleCellExperiment cpm cpm<-
-#' @aliases exprs exprs,SingleCellExperiment-method, exprs<-,SingleCellExperiment,matrix-method
-#' @aliases norm_exprs norm_exprs,SingleCellExperiment-method norm_exprs<-,SingleCellExperiment,matrix-method
-#' @aliases stand_exprs stand_exprs,SingleCellExperiment-method, stand_exprs<-,SingleCellExperiment,matrix-method
-#' @aliases fpkm fpkm,SingleCellExperiment-method fpkm<-,SingleCellExperiment,matrix-method  
+#' @aliases exprs exprs,SingleCellExperiment-method, exprs<-,SingleCellExperiment,ANY-method
+#' @aliases norm_exprs norm_exprs,SingleCellExperiment-method norm_exprs<-,SingleCellExperiment,ANY-method
+#' @aliases stand_exprs stand_exprs,SingleCellExperiment-method, stand_exprs<-,SingleCellExperiment,ANY-method
+#' @aliases fpkm fpkm,SingleCellExperiment-method fpkm<-,SingleCellExperiment,ANY-method  
 #' 
 #' @return A matrix of numeric, integer or logical values.
-#' @param object a \code{SingleCellExperiment} object.
-#' @param value an integer matrix (e.g. for \code{counts}), numeric matrix (e.g.
-#' for \code{exprs}) or logical matrix
 #' @author Davis McCarthy
 #' @export
 #' @examples
@@ -57,29 +70,16 @@
 #' cpm(example_sce) <- calculateCPM(example_sce, use.size.factors = FALSE)
 #' 
 #' fpkm(example_sce)
-GET_FUN <- function(exprs_values) {
-    (exprs_values) # To get evaluated.
-    function(object) {
-        if (exprs_values %in% assayNames(object))
-            return(assay(object, i = exprs_values))
-        else
-            return(NULL)
+for (x in c("exprs", "norm_exprs", "stand_exprs", "fpkm")) { 
+    if (x == "exprs") {    
+        setMethod(x, "SingleCellExperiment", GET_FUN("logcounts"))
+        setReplaceMethod(x, c("SingleCellExperiment", "ANY"), SET_FUN("logcounts"))
+    } else {
+        setMethod(x, "SingleCellExperiment", GET_FUN(x))
+        setReplaceMethod(x, c("SingleCellExperiment", "ANY"), SET_FUN(x))
     }
 }
 
-SET_FUN <- function(exprs_values) {
-    (exprs_values) # To get evaluated.
-    function(object, value) {
-        assay(object, i = exprs_values) <- value
-        object
-    }
-}
-
-for (x in c("norm_exprs", "stand_exprs", "tpm", "cpm", "fpkm",  
-            "counts", "normcounts", "logcounts", "exprs")) { 
-    setMethod(x, "SingleCellExperiment", GET_FUN(x))
-    setReplaceMethod(x, c("SingleCellExperiment", "ANY"), SET_FUN(x))
-}
 
 ################################################################################
 ### bootstraps

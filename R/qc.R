@@ -18,7 +18,7 @@
 #' experimental information. Must have been appropriately prepared.
 #' @param exprs_values character(1), indicating slot of the \code{assays} of the \code{object}
 #' should be used to define expression? Valid options are "counts" [default; recommended],
-#' "tpm", "fpkm" and "exprs", or anything else in the object added manually by 
+#' "tpm", "fpkm" and "logcounts", or anything else in the object added manually by 
 #' the user.
 #' @param feature_controls a named list containing one or more vectors 
 #' (character vector of feature names, logical vector, or a numeric vector of
@@ -510,7 +510,7 @@ isOutlier <- function(metric, nmads = 5, type = c("both", "lower", "higher"),
 #' interest.
 #' @param exprs_values which slot of the \code{assayData} in the \code{object}
 #' should be used to define expression? Valid options are "counts",
-#' "tpm", "fpkm" and "exprs" (default), or anything else in the object added manually by 
+#' "tpm", "fpkm" and "logcounts" (default), or anything else in the object added manually by 
 #' the user.
 #' @param ntop numeric scalar indicating the number of most variable features to
 #' use for the PCA. Default is \code{500}, but any \code{ntop} argument is
@@ -546,7 +546,7 @@ isOutlier <- function(metric, nmads = 5, type = c("both", "lower", "higher"),
 #' findImportantPCs(example_sce, variable="total_features")
 #'
 findImportantPCs <- function(object, variable="total_features",
-                             plot_type = "pcs-vs-vars", exprs_values = "exprs",
+                             plot_type = "pcs-vs-vars", exprs_values = "logcounts",
                              ntop = 500, feature_set = NULL, 
                              scale_features = TRUE, theme_size = 10) {
     if ( !is.null(feature_set) && typeof(feature_set) == "character" ) {
@@ -707,7 +707,7 @@ findImportantPCs <- function(object, variable="total_features",
 #' from endogenous rather than synthetic genes.
 #' @param exprs_values which slot of the \code{assayData} in the \code{object}
 #' should be used to define expression? Valid options are "counts" (default),
-#' "tpm", "fpkm" and "exprs".
+#' "tpm", "fpkm" and "logcounts".
 #' @param feature_names_to_plot character scalar indicating which column of the 
 #' featureData slot in the \code{object} is to be used for the feature names 
 #' displayed on the plot. Default is \code{NULL}, in which case 
@@ -765,7 +765,7 @@ plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
 
     ## Define expression values to be used
     exprs_values <- match.arg(exprs_values,
-                              c("exprs", "tpm", "cpm", "fpkm", "counts"))
+                              c("logcounts", "tpm", "cpm", "fpkm", "counts"))
     exprs_mat <- assay(object, exprs_values)
     if ( is.null(exprs_mat) && !is.null(counts(object)) ) {
         exprs_mat <- counts(object)
@@ -774,9 +774,9 @@ plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
     } else if ( is.null(exprs_mat) ) {
         exprs_mat <- exprs(object)
         message("Using exprs(object) values as expression values.")
-        exprs_values <- "exprs"
+        exprs_values <- "logcounts"
     }
-    if ( exprs_values == "exprs" ) 
+    if ( exprs_values == "logcounts" ) 
         exprs_mat <- 2 ^ exprs_mat - object@logExprsOffset
 
     ## Find the most highly expressed features in this dataset
@@ -792,7 +792,7 @@ plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
             message("Using counts to order total expression of features.")
         }
         else {
-            exprs_values <- "exprs"
+            exprs_values <- "logcounts"
             oo <- order(rdata[["rank_exprs"]], decreasing = TRUE)
             message("Using 'exprs' to order total expression of features.")
         }
@@ -913,7 +913,7 @@ plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
 #' ordered by the percentage of feature expression variance (as measured by
 #' R-squared in a marginal linear model) explained.
 #' @param exprs_values which slot of the \code{assayData} in the \code{object}
-#' should be used to define expression? Valid options are "exprs" (default),
+#' should be used to define expression? Valid options are "logcounts" (default),
 #' "tpm", "fpkm", "cpm", and "counts".
 #' @param nvars_to_plot integer, the number of variables to plot in the pairs
 #' plot. Default value is 10.
@@ -955,7 +955,7 @@ plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
 #' plotExplanatoryVariables(example_sce, variables=vars)
 #'
 plotExplanatoryVariables <- function(object, method = "density",
-                                     exprs_values = "exprs", nvars_to_plot = 10,
+                                     exprs_values = "logcounts", nvars_to_plot = 10,
                                      min_marginal_r2 = 0, variables = NULL,
                                      return_object = FALSE, theme_size = 10,
                                      ...) {
@@ -964,7 +964,7 @@ plotExplanatoryVariables <- function(object, method = "density",
     ## Checking arguments for expression values
     # exprs_values <- match.arg(
     #     exprs_values,
-    #     choices = c("exprs", "norm_exprs", "stand_exprs", "norm_exprs",
+    #     choices = c("logcounts", "norm_exprs", "stand_exprs", "norm_exprs",
     #                 "counts", "norm_counts", "tpm", "norm_tpm", "fpkm",
     #                 "norm_fpkm", "cpm", "norm_cpm"))
     exprs_mat <- assay(object, exprs_values)
@@ -1441,24 +1441,29 @@ plotQC <- function(object, type = "highest-expression", ...) {
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
-#' plotRLE(example_sce, list(exprs = "exprs", counts = "counts"), c(TRUE, FALSE), 
+#' plotRLE(example_sce, list(exprs = "logcounts", counts = "counts"), c(TRUE, FALSE), 
 #'        colour_by = "Mutation_Status", style = "minimal")
 #'
-#' plotRLE(example_sce, list(exprs = "exprs", counts = "counts"), c(TRUE, FALSE), 
+#' plotRLE(example_sce, list(exprs = "logcounts", counts = "counts"), c(TRUE, FALSE), 
 #'        colour_by = "Mutation_Status", style = "full",
 #'        outlier.alpha = 0.1, outlier.shape = 3, outlier.size = 0)
 #' 
-plotRLE <- function(object, exprs_mats = list(exprs = "exprs"), exprs_logged = c(TRUE),
-                   colour_by = NULL, style = "minimal", legend = "auto", 
-                   order_by_colour = TRUE, ncol = 1,  ...) {
-              .plotRLE(object, exprs_mats = exprs_mats, exprs_logged = exprs_logged,
-                       colour_by = colour_by, legend = legend, 
-                       order_by_colour = order_by_colour, ncol = ncol, style = style, ...)
-          }
+plotRLE <- function(object, exprs_mats = list(exprs = "logcounts"), exprs_logged = c(TRUE),
+                    colour_by = NULL, style = "minimal", legend = "auto", 
+                    order_by_colour = TRUE, ncol = 1,  ...) {
+    for (i in seq_len(length(exprs_mats))) {
+        
+        if (is.character(exprs_mats[[i]]) && exprs_mats[[i]] == "exprs") 
+            exprs_mats[[i]] <- "logcounts"
+    }
+    .plotRLE(object, exprs_mats = exprs_mats, exprs_logged = exprs_logged,
+             colour_by = colour_by, legend = legend, 
+             order_by_colour = order_by_colour, ncol = ncol, style = style, ...)
+}
 
-.plotRLE <- function(object, exprs_mats = list(exprs = "exprs"), exprs_logged = c(TRUE),
-                    colour_by = NULL, legend = "auto", order_by_colour = TRUE, ncol = 1,
-                    style = "minimal", ...) {
+.plotRLE <- function(object, exprs_mats = list(exprs = "logcounts"), exprs_logged = c(TRUE),
+                     colour_by = NULL, legend = "auto", order_by_colour = TRUE, ncol = 1,
+                     style = "minimal", ...) {
     if (any(is.null(names(exprs_mats))) || any(names(exprs_mats) == ""))
         stop("exprs_mats must be a named list, with all names non-NULL and non-empty.")
     ## check legend argument
@@ -1466,7 +1471,7 @@ plotRLE <- function(object, exprs_mats = list(exprs = "exprs"), exprs_logged = c
     style <- match.arg(style, c("full", "minimal"))
     ## Check arguments are valid
     colour_by_out <- .choose_vis_values(object, colour_by, cell_control_default = TRUE,
-                                        check_features = TRUE, exprs_values = "exprs")
+                                        check_features = TRUE, exprs_values = "logcounts")
     colour_by <- colour_by_out$name
     colour_by_vals <- colour_by_out$val
     ncells <- NULL
@@ -1544,7 +1549,7 @@ plotRLE <- function(object, exprs_mats = list(exprs = "exprs"), exprs_logged = c
 .plotRLE_minimal <- function(df, colour_by, ncol, ...) {
     plot_out <- ggplot(df, aes_string(x = "x", fill = colour_by)) +
         geom_segment(aes_string(xend = "x", y = "q25", yend = "q75"), 
-                                colour = "gray60") +
+                     colour = "gray60") +
         geom_segment(aes_string(xend = "x", y = "q75", yend = "whiskMax", 
                                 colour = colour_by)) +
         geom_segment(aes_string(xend = "x", y = "q25", yend = "whiskMin",

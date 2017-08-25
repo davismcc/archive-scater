@@ -5,7 +5,7 @@
 \title{Plot cells in plate positions}
 \usage{
 plotPlatePosition(object, plate_position = NULL, colour_by = NULL,
-  x_position = NULL, y_position = NULL, exprs_values = "exprs",
+  x_position = NULL, y_position = NULL, exprs_values = "logcounts",
   theme_size = 24, legend = "auto")
 }
 \arguments{

@@ -13,7 +13,7 @@ experimental information. Must have been appropriately prepared.}
 
 \item{exprs_values}{character(1), indicating slot of the \code{assays} of the \code{object}
 should be used to define expression? Valid options are "counts" [default; recommended],
-"tpm", "fpkm" and "exprs", or anything else in the object added manually by 
+"tpm", "fpkm" and "logcounts", or anything else in the object added manually by 
 the user.}
 
 \item{feature_controls}{a named list containing one or more vectors 

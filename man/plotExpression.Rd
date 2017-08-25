@@ -8,7 +8,7 @@
 \alias{plotExpression}
 \title{Plot expression values for a set of features (e.g. genes or transcripts)}
 \usage{
-plotExpression(object, features, x = NULL, exprs_values = "exprs",
+plotExpression(object, features, x = NULL, exprs_values = "logcounts",
   log2_values = FALSE, colour_by = NULL, shape_by = NULL,
   size_by = NULL, ncol = 2, xlab = NULL, show_median = FALSE,
   show_violin = TRUE, theme_size = 10, ...)
@@ -41,8 +41,8 @@ as the expression values for this plot. Valid arguments are \code{"tpm"}
 values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
-counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot
-of the \code{SingleCellExperiment} object; default), \code{"norm_exprs"} (normalised
+counts-per-million), \code{"logcounts"} (log-transformed count data; default),
+\code{"norm_exprs"} (normalised
 expression values) or \code{"stand_exprs"} (standardised expression values)
 or any other slots that have been added to the \code{"assayData"} slot by
 the user.}
@@ -142,7 +142,7 @@ plotExpression(example_sce, 1:15, jitter = "jitter")
 plotExpression(example_sce, 1:6, "Mutation_Status")
 
 ## explore options
-plotExpression(example_sce, 1:6, x = "Mutation_Status", exprs_values = "exprs",
+plotExpression(example_sce, 1:6, x = "Mutation_Status", exprs_values = "logcounts",
 colour_by = "Cell_Cycle", show_violin = TRUE, show_median = TRUE)
 plotExpression(example_sce, 1:6, x = "Mutation_Status", exprs_values = "counts",
 colour_by = "Cell_Cycle", show_violin = TRUE, show_median = TRUE)

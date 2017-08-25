@@ -91,7 +91,7 @@
 .choose_vis_values <- function(x, by, check_coldata = TRUE,
                                cell_control_default = FALSE,
                                check_features = FALSE,
-                               exprs_values = "exprs",
+                               exprs_values = "logcounts",
                                coerce_factor = FALSE, level_limit = NA) {
     ## This function looks through the visualization data and returns the
     ## values to be visualized. Either 'by' itself, or a column of colData,
@@ -264,13 +264,13 @@ plotScater <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
     nfeatures_to_plot <- nfeatures
     to_plot <- seq_len(nfeatures_to_plot)
     seq_real_estate_long <- reshape2::melt(seq_real_estate[to_plot, ],
-                                           value.name = "exprs")
+                                           value.name = exprs_values)
 
     ## Get the proportion of the library accounted for by the top features
     prop_library <- reshape2::melt(t(t(seq_real_estate[to_plot, ]) /
                                          colSums(exprs_mat)),
                                    value.name = "prop_library")
-    colnames(seq_real_estate_long) <- c("Feature", "Cell", "exprs")
+    colnames(seq_real_estate_long) <- c("Feature", "Cell", exprs_values)
     seq_real_estate_long$Proportion_Library <- prop_library$prop_library
 
     ## Add block and colour_by information if provided
@@ -338,14 +338,14 @@ plotScater <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' @param ntop numeric scalar indicating the number of most variable features to
 #' use for the PCA. Default is \code{500}, but any \code{ntop} argument is
 #' overrided if the \code{feature_set} argument is non-NULL.
-#' @param exprs_values character string indicating which values should be used
+#' @param logcounts_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
 #' (transcripts per million), \code{"norm_tpm"} (normalised TPM
 #' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 #' values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 #' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
-#' counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot
-#' of the \code{SingleCellExperiment} object; default), \code{"norm_exprs"} (normalised
+#' counts-per-million), \code{"logcounts"} (log-transformed count data; default),
+#' \code{"norm_exprs"} (normalised
 #' expression values) or \code{"stand_exprs"} (standardised expression values)
 #' or any other named element of the \code{assays} slot of the \code{SingleCellExperiment}
 #' object that can be accessed with the \code{assay} function.
@@ -357,8 +357,8 @@ plotScater <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' @param scale_features logical, should the expression values be standardised
 #' so that each feature has unit variance? Default is \code{TRUE}.
 #' @param pca_data_input character argument defining which data should be used
-#' as input for the PCA. Possible options are \code{"exprs"} (default), which
-#' uses expression data to produce a PCA at the cell level; \code{"coldata"} or
+#' as input for the PCA. Possible options are \code{"logcounts"} (default), which
+#' uses log-count data to produce a PCA at the cell level; \code{"coldata"} or
 #' \code{"pdata"} (for backwards compatibility) which uses numeric variables
 #' from \code{colData(object)} to do PCA at the cell level; and
 #' \code{"rowdata"} which uses numeric variables from \code{rowData(object)} to
@@ -372,11 +372,11 @@ plotScater <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #'
 #' @rdname plotPCA
 #' @export
-runPCA <- function(object, ntop=500, ncomponents=2, exprs_values = "exprs",
-       feature_set = NULL, scale_features = TRUE, pca_data_input = "exprs",
+runPCA <- function(object, ntop=500, ncomponents=2, logcounts_values = "logcounts",
+       feature_set = NULL, scale_features = TRUE, pca_data_input = "logcounts",
        selected_variables = NULL, detect_outliers = FALSE) {
 
-    exprs_mat <- assay(object, i = exprs_values)
+    exprs_mat <- assay(object, i = logcounts_values)
 
     # Choosing a set of features, if null.
     if (is.null(feature_set)) {
@@ -606,8 +606,8 @@ setMethod("plotPCA", "SingleCellExperiment", plotPCASCE)
 #' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 #' values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 #' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
-#' counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot
-#' of the \code{SingleCellExperiment} object; default), \code{"norm_exprs"} (normalised
+#' counts-per-million), \code{"logcounts"} (log-transformed count data; default),
+#' \code{"norm_exprs"} (normalised
 #' expression values) or \code{"stand_exprs"} (standardised expression values),
 #' or any other named element of the \code{assayData} slot of the \code{SingleCellExperiment}
 #' object that can be accessed with the \code{assay} function.
@@ -632,7 +632,7 @@ setMethod("plotPCA", "SingleCellExperiment", plotPCASCE)
 #'
 #' @rdname plotTSNE
 #' @export
-runTSNE <- function(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
+runTSNE <- function(object, ntop = 500, ncomponents = 2, exprs_values = "logcounts",
         feature_set = NULL, use_dimred = NULL, n_dimred = NULL, scale_features = TRUE,
         rand_seed = NULL, perplexity = floor(ncol(object) / 5), ...) {
 
@@ -800,8 +800,8 @@ plotTSNE <- function(object, colour_by = NULL, shape_by = NULL, size_by = NULL,
 #' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 #' values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 #' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
-#' counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot
-#' of the \code{SingleCellExperiment} object; default), \code{"norm_exprs"} (normalised
+#' counts-per-million), \code{"logcounts"} (log-transformed count data; default),
+#' \code{"norm_exprs"} (normalised
 #' expression values) or \code{"stand_exprs"} (standardised expression values)
 #' or any other named element of the \code{assayData} slot of the \code{SingleCellExperiment}
 #' object that can be accessed with the \code{assay} function.
@@ -826,7 +826,7 @@ plotTSNE <- function(object, colour_by = NULL, shape_by = NULL, size_by = NULL,
 #' @export
 #' @rdname plotDiffusionMap
 runDiffusionMap <- function(object, ntop = 500, ncomponents = 2, feature_set = NULL,
-        exprs_values = "exprs", scale_features = TRUE, use_dimred=NULL, n_dimred=NULL,
+        exprs_values = "logcounts", scale_features = TRUE, use_dimred=NULL, n_dimred=NULL,
         rand_seed = NULL, sigma = NULL, distance = "euclidean", ...) {
 
     if (!is.null(use_dimred)) {
@@ -973,7 +973,7 @@ plotDiffusionMap <- function(object, colour_by = NULL, shape_by = NULL, size_by 
 ### plotMDS
 
 runMDS <- function(object, ntop = 500, ncomponents = 2, feature_set = NULL,
-        exprs_values = "exprs", scale_features = TRUE, use_dimred=NULL, n_dimred=NULL,
+        exprs_values = "logcounts", scale_features = TRUE, use_dimred=NULL, n_dimred=NULL,
         method = "euclidean") {
 
     if (!is.null(use_dimred)) {
@@ -1083,7 +1083,7 @@ runMDS <- function(object, ntop = 500, ncomponents = 2, feature_set = NULL,
 #'
 plotMDS <- function(object, ncomponents = 2, colour_by = NULL,
                     shape_by = NULL, size_by = NULL, return_SCE = FALSE,
-                    rerun = FALSE, draw_plot = TRUE, exprs_values = "exprs",
+                    rerun = FALSE, draw_plot = TRUE, exprs_values = "logcounts",
                     theme_size = 10, legend = "auto", ...) {
 
     if ( !("MDS" %in% names(reducedDims(object))) || rerun) {
@@ -1318,7 +1318,7 @@ plotReducedDimDefault <- function(df_to_plot, ncomponents=2, percentVar=NULL,
 #' @export
 plotReducedDim <- function(object, use_dimred, ncomponents = 2,
                               colour_by = NULL, shape_by = NULL, size_by = NULL,
-                              exprs_values = "exprs", percentVar = NULL, ...) {
+                              exprs_values = "logcounts", percentVar = NULL, ...) {
 
     ## Check arguments are valid
     colour_by_out <- .choose_vis_values(
@@ -1424,7 +1424,7 @@ plotReducedDim <- function(object, use_dimred, ncomponents = 2,
 plotPlatePosition <- function(object, plate_position = NULL,
                               colour_by = NULL,
                               x_position = NULL, y_position = NULL,
-                              exprs_values = "exprs", theme_size = 24, legend = "auto") {
+                              exprs_values = "logcounts", theme_size = 24, legend = "auto") {
     ## check object is SingleCellExperiment object
     if ( !is(object, "SingleCellExperiment") )
         stop("Object must be of class SingleCellExperiment")
@@ -1517,8 +1517,8 @@ plotPlatePosition <- function(object, plate_position = NULL,
 #' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 #' values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 #' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
-#' counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot
-#' of the \code{SingleCellExperiment} object; default), \code{"norm_exprs"} (normalised
+#' counts-per-million), \code{"logcounts"} (log-transformed count data; default),
+#' \code{"norm_exprs"} (normalised
 #' expression values) or \code{"stand_exprs"} (standardised expression values)
 #' or any other slots that have been added to the \code{"assayData"} slot by
 #' the user.
@@ -1596,7 +1596,7 @@ plotPlatePosition <- function(object, plate_position = NULL,
 #' plotExpression(example_sce, 1:6, "Mutation_Status")
 #'
 #' ## explore options
-#' plotExpression(example_sce, 1:6, x = "Mutation_Status", exprs_values = "exprs",
+#' plotExpression(example_sce, 1:6, x = "Mutation_Status", exprs_values = "logcounts",
 #' colour_by = "Cell_Cycle", show_violin = TRUE, show_median = TRUE)
 #' plotExpression(example_sce, 1:6, x = "Mutation_Status", exprs_values = "counts",
 #' colour_by = "Cell_Cycle", show_violin = TRUE, show_median = TRUE)
@@ -1607,7 +1607,7 @@ plotPlatePosition <- function(object, plate_position = NULL,
 #' plotExpression(example_sce, 1:4, "Gene_0004", show_smooth = TRUE, se = FALSE)
 #'
 plotExpression <- function(object, features, x = NULL,
-                              exprs_values = "exprs", log2_values = FALSE,
+                              exprs_values = "logcounts", log2_values = FALSE,
                               colour_by = NULL, shape_by = NULL, size_by = NULL,
                               ncol = 2, xlab = NULL, show_median = FALSE,
                            show_violin = TRUE, theme_size = 10, ...) {
@@ -2277,8 +2277,8 @@ multiplot <- function(..., plotlist = NULL, cols = 1, layout = NULL) {
 #' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 #' values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 #' \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
-#' counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot
-#' of the \code{SingleCellExperiment} object; default), \code{"norm_exprs"} (normalised
+#' counts-per-million), \code{"logcounts"} (log-transformed count data; default),
+#' \code{"norm_exprs"} (normalised
 #' expression values) or \code{"stand_exprs"} (standardised expression values)
 #' or any other slots that have been added to the \code{"assays"} slot by
 #' the user.
@@ -2347,7 +2347,7 @@ multiplot <- function(..., plotlist = NULL, cols = 1, layout = NULL) {
 #' plotExprsVsTxLength(example_sce, rnorm(2000, mean = 5000, sd = 500))
 #'
 plotExprsVsTxLength <- function(object, tx_length = "median_feat_eff_len",
-                                exprs_values = "exprs",
+                                exprs_values = "logcounts",
                                 colour_by = NULL, shape_by = NULL,
                                 size_by = NULL, xlab = NULL,
                                 show_exprs_sd = FALSE,

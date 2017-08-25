@@ -5,7 +5,7 @@
 \title{Find most important principal components for a given variable}
 \usage{
 findImportantPCs(object, variable = "total_features",
-  plot_type = "pcs-vs-vars", exprs_values = "exprs", ntop = 500,
+  plot_type = "pcs-vs-vars", exprs_values = "logcounts", ntop = 500,
   feature_set = NULL, scale_features = TRUE, theme_size = 10)
 }
 \arguments{
@@ -23,7 +23,7 @@ interest.}
 
 \item{exprs_values}{which slot of the \code{assayData} in the \code{object}
 should be used to define expression? Valid options are "counts",
-"tpm", "fpkm" and "exprs" (default), or anything else in the object added manually by 
+"tpm", "fpkm" and "logcounts" (default), or anything else in the object added manually by 
 the user.}
 
 \item{ntop}{numeric scalar indicating the number of most variable features to

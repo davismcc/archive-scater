@@ -10,8 +10,9 @@
 \alias{plotPCA}
 \title{Plot PCA for a SingleCellExperiment object}
 \usage{
-runPCA(object, ntop = 500, ncomponents = 2, exprs_values = "exprs",
-  feature_set = NULL, scale_features = TRUE, pca_data_input = "exprs",
+runPCA(object, ntop = 500, ncomponents = 2,
+  logcounts_values = "logcounts", feature_set = NULL,
+  scale_features = TRUE, pca_data_input = "logcounts",
   selected_variables = NULL, detect_outliers = FALSE)
 
 plotPCASCE(object, colour_by = NULL, shape_by = NULL, size_by = NULL,
@@ -37,14 +38,14 @@ components to plot, starting from the first principal component. Default is
 If \code{ncomponents} is greater than 2, a pairs plots for the top components
 is produced.}
 
-\item{exprs_values}{character string indicating which values should be used
+\item{logcounts_values}{character string indicating which values should be used
 as the expression values for this plot. Valid arguments are \code{"tpm"}
 (transcripts per million), \code{"norm_tpm"} (normalised TPM
 values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
 values), \code{"counts"} (counts for each feature), \code{"norm_counts"},
 \code{"cpm"} (counts-per-million), \code{"norm_cpm"} (normalised
-counts-per-million), \code{"exprs"} (whatever is in the \code{'exprs'} slot
-of the \code{SingleCellExperiment} object; default), \code{"norm_exprs"} (normalised
+counts-per-million), \code{"logcounts"} (log-transformed count data; default),
+\code{"norm_exprs"} (normalised
 expression values) or \code{"stand_exprs"} (standardised expression values)
 or any other named element of the \code{assays} slot of the \code{SingleCellExperiment}
 object that can be accessed with the \code{assay} function.}
@@ -59,8 +60,8 @@ equal to \code{nrow(object)}.}
 so that each feature has unit variance? Default is \code{TRUE}.}
 
 \item{pca_data_input}{character argument defining which data should be used
-as input for the PCA. Possible options are \code{"exprs"} (default), which
-uses expression data to produce a PCA at the cell level; \code{"coldata"} or
+as input for the PCA. Possible options are \code{"logcounts"} (default), which
+uses log-count data to produce a PCA at the cell level; \code{"coldata"} or
 \code{"pdata"} (for backwards compatibility) which uses numeric variables
 from \code{colData(object)} to do PCA at the cell level; and
 \code{"rowdata"} which uses numeric variables from \code{rowData(object)} to

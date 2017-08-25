@@ -204,9 +204,11 @@ summariseExprsAcrossFeatures <- function(object, exprs_values = "tpm",
                           list(counts = exprs_new), colData = pd, rowData = fd))
     ## Summarise other data in the object if present
     ## counts
-    if ( !is.null(tpm(object)) && scaled_tpm_counts ) {
+    tpm_object <- tryCatch(tpm(object), error = function(e) return(NULL))
+    counts_object <- tryCatch(counts(object), error = function(e) return(NULL))
+    if ( !is.null(tpm_object) && scaled_tpm_counts ) {
         if ( is.null(lib_size) ) {
-            if ( is.null(counts(object)) )
+            if ( is.null(counts_object) )
                 stop("If object does not contain count values, lib_size argument must be provided.")
             else 
                 lib_size <- colSums(counts(object))
@@ -224,7 +226,7 @@ summariseExprsAcrossFeatures <- function(object, exprs_values = "tpm",
         counts(sce_out) <- counts_new
         rm(counts_new)   
     } else {
-        if ( exprs_values != "counts" && !is.null(counts(object)) ) {
+        if ( exprs_values != "counts" && !is.null(counts_object) ) {
             tmp_exprs <- data.frame(feature = rowData(object)[[summarise_by]], 
                                     counts(object))
             tmp_exprs_long <- reshape2::melt(tmp_exprs)
@@ -234,7 +236,7 @@ summariseExprsAcrossFeatures <- function(object, exprs_values = "tpm",
             rm(counts_new)
         }
     }
-    if ( exprs_values != "tpm" && !is.null(tpm(object)) ) {
+    if ( exprs_values != "tpm" && !is.null(tpm_object) ) {
         tmp_exprs <- data.frame(feature = rowData(object)[[summarise_by]], 
                                 tpm(object))
         tmp_exprs_long <- reshape2::melt(tmp_exprs)
@@ -252,9 +254,10 @@ summariseExprsAcrossFeatures <- function(object, exprs_values = "tpm",
         fpkm(sce_out) <- fpkm_new
         rm(fpkm_new)
     }
-    if ( !is.null(cpm(object)) ) {
+    cpm_object <- tryCatch(cpm(object), error = function(e) return(NULL))
+    if ( !is.null(cpm_object) ) {
         tmp_exprs <- data.frame(feature = rowData(object)[[summarise_by]], 
-                                cpm(object))
+                                cpm_object)
         tmp_exprs_long <- reshape2::melt(tmp_exprs)
         cpm_new <- reshape2::acast(tmp_exprs_long, feature ~ variable, sum)
         colnames(cpm_new) <- colnames(object) 

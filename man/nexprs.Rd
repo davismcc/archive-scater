@@ -15,7 +15,7 @@ observations are deemed to be expressed. Defaults to
 \code{object@lowerDetectionLimit}.}
 
 \item{exprs_values}{character scalar indicating whether the count data
-(\code{"counts"}), the transformed expression data (\code{"exprs"}),
+(\code{"counts"}), the log-transformed count data (\code{"logcounts"}),
 transcript-per-million (\code{"tpm"}), counts-per-million (\code{"cpm"}) or
 FPKM (\code{"fpkm"}) should be used to define if an observation is expressed
 or not. Defaults to the first available value of those options in the
