@@ -171,6 +171,11 @@ test_that("plotRLE works as expected", {
         colData = sc_example_cell_info)
     exprs(example_sce) <- log2(
         calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+
+    p <- plotRLE(example_sce, list(exprs = "logcounts", counts = "counts"), 
+                 c(TRUE, FALSE), colour_by = "Mutation_Status")
+    expect_that(p, is_a("ggplot"))
+    
     p <- plotRLE(example_sce, list(exprs = "exprs", counts = "counts"), 
                  c(TRUE, FALSE), colour_by = "Mutation_Status")
     expect_that(p, is_a("ggplot"))

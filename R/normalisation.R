@@ -258,7 +258,7 @@ normalizeSCE <- function(object, exprs_values = "counts",
                              log_exprs_offset = NULL,
                              centre_size_factors = TRUE,
                              return_norm_as_exprs = TRUE) {
-
+    if (exprs_values == "exprs") exprs_values <- "logcounts"
     exprs_mat <- assay(object, i = exprs_values)
     if (exprs_values == "counts") {
         sf.list <- .get_all_sf_sets(object)

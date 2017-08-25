@@ -1449,16 +1449,21 @@ plotQC <- function(object, type = "highest-expression", ...) {
 #'        outlier.alpha = 0.1, outlier.shape = 3, outlier.size = 0)
 #' 
 plotRLE <- function(object, exprs_mats = list(exprs = "logcounts"), exprs_logged = c(TRUE),
-                   colour_by = NULL, style = "minimal", legend = "auto", 
-                   order_by_colour = TRUE, ncol = 1,  ...) {
-              .plotRLE(object, exprs_mats = exprs_mats, exprs_logged = exprs_logged,
-                       colour_by = colour_by, legend = legend, 
-                       order_by_colour = order_by_colour, ncol = ncol, style = style, ...)
-          }
+                    colour_by = NULL, style = "minimal", legend = "auto", 
+                    order_by_colour = TRUE, ncol = 1,  ...) {
+    for (i in seq_len(length(exprs_mats))) {
+        
+        if (is.character(exprs_mats[[i]]) && exprs_mats[[i]] == "exprs") 
+            exprs_mats[[i]] <- "logcounts"
+    }
+    .plotRLE(object, exprs_mats = exprs_mats, exprs_logged = exprs_logged,
+             colour_by = colour_by, legend = legend, 
+             order_by_colour = order_by_colour, ncol = ncol, style = style, ...)
+}
 
 .plotRLE <- function(object, exprs_mats = list(exprs = "logcounts"), exprs_logged = c(TRUE),
-                    colour_by = NULL, legend = "auto", order_by_colour = TRUE, ncol = 1,
-                    style = "minimal", ...) {
+                     colour_by = NULL, legend = "auto", order_by_colour = TRUE, ncol = 1,
+                     style = "minimal", ...) {
     if (any(is.null(names(exprs_mats))) || any(names(exprs_mats) == ""))
         stop("exprs_mats must be a named list, with all names non-NULL and non-empty.")
     ## check legend argument
@@ -1544,7 +1549,7 @@ plotRLE <- function(object, exprs_mats = list(exprs = "logcounts"), exprs_logged
 .plotRLE_minimal <- function(df, colour_by, ncol, ...) {
     plot_out <- ggplot(df, aes_string(x = "x", fill = colour_by)) +
         geom_segment(aes_string(xend = "x", y = "q25", yend = "q75"), 
-                                colour = "gray60") +
+                     colour = "gray60") +
         geom_segment(aes_string(xend = "x", y = "q75", yend = "whiskMax", 
                                 colour = colour_by)) +
         geom_segment(aes_string(xend = "x", y = "q25", yend = "whiskMin",

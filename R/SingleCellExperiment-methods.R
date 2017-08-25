@@ -27,30 +27,26 @@ SET_FUN <- function(exprs_values) {
 #' Convenience functions to access commonly-used assays of the 
 #' \code{\link{SingleCellExperiment}} object.
 #' 
-#' @param object SingleCellExperiment class object from which to access or to 
+#' @param object \code{SingleCellExperiment} class object from which to access or to 
 #' which to assign assay values. Namely: "exprs", norm_exprs", "stand_exprs", "fpkm".
 #' The following are imported from \code{\link{SingleCellExperiment}}: "counts",
 #' "normcounts", "logcounts", "cpm", "tpm".
-#'
-#' @details \code{exprs} values are typically log2-scaled (normalised) 
-#' counts-per-million values.
+#' @param value a numeric matrix (e.g. for \code{exprs})
 #'
 #' @docType methods
-#' @name accessors exprs norm_exprs stand_exprs fpkm
+#' @name exprs
 #' @rdname accessors
 #' @importFrom BiocGenerics counts counts<-
 #' @importFrom SingleCellExperiment normcounts normcounts<-
 #' @importFrom SingleCellExperiment logcounts logcounts<-
 #' @importFrom SingleCellExperiment tpm tpm<-
 #' @importFrom SingleCellExperiment cpm cpm<-
-#' @aliases exprs exprs,SingleCellExperiment-method, exprs<-,SingleCellExperiment,matrix-method
-#' @aliases norm_exprs norm_exprs,SingleCellExperiment-method norm_exprs<-,SingleCellExperiment,matrix-method
-#' @aliases stand_exprs stand_exprs,SingleCellExperiment-method, stand_exprs<-,SingleCellExperiment,matrix-method
-#' @aliases fpkm fpkm,SingleCellExperiment-method fpkm<-,SingleCellExperiment,matrix-method  
+#' @aliases exprs exprs,SingleCellExperiment-method, exprs<-,SingleCellExperiment,ANY-method
+#' @aliases norm_exprs norm_exprs,SingleCellExperiment-method norm_exprs<-,SingleCellExperiment,ANY-method
+#' @aliases stand_exprs stand_exprs,SingleCellExperiment-method, stand_exprs<-,SingleCellExperiment,ANY-method
+#' @aliases fpkm fpkm,SingleCellExperiment-method fpkm<-,SingleCellExperiment,ANY-method  
 #' 
 #' @return A matrix of numeric, integer or logical values.
-#' @param object a \code{SingleCellExperiment} object.
-#' @param value a numeric matrix (e.g. for \code{exprs})
 #' @author Davis McCarthy
 #' @export
 #' @examples
@@ -74,12 +70,14 @@ SET_FUN <- function(exprs_values) {
 #' cpm(example_sce) <- calculateCPM(example_sce, use.size.factors = FALSE)
 #' 
 #' fpkm(example_sce)
-setMethod("exprs", "SingleCellExperiment", GET_FUN("logcounts"))
-setReplaceMethod("exprs", c("SingleCellExperiment", "ANY"), SET_FUN("logcounts"))
-
-for (x in c("norm_exprs", "stand_exprs", "fpkm")) { 
-    setMethod(x, "SingleCellExperiment", GET_FUN(x))
-    setReplaceMethod(x, c("SingleCellExperiment", "ANY"), SET_FUN(x))
+for (x in c("exprs", "norm_exprs", "stand_exprs", "fpkm")) { 
+    if (x == "exprs") {    
+        setMethod(x, "SingleCellExperiment", GET_FUN("logcounts"))
+        setReplaceMethod(x, c("SingleCellExperiment", "ANY"), SET_FUN("logcounts"))
+    } else {
+        setMethod(x, "SingleCellExperiment", GET_FUN(x))
+        setReplaceMethod(x, c("SingleCellExperiment", "ANY"), SET_FUN(x))
+    }
 }
 
 

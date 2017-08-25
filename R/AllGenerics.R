@@ -1,24 +1,28 @@
-#' @name norm_exprs
+#' @name accessors
+#' @aliases norm_exprs
 #' @export
 #' @docType methods
 #' @return a matrix of normalised expression data
 #' @rdname accessors
 setGeneric("norm_exprs", function(object) standardGeneric("norm_exprs"))
 
-#' @name norm_exprs<-
+#' @name accessors
+#' @aliases norm_exprs<-
 #' @export
 #' @docType methods
 #' @rdname accessors
 setGeneric("norm_exprs<-", function(object, value) standardGeneric("norm_exprs<-"))
 
-#' @name stand_exprs
+#' @name accessors
+#' @aliases stand_exprs
 #' @export
 #' @docType methods
 #' @return a matrix of standardised expressiond data
 #' @rdname accessors
 setGeneric("stand_exprs", function(object) standardGeneric("stand_exprs"))
 
-#' @name stand_exprs<-
+#' @name accessors
+#' @aliases stand_exprs<-
 #' @export
 #' @docType methods
 #' @rdname accessors
@@ -36,14 +40,16 @@ setGeneric("bootstraps", function(object) standardGeneric("bootstraps"))
 #' @rdname bootstraps
 setGeneric("bootstraps<-", function(object, value) standardGeneric("bootstraps<-"))
 
-#' @name fpkm
+#' @name accessors
+#' @aliases  fpkm
 #' @export
 #' @docType methods
 #' @return a matrix of FPKM values
 #' @rdname accessors
 setGeneric("fpkm", function(object) standardGeneric("fpkm"))
 
-#' @name fpkm<-
+#' @name accessors
+#' @aliases  fpkm<-
 #' @export
 #' @docType methods
 #' @rdname accessors

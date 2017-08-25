@@ -10,7 +10,7 @@ Authors@R: c(person("Davis", "McCarthy", role=c("aut", "cre"),
         email="vk6@sanger.ac.uk"))
 Maintainer: Davis McCarthy <davis@ebi.ac.uk>, Aaron Lun 
         <aaron.lun@cruk.cam.ac.uk>
-Version: 1.5.8
+Version: 1.5.9
 Date: 2017-08-25
 License: GPL (>= 2)
 Title: Single-cell analysis toolkit for gene expression data in R
