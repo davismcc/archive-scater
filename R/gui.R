@@ -90,7 +90,7 @@ scater_gui <- function(object) {
                                                    selected = pd.plot[4]),
                                        selectInput("exprs_values", "exprs_values:",
                                                    exprs_values,
-                                                   selected = "exprs")
+                                                   selected = "logcounts")
                                 )
                             )
                     ),
@@ -217,7 +217,7 @@ scater_gui <- function(object) {
                                        selectInput("pca_exprs_values",
                                                    "exprs_values:",
                                                    exprs_values, 
-                                                   selected = "exprs"),
+                                                   selected = "logcounts"),
                                        numericInput("pca_ntop",
                                                     "number of most variable features to use:",
                                                     500,
@@ -261,7 +261,7 @@ scater_gui <- function(object) {
                                        selectInput("tsne_exprs_values",
                                                    "exprs_values:",
                                                    exprs_values, 
-                                                   selected = "exprs"),
+                                                   selected = "logcounts"),
                                        numericInput("tsne_ntop",
                                                     "number of most variable features to use:",
                                                     500,
@@ -308,7 +308,7 @@ scater_gui <- function(object) {
                                        selectInput("diffmap_exprs_values",
                                                    "exprs_values:",
                                                    exprs_values, 
-                                                   selected = "exprs"),
+                                                   selected = "logcounts"),
                                        numericInput("diffmap_ntop",
                                                     "number of most variable features to use:",
                                                     500,
@@ -373,7 +373,7 @@ scater_gui <- function(object) {
                                        selectInput("exprs_exprs_values",
                                                    "exprs_values:",
                                                    exprs_values, 
-                                                   selected = "exprs"),
+                                                   selected = "logcounts"),
                                        numericInput("exprs_ncols",
                                                     "number of columns:",
                                                     2, min = 1, max = 8),

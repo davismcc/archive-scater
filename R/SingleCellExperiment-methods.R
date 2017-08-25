@@ -4,9 +4,9 @@
 ################################################################################
 ### counts
 
-#' Accessors for the typical elements of a SingleCellExperiment object.
+#' Additional accessors for the typical elements of a SingleCellExperiment object.
 #'
-#' Convenience function to access commonly-used assays (counts, exprs, etc) of the 
+#' Convenience functions to access commonly-used assays of the 
 #' \code{\link{SingleCellExperiment}} object.
 #' 
 #' @param exprs_values character(1), type of expression values for which 
@@ -75,11 +75,13 @@ SET_FUN <- function(exprs_values) {
     }
 }
 
-for (x in c("norm_exprs", "stand_exprs", "tpm", "cpm", "fpkm",  
-            "counts", "normcounts", "logcounts", "exprs")) { 
+for (x in c("norm_exprs", "stand_exprs", "fpkm")) { 
     setMethod(x, "SingleCellExperiment", GET_FUN(x))
     setReplaceMethod(x, c("SingleCellExperiment", "ANY"), SET_FUN(x))
 }
+
+setMethod("exprs", "SingleCellExperiment", GET_FUN("logcounts"))
+setReplaceMethod("exprs", c("SingleCellExperiment", "ANY"), SET_FUN("logcounts"))
 
 ################################################################################
 ### bootstraps
