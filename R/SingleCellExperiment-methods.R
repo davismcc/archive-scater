@@ -2,7 +2,7 @@
 
 
 ################################################################################
-### counts
+### accessors
 
 #' Accessors for the typical elements of a SingleCellExperiment object.
 #'
