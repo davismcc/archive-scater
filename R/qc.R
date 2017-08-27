@@ -307,7 +307,7 @@ calculateQCMetrics <- function(object, exprs_values="counts",
             .subset2index(subset_row, target = exprs_mat, byrow = TRUE) - 1L, FALSE)
     nfeatures <- margin.stats[[2]]
     rd <- DataFrame(nfeatures, log10(nfeatures + 1), row.names = colnames(exprs_mat))
-    colnames(rd) <- paste0(c("total", "log10_total"), subset_type, "_features")
+    colnames(rd) <- paste0(c("", "log10_"), "total_features", subset_type)
 
     if (linear) {
         ## Adding the total sum.
@@ -347,7 +347,7 @@ calculateQCMetrics <- function(object, exprs_values="counts",
     if (any(can.calculate)) { 
         top.number <- top.number[can.calculate]
         pct_exprs_top_out <- .Call(cxx_calc_top_features, exprs_mat, top.number, subset_row)
-        names(pct_exprs_top_out) <- paste0("pct_", exprs_type, "_top_", top.number, subset_type, "_features")
+        names(pct_exprs_top_out) <- paste0("pct_", exprs_type, "_top_", top.number, "_features", subset_type)
         return(do.call(data.frame, pct_exprs_top_out))
     }
     return(data.frame(row.names = seq_len(ncol(exprs_mat))))
