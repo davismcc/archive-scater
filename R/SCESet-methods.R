@@ -80,8 +80,42 @@ toSingleCellExperiment <- function(object) {
 #' \code{\link{SingleCellExperiment}} class. To convert an SCESet object to 
 #' SingleCellExperiment see the \code{\link{toSingleCellExperiment}} function.
 #'
-newSCESet <- function() {
-    stop("Deprecated from scater 1.5.2. Use SingleCellExperiment() instead.")
+newSCESet <- function(exprsData = NULL, countData = NULL, tpmData = NULL, 
+                      fpkmData = NULL, cpmData = NULL, phenoData = NULL, featureData = NULL, 
+                      experimentData = NULL, is_exprsData = NULL, cellPairwiseDistances = dist(vector()), 
+                      featurePairwiseDistances = dist(vector()), lowerDetectionLimit = NULL, 
+                      logExprsOffset = NULL) {
+    .Deprecated(old="newSCESet", "SingleCellExperiment")
+
+    ass.data <- list()
+    if (!is.null(exprsData)) { 
+        ass.data$logcounts <- exprsData
+    }
+    if (!is.null(countData)) { 
+        ass.data$counts <- countData
+    } 
+    if (!is.null(tpmData)) {
+        ass.data$tpm <- tpmData
+    }
+    if (!is.null(fpkmData)) {
+        ass.data$fpkm <- fpkmData
+    }
+    if (!is.null(cpmData)) {
+        ass.data$cpm <- cpmData
+    }
+    if (length(ass.data)==0) {
+        stop("one set of expression values should be supplied")
+    }
+
+    sce <- SingleCellExperiment(ass.data, rowData=featureData, metadata=experimentData)
+
+    if (!is.null(phenoData)) { 
+        colData(sce) <- as(phenoData, "DataFrame")
+    }
+    if (!is.null(logExprsOffset)) {
+        metadata(sce)$log.exprs.offset <- logExprsOffset
+    }
+    return(sce)
 }
 
 
