@@ -260,13 +260,16 @@ normalizeSCE <- function(object, exprs_values = "counts",
                              log_exprs_offset = NULL,
                              centre_size_factors = TRUE,
                              return_norm_as_exprs = TRUE) {
-    if (exprs_values == "exprs") exprs_values <- "logcounts"
+    if (exprs_values == "exprs") {
+        exprs_values <- "logcounts"
+    }
     exprs_mat <- assay(object, i = exprs_values)
+
     if (exprs_values == "counts") {
         sf.list <- .get_all_sf_sets(object)
         if (is.null(sf.list$size.factors[[1]])) {
-            warning("skipping normalization of counts as size factors were not defined")
-            return(object)
+            warning("using library sizes as size factors")
+            sf.list$size.factors[[1]] <- colSums(exprs_mat)
         }
 
         ## figuring out how many controls have their own size factors
@@ -306,8 +309,10 @@ normalizeSCE <- function(object, exprs_values = "counts",
     ## centering all existing size factors if requested
     if (exprs_values == "counts" && centre_size_factors) {
         sf <- sizeFactors(object)
-        sf <- sf / mean(sf)
-        sizeFactors(object) <- sf
+        if (!is.null(sf)) { 
+            sf <- sf / mean(sf)
+            sizeFactors(object) <- sf
+        }
 
         # ... and for all controls.
         for (type in sf.list$available) {
