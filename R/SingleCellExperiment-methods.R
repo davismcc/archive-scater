@@ -54,8 +54,10 @@ SET_FUN <- function(exprs_values) {
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' 
-#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#'
+#' example_sce <- normalize(example_sce)
+#' head(logcounts(example_sce)[,1:10])
+#' head(exprs(example_sce)[,1:10]) # identical to logcounts()
 #' 
 #' example_sce <- SingleCellExperiment(
 #' assays = list(norm_counts = sc_example_counts), colData = sc_example_cell_info)

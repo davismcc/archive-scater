@@ -515,7 +515,7 @@ runPCA <- function(object, ntop=500, ncomponents=2, exprs_values = "logcounts",
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
@@ -750,7 +750,7 @@ runTSNE <- function(object, ntop = 500, ncomponents = 2, exprs_values = "logcoun
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
@@ -928,8 +928,7 @@ runDiffusionMap <- function(object, ntop = 500, ncomponents = 2, feature_set = N
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(
-#' calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
@@ -1070,7 +1069,7 @@ runMDS <- function(object, ntop = 500, ncomponents = 2, feature_set = NULL,
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
@@ -1158,7 +1157,7 @@ plotMDS <- function(object, ncomponents = 2, colour_by = NULL,
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
@@ -1410,7 +1409,7 @@ plotReducedDim <- function(object, use_dimred, ncomponents = 2,
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #' example_sce <- calculateQCMetrics(example_sce)
 #'
 #' ## define plate positions
@@ -1586,8 +1585,7 @@ plotPlatePosition <- function(object, plate_position = NULL,
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(
-#' calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#  example_sce <- normalize(example_sce)
 #' example_sce <- calculateQCMetrics(example_sce)
 #'
 #' ## default plot
@@ -2329,7 +2327,7 @@ multiplot <- function(..., plotlist = NULL, cols = 1, layout = NULL) {
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts),
 #' colData = sc_example_cell_info, rowData = rd)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #'
 #' plotExprsVsTxLength(example_sce, "median_tx_length")
 #' plotExprsVsTxLength(example_sce, "median_tx_length", show_smooth = TRUE)
