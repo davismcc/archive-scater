@@ -64,10 +64,10 @@ data("sc_example_cell_info")
 example_sce <- SingleCellExperiment(
 assays = list(counts = sc_example_counts), 
 colData = sc_example_cell_info)
+example_sce <- normalize(example_sce)
+
 example_sce <- calculateQCMetrics(example_sce, 
                                  feature_controls = list(set1 = 1:500))
-exprs(example_sce) <- log2(
-   calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 plotExprsFreqVsMean(example_sce)
 
 example_sce <- calculateQCMetrics(

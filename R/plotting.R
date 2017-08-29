@@ -1587,6 +1587,8 @@ plotPlatePosition <- function(object, plate_position = NULL,
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
 #  example_sce <- normalize(example_sce)
 #' example_sce <- calculateQCMetrics(example_sce)
+#' sizeFactors(example_sce) <- colSums(counts(example_sce))
+#' example_sce <- normalize(example_sce)
 #'
 #' ## default plot
 #' plotExpression(example_sce, 1:15)
@@ -1601,6 +1603,10 @@ plotPlatePosition <- function(object, plate_position = NULL,
 #' plotExpression(example_sce, 1:6, x = "Mutation_Status", exprs_values = "counts",
 #' colour_by = "Cell_Cycle", show_violin = TRUE, show_median = TRUE)
 #'
+#' plotExpression(example_sce, "Gene_0001", x = "Mutation_Status")
+#' plotExpression(example_sce, c("Gene_0001", "Gene_0004"), x="Mutation_Status")
+#' plotExpression(example_sce, "Gene_0001", x = "Gene_0002")
+#' plotExpression(example_sce, c("Gene_0001", "Gene_0004"), x="Gene_0002")
 #' ## plot expression against expression values for Gene_0004
 #' plotExpression(example_sce, 1:4, "Gene_0004")
 #' plotExpression(example_sce, 1:4, "Gene_0004", show_smooth = TRUE)
@@ -1631,7 +1637,7 @@ plotExpression <- function(object, features, x = NULL,
     xcoord <- NULL
     if ( !is.null(x) ) {
         if ( x %in% rownames(object) ) {
-            xcoord <- exprs_mat[x,]
+            xcoord <- assay(object, i = exprs_values)[x,]
             show_violin <- FALSE
             show_median <- FALSE
         } else if (x %in% colnames(colData(object))) {
@@ -1767,7 +1773,7 @@ plotExpressionDefault <- function(object, aesth, ncol = 2, xlab = NULL,
         if ( is.null(aesth$size) & !is.null(size) ) {
             if (jitter == "swarm")
                 plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
-                    alpha = alpha, size = size)
+                    alpha = alpha, size = size, groupOnX = TRUE)
             else
                 plot_out <- plot_out + geom_jitter(
                     alpha = alpha, size = size, position = position_jitter(height = 0))
@@ -1775,7 +1781,7 @@ plotExpressionDefault <- function(object, aesth, ncol = 2, xlab = NULL,
         else {
             if (jitter == "swarm")
                 plot_out <- plot_out + ggbeeswarm::geom_quasirandom(
-                    alpha = alpha)
+                    alpha = alpha, groupOnX = TRUE)
             else
                 plot_out <- plot_out + geom_jitter(
                     alpha = alpha, position = position_jitter(height = 0))

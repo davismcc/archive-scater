@@ -62,7 +62,7 @@ data("sc_example_counts")
 data("sc_example_cell_info")
 example_sce <- SingleCellExperiment(
 assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+example_sce <- normalize(example_sce)
 example_sce <- calculateQCMetrics(example_sce)
 
 ## define plate positions

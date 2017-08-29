@@ -10,9 +10,8 @@
 \alias{plotPCA}
 \title{Plot PCA for a SingleCellExperiment object}
 \usage{
-runPCA(object, ntop = 500, ncomponents = 2,
-  logcounts_values = "logcounts", feature_set = NULL,
-  scale_features = TRUE, pca_data_input = "logcounts",
+runPCA(object, ntop = 500, ncomponents = 2, exprs_values = "logcounts",
+  feature_set = NULL, scale_features = TRUE, pca_data_input = "logcounts",
   selected_variables = NULL, detect_outliers = FALSE)
 
 plotPCASCE(object, colour_by = NULL, shape_by = NULL, size_by = NULL,
@@ -38,7 +37,7 @@ components to plot, starting from the first principal component. Default is
 If \code{ncomponents} is greater than 2, a pairs plots for the top components
 is produced.}
 
-\item{logcounts_values}{character string indicating which values should be used
+\item{exprs_values}{character string indicating which values should be used
 as the expression values for this plot. Valid arguments are \code{"tpm"}
 (transcripts per million), \code{"norm_tpm"} (normalised TPM
 values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
@@ -138,7 +137,7 @@ data("sc_example_counts")
 data("sc_example_cell_info")
 example_sce <- SingleCellExperiment(
 assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+example_sce <- normalize(example_sce)
 drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 example_sce <- example_sce[!drop_genes, ]
 

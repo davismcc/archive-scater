@@ -5,7 +5,7 @@
 \alias{plotRLE,SingleCellExperiment-method}
 \title{Plot a relative log expression (RLE) plot}
 \usage{
-plotRLE(object, exprs_mats = list(exprs = "logcounts"),
+plotRLE(object, exprs_mats = list(logcounts = "logcounts"),
   exprs_logged = c(TRUE), colour_by = NULL, style = "minimal",
   legend = "auto", order_by_colour = TRUE, ncol = 1, ...)
 }
@@ -75,14 +75,14 @@ data("sc_example_cell_info")
  example_sce <- SingleCellExperiment(
 assays = list(counts = sc_example_counts), 
 colData = sc_example_cell_info)
-exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
-drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
+example_sce <- normalize(example_sce)
+drop_genes <- apply(logcounts(example_sce), 1, function(x) {var(x) == 0})
 example_sce <- example_sce[!drop_genes, ]
 
-plotRLE(example_sce, list(exprs = "logcounts", counts = "counts"), c(TRUE, FALSE), 
+plotRLE(example_sce, list(logcounts= "logcounts", counts = "counts"), c(TRUE, FALSE), 
        colour_by = "Mutation_Status", style = "minimal")
 
-plotRLE(example_sce, list(exprs = "logcounts", counts = "counts"), c(TRUE, FALSE), 
+plotRLE(example_sce, list(logcounts = "logcounts", counts = "counts"), c(TRUE, FALSE), 
        colour_by = "Mutation_Status", style = "full",
        outlier.alpha = 0.1, outlier.shape = 3, outlier.size = 0)
 

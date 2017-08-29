@@ -91,7 +91,7 @@ rownames(rd) <- rownames(sc_example_counts)
 example_sce <- SingleCellExperiment(
 assays = list(counts = sc_example_counts),
 colData = sc_example_cell_info, rowData = rd)
-exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+example_sce <- normalize(example_sce)
 
 plotExprsVsTxLength(example_sce, "median_tx_length")
 plotExprsVsTxLength(example_sce, "median_tx_length", show_smooth = TRUE)

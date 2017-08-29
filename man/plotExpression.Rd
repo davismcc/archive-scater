@@ -130,9 +130,9 @@ data("sc_example_counts")
 data("sc_example_cell_info")
 example_sce <- SingleCellExperiment(
 assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-exprs(example_sce) <- log2(
-calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 example_sce <- calculateQCMetrics(example_sce)
+sizeFactors(example_sce) <- colSums(counts(example_sce))
+example_sce <- normalize(example_sce)
 
 ## default plot
 plotExpression(example_sce, 1:15)
@@ -147,6 +147,10 @@ colour_by = "Cell_Cycle", show_violin = TRUE, show_median = TRUE)
 plotExpression(example_sce, 1:6, x = "Mutation_Status", exprs_values = "counts",
 colour_by = "Cell_Cycle", show_violin = TRUE, show_median = TRUE)
 
+plotExpression(example_sce, "Gene_0001", x = "Mutation_Status")
+plotExpression(example_sce, c("Gene_0001", "Gene_0004"), x="Mutation_Status")
+plotExpression(example_sce, "Gene_0001", x = "Gene_0002")
+plotExpression(example_sce, c("Gene_0001", "Gene_0004"), x="Gene_0002")
 ## plot expression against expression values for Gene_0004
 plotExpression(example_sce, 1:4, "Gene_0004")
 plotExpression(example_sce, 1:4, "Gene_0004", show_smooth = TRUE)

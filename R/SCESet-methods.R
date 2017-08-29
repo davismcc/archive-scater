@@ -78,14 +78,20 @@ toSingleCellExperiment <- function(object) {
 #'
 #' Deprecated from scater version 1.3.29; the package now uses the 
 #' \code{\link{SingleCellExperiment}} class. To convert an SCESet object to 
-#' SingleCellExperiment see the \code{\link{toSingleCellExperiment}} function.
+#' SingleCellExperiment see the \code{\link{toSingleCellExperiment}} function. 
+#' This function is retained for backwards compatibility.
+#'
+#' @importFrom Biobase pData
+#' @importFrom methods as
+#' @return a \code{\link{SingleCellExperiment}} object
+#' @export
 #'
 newSCESet <- function(exprsData = NULL, countData = NULL, tpmData = NULL, 
                       fpkmData = NULL, cpmData = NULL, phenoData = NULL, featureData = NULL, 
                       experimentData = NULL, is_exprsData = NULL, cellPairwiseDistances = dist(vector()), 
                       featurePairwiseDistances = dist(vector()), lowerDetectionLimit = NULL, 
                       logExprsOffset = NULL) {
-    .Deprecated(old="newSCESet", "SingleCellExperiment")
+    .Deprecated(old = "newSCESet", "SingleCellExperiment")
 
     ass.data <- list()
     if (!is.null(exprsData)) { 
@@ -103,14 +109,15 @@ newSCESet <- function(exprsData = NULL, countData = NULL, tpmData = NULL,
     if (!is.null(cpmData)) {
         ass.data$cpm <- cpmData
     }
-    if (length(ass.data)==0) {
+    if (length(ass.data) == 0) {
         stop("one set of expression values should be supplied")
     }
 
-    sce <- SingleCellExperiment(ass.data, rowData=featureData, metadata=experimentData)
+    sce <- SingleCellExperiment(ass.data, rowData = featureData, 
+                                metadata = experimentData)
 
     if (!is.null(phenoData)) { 
-        colData(sce) <- as(phenoData, "DataFrame")
+        colData(sce) <- as(pData(phenoData), "DataFrame")
     }
     if (!is.null(logExprsOffset)) {
         metadata(sce)$log.exprs.offset <- logExprsOffset

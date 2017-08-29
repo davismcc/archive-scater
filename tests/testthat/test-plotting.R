@@ -139,6 +139,14 @@ test_that("we can produce expression plots with different expression values", {
         calculateCPM(example_sce, use.size.factors = FALSE) + 1)
     example_sce <- calculateQCMetrics(example_sce)
 
+    expect_that(plotExpression(example_sce, "Gene_0001", x = "Mutation_Status"),
+                is_a("ggplot"))
+    expect_that(plotExpression(example_sce, c("Gene_0001", "Gene_0004"), 
+                               x = "Mutation_Status"), is_a("ggplot"))
+    expect_that(plotExpression(example_sce, "Gene_0001", x = "Gene_0002"),
+                is_a("ggplot"))
+    expect_that(plotExpression(example_sce, c("Gene_0001", "Gene_0004"), 
+                               x = "Gene_0002"), is_a("ggplot"))
     expect_that(plotExpression(example_sce, 1:4, "Cell_Cycle"), is_a("ggplot"))
     expect_that(plotExpression(example_sce, 1:4, "Gene_0004"), is_a("ggplot"))
     expect_that(plotExpression(example_sce, 1:4), is_a("ggplot"))

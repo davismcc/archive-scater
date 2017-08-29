@@ -129,7 +129,7 @@ test_that("we can compute normalise the object", {
     ## check error if no size factors
     sizeFactors(example_sce) <- NULL
 
-    expect_warning(normalize(example_sce), "size factors were not defined")
+    expect_warning(normalize(example_sce), "using library sizes")
     
 })
 

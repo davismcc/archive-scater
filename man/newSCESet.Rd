@@ -4,10 +4,19 @@
 \alias{newSCESet}
 \title{Create a new SCESet object}
 \usage{
-newSCESet()
+newSCESet(exprsData = NULL, countData = NULL, tpmData = NULL,
+  fpkmData = NULL, cpmData = NULL, phenoData = NULL, featureData = NULL,
+  experimentData = NULL, is_exprsData = NULL,
+  cellPairwiseDistances = dist(vector()),
+  featurePairwiseDistances = dist(vector()), lowerDetectionLimit = NULL,
+  logExprsOffset = NULL)
+}
+\value{
+a \code{\link{SingleCellExperiment}} object
 }
 \description{
 Deprecated from scater version 1.3.29; the package now uses the 
 \code{\link{SingleCellExperiment}} class. To convert an SCESet object to 
-SingleCellExperiment see the \code{\link{toSingleCellExperiment}} function.
+SingleCellExperiment see the \code{\link{toSingleCellExperiment}} function. 
+This function is retained for backwards compatibility.
 }
