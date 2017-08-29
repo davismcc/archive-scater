@@ -338,7 +338,7 @@ plotScater <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #' @param ntop numeric scalar indicating the number of most variable features to
 #' use for the PCA. Default is \code{500}, but any \code{ntop} argument is
 #' overrided if the \code{feature_set} argument is non-NULL.
-#' @param logcounts_values character string indicating which values should be used
+#' @param exprs_values character string indicating which values should be used
 #' as the expression values for this plot. Valid arguments are \code{"tpm"}
 #' (transcripts per million), \code{"norm_tpm"} (normalised TPM
 #' values), \code{"fpkm"} (FPKM values), \code{"norm_fpkm"} (normalised FPKM
@@ -372,18 +372,9 @@ plotScater <- function(x, block1 = NULL, block2 = NULL, colour_by = NULL,
 #'
 #' @rdname plotPCA
 #' @export
-runPCA <- function(object, ntop=500, ncomponents=2, logcounts_values = "logcounts",
+runPCA <- function(object, ntop=500, ncomponents=2, exprs_values = "logcounts",
        feature_set = NULL, scale_features = TRUE, pca_data_input = "logcounts",
        selected_variables = NULL, detect_outliers = FALSE) {
-
-    exprs_mat <- assay(object, i = logcounts_values)
-
-    # Choosing a set of features, if null.
-    if (is.null(feature_set)) {
-        rv <- matrixStats::rowVars(exprs_mat)
-        o <- order(rv, decreasing = TRUE)
-        feature_set <- o[seq_len(min(ntop, length(rv)))]
-    }
 
     if ( pca_data_input == "pdata" || pca_data_input == "coldata" ) {
         #use_variable <- sapply(pData(object), is.double)
@@ -392,15 +383,17 @@ runPCA <- function(object, ntop=500, ncomponents=2, logcounts_values = "logcount
             selected_variables <- c("pct_counts_top_100_features",
                                     "total_features",
                                     "pct_counts_feature_controls",
-                                    "n_detected_feature_controls",
-                                    "log10_counts_endogenous_features",
-                                    "log10_counts_feature_controls")
+                                    "total_features_feature_controls",
+                                    "log10_total_counts_endogenous",
+                                    "log10_total_counts_feature_controls")
         }
-        use_variable <- varLabels(object) %in% selected_variables
-        vars_not_found <- !(selected_variables %in% varLabels(object))
+
+        col_data_names <- colnames(colData(object)) 
+        use_variable <- col_data_names %in% selected_variables
+        vars_not_found <- !(selected_variables %in% col_data_names)
         if ( any(vars_not_found) ) {
-            message(paste("The following selected_variables were not found in pData(object):", selected_variables[vars_not_found]))
-            message("Other variables from pData(object) can be used by specifying a vector of variable names as the selected_variables argument.")
+            message(paste("The following selected_variables were not found in colData(object):", selected_variables[vars_not_found]))
+            message("Other variables from colData(object) can be used by specifying a vector of variable names as the selected_variables argument.")
             message("PCA is being conducted using the following variables:",
                     selected_variables[!vars_not_found])
         }
@@ -408,6 +401,15 @@ runPCA <- function(object, ntop=500, ncomponents=2, logcounts_values = "logcount
         exprs_to_plot <- scale(colData(object)[, use_variable],
                                scale = scale_features)
     } else {
+        exprs_mat <- assay(object, i = exprs_values)
+        
+        # Choosing a set of features, if null.
+        if (is.null(feature_set)) {
+            rv <- matrixStats::rowVars(exprs_mat)
+            o <- order(rv, decreasing = TRUE)
+            feature_set <- o[seq_len(min(ntop, length(rv)))]
+        }
+
         # Subsetting to the desired features (do NOT move below 'scale()')
         exprs_to_plot <- exprs_mat[feature_set,, drop = FALSE]
         ## Standardise expression if scale_features argument is TRUE
@@ -513,7 +515,7 @@ runPCA <- function(object, ntop=500, ncomponents=2, logcounts_values = "logcount
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
@@ -748,7 +750,7 @@ runTSNE <- function(object, ntop = 500, ncomponents = 2, exprs_values = "logcoun
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
@@ -926,8 +928,7 @@ runDiffusionMap <- function(object, ntop = 500, ncomponents = 2, feature_set = N
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(
-#' calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
@@ -1068,7 +1069,7 @@ runMDS <- function(object, ntop = 500, ncomponents = 2, feature_set = NULL,
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
@@ -1156,7 +1157,7 @@ plotMDS <- function(object, ncomponents = 2, colour_by = NULL,
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
@@ -1408,7 +1409,7 @@ plotReducedDim <- function(object, use_dimred, ncomponents = 2,
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #' example_sce <- calculateQCMetrics(example_sce)
 #'
 #' ## define plate positions
@@ -1584,8 +1585,7 @@ plotPlatePosition <- function(object, plate_position = NULL,
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(
-#' calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#  example_sce <- normalize(example_sce)
 #' example_sce <- calculateQCMetrics(example_sce)
 #'
 #' ## default plot
@@ -2327,7 +2327,7 @@ multiplot <- function(..., plotlist = NULL, cols = 1, layout = NULL) {
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts),
 #' colData = sc_example_cell_info, rowData = rd)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #'
 #' plotExprsVsTxLength(example_sce, "median_tx_length")
 #' plotExprsVsTxLength(example_sce, "median_tx_length", show_smooth = TRUE)

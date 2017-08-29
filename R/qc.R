@@ -307,7 +307,7 @@ calculateQCMetrics <- function(object, exprs_values="counts",
             .subset2index(subset_row, target = exprs_mat, byrow = TRUE) - 1L, FALSE)
     nfeatures <- margin.stats[[2]]
     rd <- DataFrame(nfeatures, log10(nfeatures + 1), row.names = colnames(exprs_mat))
-    colnames(rd) <- paste0(c("total", "log10_total"), subset_type, "_features")
+    colnames(rd) <- paste0(c("", "log10_"), "total_features", subset_type)
 
     if (linear) {
         ## Adding the total sum.
@@ -347,7 +347,7 @@ calculateQCMetrics <- function(object, exprs_values="counts",
     if (any(can.calculate)) { 
         top.number <- top.number[can.calculate]
         pct_exprs_top_out <- .Call(cxx_calc_top_features, exprs_mat, top.number, subset_row)
-        names(pct_exprs_top_out) <- paste0("pct_", exprs_type, "_top_", top.number, subset_type, "_features")
+        names(pct_exprs_top_out) <- paste0("pct_", exprs_type, "_top_", top.number, "_features", subset_type)
         return(do.call(data.frame, pct_exprs_top_out))
     }
     return(data.frame(row.names = seq_len(ncol(exprs_mat))))
@@ -538,8 +538,7 @@ isOutlier <- function(metric, nmads = 5, type = c("both", "lower", "higher"),
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(
-#' calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #' example_sce <- calculateQCMetrics(example_sce)
@@ -946,8 +945,7 @@ plotHighestExprs <- function(object, col_by_variable = "total_features", n = 50,
 #' data("sc_example_cell_info")
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(
-#'     calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #' example_sce <- calculateQCMetrics(example_sce)
@@ -1154,10 +1152,10 @@ This variable will not be plotted."))
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), 
 #' colData = sc_example_cell_info)
+#' example_sce <- normalize(example_sce)
+#'
 #' example_sce <- calculateQCMetrics(example_sce, 
 #'                                  feature_controls = list(set1 = 1:500))
-#' exprs(example_sce) <- log2(
-#'    calculateCPM(example_sce, use.size.factors = FALSE) + 1)
 #' plotExprsFreqVsMean(example_sce)
 #'
 #' example_sce <- calculateQCMetrics(
@@ -1332,7 +1330,8 @@ plotExprsFreqVsMean <- function(object, feature_set = NULL,
 #' example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), 
 #' colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
+#' example_sce <- normalize(example_sce)
+#'
 #' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #' example_sce <- calculateQCMetrics(example_sce)
@@ -1437,18 +1436,18 @@ plotQC <- function(object, type = "highest-expression", ...) {
 #'  example_sce <- SingleCellExperiment(
 #' assays = list(counts = sc_example_counts), 
 #' colData = sc_example_cell_info)
-#' exprs(example_sce) <- log2(calculateCPM(example_sce, use.size.factors = FALSE) + 1)
-#' drop_genes <- apply(exprs(example_sce), 1, function(x) {var(x) == 0})
+#' example_sce <- normalize(example_sce)
+#' drop_genes <- apply(logcounts(example_sce), 1, function(x) {var(x) == 0})
 #' example_sce <- example_sce[!drop_genes, ]
 #'
-#' plotRLE(example_sce, list(exprs = "logcounts", counts = "counts"), c(TRUE, FALSE), 
+#' plotRLE(example_sce, list(logcounts= "logcounts", counts = "counts"), c(TRUE, FALSE), 
 #'        colour_by = "Mutation_Status", style = "minimal")
 #'
-#' plotRLE(example_sce, list(exprs = "logcounts", counts = "counts"), c(TRUE, FALSE), 
+#' plotRLE(example_sce, list(logcounts = "logcounts", counts = "counts"), c(TRUE, FALSE), 
 #'        colour_by = "Mutation_Status", style = "full",
 #'        outlier.alpha = 0.1, outlier.shape = 3, outlier.size = 0)
 #' 
-plotRLE <- function(object, exprs_mats = list(exprs = "logcounts"), exprs_logged = c(TRUE),
+plotRLE <- function(object, exprs_mats = list(logcounts = "logcounts"), exprs_logged = c(TRUE),
                     colour_by = NULL, style = "minimal", legend = "auto", 
                     order_by_colour = TRUE, ncol = 1,  ...) {
     for (i in seq_len(length(exprs_mats))) {
@@ -1461,7 +1460,7 @@ plotRLE <- function(object, exprs_mats = list(exprs = "logcounts"), exprs_logged
              order_by_colour = order_by_colour, ncol = ncol, style = style, ...)
 }
 
-.plotRLE <- function(object, exprs_mats = list(exprs = "logcounts"), exprs_logged = c(TRUE),
+.plotRLE <- function(object, exprs_mats = list(logcounts = "logcounts"), exprs_logged = c(TRUE),
                      colour_by = NULL, legend = "auto", order_by_colour = TRUE, ncol = 1,
                      style = "minimal", ...) {
     if (any(is.null(names(exprs_mats))) || any(names(exprs_mats) == ""))
