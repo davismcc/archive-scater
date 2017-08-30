@@ -34,11 +34,11 @@ toSingleCellExperiment <- function(object) {
     new.assay <- list()
     ass.names <- Biobase::assayDataElementNames(object)
     for (x in ass.names) {
-        if (x=="exprs" || x=="logcounts") { 
+        if (x == "exprs" || x == "logcounts") { 
             new.name <- "logcounts"
             if (new.name %in% names(new.assay)) {
                 warning("'exprs' renamed to 'logcounts' will ", 
-                        ifelse(x=="exprs", "overwrite existing value",
+                        ifelse(x == "exprs", "overwrite existing value",
                                "be overwritten"))
             }
         } else {
@@ -81,11 +81,48 @@ toSingleCellExperiment <- function(object) {
 #' SingleCellExperiment see the \code{\link{toSingleCellExperiment}} function. 
 #' This function is retained for backwards compatibility.
 #'
+#' @param exprsData expression data matrix for an experiment (features x cells)
+#' @param countData data matrix containing raw count expression values
+#' @param tpmData matrix of class \code{"numeric"} containing
+#' transcripts-per-million (TPM) expression values
+#' @param fpkmData matrix of class \code{"numeric"} containing fragments per
+#' kilobase of exon per million reads mapped (FPKM) expression values
+#' @param cpmData matrix of class \code{"numeric"} containing counts per
+#' million (CPM) expression values (optional)
+#' @param phenoData data frame containing attributes of individual cells
+#' @param featureData data frame containing attributes of features (e.g. genes)
+#' @param experimentData MIAME class object containing metadata data and details
+#' about the experiment and dataset.
+#' @param is_exprsData matrix of class \code{"logical"}, indicating whether
+#'    or not each observation is above the \code{lowerDetectionLimit}.
+#' @param cellPairwiseDistances object of class \code{"dist"} (or a class that
+#' extends "dist") containing cell-cell distance or dissimilarity values.
+#' @param featurePairwiseDistances object of class \code{"dist"} (or a class that
+#' extends "dist") containing feature-feature distance or dissimilarity values.
+#' @param lowerDetectionLimit the minimum expression level that constitutes true
+#'  expression (defaults to zero and uses count data to determine if an
+#'  observation is expressed or not).
+#' @param logExprsOffset numeric scalar, providing the offset used when doing
+#' log2-transformations of expression data to avoid trying to take logs of zero.
+#' Default offset value is \code{1}.
+#'
+#' @details
+#' This function now returns a \code{\link{SingleCellExperiment}} object, 
+#' whereas earlier versions produced an \code{SCESet} object. The \code{scater}
+#' package now uses \code{SingleCellExperiment} as its data structure instead
+#' of \code{SCESet}.
+#' 
 #' @importFrom Biobase pData
 #' @importFrom methods as
 #' @return a \code{\link{SingleCellExperiment}} object
 #' @export
-#'
+#' @examples
+#' data("sc_example_counts")
+#' data("sc_example_cell_info")
+#' pd <- new("AnnotatedDataFrame", data = sc_example_cell_info)
+#' \dontrun{
+#' example_sce <- newSCESet(countData = sc_example_counts, phenoData = pd)
+#' }
 newSCESet <- function(exprsData = NULL, countData = NULL, tpmData = NULL, 
                       fpkmData = NULL, cpmData = NULL, phenoData = NULL, featureData = NULL, 
                       experimentData = NULL, is_exprsData = NULL, cellPairwiseDistances = dist(vector()), 

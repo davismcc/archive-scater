@@ -1705,7 +1705,8 @@ plotExpression <- function(object, features, x = NULL,
 
     ## Make the plot
     plot_out <- plotExpressionDefault(object, aesth, ncol, xlab, ylab,
-                                      show_median, show_violin, ...)
+                                      show_median, show_violin, 
+                                      one_facet = one_facet, ...)
 
     if ( is.null(x) ) { ## in this case, do not show x-axis ticks or labels
         plot_out <- plot_out + theme(
