@@ -8,8 +8,7 @@ Authors@R: c(person("Davis", "McCarthy", role=c("aut", "cre"),
         role=c("aut"), email="qilin@quinwills.net"), 
         person("Vladimir", "Kiselev", role=c("ctb"),
         email="vk6@sanger.ac.uk"))
-Maintainer: Davis McCarthy <davis@ebi.ac.uk>, Aaron Lun 
-        <aaron.lun@cruk.cam.ac.uk>
+Maintainer: Davis McCarthy <davis@ebi.ac.uk>
 Version: 1.5.11
 Date: 2017-08-30
 License: GPL (>= 2)
